@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply text-gray-900 bg-white dark:bg-[#0D1117] dark:text-gray-100;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .dot-grid {
+    background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .dark .dot-grid {
+    background-image: radial-gradient(circle, #1f2937 1px, transparent 1px);
+  }
+
+  .bg-radial-fade {
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 30%, white 100%);
+  }
+
+  .dark .bg-radial-fade {
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 30%, #0D1117 100%);
+  }
+}

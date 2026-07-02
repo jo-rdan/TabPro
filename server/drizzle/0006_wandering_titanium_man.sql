@@ -1,0 +1,1 @@
+ALTER TYPE "plan" ADD VALUE 'elite';

@@ -1,0 +1,17 @@
+{
+  "name": "TabPro",
+  "short_name": "TabPro",
+  "description": "Smart ordering for bars & restaurants",
+  "theme_color": "#1D9E75",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "tabpro",
+  "private": true,
+  "workspaces": ["shared", "server", "client"],
+  "scripts": {
+    "dev": "concurrently \"yarn workspace server dev\" \"yarn workspace client dev\"",
+    "build": "yarn workspace shared build && yarn workspace server build && yarn workspace client build",
+    "db:generate": "yarn workspace server db:generate",
+    "db:migrate": "yarn workspace server db:migrate",
+    "db:studio": "yarn workspace server db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
