@@ -1,8 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, Upload, Pencil, Trash2, ToggleLeft, ToggleRight, Check, X, Loader, Sparkles } from 'lucide-react';
-import Layout from '../../components/Layout';
-import { useAuthStore } from '../../lib/auth';
-import api from '../../lib/api';
+import { useState, useEffect, useRef } from "react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+  Check,
+  X,
+  Loader,
+  Sparkles,
+} from "lucide-react";
+import Layout from "../../components/Layout";
+import { useAuthStore } from "../../lib/auth";
+import api from "../../lib/api";
 
 interface MenuItemRow {
   id: string;
@@ -18,29 +28,33 @@ interface ExtractedItem {
   priceRwf: number;
 }
 
-function formatRwf(n: number) { return `${n.toLocaleString()} RWF`; }
+function formatRwf(n: number) {
+  return `${n.toLocaleString()} RWF`;
+}
 
 export default function MenuManagement() {
   const { venues, fetchMe } = useAuthStore();
   const venue = venues[0];
-  useEffect(() => { if (!venue) fetchMe(); }, []);
+  useEffect(() => {
+    if (!venue) fetchMe();
+  }, []);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<MenuItemRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Add item form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newCategory, setNewCategory] = useState('');
-  const [newPrice, setNewPrice] = useState('');
+  const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [newPrice, setNewPrice] = useState("");
   const [addLoading, setAddLoading] = useState(false);
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editPrice, setEditPrice] = useState('');
-  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState("");
+  const [editName, setEditName] = useState("");
 
   // AI extraction
   const [extracting, setExtracting] = useState(false);
@@ -53,39 +67,63 @@ export default function MenuManagement() {
     try {
       const res = await api.get(`/menu/${venue.id}`);
       setItems(res.data.data.items);
-    } catch { setError('Failed to load menu.'); }
-    finally { setLoading(false); }
+    } catch {
+      setError("Failed to load menu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchMenu(); }, [venue]);
+  useEffect(() => {
+    fetchMenu();
+  }, [venue]);
 
-  const grouped = items.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, MenuItemRow[]>);
+  const grouped = items.reduce(
+    (acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    },
+    {} as Record<string, MenuItemRow[]>,
+  );
 
   const handleAddItem = async () => {
     if (!newName.trim() || !newCategory.trim() || !newPrice) return;
     setAddLoading(true);
     try {
-      await api.post('/menu', {
+      await api.post("/menu", {
         venueId: venue!.id,
-        items: [{ name: newName.trim(), category: newCategory.trim(), priceRwf: parseInt(newPrice) }],
+        items: [
+          {
+            name: newName.trim(),
+            category: newCategory.trim(),
+            priceRwf: parseInt(newPrice),
+          },
+        ],
       });
-      setNewName(''); setNewCategory(''); setNewPrice('');
+      setNewName("");
+      setNewCategory("");
+      setNewPrice("");
       setShowAddForm(false);
       await fetchMenu();
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to add item.');
-    } finally { setAddLoading(false); }
+      setError(err?.response?.data?.error || "Failed to add item.");
+    } finally {
+      setAddLoading(false);
+    }
   };
 
   const handleToggle = async (itemId: string) => {
     try {
       await api.patch(`/menu/items/${itemId}/toggle`);
-      setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, isAvailable: !i.isAvailable } : i));
-    } catch { setError('Failed to toggle item.'); }
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === itemId ? { ...i, isAvailable: !i.isAvailable } : i,
+        ),
+      );
+    } catch {
+      setError("Failed to toggle item.");
+    }
   };
 
   const handleSaveEdit = async (itemId: string) => {
@@ -94,37 +132,49 @@ export default function MenuManagement() {
         name: editName,
         priceRwf: parseInt(editPrice),
       });
-      setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, name: editName, priceRwf: parseInt(editPrice) } : i));
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === itemId
+            ? { ...i, name: editName, priceRwf: parseInt(editPrice) }
+            : i,
+        ),
+      );
       setEditingId(null);
-    } catch { setError('Failed to update item.'); }
+    } catch {
+      setError("Failed to update item.");
+    }
   };
 
   const handleDelete = async (itemId: string) => {
-    if (!confirm('Delete this item?')) return;
+    if (!confirm("Delete this item?")) return;
     try {
       await api.delete(`/menu/items/${itemId}`);
       setItems((prev) => prev.filter((i) => i.id !== itemId));
-    } catch { setError('Failed to delete item.'); }
+    } catch {
+      setError("Failed to delete item.");
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setExtracting(true);
-    setError('');
+    setError("");
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('/menu/extract', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      formData.append("file", file);
+      const res = await api.post("/menu/extract", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       setExtracted(res.data.data);
       setShowReview(true);
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Extraction failed. Try a clearer image.');
+      setError(
+        err?.response?.data?.error || "Extraction failed. Try a clearer image.",
+      );
     } finally {
       setExtracting(false);
-      if (fileRef.current) fileRef.current.value = '';
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -132,31 +182,47 @@ export default function MenuManagement() {
     if (!venue || extracted.length === 0) return;
     setSavingExtracted(true);
     try {
-      await api.post('/menu', { venueId: venue.id, items: extracted });
+      await api.post("/menu", { venueId: venue.id, items: extracted });
       setShowReview(false);
       setExtracted([]);
       await fetchMenu();
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to save items.');
-    } finally { setSavingExtracted(false); }
+      setError(err?.response?.data?.error || "Failed to save items.");
+    } finally {
+      setSavingExtracted(false);
+    }
   };
 
   return (
     <Layout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Menu</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{items.length} items · {venue?.name}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Menu
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {items.length} items · {venue?.name}
+          </p>
         </div>
         <div className="flex gap-2">
-          <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFileUpload} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={extracting}
             className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
           >
-            {extracting ? <Loader size={15} className="animate-spin" /> : <Sparkles size={15} className="text-purple-500" />}
-            {extracting ? 'Extracting...' : 'Upload menu'}
+            {extracting ? (
+              <Loader size={15} className="animate-spin" />
+            ) : (
+              <Sparkles size={15} className="text-purple-500" />
+            )}
+            {extracting ? "Extracting..." : "Upload menu"}
           </button>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
@@ -175,23 +241,42 @@ export default function MenuManagement() {
           <div className="bg-white dark:bg-[#161B22] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
             <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-gray-900 dark:text-white">Review extracted items</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{extracted.length} items found — review before saving</p>
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+                  Review extracted items
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {extracted.length} items found — review before saving
+                </p>
               </div>
-              <button onClick={() => setShowReview(false)} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setShowReview(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <X size={18} />
               </button>
             </div>
             <div className="overflow-y-auto flex-1 divide-y divide-gray-100 dark:divide-gray-800">
               {extracted.map((item, i) => (
-                <div key={i} className="px-5 py-3 flex items-center justify-between">
+                <div
+                  key={i}
+                  className="px-5 py-3 flex items-center justify-between"
+                >
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {item.name}
+                    </p>
                     <p className="text-xs text-gray-400">{item.category}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-brand-500">{formatRwf(item.priceRwf)}</span>
-                    <button onClick={() => setExtracted((prev) => prev.filter((_, j) => j !== i))} className="text-gray-300 hover:text-red-500 transition-colors">
+                    <span className="text-sm font-semibold text-brand-500">
+                      {formatRwf(item.priceRwf)}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setExtracted((prev) => prev.filter((_, j) => j !== i))
+                      }
+                      className="text-gray-300 hover:text-red-500 transition-colors"
+                    >
                       <X size={14} />
                     </button>
                   </div>
@@ -199,7 +284,10 @@ export default function MenuManagement() {
               ))}
             </div>
             <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
-              <button onClick={() => setShowReview(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <button
+                onClick={() => setShowReview(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
                 Cancel
               </button>
               <button
@@ -207,7 +295,9 @@ export default function MenuManagement() {
                 disabled={savingExtracted || extracted.length === 0}
                 className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
               >
-                {savingExtracted ? 'Saving...' : `Save ${extracted.length} items`}
+                {savingExtracted
+                  ? "Saving..."
+                  : `Save ${extracted.length} items`}
               </button>
             </div>
           </div>
@@ -217,18 +307,38 @@ export default function MenuManagement() {
       {/* Add form */}
       {showAddForm && (
         <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">New item</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+            New item
+          </h3>
           <div className="grid grid-cols-3 gap-3 mb-3">
-            <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Item name"
-              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
-            <input type="text" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Category"
-              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
-            <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="Price (RWF)"
-              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Item name"
+              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+            <input
+              type="text"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="Category"
+              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+            <input
+              type="number"
+              value={newPrice}
+              onChange={(e) => setNewPrice(e.target.value)}
+              placeholder="Price (RWF)"
+              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
           </div>
-          <button onClick={handleAddItem} disabled={addLoading || !newName || !newCategory || !newPrice}
-            className="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors">
-            {addLoading ? 'Adding...' : 'Add item'}
+          <button
+            onClick={handleAddItem}
+            disabled={addLoading || !newName || !newCategory || !newPrice}
+            className="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors"
+          >
+            {addLoading ? "Adding..." : "Add item"}
           </button>
         </div>
       )}
@@ -242,40 +352,86 @@ export default function MenuManagement() {
       {/* Menu items by category */}
       <div className="space-y-4">
         {Object.entries(grouped).map(([category, categoryItems]) => (
-          <div key={category} className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+          <div
+            key={category}
+            className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
+          >
             <div className="px-5 py-3 bg-gray-50 dark:bg-[#0D1117]">
-              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{category}</h2>
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                {category}
+              </h2>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {categoryItems.map((item) => (
-                <div key={item.id} className={`px-5 py-3 flex items-center justify-between ${!item.isAvailable ? 'opacity-50' : ''}`}>
+                <div
+                  key={item.id}
+                  className={`px-5 py-3 flex items-center justify-between ${!item.isAvailable ? "opacity-50" : ""}`}
+                >
                   <div className="flex-1">
                     {editingId === item.id ? (
                       <div className="flex items-center gap-2">
-                        <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
-                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white w-40 focus:outline-none focus:ring-1 focus:ring-brand-500" />
-                        <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
-                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white w-28 focus:outline-none focus:ring-1 focus:ring-brand-500" />
-                        <button onClick={() => handleSaveEdit(item.id)} className="text-green-500 hover:text-green-600"><Check size={16} /></button>
-                        <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white w-40 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        />
+                        <input
+                          type="number"
+                          value={editPrice}
+                          onChange={(e) => setEditPrice(e.target.value)}
+                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white w-28 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        />
+                        <button
+                          onClick={() => handleSaveEdit(item.id)}
+                          className="text-green-500 hover:text-green-600"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <X size={16} />
+                        </button>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                        <p className="text-xs text-brand-500 font-semibold mt-0.5">{formatRwf(item.priceRwf)}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-brand-500 font-semibold mt-0.5">
+                          {formatRwf(item.priceRwf)}
+                        </p>
                       </div>
                     )}
                   </div>
                   {editingId !== item.id && (
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleToggle(item.id)} className="text-gray-400 hover:text-brand-500 transition-colors">
-                        {item.isAvailable ? <ToggleRight size={20} className="text-brand-500" /> : <ToggleLeft size={20} />}
+                      <button
+                        onClick={() => handleToggle(item.id)}
+                        className="text-gray-400 hover:text-brand-500 transition-colors"
+                      >
+                        {item.isAvailable ? (
+                          <ToggleRight size={20} className="text-brand-500" />
+                        ) : (
+                          <ToggleLeft size={20} />
+                        )}
                       </button>
-                      <button onClick={() => { setEditingId(item.id); setEditName(item.name); setEditPrice(String(item.priceRwf)); }}
-                        className="text-gray-400 hover:text-gray-600 p-1">
+                      <button
+                        onClick={() => {
+                          setEditingId(item.id);
+                          setEditName(item.name);
+                          setEditPrice(String(item.priceRwf));
+                        }}
+                        className="text-gray-400 hover:text-gray-600 p-1"
+                      >
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(item.id)} className="text-gray-400 hover:text-red-500 p-1 transition-colors">
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="text-gray-400 hover:text-red-500 p-1 transition-colors"
+                      >
                         <Trash2 size={14} />
                       </button>
                     </div>

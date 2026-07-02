@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 interface PushSubscribeOptions {
   venueId: string;
@@ -7,29 +7,32 @@ interface PushSubscribeOptions {
 
 export function usePushNotifications() {
   const [permission, setPermission] = useState<NotificationPermission>(
-    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+    typeof Notification !== "undefined" ? Notification.permission : "default",
   );
 
   const isSupported =
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window;
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window;
 
-  const subscribe = async ({ venueId, staffId }: PushSubscribeOptions): Promise<boolean> => {
+  const subscribe = async ({
+    venueId,
+    staffId,
+  }: PushSubscribeOptions): Promise<boolean> => {
     if (!isSupported) return false;
 
     try {
       // Register service worker
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
 
       // Request permission
       const perm = await Notification.requestPermission();
       setPermission(perm);
-      if (perm !== 'granted') return false;
+      if (perm !== "granted") return false;
 
       // Get VAPID public key from server
-      const keyRes = await fetch('/api/push/vapid-key');
+      const keyRes = await fetch("/api/push/vapid-key");
       const keyData = await keyRes.json();
       if (!keyData.data?.publicKey) return false;
 
@@ -39,15 +42,15 @@ export function usePushNotifications() {
       // Subscribe to push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: vapidKey,
+        applicationServerKey: vapidKey as unknown as ArrayBuffer,
       });
 
       const sub = subscription.toJSON();
 
       // Save subscription to server
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           venueId,
           staffId,
@@ -60,7 +63,7 @@ export function usePushNotifications() {
 
       return true;
     } catch (err) {
-      console.error('[Push] Subscription failed:', err);
+      console.error("[Push] Subscription failed:", err);
       return false;
     }
   };
@@ -69,8 +72,8 @@ export function usePushNotifications() {
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }

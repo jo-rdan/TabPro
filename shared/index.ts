@@ -1,14 +1,18 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type Plan = 'basic' | 'pro' | 'elite';
-export type VenueStatus = 'trial' | 'active' | 'grace' | 'suspended';
-export type TabStatus = 'open' | 'bill_requested' | 'closed';
-export type OrderStatus = 'pending' | 'preparing' | 'delivered';
-export type OrderSource = 'customer' | 'staff';
-export type StaffRole = 'waiter' | 'manager';
-export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'cancelled';
-export type QrStickerStatus = 'unclaimed' | 'claimed';
-export type InviteChannel = 'sms' | 'whatsapp';
+export type Plan = "basic" | "pro" | "elite";
+export type VenueStatus = "trial" | "active" | "grace" | "suspended";
+export type TabStatus = "open" | "bill_requested" | "closed";
+export type OrderStatus = "pending" | "preparing" | "delivered";
+export type OrderSource = "customer" | "staff";
+export type StaffRole = "waiter" | "manager";
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "cancelled";
+export type QrStickerStatus = "unclaimed" | "claimed";
+export type InviteChannel = "sms" | "whatsapp";
 
 // ─── Owner ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +36,7 @@ export interface Venue {
   isActive: boolean;
   trialEndsAt: string;
   createdAt: string;
+  logoUrl?: string | null;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────
@@ -179,12 +184,12 @@ export interface Subscription {
 // ─── WebSocket event payloads ─────────────────────────────────────────────────
 
 export type WsEventType =
-  | 'new_order'
-  | 'order_status_update'
-  | 'new_nudge'
-  | 'bill_requested'
-  | 'tab_closed'
-  | 'new_rating';
+  | "new_order"
+  | "order_status_update"
+  | "new_nudge"
+  | "bill_requested"
+  | "tab_closed"
+  | "new_rating";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;

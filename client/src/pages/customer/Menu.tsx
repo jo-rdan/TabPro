@@ -357,17 +357,17 @@ export default function CustomerMenu() {
   // Close tab via beacon when customer closes the browser/tab
   useEffect(() => {
     if (!tabId) return;
-    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const apiBase = import.meta.env.VITE_API_URL || "/api";
 
     const handleUnload = () => {
       // Only send if tab is still open (not already closed/billed)
-      if (tabStatus === 'open') {
+      if (tabStatus === "open") {
         navigator.sendBeacon(`${apiBase}/tabs/${tabId}/close`);
       }
     };
 
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
   }, [tabId, tabStatus]);
 
   useEffect(() => {
@@ -462,7 +462,7 @@ export default function CustomerMenu() {
       if (venue.logoUrl) setVenueLogoUrl(venue.logoUrl);
       setTableLabel(table.label);
       setMenuGrouped(mg);
-      setAllItems(Object.values(mg).flat());
+      setAllItems(Object.values(mg).flat() as MenuItemData[]);
       setActiveCategory(Object.keys(mg)[0] ?? "");
       setIsGroupTab(isExisting);
       sessionStorage.setItem(
@@ -684,7 +684,9 @@ export default function CustomerMenu() {
           <div className="flex items-center gap-3">
             <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
             <div>
-              <h1 className="font-black text-gray-900 dark:text-white text-lg">{venueName}</h1>
+              <h1 className="font-black text-gray-900 dark:text-white text-lg">
+                {venueName}
+              </h1>
               <p className="text-xs text-gray-400 mt-0.5">{tableLabel}</p>
             </div>
           </div>
@@ -838,7 +840,11 @@ export default function CustomerMenu() {
             {/* Venue info row */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
+                <VenueLogo
+                  logoUrl={venueLogoUrl}
+                  venueName={venueName}
+                  size={36}
+                />
                 <div>
                   <h1 className="font-black text-gray-900 dark:text-white text-xl leading-tight">
                     {venueName}
