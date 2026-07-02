@@ -14,7 +14,8 @@
     "baseUrl": ".",
     "paths": {
       "@tabpro/shared": ["../shared/src/types/index.ts"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "../node_modules/@types"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
