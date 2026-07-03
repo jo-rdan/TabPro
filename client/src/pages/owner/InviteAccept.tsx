@@ -183,64 +183,85 @@ export default function InviteAccept() {
         )}
 
         {status === "set-pin" && (
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
-            <div className="text-4xl mb-3">🔐</div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-              Welcome, {staffName}!
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {pinStep === "enter"
-                ? "Set a 4-digit PIN to secure your account."
-                : "Confirm your PIN to make sure you remember it."}
-            </p>
+          <>
+            <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
+              <div className="text-4xl mb-3">🔐</div>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                Welcome, {staffName}!
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {pinStep === "enter"
+                  ? "Set a 4-digit PIN to secure your account."
+                  : "Confirm your PIN to make sure you remember it."}
+              </p>
 
-            {pinStep === "enter" ? (
-              <PinInputs
-                value={pin}
-                onChange={(val, idx) =>
-                  handlePinInput(val, idx, pin, setPin, inputRefs)
-                }
-                refs={inputRefs}
-              />
-            ) : (
-              <PinInputs
-                value={confirmPin}
-                onChange={(val, idx) =>
-                  handlePinInput(
-                    val,
-                    idx,
-                    confirmPin,
-                    setConfirmPin,
-                    confirmRefs,
-                  )
-                }
-                refs={confirmRefs}
-              />
-            )}
-
-            {pinError && (
-              <p className="text-sm text-red-500 mb-3">{pinError}</p>
-            )}
-
-            <button
-              onClick={handlePinSubmit}
-              disabled={
-                saving ||
-                (pinStep === "enter"
-                  ? pin.join("").length < 4
-                  : confirmPin.join("").length < 4)
-              }
-              className="w-full py-3 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
-            >
-              {saving ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : pinStep === "enter" ? (
-                "Continue →"
+              {pinStep === "enter" ? (
+                <PinInputs
+                  value={pin}
+                  onChange={(val, idx) =>
+                    handlePinInput(val, idx, pin, setPin, inputRefs)
+                  }
+                  refs={inputRefs}
+                />
               ) : (
-                "Set PIN & enter app"
+                <PinInputs
+                  value={confirmPin}
+                  onChange={(val, idx) =>
+                    handlePinInput(
+                      val,
+                      idx,
+                      confirmPin,
+                      setConfirmPin,
+                      confirmRefs,
+                    )
+                  }
+                  refs={confirmRefs}
+                />
               )}
-            </button>
-          </div>
+
+              {pinError && (
+                <p className="text-sm text-red-500 mb-3">{pinError}</p>
+              )}
+
+              <button
+                onClick={handlePinSubmit}
+                disabled={
+                  saving ||
+                  (pinStep === "enter"
+                    ? pin.join("").length < 4
+                    : confirmPin.join("").length < 4)
+                }
+                className="w-full py-3 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : pinStep === "enter" ? (
+                  "Continue →"
+                ) : (
+                  "Set PIN & enter app"
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 text-center">
+              By continuing you agree to our{" "}
+              <a
+                href={`${import.meta.env.VITE_APP_URL}/privacy.html`}
+                target="_blank"
+                className="underline hover:text-gray-500 transition-colors"
+              >
+                Privacy Policy
+              </a>
+              {" · "}
+              <a
+                href={`${import.meta.env.VITE_APP_URL}/terms.html`}
+                target="_blank"
+                className="underline hover:text-gray-500 transition-colors"
+              >
+                Terms
+              </a>
+              .
+            </p>
+          </>
         )}
 
         {status === "success" && (

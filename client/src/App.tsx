@@ -155,6 +155,9 @@ export default function App() {
           }
         />
 
+        <Route path="/privacy.html" element={null} />
+        <Route path="/terms.html" element={null} />
+
         {/* Catch-all */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

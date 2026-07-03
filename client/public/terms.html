@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms & Conditions — TabPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0F1419;
+    --ink-soft: #4A5568;
+    --ink-muted: #718096;
+    --line: #E2E8F0;
+    --accent: #0A5C3F;
+    --accent-light: #EBF5F0;
+    --bg: #FAFAF8;
+    --white: #FFFFFF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .doc-type {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ink-muted);
+  }
+  .hero {
+    background: #1A1A2E;
+    padding: 64px 32px 56px;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .hero-meta {
+    font-size: 13px;
+    color: rgba(255,255,255,.5);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .layout {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px 80px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .toc {
+    position: sticky;
+    top: 78px;
+    padding-top: 48px;
+  }
+  .toc-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+  }
+  .toc a {
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 5px 0 5px 12px;
+    border-left: 2px solid var(--line);
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .toc a:hover { color: var(--accent); border-left-color: var(--accent); }
+  .content { padding-top: 48px; }
+  .section {
+    padding-bottom: 44px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 44px;
+  }
+  .section:last-child { border-bottom: none; }
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-soft);
+    margin: 24px 0 8px;
+  }
+  p { margin-bottom: 14px; color: var(--ink-soft); }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--ink); font-weight: 600; }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; color: var(--ink-soft); }
+  li { margin-bottom: 6px; }
+  .callout {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 13.5px;
+    color: var(--ink);
+  }
+  .warn-callout {
+    background: #FFF8E1;
+    border-left: 3px solid #F59E0B;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 13.5px;
+    color: #92400E;
+  }
+  .contact-box {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+  .contact-box p { margin-bottom: 6px; }
+  .footer {
+    border-top: 1px solid var(--line);
+    padding: 24px 32px;
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  @media (max-width: 680px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    .hero { padding: 48px 20px 40px; }
+    .layout, .footer { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">TabPro</a>
+    <span class="doc-type">Terms & Conditions</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">Legal Document · VNT250 Ltd</div>
+  <h1>Terms & Conditions</h1>
+  <div class="hero-meta">Effective date: July 2025 &nbsp;·&nbsp; Last updated: July 2025</div>
+</div>
+
+<div class="layout">
+
+  <aside class="toc">
+    <div class="toc-label">Contents</div>
+    <a href="#t1">1. Definitions</a>
+    <a href="#t2">2. Acceptance</a>
+    <a href="#t3">3. The Service</a>
+    <a href="#t4">4. Account Registration</a>
+    <a href="#t5">5. Subscription & Billing</a>
+    <a href="#t6">6. Acceptable Use</a>
+    <a href="#t7">7. Customer Data</a>
+    <a href="#t8">8. Intellectual Property</a>
+    <a href="#t9">9. Warranties & Disclaimers</a>
+    <a href="#t10">10. Limitation of Liability</a>
+    <a href="#t11">11. Indemnification</a>
+    <a href="#t12">12. Suspension & Termination</a>
+    <a href="#t13">13. Governing Law</a>
+    <a href="#t14">14. Dispute Resolution</a>
+    <a href="#t15">15. Amendments</a>
+    <a href="#t16">16. Contact</a>
+  </aside>
+
+  <main class="content">
+
+    <div class="callout">
+      These Terms and Conditions ("Agreement") constitute a legally binding contract between <strong>VNT250 Ltd</strong> ("Company", "we", "us"), the operator of the <strong>TabPro</strong> platform, and you, the person or entity accessing or using the Service. Please read this Agreement carefully before using TabPro.
+    </div>
+
+    <div class="section" id="t1">
+      <div class="section-num">Article 01</div>
+      <h2>Definitions</h2>
+      <p>In this Agreement, the following terms have the meanings set out below:</p>
+      <ul>
+        <li><strong>"Service"</strong> means the TabPro digital tab management platform, including all web applications, APIs, and related tools operated by VNT250 Ltd.</li>
+        <li><strong>"Venue Owner"</strong> means any individual or entity that registers a venue on TabPro and subscribes to the Service.</li>
+        <li><strong>"Staff" or "Waiter"</strong> means any employee or contractor of a Venue Owner granted access to the Service by the Venue Owner.</li>
+        <li><strong>"Customer"</strong> means any end user who opens a tab, places an order, or otherwise interacts with the Service at a participating venue.</li>
+        <li><strong>"Content"</strong> means all data, text, images, menus, and other materials submitted to the Service.</li>
+        <li><strong>"Subscription"</strong> means the paid plan selected by a Venue Owner granting access to the Service.</li>
+        <li><strong>"Applicable Law"</strong> means the laws of the Republic of Rwanda, including but not limited to Law No. 058/2021 on Data Protection, Law No. 10/2009 on Electronic Transactions, and relevant consumer protection legislation.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="t2">
+      <div class="section-num">Article 02</div>
+      <h2>Acceptance of Terms</h2>
+      <p>By registering an account, activating a venue, or otherwise accessing the Service, you confirm that you have read, understood, and agree to be bound by this Agreement and our Privacy Policy.</p>
+      <p>If you are entering into this Agreement on behalf of a company or other legal entity, you represent that you have the authority to bind that entity. If you do not have such authority, or if you do not agree with these terms, you must not use the Service.</p>
+      <p>The minimum age for registering as a Venue Owner or Staff member on TabPro is <strong>16 years</strong>.</p>
+    </div>
+
+    <div class="section" id="t3">
+      <div class="section-num">Article 03</div>
+      <h2>Description of the Service</h2>
+      <p>TabPro is a software-as-a-service (SaaS) platform that allows restaurant and hospitality venue owners to:</p>
+      <ul>
+        <li>Configure digital menus accessible via QR code;</li>
+        <li>Allow customers to open tabs, browse menus, and place orders without a dedicated mobile application;</li>
+        <li>Manage orders and service in real time through a staff-facing interface;</li>
+        <li>Track staff shifts, attendance, and clock-in via physical QR sticker and PIN verification;</li>
+        <li>Monitor venue performance through dashboards and reports;</li>
+        <li>Communicate with returning customers via SMS or WhatsApp campaigns.</li>
+      </ul>
+      <p>We reserve the right to modify, enhance, or discontinue any feature of the Service at any time with reasonable notice to Venue Owners.</p>
+    </div>
+
+    <div class="section" id="t4">
+      <div class="section-num">Article 04</div>
+      <h2>Account Registration and Responsibilities</h2>
+
+      <h3>4.1 — Venue Owners</h3>
+      <p>To use TabPro, a Venue Owner must create an account by authenticating via Google OAuth and providing accurate venue information. You agree to maintain accurate, current, and complete account information and to notify us promptly of any changes.</p>
+      <p>You are responsible for:</p>
+      <ul>
+        <li>Maintaining the confidentiality of your account credentials;</li>
+        <li>All activities that occur under your account, including actions by your staff;</li>
+        <li>Ensuring your staff comply with these Terms;</li>
+        <li>The accuracy of menu content, pricing, and any information displayed to customers through your venue's TabPro interface.</li>
+      </ul>
+
+      <h3>4.2 — Staff</h3>
+      <p>Staff accounts are created and managed by the Venue Owner. Staff members must not share their authentication PIN with any other person. Unauthorised clock-in attempts, including using photographs of QR stickers to fraudulently record attendance, are strictly prohibited and may result in removal from the platform and legal consequences.</p>
+
+      <h3>4.3 — Customers</h3>
+      <p>Customers access the Service by scanning a QR code at a participating venue. No registration account is required. By providing their phone number and opening a tab, customers consent to their data being processed as described in our Privacy Policy.</p>
+    </div>
+
+    <div class="section" id="t5">
+      <div class="section-num">Article 05</div>
+      <h2>Subscriptions and Billing</h2>
+
+      <h3>5.1 — Plans and Pricing</h3>
+      <p>TabPro offers subscription plans (Basic, Pro, Elite) with features and pricing as published on our platform. All prices are stated in Rwandan Francs (RWF) unless otherwise specified.</p>
+
+      <h3>5.2 — Free Trial</h3>
+      <p>New Venue Owners may be offered a free trial period. At the end of the trial, continued use of the Service requires selecting and paying for a subscription plan. We reserve the right to modify or discontinue trial offers.</p>
+
+      <h3>5.3 — Payment</h3>
+      <p>Subscriptions are billed via MTN Mobile Money (MoMo) or other payment methods made available on the platform. By subscribing, you authorise us to charge the applicable fees to your designated payment method.</p>
+
+      <h3>5.4 — Renewal and Cancellation</h3>
+      <p>Subscriptions renew automatically at the end of each billing period unless cancelled before the renewal date. You may cancel your subscription at any time through your account settings. Cancellation takes effect at the end of the current billing period; no pro-rata refunds are issued for unused time within a paid period, except where required by Rwandan consumer protection law.</p>
+
+      <h3>5.5 — Late Payment and Grace Period</h3>
+      <p>If payment fails, we will notify you and provide a grace period before suspending your account. Continued failure to pay may result in account suspension or termination.</p>
+
+      <h3>5.6 — Taxes</h3>
+      <p>You are responsible for any applicable taxes (including VAT) on subscription fees, as required under Rwandan tax law.</p>
+    </div>
+
+    <div class="section" id="t6">
+      <div class="section-num">Article 06</div>
+      <h2>Acceptable Use</h2>
+      <p>You agree not to use the Service to:</p>
+      <ul>
+        <li>Violate any applicable Rwandan or international law or regulation;</li>
+        <li>Process, store, or transmit content that is illegal, defamatory, obscene, or fraudulent;</li>
+        <li>Conduct false clock-in or attendance records;</li>
+        <li>Attempt to gain unauthorised access to any part of the Service or its underlying infrastructure;</li>
+        <li>Introduce malicious code, viruses, or disruptive software;</li>
+        <li>Reverse engineer, decompile, or otherwise attempt to extract the source code of the Service;</li>
+        <li>Resell, sublicense, or commercially exploit the Service without prior written consent from VNT250 Ltd;</li>
+        <li>Use the customer communication feature (campaigns) to send unsolicited, offensive, or unlawful messages.</li>
+      </ul>
+      <div class="warn-callout">
+        Violation of this section may result in immediate suspension or termination of your account and may be reported to the relevant Rwandan authorities.
+      </div>
+    </div>
+
+    <div class="section" id="t7">
+      <div class="section-num">Article 07</div>
+      <h2>Customer Data and Venue Owner Responsibility</h2>
+      <p>As a Venue Owner, you are a <strong>data controller</strong> in respect of your customers' personal data collected through your venue's use of TabPro. VNT250 Ltd acts as a <strong>data processor</strong> on your behalf for that data.</p>
+      <p>You agree to:</p>
+      <ul>
+        <li>Have a lawful basis for collecting customer data through the platform, including ensuring customers are informed that their data is being processed;</li>
+        <li>Use customer data only for purposes consistent with those disclosed to customers;</li>
+        <li>Not use the campaign or messaging features to send unsolicited communications to customers who have not consented to receive them;</li>
+        <li>Comply with Law No. 058/2021 and any other applicable data protection obligations in respect of your customers' data.</li>
+      </ul>
+      <p>VNT250 Ltd shall not be liable for your failure to comply with your data protection obligations as a data controller.</p>
+    </div>
+
+    <div class="section" id="t8">
+      <div class="section-num">Article 08</div>
+      <h2>Intellectual Property</h2>
+
+      <h3>8.1 — Our IP</h3>
+      <p>The TabPro platform, including its source code, design, trademarks, trade name, user interface, and all related materials, is owned by VNT250 Ltd and protected under the intellectual property laws of Rwanda. Nothing in this Agreement transfers any intellectual property rights to you.</p>
+
+      <h3>8.2 — Your Content</h3>
+      <p>You retain ownership of all Content you submit to the Service (such as menu items, images, and venue branding). By submitting Content, you grant VNT250 Ltd a non-exclusive, royalty-free licence to host, display, and process that Content solely for the purpose of providing the Service to you.</p>
+
+      <h3>8.3 — Feedback</h3>
+      <p>If you provide suggestions or feedback about the Service, you grant us the right to use that feedback without restriction or compensation.</p>
+    </div>
+
+    <div class="section" id="t9">
+      <div class="section-num">Article 09</div>
+      <h2>Warranties and Disclaimers</h2>
+      <p>We provide the Service on an <strong>"as is" and "as available"</strong> basis. To the fullest extent permitted by Rwandan law, we disclaim all warranties, express or implied, including warranties of merchantability, fitness for a particular purpose, and non-infringement.</p>
+      <p>We do not warrant that:</p>
+      <ul>
+        <li>The Service will be uninterrupted, error-free, or entirely secure;</li>
+        <li>Any defects or errors will be corrected within a specific timeframe;</li>
+        <li>The Service will be available in all geographical areas;</li>
+        <li>Results obtained through the Service will meet your expectations.</li>
+      </ul>
+      <p>We will make reasonable efforts to maintain uptime and notify you in advance of planned maintenance windows.</p>
+    </div>
+
+    <div class="section" id="t10">
+      <div class="section-num">Article 10</div>
+      <h2>Limitation of Liability</h2>
+      <p>To the maximum extent permitted by applicable Rwandan law, VNT250 Ltd shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of revenue, loss of data, or loss of business opportunity, arising from your use of or inability to use the Service.</p>
+      <p>Our total cumulative liability to you for any claim arising from or related to this Agreement shall not exceed the total subscription fees you paid to us in the <strong>three (3) months</strong> preceding the event giving rise to the claim.</p>
+      <p>Nothing in this Agreement limits liability for death or personal injury caused by our negligence, fraud, or any liability that cannot be excluded under Rwandan law.</p>
+    </div>
+
+    <div class="section" id="t11">
+      <div class="section-num">Article 11</div>
+      <h2>Indemnification</h2>
+      <p>You agree to defend, indemnify, and hold harmless VNT250 Ltd, its directors, employees, and agents from any claims, damages, liabilities, costs, or expenses (including reasonable legal fees) arising from:</p>
+      <ul>
+        <li>Your breach of this Agreement;</li>
+        <li>Your violation of any applicable law or third-party rights;</li>
+        <li>Content you submit to the Service;</li>
+        <li>Your failure to comply with your data protection obligations as a data controller.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="t12">
+      <div class="section-num">Article 12</div>
+      <h2>Suspension and Termination</h2>
+
+      <h3>12.1 — By You</h3>
+      <p>You may terminate your account at any time by cancelling your subscription and contacting us at tab.pro.vnt@gmail.com. Upon termination, your access to the Service will cease at the end of your current billing period.</p>
+
+      <h3>12.2 — By Us</h3>
+      <p>We may suspend or terminate your account immediately, with or without notice, if:</p>
+      <ul>
+        <li>You materially breach this Agreement and fail to remedy the breach within 14 days of written notice;</li>
+        <li>You fail to pay subscription fees and do not remedy the failure within the grace period;</li>
+        <li>We are required to do so by applicable law or regulatory order;</li>
+        <li>We reasonably believe your use of the Service poses a security risk or legal liability.</li>
+      </ul>
+
+      <h3>12.3 — Effect of Termination</h3>
+      <p>Upon termination, your right to access the Service ceases immediately. We will retain your data for the periods specified in our Privacy Policy, after which it will be securely deleted. You may request an export of your data prior to termination.</p>
+    </div>
+
+    <div class="section" id="t13">
+      <div class="section-num">Article 13</div>
+      <h2>Governing Law</h2>
+      <p>This Agreement is governed by and construed in accordance with the laws of the <strong>Republic of Rwanda</strong>, without regard to its conflict of law principles. The courts of Rwanda shall have exclusive jurisdiction over any dispute arising from or in connection with this Agreement.</p>
+    </div>
+
+    <div class="section" id="t14">
+      <div class="section-num">Article 14</div>
+      <h2>Dispute Resolution</h2>
+      <p>Before initiating any formal legal proceedings, the parties agree to attempt to resolve any dispute through good-faith negotiation. Either party may initiate this process by sending written notice of the dispute to the other party.</p>
+      <p>If a dispute cannot be resolved through negotiation within <strong>30 days</strong> of the written notice, either party may pursue resolution through the competent courts of Rwanda, or through arbitration under the rules of the Rwanda Arbitration Centre, as mutually agreed.</p>
+    </div>
+
+    <div class="section" id="t15">
+      <div class="section-num">Article 15</div>
+      <h2>Amendments to These Terms</h2>
+      <p>We may update these Terms and Conditions from time to time. We will notify Venue Owners of material changes via email or a prominent notice on the platform at least <strong>14 days</strong> before the changes take effect.</p>
+      <p>Your continued use of the Service after the effective date of any amendment constitutes your acceptance of the updated Terms. If you do not agree to the amended Terms, you must stop using the Service and cancel your subscription before the effective date.</p>
+    </div>
+
+    <div class="section" id="t16">
+      <div class="section-num">Article 16</div>
+      <h2>Contact Information</h2>
+      <p>For any questions, complaints, or notices under these Terms, please contact us:</p>
+      <div class="contact-box">
+        <p><strong>VNT250 Ltd — Legal</strong></p>
+        <p>Email: <strong>tab.pro.vnt@gmail.com</strong></p>
+        <p>Platform: <strong>tabpro.app</strong></p>
+        <p>Country: <strong>Republic of Rwanda</strong></p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <span>© 2025 VNT250 Ltd · TabPro</span>
+  <span>Governed by the laws of the Republic of Rwanda</span>
+</footer>
+
+</body>
+</html>

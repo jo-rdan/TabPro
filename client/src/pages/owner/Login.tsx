@@ -1,14 +1,13 @@
-import Logo from '../../components/Logo';
-import GoogleIcon from '../../components/GoogleIcon';
+import Logo from "../../components/Logo";
+import GoogleIcon from "../../components/GoogleIcon";
 
 export default function Login() {
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || '/api'}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_API_URL || "/api"}/auth/google`;
   };
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0D1117] flex flex-col items-center justify-center px-4 relative overflow-hidden">
-
       {/* Subtle dot grid background */}
       <div className="absolute inset-0 dot-grid opacity-60 dark:opacity-100" />
 
@@ -17,7 +16,6 @@ export default function Login() {
 
       {/* Card */}
       <div className="relative w-full max-w-sm">
-
         {/* Logo + wordmark */}
         <div className="flex flex-col items-center mb-8">
           <Logo size={56} className="mb-4 drop-shadow-sm" />
@@ -30,12 +28,14 @@ export default function Login() {
         </div>
 
         {/* Login card */}
-        <div className="
+        <div
+          className="
           bg-white dark:bg-[#161B22]
           border border-gray-200 dark:border-gray-800
           rounded-2xl shadow-sm
           p-8
-        ">
+        "
+        >
           <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
             Owner sign in
           </h2>
@@ -65,7 +65,7 @@ export default function Login() {
 
           <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
             <p className="text-xs text-gray-400 dark:text-gray-500 text-center leading-relaxed">
-              For venue owners only.{' '}
+              For venue owners only.{" "}
               <span className="text-gray-500 dark:text-gray-400">
                 Staff access is via invite link.
               </span>
@@ -75,10 +75,24 @@ export default function Login() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">
-          © {new Date().getFullYear()} TabPro
+          © {new Date().getFullYear()} TabPro ·{" "}
+          <a
+            href={`${import.meta.env.VITE_APP_URL}/privacy.html`}
+            target="_blank"
+            className="underline hover:text-gray-500 transition-colors"
+          >
+            Privacy Policy
+          </a>
+          {" · "}
+          <a
+            href={`${import.meta.env.VITE_APP_URL}/terms.html`}
+            target="_blank"
+            className="underline hover:text-gray-500 transition-colors"
+          >
+            Terms
+          </a>
         </p>
       </div>
     </div>
   );
 }
-

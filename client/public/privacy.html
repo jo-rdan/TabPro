@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — TabPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0F1419;
+    --ink-soft: #4A5568;
+    --ink-muted: #718096;
+    --line: #E2E8F0;
+    --accent: #0A5C3F;
+    --accent-light: #EBF5F0;
+    --bg: #FAFAF8;
+    --white: #FFFFFF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -.01em;
+    text-decoration: none;
+  }
+  .doc-type {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ink-muted);
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--accent);
+    padding: 64px 32px 56px;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.6);
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .hero-meta {
+    font-size: 13px;
+    color: rgba(255,255,255,.65);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px 80px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  /* ── Sidebar ToC ── */
+  .toc {
+    position: sticky;
+    top: 78px;
+    padding-top: 48px;
+  }
+  .toc-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+  }
+  .toc a {
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 5px 0 5px 12px;
+    border-left: 2px solid var(--line);
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .toc a:hover { color: var(--accent); border-left-color: var(--accent); }
+
+  /* ── Content ── */
+  .content { padding-top: 48px; }
+
+  .section {
+    padding-bottom: 44px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 44px;
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-soft);
+    margin: 24px 0 8px;
+  }
+  p { margin-bottom: 14px; color: var(--ink-soft); }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--ink); font-weight: 600; }
+
+  ul, ol {
+    padding-left: 20px;
+    margin-bottom: 14px;
+    color: var(--ink-soft);
+  }
+  li { margin-bottom: 6px; }
+  li:last-child { margin-bottom: 0; }
+
+  .callout {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 13.5px;
+    color: var(--ink);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  .data-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ink-muted);
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--line);
+  }
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-soft);
+    vertical-align: top;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .contact-box {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+  .contact-box p { margin-bottom: 6px; }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid var(--line);
+    padding: 24px 32px;
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  @media (max-width: 680px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    .hero { padding: 48px 20px 40px; }
+    .layout, .footer { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">TabPro</a>
+    <span class="doc-type">Privacy Policy</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">Legal Document · VNT250 Ltd</div>
+  <h1>Privacy Policy</h1>
+  <div class="hero-meta">Effective date: July 2025 &nbsp;·&nbsp; Last updated: July 2025</div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar ToC -->
+  <aside class="toc">
+    <div class="toc-label">Contents</div>
+    <a href="#s1">1. Who We Are</a>
+    <a href="#s2">2. Scope</a>
+    <a href="#s3">3. Data We Collect</a>
+    <a href="#s4">4. Legal Basis</a>
+    <a href="#s5">5. How We Use Data</a>
+    <a href="#s6">6. Sharing Your Data</a>
+    <a href="#s7">7. Data Retention</a>
+    <a href="#s8">8. Your Rights</a>
+    <a href="#s9">9. Security</a>
+    <a href="#s10">10. Cookies</a>
+    <a href="#s11">11. Children</a>
+    <a href="#s12">12. International Transfers</a>
+    <a href="#s13">13. Changes</a>
+    <a href="#s14">14. Contact Us</a>
+  </aside>
+
+  <!-- Main content -->
+  <main class="content">
+
+    <div class="callout">
+      This Privacy Policy is issued by <strong>VNT250 Ltd</strong> ("we", "us", "our"), the registered company operating the <strong>TabPro</strong> platform, in compliance with <strong>Law No. 058/2021 of 13/10/2021 Relating to the Protection of Personal Data and Privacy in Rwanda</strong> and any subsidiary regulations issued thereunder.
+    </div>
+
+    <div class="section" id="s1">
+      <div class="section-num">Article 01</div>
+      <h2>Who We Are</h2>
+      <p>VNT250 Ltd is a company duly incorporated and registered under the laws of the Republic of Rwanda. We develop and operate TabPro, a digital restaurant tab and order management platform that enables venue owners, their staff, and their customers to manage orders, payments, and service interactions electronically.</p>
+      <p>For all purposes under the Law No. 058/2021, VNT250 Ltd acts as the <strong>Data Controller</strong> in respect of the personal data processed through the TabPro platform.</p>
+      <div class="contact-box">
+        <p><strong>Legal name:</strong> VNT250 Ltd</p>
+        <p><strong>Product:</strong> TabPro</p>
+        <p><strong>Country:</strong> Republic of Rwanda</p>
+        <p><strong>Data Protection Contact:</strong> tab.pro.vnt@gmail.com</p>
+      </div>
+    </div>
+
+    <div class="section" id="s2">
+      <div class="section-num">Article 02</div>
+      <h2>Scope of This Policy</h2>
+      <p>This Privacy Policy applies to all personal data we collect and process in connection with:</p>
+      <ul>
+        <li>Venue owners and managers who register and operate venues on TabPro;</li>
+        <li>Waitstaff who use the TabPro platform on behalf of a venue;</li>
+        <li>Customers who open tabs, place orders, or interact with TabPro at a participating venue;</li>
+        <li>Visitors to our website and any person who contacts us directly.</li>
+      </ul>
+      <p>This Policy does not cover the data practices of third-party services we integrate with (such as payment processors or cloud service providers), which are governed by their own privacy policies.</p>
+    </div>
+
+    <div class="section" id="s3">
+      <div class="section-num">Article 03</div>
+      <h2>Personal Data We Collect</h2>
+      <p>We collect only the data that is necessary to provide our services. The categories of personal data we process are set out below.</p>
+
+      <h3>3.1 — Venue Owners & Managers</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Data</th><th>Purpose</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Full name</td><td>Account identification</td><td>Google OAuth / direct input</td></tr>
+          <tr><td>Email address</td><td>Account creation and communication</td><td>Google OAuth</td></tr>
+          <tr><td>Phone number</td><td>Billing and support contact</td><td>Direct input (optional)</td></tr>
+          <tr><td>Venue name and location</td><td>Platform configuration</td><td>Direct input</td></tr>
+          <tr><td>Logo / branding images</td><td>Menu and profile display</td><td>Direct upload</td></tr>
+          <tr><td>Subscription and payment records</td><td>Billing management</td><td>Payment processor</td></tr>
+        </tbody>
+      </table>
+
+      <h3>3.2 — Waitstaff</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Data</th><th>Purpose</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Full name</td><td>Account identification and attendance</td><td>Venue owner input</td></tr>
+          <tr><td>Phone number</td><td>Invite delivery and authentication</td><td>Venue owner input</td></tr>
+          <tr><td>Role and shift data</td><td>Schedule management</td><td>Venue owner and system</td></tr>
+          <tr><td>Clock-in / clock-out timestamps</td><td>Attendance and hours tracking</td><td>System-generated</td></tr>
+          <tr><td>Performance ratings</td><td>Staff performance reporting</td><td>Customer submissions</td></tr>
+          <tr><td>Authentication PIN (hashed)</td><td>Secure login</td><td>Staff input</td></tr>
+        </tbody>
+      </table>
+
+      <h3>3.3 — Customers</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Data</th><th>Purpose</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Phone number</td><td>Tab creation only — not used for marketing</td><td>Direct input (required to open a tab)</td></tr>
+          <tr><td>Name</td><td>Personalisation (optional)</td><td>Direct input</td></tr>
+          <tr><td>Order history</td><td>Service fulfilment and analytics</td><td>System-generated</td></tr>
+          <tr><td>Tab and payment records</td><td>Transaction records</td><td>System-generated</td></tr>
+          <tr><td>Ratings and comments</td><td>Quality improvement</td><td>Direct input (voluntary)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>3.4 — Passively Collected Technical Data</h3>
+      <p>Like all web servers, our infrastructure passively records standard technical information generated by your device when you access the platform — such as IP address, browser type, and request timestamps. This happens as a natural function of how the internet works, not through any tracking technology we have built. This data is used solely for security monitoring and debugging and is not linked to individual user profiles.</p>
+    </div>
+
+    <div class="section" id="s4">
+      <div class="section-num">Article 04</div>
+      <h2>Legal Basis for Processing</h2>
+      <p>In accordance with Article 9 of Law No. 058/2021, we rely on the following legal grounds to process personal data:</p>
+      <ul>
+        <li><strong>Contractual necessity:</strong> Processing required to perform the TabPro service you have registered for or interact with, including order management, billing, and account administration.</li>
+        <li><strong>Consent:</strong> Where you have freely and explicitly provided consent, such as when a customer voluntarily enters their phone number to open a tab, or when you opt in to push notifications or marketing campaigns.</li>
+        <li><strong>Legitimate interests:</strong> For analytics, platform security, fraud prevention, and service improvement, where those interests are not overridden by your fundamental rights.</li>
+        <li><strong>Legal obligation:</strong> Where we are required to retain or disclose data to comply with applicable Rwandan law, including tax, financial records, and law enforcement requirements.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="s5">
+      <div class="section-num">Article 05</div>
+      <h2>How We Use Your Personal Data</h2>
+      <p>We use the personal data we collect for the following purposes:</p>
+      <ul>
+        <li>To create and manage venue owner, staff, and customer accounts;</li>
+        <li>To process orders, payments, and tab transactions;</li>
+        <li>To deliver shift schedules, attendance records, and performance reports to venue owners;</li>
+        <li>To send transactional notifications, including order status updates and clock-in confirmations, via push notification, SMS, or WhatsApp;</li>
+        <li>To process billing and manage subscriptions;</li>
+        <li>To monitor and improve platform security and performance;</li>
+        <li>To comply with legal and regulatory obligations;</li>
+        <li>To respond to support inquiries and resolve disputes.</li>
+      </ul>
+      <p>We will not use your data for any purpose incompatible with the purposes stated above without first obtaining your consent or having another lawful basis to do so.</p>
+    </div>
+
+    <div class="section" id="s6">
+      <div class="section-num">Article 06</div>
+      <h2>Sharing Your Personal Data</h2>
+      <p>We do not sell personal data. We may share your data only in the following circumstances:</p>
+
+      <h3>6.1 — Service Providers</h3>
+      <p>We engage third-party processors who act on our behalf, under binding data processing agreements, to provide infrastructure and services including:</p>
+      <ul>
+        <li><strong>Cloud hosting:</strong> Render (server hosting and static site deployment);</li>
+        <li><strong>Database:</strong> Neon (PostgreSQL cloud database);</li>
+        <li><strong>Media storage:</strong> Cloudinary (image uploads);</li>
+        <li><strong>Payment processing:</strong> MTN Mobile Money (MoMo) for subscription billing;</li>
+        <li><strong>Messaging:</strong> Africa's Talking or equivalent provider for SMS/WhatsApp staff invitations.</li>
+      </ul>
+
+      <h3>6.2 — Venue Owners</h3>
+      <p>Customer order data, tab history, and ratings are visible to the venue owner and their authorised staff within the TabPro platform. Customers acknowledge this when they open a tab at a participating venue.</p>
+
+      <h3>6.3 — Legal Requirements</h3>
+      <p>We may disclose personal data where required to do so by Rwandan law, court order, or competent regulatory authority, including the Rwanda Data Protection Authority (RPDA) and the Rwanda Investigation Bureau (RIB).</p>
+
+      <h3>6.4 — Business Transfers</h3>
+      <p>In the event of a merger, acquisition, or sale of all or part of VNT250 Ltd's assets, personal data may be transferred to the successor entity, subject to the same protections described in this Policy.</p>
+    </div>
+
+    <div class="section" id="s7">
+      <div class="section-num">Article 07</div>
+      <h2>Data Retention</h2>
+      <p>We retain personal data only for as long as necessary to fulfil the purposes set out in this Policy, or as required by law. Our general retention periods are:</p>
+      <table class="data-table">
+        <thead>
+          <tr><th>Category</th><th>Retention Period</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Venue owner account data</td><td>Duration of subscription + 5 years</td></tr>
+          <tr><td>Staff records and shift logs</td><td>3 years from date of creation</td></tr>
+          <tr><td>Customer phone numbers and order history</td><td>2 years from last interaction</td></tr>
+          <tr><td>Payment and billing records</td><td>7 years (Rwandan tax and accounting obligations)</td></tr>
+          <tr><td>Ratings and feedback</td><td>3 years</td></tr>
+          <tr><td>Security and access logs</td><td>90 days</td></tr>
+        </tbody>
+      </table>
+      <p>Upon account deletion or expiry of the applicable retention period, data is securely erased or anonymised so that it can no longer be attributed to any individual.</p>
+    </div>
+
+    <div class="section" id="s8">
+      <div class="section-num">Article 08</div>
+      <h2>Your Rights as a Data Subject</h2>
+      <p>Under Law No. 058/2021, you have the following rights in respect of your personal data. To exercise any of these rights, please contact us at <strong>privacy@tabpro.app</strong>.</p>
+      <ul>
+        <li><strong>Right of access:</strong> You may request a copy of the personal data we hold about you;</li>
+        <li><strong>Right to rectification:</strong> You may request correction of inaccurate or incomplete data;</li>
+        <li><strong>Right to erasure:</strong> You may request deletion of your personal data where it is no longer necessary for the purposes for which it was collected, subject to legal retention obligations;</li>
+        <li><strong>Right to restrict processing:</strong> You may request that we limit how we use your data in certain circumstances;</li>
+        <li><strong>Right to data portability:</strong> You may request your data in a structured, commonly used, machine-readable format;</li>
+        <li><strong>Right to object:</strong> You may object to processing based on legitimate interests or for direct marketing purposes;</li>
+        <li><strong>Right to withdraw consent:</strong> Where processing is based on your consent, you may withdraw it at any time, without affecting the lawfulness of processing before withdrawal.</li>
+      </ul>
+      <p>We will respond to all valid requests within <strong>30 days</strong> of receipt. If you believe your rights have been violated, you have the right to lodge a complaint with the <strong>Rwanda Data Protection Authority (RPDA)</strong>.</p>
+    </div>
+
+    <div class="section" id="s9">
+      <div class="section-num">Article 09</div>
+      <h2>Security Measures</h2>
+      <p>We implement appropriate technical and organisational measures to protect personal data against unauthorised access, loss, alteration, or disclosure, including:</p>
+      <ul>
+        <li>Encryption of data in transit using TLS/HTTPS;</li>
+        <li>Bcrypt hashing of all authentication credentials (staff PINs and venue PINs);</li>
+        <li>JWT-based session tokens with defined expiry windows;</li>
+        <li>Role-based access controls ensuring staff can only access data relevant to their venue and role;</li>
+        <li>Physical clock-in verification requiring physical presence at the venue;</li>
+        <li>Regular security reviews of our codebase and dependencies.</li>
+      </ul>
+      <p>No system can guarantee absolute security. In the event of a personal data breach that is likely to result in a risk to your rights and freedoms, we will notify the RPDA and affected data subjects in accordance with applicable law.</p>
+    </div>
+
+    <div class="section" id="s10">
+      <div class="section-num">Article 10</div>
+      <h2>Cookies and Local Storage</h2>
+      <p>The TabPro platform uses browser local storage and session storage to maintain your authenticated session (for venue owners and waitstaff). These are strictly necessary for the platform to function and do not require separate consent.</p>
+      <p>We do not use third-party tracking cookies or cross-site advertising technologies. Any analytics we collect are anonymised and aggregated at the venue level.</p>
+    </div>
+
+    <div class="section" id="s11">
+      <div class="section-num">Article 11</div>
+      <h2>Children's Data</h2>
+      <p>The TabPro platform is not directed at children under the age of 16. We do not knowingly collect personal data from individuals under 16. If you believe we have inadvertently collected such data, please contact us immediately at <strong>tab.pro.vnt@gmail.com</strong> and we will delete it promptly.</p>
+    </div>
+
+    <div class="section" id="s12">
+      <div class="section-num">Article 12</div>
+      <h2>International Data Transfers</h2>
+      <p>Some of our third-party service providers are located outside Rwanda (including cloud hosting and database providers). Where personal data is transferred outside Rwanda, we ensure that appropriate safeguards are in place, including contractual clauses that require the recipient to protect data to a standard equivalent to that required under Rwandan law.</p>
+    </div>
+
+    <div class="section" id="s13">
+      <div class="section-num">Article 13</div>
+      <h2>Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time to reflect changes in our practices, legal requirements, or platform features. When we make material changes, we will notify venue owners by email and display a notice on the platform. The effective date at the top of this document will always reflect the most recent version.</p>
+      <p>Continued use of the TabPro platform after an update constitutes acceptance of the revised Policy.</p>
+    </div>
+
+    <div class="section" id="s14">
+      <div class="section-num">Article 14</div>
+      <h2>Contact Us</h2>
+      <p>If you have any questions, concerns, or requests regarding this Privacy Policy or the processing of your personal data, please contact us:</p>
+      <div class="contact-box">
+        <p><strong>VNT250 Ltd — Data Protection</strong></p>
+        <p>Email: <strong>tab.pro.vnt@gmail.com</strong></p>
+        <p>Platform: <strong>tabpro.app</strong></p>
+        <p>Country: <strong>Republic of Rwanda</strong></p>
+        <p style="margin-top:12px; font-size:13px; color:#718096;">You also have the right to lodge a complaint directly with the <strong>Rwanda Data Protection Authority (RPDA)</strong> at <strong>www.rpda.rw</strong> if you believe your data protection rights have been infringed.</p>
+        <p style="margin-top:8px; font-size:13px; color:#718096;">All data protection, legal, and support enquiries can be directed to: <strong>tab.pro.vnt@gmail.com</strong></p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <span>© 2025 VNT250 Ltd · TabPro</span>
+  <span>Governed by the laws of the Republic of Rwanda</span>
+</footer>
+
+</body>
+</html>

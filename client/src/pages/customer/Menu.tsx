@@ -672,6 +672,25 @@ export default function CustomerMenu() {
             {loading ? "Opening tab..." : "Open my tab →"}
           </button>
         </div>
+        <p className="text-xs text-gray-400 text-center mt-4">
+          By opening a tab you agree to our{" "}
+          <a
+            href={`${import.meta.env.VITE_APP_URL}/privacy.html`}
+            target="_blank"
+            className="underline hover:text-gray-500 transition-colors"
+          >
+            Privacy Policy
+          </a>
+          {" · "}
+          <a
+            href={`${import.meta.env.VITE_APP_URL}/terms.html`}
+            target="_blank"
+            className="underline hover:text-gray-500 transition-colors"
+          >
+            Terms
+          </a>
+          .
+        </p>
       </div>
     );
   }
