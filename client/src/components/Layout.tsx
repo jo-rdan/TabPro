@@ -34,7 +34,7 @@ const NAV_ITEMS = [
   { label: "Staff", href: "/staff", icon: Users },
   { label: "Activity", href: "/activity", icon: ScrollText },
   { label: "Ratings", href: "/ratings", icon: Star, pro: true },
-  { label: "Campaigns", href: "/campaigns", icon: Megaphone, pro: true },
+  // { label: "Campaigns", href: "/campaigns", icon: Megaphone, pro: true },
   { label: "Busy Hours", href: "/busy-hours", icon: BarChart2, elite: true },
   { label: "Shifts", href: "/shifts", icon: Clock, elite: true },
 ];
@@ -263,7 +263,9 @@ export default function Layout({ children }: LayoutProps) {
             <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-4" />
 
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">More</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                More
+              </h3>
               <button
                 onClick={() => setMoreOpen(false)}
                 className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg"
@@ -289,8 +291,8 @@ export default function Layout({ children }: LayoutProps) {
                         locked
                           ? "bg-purple-50 dark:bg-purple-900/10 border border-dashed border-purple-200/70 dark:border-purple-700/40"
                           : isActive(href)
-                          ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200/70 dark:border-brand-700/40"
-                          : "bg-gray-50 dark:bg-gray-800/40 border border-transparent"
+                            ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200/70 dark:border-brand-700/40"
+                            : "bg-gray-50 dark:bg-gray-800/40 border border-transparent"
                       }
                     `}
                   >
@@ -301,8 +303,8 @@ export default function Layout({ children }: LayoutProps) {
                           locked
                             ? "text-purple-400"
                             : isActive(href)
-                            ? "text-brand-500"
-                            : "text-gray-500 dark:text-gray-400"
+                              ? "text-brand-500"
+                              : "text-gray-500 dark:text-gray-400"
                         }
                       />
                       {locked && (
