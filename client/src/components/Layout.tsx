@@ -6,7 +6,6 @@ import {
   UtensilsCrossed,
   Users,
   ScrollText,
-  Megaphone,
   Star,
   LogOut,
   Sun,
