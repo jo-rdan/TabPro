@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../components/Logo";
+import { apiFetch } from "../../lib/apiFetch";
 
 const STORAGE_KEY = "tabpro_staff_session";
 
@@ -58,7 +59,7 @@ export default function WaiterLogin() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/staff/login", {
+      const res = await apiFetch("/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: phone.trim(), pin }),

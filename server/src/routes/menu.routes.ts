@@ -9,6 +9,7 @@ import {
 } from '../controllers/menu.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 import { upload } from '../middleware/upload.middleware';
+import { ownsVenue, venueFromBody, venueOfMenuItem } from '../middleware/venueAccess.middleware';
 
 const router = Router();
 
@@ -16,10 +17,10 @@ const router = Router();
 router.get('/:venueId', handleGetMenu);
 
 // Protected — owner manages menu
-router.post('/', requireAuth, handleCreateMenuItems);
+router.post('/', requireAuth, ownsVenue(venueFromBody()), handleCreateMenuItems);
 router.post('/extract', requireAuth, upload.single('file'), handleExtractMenu);
-router.patch('/items/:itemId', requireAuth, handleUpdateMenuItem);
-router.patch('/items/:itemId/toggle', requireAuth, handleToggleAvailability);
-router.delete('/items/:itemId', requireAuth, handleDeleteMenuItem);
+router.patch('/items/:itemId', requireAuth, ownsVenue(venueOfMenuItem()), handleUpdateMenuItem);
+router.patch('/items/:itemId/toggle', requireAuth, ownsVenue(venueOfMenuItem()), handleToggleAvailability);
+router.delete('/items/:itemId', requireAuth, ownsVenue(venueOfMenuItem()), handleDeleteMenuItem);
 
 export default router;

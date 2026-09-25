@@ -23,7 +23,9 @@ export async function handleSubscribe(req: Request, res: Response) {
     return;
   }
 
-  const { venueId, staffId, subscription } = parsed.data;
+  const { venueId, subscription } = parsed.data;
+  // A waiter can only register their own device; owners register as the venue.
+  const staffId = req.staffMember?.staffId;
   const result = await saveSubscription(
     venueId,
     subscription.endpoint,

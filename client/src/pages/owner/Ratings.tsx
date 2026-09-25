@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, MessageSquare, User, TrendingUp, RefreshCw, Lock } from 'lucide-react';
+import { Star, MessageSquare, User, TrendingUp, RefreshCw } from 'lucide-react';
 import Layout from '../../components/Layout';
 import { useAuthStore } from '../../lib/auth';
 import api from '../../lib/api';
@@ -95,30 +95,7 @@ export default function Ratings() {
 
   useEffect(() => { fetchBreakdown(); }, [venue]);
 
-  if (!isPro) {
-    return (
-      <Layout>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ratings</h1>
-        </div>
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
-          <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Lock size={20} className="text-purple-500" />
-          </div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2">Pro feature</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xs mx-auto">
-            Ratings give you a full breakdown of food, waiter, and overall scores — with comments and weekly trends. Upgrade to Pro to unlock this.
-          </p>
-          <a
-            href="/subscription"
-            className="inline-block px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl transition-colors"
-          >
-            View plans →
-          </a>
-        </div>
-      </Layout>
-    );
-  }
+  if (!isPro) { /* guard removed */ }
 
   return (
     <Layout>

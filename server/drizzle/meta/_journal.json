@@ -78,6 +78,34 @@
       "when": 1782900000000,
       "tag": "0010_clockin_sticker_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785670929836,
+      "tag": "0011_curved_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785930392996,
+      "tag": "0012_sloppy_red_ghost",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788959022874,
+      "tag": "0013_rainy_sunfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790335422987,
+      "tag": "0014_normalize_staff_phones",
+      "breakpoints": true
     }
   ]
 }

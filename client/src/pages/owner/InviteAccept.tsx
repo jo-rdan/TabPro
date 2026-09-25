@@ -1,8 +1,50 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import Logo from "../../components/Logo";
+import { apiFetch } from "../../lib/apiFetch";
 
 type Status = "loading" | "set-pin" | "success" | "error";
+
+// Hoisted to module scope — must NOT be defined inside InviteAccept's render.
+// A component declared inline inside another component's body gets a fresh
+// function identity on every re-render, which makes React unmount + remount
+// the whole subtree on every keystroke, killing focus before it can land on
+// the next box. Keeping it stable here lets .focus() calls actually stick.
+function PinInputs({
+  value,
+  onChange,
+  onKeyDown,
+  refs,
+}: {
+  value: string[];
+  onChange: (val: string, idx: number) => void;
+  onKeyDown: (e: React.KeyboardEvent, idx: number) => void;
+  refs: React.MutableRefObject<(HTMLInputElement | null)[]>;
+}) {
+  return (
+    <div className="flex gap-3 justify-center my-6">
+      {value.map((digit, i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          type="password"
+          inputMode="numeric"
+          maxLength={1}
+          value={digit}
+          onChange={(e) => onChange(e.target.value, i)}
+          onKeyDown={(e) => onKeyDown(e, i)}
+          className={`w-14 h-14 text-center text-2xl font-black rounded-2xl border-2 outline-none transition-all bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white ${
+            digit
+              ? "border-brand-500 bg-brand-50 dark:bg-brand-900/20"
+              : "border-gray-200 dark:border-gray-700 focus:border-brand-400"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function InviteAccept() {
   const { token } = useParams<{ token: string }>();
@@ -25,7 +67,7 @@ export default function InviteAccept() {
   useEffect(() => {
     const accept = async () => {
       try {
-        const res = await fetch(`/api/staff/invite/${token}`);
+        const res = await apiFetch(`/staff/invite/${token}`);
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
 
@@ -106,7 +148,7 @@ export default function InviteAccept() {
     setSaving(true);
     setPinError("");
     try {
-      const res = await fetch("/api/staff/me/set-pin", {
+      const res = await apiFetch("/staff/me/set-pin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -135,38 +177,6 @@ export default function InviteAccept() {
       setSaving(false);
     }
   };
-
-  const PinInputs = ({
-    value,
-    onChange,
-    refs,
-  }: {
-    value: string[];
-    onChange: (val: string, idx: number) => void;
-    refs: React.MutableRefObject<(HTMLInputElement | null)[]>;
-  }) => (
-    <div className="flex gap-3 justify-center my-6">
-      {value.map((digit, i) => (
-        <input
-          key={i}
-          ref={(el) => {
-            refs.current[i] = el;
-          }}
-          type="password"
-          inputMode="numeric"
-          maxLength={1}
-          value={digit}
-          onChange={(e) => onChange(e.target.value, i)}
-          onKeyDown={(e) => handlePinKeyDown(e, i, refs)}
-          className={`w-14 h-14 text-center text-2xl font-black rounded-2xl border-2 outline-none transition-all bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white ${
-            digit
-              ? "border-brand-500 bg-brand-50 dark:bg-brand-900/20"
-              : "border-gray-200 dark:border-gray-700 focus:border-brand-400"
-          }`}
-        />
-      ))}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
@@ -201,6 +211,7 @@ export default function InviteAccept() {
                   onChange={(val, idx) =>
                     handlePinInput(val, idx, pin, setPin, inputRefs)
                   }
+                  onKeyDown={(e, idx) => handlePinKeyDown(e, idx, inputRefs)}
                   refs={inputRefs}
                 />
               ) : (
@@ -215,6 +226,7 @@ export default function InviteAccept() {
                       confirmRefs,
                     )
                   }
+                  onKeyDown={(e, idx) => handlePinKeyDown(e, idx, confirmRefs)}
                   refs={confirmRefs}
                 />
               )}

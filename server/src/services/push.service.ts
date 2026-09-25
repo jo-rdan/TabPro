@@ -22,7 +22,6 @@ export async function saveSubscription(
   auth: string,
   staffId?: string,
 ) {
-  // Upsert — if endpoint exists, update it
   const existing = await db.query.pushSubscriptions.findFirst({
     where: eq(pushSubscriptions.endpoint, endpoint),
   });
@@ -44,13 +43,14 @@ export async function saveSubscription(
   return created;
 }
 
+// ─── Send to ALL devices at a venue (owner + staff) ──────────────────────────
 export async function sendPushToVenue(
   venueId: string,
   title: string,
   body: string,
   data?: Record<string, unknown>,
 ) {
-  if (!process.env.VAPID_PUBLIC_KEY) return; // Push not configured
+  if (!process.env.VAPID_PUBLIC_KEY) return;
 
   const subs = await db.query.pushSubscriptions.findMany({
     where: eq(pushSubscriptions.venueId, venueId),
@@ -70,7 +70,6 @@ export async function sendPushToVenue(
     ),
   );
 
-  // Remove expired/invalid subscriptions
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
     if (result.status === "rejected") {
@@ -79,6 +78,89 @@ export async function sendPushToVenue(
         await db
           .delete(pushSubscriptions)
           .where(eq(pushSubscriptions.id, subs[i].id));
+      }
+    }
+  }
+}
+
+// ─── Send only to staff (waiters/managers) ────────────────────────────────────
+export async function sendPushToStaff(
+  venueId: string,
+  _tableId: string,
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+) {
+  if (!process.env.VAPID_PUBLIC_KEY) return;
+
+  const subs = await db.query.pushSubscriptions.findMany({
+    where: eq(pushSubscriptions.venueId, venueId),
+  });
+
+  const staffSubs = subs.filter((s) => s.staffId !== null);
+  const payload = JSON.stringify({ title, body, data });
+
+  const results = await Promise.allSettled(
+    staffSubs.map((sub) =>
+      webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        },
+        payload,
+      ),
+    ),
+  );
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.status === "rejected") {
+      const statusCode = (result.reason as any)?.statusCode;
+      if (statusCode === 404 || statusCode === 410) {
+        await db
+          .delete(pushSubscriptions)
+          .where(eq(pushSubscriptions.id, staffSubs[i].id));
+      }
+    }
+  }
+}
+
+// ─── Send only to the owner ───────────────────────────────────────────────────
+export async function sendPushToOwner(
+  venueId: string,
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+) {
+  if (!process.env.VAPID_PUBLIC_KEY) return;
+
+  const subs = await db.query.pushSubscriptions.findMany({
+    where: eq(pushSubscriptions.venueId, venueId),
+  });
+
+  const ownerSubs = subs.filter((s) => s.staffId === null);
+  const payload = JSON.stringify({ title, body, data });
+
+  const results = await Promise.allSettled(
+    ownerSubs.map((sub) =>
+      webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        },
+        payload,
+      ),
+    ),
+  );
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.status === "rejected") {
+      const statusCode = (result.reason as any)?.statusCode;
+      if (statusCode === 404 || statusCode === 410) {
+        await db
+          .delete(pushSubscriptions)
+          .where(eq(pushSubscriptions.id, ownerSubs[i].id));
       }
     }
   }

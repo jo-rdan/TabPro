@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Clock, Lock, Check, X, QrCode, KeyRound, AlertCircle, CheckCircle2, MinusCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Pencil, Trash2, Clock, Check, X, QrCode, KeyRound, AlertCircle, CheckCircle2, MinusCircle } from 'lucide-react';
 import Layout from '../../components/Layout';
 import { useAuthStore } from '../../lib/auth';
 import api from '../../lib/api';
@@ -176,27 +175,7 @@ export default function Shifts() {
   useEffect(() => { fetchShifts(); }, [venue]);
 
   // ── Elite guard ──────────────────────────────────────────────────────────
-  if (venue && !isElite) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-          <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
-            <Lock size={24} className="text-purple-500" />
-          </div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Elite feature</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mb-6">
-            Shift management is available on the Elite plan. Upgrade to define shifts and track waiter attendance.
-          </p>
-          <Link
-            to="/subscription"
-            className="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
-          >
-            View plans →
-          </Link>
-        </div>
-      </Layout>
-    );
-  }
+  if (venue && !isElite) { /* guard removed */ }
 
   const resetForm = () => {
     setName(''); setStartTime(''); setEndTime('');

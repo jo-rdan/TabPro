@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Layout from "../../components/Layout";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import { useAuthStore } from "../../lib/auth";
 import api from "../../lib/api";
 
@@ -61,6 +62,10 @@ export default function MenuManagement() {
   const [extracted, setExtracted] = useState<ExtractedItem[]>([]);
   const [showReview, setShowReview] = useState(false);
   const [savingExtracted, setSavingExtracted] = useState(false);
+
+  // Delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<MenuItemRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchMenu = async () => {
     if (!venue) return;
@@ -145,13 +150,17 @@ export default function MenuManagement() {
     }
   };
 
-  const handleDelete = async (itemId: string) => {
-    if (!confirm("Delete this item?")) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await api.delete(`/menu/items/${itemId}`);
-      setItems((prev) => prev.filter((i) => i.id !== itemId));
+      await api.delete(`/menu/items/${deleteTarget.id}`);
+      setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch {
       setError("Failed to delete item.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -304,6 +313,19 @@ export default function MenuManagement() {
         </div>
       )}
 
+      {/* Delete confirmation */}
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete item?"
+          message={`"${deleteTarget.name}" will be removed from your menu. This can't be undone.`}
+          confirmLabel="Delete"
+          danger
+          loading={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
       {/* Add form */}
       {showAddForm && (
         <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
@@ -429,7 +451,7 @@ export default function MenuManagement() {
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => setDeleteTarget(item)}
                         className="text-gray-400 hover:text-red-500 p-1 transition-colors"
                       >
                         <Trash2 size={14} />

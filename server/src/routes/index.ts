@@ -11,9 +11,9 @@ import staffRoutes from "./staff.routes";
 import campaignRoutes from "./campaign.routes";
 import subscriptionRoutes from "./subscription.routes";
 import pushRoutes from "./push.routes";
-import momoRoutes from "./momo.routes";
 import shiftRoutes from "./shift.routes";
 import clockinRoutes from "./clockin.routes";
+import tabPaymentRoutes from "./tabpayment.routes";
 
 const router = Router();
 
@@ -29,19 +29,8 @@ router.use("/staff", staffRoutes);
 router.use("/subscriptions", subscriptionRoutes);
 router.use("/campaigns", campaignRoutes);
 router.use("/push", pushRoutes);
-router.use("/momo", momoRoutes);
 router.use("/shifts", shiftRoutes);
 router.use("/clockin", clockinRoutes);
-
-// Phase 2+ routes will be added here:
-// router.use('/venues', venueRoutes);
-// router.use('/tables', tableRoutes);
-// router.use('/menu', menuRoutes);
-// router.use('/tabs', tabRoutes);
-// router.use('/orders', orderRoutes);
-// router.use('/staff', staffRoutes);
-// router.use('/ratings', ratingRoutes);
-// router.use('/campaigns', campaignRoutes);
-// router.use('/subscriptions', subscriptionRoutes);
+router.use("/tabpayment", tabPaymentRoutes);
 
 export default router;

@@ -10,13 +10,10 @@ import {
   LogOut,
   Sun,
   Moon,
-  Lock,
   BarChart2,
   Clock,
   Menu as MenuIcon,
   X,
-  Sparkles,
-  Crown,
 } from "lucide-react";
 import Logo from "./Logo";
 import { useAuthStore } from "../lib/auth";
@@ -32,10 +29,10 @@ const NAV_ITEMS = [
   { label: "Menu", href: "/menu", icon: UtensilsCrossed },
   { label: "Staff", href: "/staff", icon: Users },
   { label: "Activity", href: "/activity", icon: ScrollText },
-  { label: "Ratings", href: "/ratings", icon: Star, pro: true },
-  // { label: "Campaigns", href: "/campaigns", icon: Megaphone, pro: true },
-  { label: "Busy Hours", href: "/busy-hours", icon: BarChart2, elite: true },
-  { label: "Shifts", href: "/shifts", icon: Clock, elite: true },
+  { label: "Ratings", href: "/ratings", icon: Star },
+  // { label: "Campaigns", href: "/campaigns", icon: Megaphone },
+  { label: "Busy Hours", href: "/busy-hours", icon: BarChart2 },
+  { label: "Shifts", href: "/shifts", icon: Clock },
 ];
 
 // Bottom nav shows the 3 most-used items pinned, then a "More" button
@@ -49,8 +46,6 @@ export default function Layout({ children }: LayoutProps) {
   const { owner, venues, logout } = useAuthStore();
   const { theme, toggle } = useThemeStore();
   const venue = venues[0];
-  const isPro = venue?.plan === "pro" || venue?.plan === "elite";
-  const isElite = venue?.plan === "elite";
 
   const isActive = (href: string) => location.pathname === href;
   const [moreOpen, setMoreOpen] = useState(false);
@@ -85,7 +80,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map(({ label, href, icon: Icon, pro, elite }) => (
+          {NAV_ITEMS.map(({ label, href, icon: Icon }) => (
             <Link
               key={href}
               to={href}
@@ -100,22 +95,6 @@ export default function Layout({ children }: LayoutProps) {
             >
               <Icon size={17} />
               <span className="flex-1">{label}</span>
-              {pro && !isPro && (
-                <Lock
-                  size={12}
-                  className={
-                    isActive(href) ? "text-white/70" : "text-purple-400"
-                  }
-                />
-              )}
-              {elite && !isElite && (
-                <Lock
-                  size={12}
-                  className={
-                    isActive(href) ? "text-white/70" : "text-purple-400"
-                  }
-                />
-              )}
             </Link>
           ))}
         </nav>
@@ -239,9 +218,6 @@ export default function Layout({ children }: LayoutProps) {
         >
           <div className="relative">
             <MenuIcon size={20} />
-            {!isElite && (
-              <span className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-purple-500 ring-2 ring-white dark:ring-[#161B22]" />
-            )}
           </div>
           <span className="text-[10px]">More</span>
           {isMoreActive && (
@@ -274,75 +250,32 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              {MORE_NAV.map(({ label, href, icon: Icon, pro, elite }) => {
-                const locked = (pro && !isPro) || (elite && !isElite);
-                const tierLabel = elite ? "Elite" : "Pro";
-                const TierIcon = elite ? Sparkles : Crown;
-
+              {MORE_NAV.map(({ label, href, icon: Icon }) => {
                 return (
                   <Link
                     key={href}
-                    to={locked ? "/subscription" : href}
+                    to={href}
                     onClick={() => setMoreOpen(false)}
                     className={`
                       relative flex flex-col items-center justify-center gap-2 rounded-2xl px-3 py-4 text-center transition-colors
                       ${
-                        locked
-                          ? "bg-purple-50 dark:bg-purple-900/10 border border-dashed border-purple-200/70 dark:border-purple-700/40"
-                          : isActive(href)
-                            ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200/70 dark:border-brand-700/40"
-                            : "bg-gray-50 dark:bg-gray-800/40 border border-transparent"
+                        isActive(href)
+                          ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200/70 dark:border-brand-700/40"
+                          : "bg-gray-50 dark:bg-gray-800/40 border border-transparent"
                       }
                     `}
                   >
-                    <div className="relative">
-                      <Icon
-                        size={20}
-                        className={
-                          locked
-                            ? "text-purple-400"
-                            : isActive(href)
-                              ? "text-brand-500"
-                              : "text-gray-500 dark:text-gray-400"
-                        }
-                      />
-                      {locked && (
-                        <Lock
-                          size={10}
-                          className="absolute -top-1.5 -right-2 text-purple-500 bg-white dark:bg-[#161B22] rounded-full p-[1px]"
-                        />
-                      )}
-                    </div>
-                    <span
-                      className={`text-xs font-semibold ${
-                        locked
-                          ? "text-purple-600 dark:text-purple-300"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
+                    <Icon
+                      size={20}
+                      className={isActive(href) ? "text-brand-500" : "text-gray-500 dark:text-gray-400"}
+                    />
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                       {label}
                     </span>
-                    {locked && (
-                      <span className="flex items-center gap-0.5 text-[9px] font-bold text-purple-500 uppercase tracking-wide">
-                        <TierIcon size={9} />
-                        {tierLabel}
-                      </span>
-                    )}
                   </Link>
                 );
               })}
             </div>
-
-            {!isElite && (
-              <Link
-                to="/subscription"
-                onClick={() => setMoreOpen(false)}
-                className="mt-5 flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-500 to-amber-400 text-white text-sm font-bold py-3 rounded-2xl"
-              >
-                <Sparkles size={15} />
-                Unlock {isPro ? "Elite" : "Pro & Elite"} features
-              </Link>
-            )}
           </div>
         </div>
       )}

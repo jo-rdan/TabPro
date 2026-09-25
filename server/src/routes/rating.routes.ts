@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { handleSubmitRating, handleGetLeaderboard, handleGetRatingsBreakdown } from '../controllers/rating.controller';
 import { requireAuth } from '../middleware/auth.middleware';
+import { ownsVenue, venueFromParam } from '../middleware/venueAccess.middleware';
 
 const router = Router();
 
@@ -8,7 +9,7 @@ const router = Router();
 router.post('/', handleSubmitRating);
 
 // Protected — owner views ratings
-router.get('/leaderboard/:venueId', requireAuth, handleGetLeaderboard);
-router.get('/breakdown/:venueId', requireAuth, handleGetRatingsBreakdown);
+router.get('/leaderboard/:venueId', requireAuth, ownsVenue(venueFromParam()), handleGetLeaderboard);
+router.get('/breakdown/:venueId', requireAuth, ownsVenue(venueFromParam()), handleGetRatingsBreakdown);
 
 export default router;

@@ -6,6 +6,10 @@ import api from '../../lib/api';
 import Toast from '../../components/Toast';
 import QrScannerModal from '../../components/QrScannerModal';
 
+// Manual "Add table" (self-serve QR generation) is off for launch — we're doing
+// pre-printed sticker binding only for now. Flip this to true to bring it back.
+const ENABLE_MANUAL_TABLE_CREATION = false;
+
 interface TableRow {
   id: string;
   label: string;
@@ -89,6 +93,7 @@ export default function Tables() {
       setScanLabel('');
       setScannedCode('');
       await fetchTables();
+      setToast('Table added — assignments updated across your team');
     } catch (err: any) {
       setScanError(err?.response?.data?.error || 'Failed to claim sticker.');
     } finally {
@@ -115,18 +120,24 @@ export default function Tables() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowScanner(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${
+              ENABLE_MANUAL_TABLE_CREATION
+                ? 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                : 'bg-brand-500 hover:bg-brand-600 text-white'
+            }`}
           >
             <ScanLine size={16} />
             Scan sticker
           </button>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl transition-colors"
-          >
-            <Plus size={16} />
-            Add table
-          </button>
+          {ENABLE_MANUAL_TABLE_CREATION && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              <Plus size={16} />
+              Add table
+            </button>
+          )}
         </div>
       </div>
 
@@ -134,7 +145,9 @@ export default function Tables() {
         <p className="text-sm text-red-500 mb-4">{scanError}</p>
       )}
 
-      {showForm && (
+      {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
+
+      {ENABLE_MANUAL_TABLE_CREATION && showForm && (
         <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">New table</h3>
           <div className="flex gap-3">
@@ -154,7 +167,6 @@ export default function Tables() {
               {creating ? 'Creating...' : 'Create'}
             </button>
           </div>
-          {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
         </div>
       )}
 
@@ -197,7 +209,7 @@ export default function Tables() {
 
         {!loading && tables.length === 0 && (
           <div className="text-center py-16 text-sm text-gray-400 dark:text-gray-500">
-            No tables yet. Add your first table above.
+            No tables yet. {ENABLE_MANUAL_TABLE_CREATION ? 'Add your first table above.' : 'Scan your first sticker above.'}
           </div>
         )}
       </div>
