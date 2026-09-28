@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
+import api from "../../lib/api";
 import {
   ShoppingBag,
   Bell,
@@ -16,6 +17,7 @@ import Logo from "../../components/Logo";
 import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { WsEvent } from "@tabpro/shared";
+import { apiFetch } from "../../lib/apiFetch";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MenuItemData {
@@ -348,27 +350,22 @@ export default function CustomerMenu() {
   const [billLoading, setBillLoading] = useState(false);
   const [billLines, setBillLines] = useState<BillLine[]>([]);
   const [grandTotal, setGrandTotal] = useState(0);
+
+  // ─── Mobile Money payment state ───────────────────────────────────────────────────
+  type PayStep = "idle" | "entering_phone" | "waiting" | "success" | "failed";
+  const [payStep, setPayStep] = useState<PayStep>("idle");
+  const [payPhone, setPayPhone] = useState("");
+  const [payPhoneError, setPayPhoneError] = useState("");
+  const [payFailReason, setPayFailReason] = useState("");
+  // False when the venue has no payout number or payments aren't configured —
+  // the customer is asked to pay the waiter instead.
+  const [acceptsMobileMoney, setAcceptsMobileMoney] = useState(true);
+  const [payReferenceId, setPayReferenceId] = useState("");
   const [foodScore, setFoodScore] = useState(0);
   const [waiterScore, setWaiterScore] = useState(0);
   const [overallScore, setOverallScore] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
   const [ratingLoading, setRatingLoading] = useState(false);
-
-  // Close tab via beacon when customer closes the browser/tab
-  useEffect(() => {
-    if (!tabId) return;
-    const apiBase = import.meta.env.VITE_API_URL || "/api";
-
-    const handleUnload = () => {
-      // Only send if tab is still open (not already closed/billed)
-      if (tabStatus === "open") {
-        navigator.sendBeacon(`${apiBase}/tabs/${tabId}/close`);
-      }
-    };
-
-    window.addEventListener("beforeunload", handleUnload);
-    return () => window.removeEventListener("beforeunload", handleUnload);
-  }, [tabId, tabStatus]);
 
   useEffect(() => {
     if (!qrCode) return;
@@ -379,6 +376,7 @@ export default function CustomerMenu() {
     setTabStatus(s.tabStatus ?? "open");
     setVenueId(s.venueId);
     setVenueName(s.venueName);
+    setAcceptsMobileMoney(s.acceptsMobileMoney !== false);
     setTableLabel(s.tableLabel);
     setPhone(s.phone);
     const mg = s.menuGrouped as Record<string, MenuItemData[]>;
@@ -403,7 +401,8 @@ export default function CustomerMenu() {
 
   useWebSocket({
     venueId: venueId ?? "",
-    enabled: !!venueId,
+    tabId: tabId ?? undefined,
+    enabled: !!venueId && !!tabId,
     onEvent: (event: WsEvent) => {
       if (event.type === "order_status_update") {
         const { orderId, status } = event.payload as any;
@@ -443,7 +442,7 @@ export default function CustomerMenu() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/tabs/open", {
+      const res = await apiFetch("/tabs/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -460,6 +459,7 @@ export default function CustomerMenu() {
       setVenueId(venue.id);
       setVenueName(venue.name);
       if (venue.logoUrl) setVenueLogoUrl(venue.logoUrl);
+      setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
       setTableLabel(table.label);
       setMenuGrouped(mg);
       setAllItems(Object.values(mg).flat() as MenuItemData[]);
@@ -472,12 +472,19 @@ export default function CustomerMenu() {
           tabStatus: tab.status,
           venueId: venue.id,
           venueName: venue.name,
+          acceptsMobileMoney: venue.acceptsMobileMoney !== false,
           tableLabel: table.label,
           phone: phone.trim(),
           menuGrouped: mg,
         }),
       );
-      setStep("menu");
+      // Re-scanning a table whose bill is already requested lands on the bill.
+      if (tab.status === "bill_requested") {
+        fetchBill(tab.id);
+        setStep("bill");
+      } else {
+        setStep("menu");
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -510,7 +517,7 @@ export default function CustomerMenu() {
     if (!cart.length) return;
     setOrderLoading(true);
     try {
-      const res = await fetch("/api/orders", {
+      const res = await apiFetch("/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -546,7 +553,7 @@ export default function CustomerMenu() {
     if (!tabId || nudgeLoading || justNudged) return;
     setNudgeLoading(true);
     try {
-      await fetch(`/api/tabs/${tabId}/nudge`, { method: "POST" });
+      await apiFetch(`/tabs/${tabId}/nudge`, { method: "POST" });
       setJustNudged(true);
       setTimeout(() => setJustNudged(false), 10000);
     } catch {
@@ -559,7 +566,7 @@ export default function CustomerMenu() {
     if (!tabId) return;
     setBillLoading(true);
     try {
-      await fetch(`/api/tabs/${tabId}/request-bill`, { method: "POST" });
+      await apiFetch(`/tabs/${tabId}/request-bill`, { method: "POST" });
       await fetchBill(tabId);
       setTabStatus("bill_requested");
       setStep("bill");
@@ -571,9 +578,87 @@ export default function CustomerMenu() {
     }
   };
 
+  // ─── Heartbeat — ping server every 30s so it knows customer is still here ───
+  useEffect(() => {
+    if (!tabId || tabStatus === "closed") return;
+    const ping = () => api.post(`/tabs/${tabId}/heartbeat`).catch(() => {});
+    ping(); // immediate first ping
+    const interval = setInterval(ping, 30_000);
+    return () => clearInterval(interval);
+  }, [tabId, tabStatus]);
+
+  const handleMomoPay = async () => {
+    setPayPhoneError("");
+    const cleaned = payPhone.trim().replace(/\s/g, "");
+    if (cleaned.length < 9) {
+      setPayPhoneError("Enter a valid MTN MoMo or Airtel Money number");
+      return;
+    }
+    try {
+      setPayStep("waiting");
+      setPayFailReason("");
+      const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned });
+      setPayReferenceId(res.data.data.depositId);
+    } catch (err: any) {
+      // e.g. "Not enough balance on your Mobile Money account."
+      setPayFailReason(err?.response?.data?.error ?? "");
+      setPayStep("failed");
+    }
+  };
+
+  // Poll for payment confirmation
+  useEffect(() => {
+    if (payStep !== "waiting" || !payReferenceId || !tabId) return;
+
+    let interval: ReturnType<typeof setInterval>;
+    let attempts = 0;
+    // The customer has to approve on their phone and enter their PIN — give
+    // them ~3 minutes (36 × 5s) before giving up.
+    const MAX_ATTEMPTS = 36;
+
+    const timeout = setTimeout(() => {
+      interval = setInterval(async () => {
+        attempts += 1;
+        try {
+          const res = await api.get(`/tabpayment/${tabId}/pay/status/${payReferenceId}`);
+          if (!res.data.success) return;
+
+          const status = res.data.data.status;
+
+          if (status === "successful") {
+            clearInterval(interval);
+            setPayStep("success");
+            setTabStatus("closed");
+            saveSession({ tabStatus: "closed" });
+            setTimeout(() => setStep("rating"), 2000);
+            return;
+          }
+
+          // Never show success unless the provider confirmed it.
+          if (status === "failed" || attempts >= MAX_ATTEMPTS) {
+            clearInterval(interval);
+            setPayFailReason(
+              status === "failed"
+                ? res.data.data.failureMessage ?? ""
+                : "We haven't heard back from Mobile Money yet. If you approved it, don't pay again — ask your waiter.",
+            );
+            setPayStep("failed");
+          }
+        } catch {
+          /* keep polling */
+        }
+      }, 5000);
+    }, 3000);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [payStep, payReferenceId, tabId]);
+
   const fetchBill = async (id: string) => {
     try {
-      const res = await fetch(`/api/tabs/${id}/bill`);
+      const res = await apiFetch(`/tabs/${id}/bill`);
       const data = await res.json();
       if (!data.success) return;
       setBillLines(data.data.lineItems);
@@ -592,7 +677,7 @@ export default function CustomerMenu() {
     setError("");
     try {
       if (!skip)
-        await fetch("/api/ratings", {
+        await apiFetch("/ratings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -710,50 +795,423 @@ export default function CustomerMenu() {
             </div>
           </div>
         </div>
-        <div className="px-4 pt-6 pb-10 max-w-lg mx-auto">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center shadow-lg shadow-brand-500/30">
-              <Receipt size={20} className="text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-gray-900 dark:text-white">
-                Your bill
-              </h2>
-              <p className="text-xs text-gray-400">{billLines.length} items</p>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden mb-4 shadow-sm">
-            {billLines.map((line, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 last:border-0"
-              >
-                <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">
-                    {line.name}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {fmt(line.unitPriceRwf)} × {line.quantity}
-                  </p>
-                </div>
-                <p className="text-sm font-black text-gray-900 dark:text-white">
-                  {fmt(line.subtotal)}
-                </p>
-              </div>
-            ))}
-            <div className="flex items-center justify-between px-5 py-5 bg-gradient-to-r from-brand-500 to-teal-500">
-              <p className="text-sm font-bold text-white">Total to pay</p>
-              <p className="text-2xl font-black text-white">
-                {fmt(grandTotal)}
-              </p>
-            </div>
-          </div>
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl px-5 py-4 flex items-center gap-3">
-            <span className="text-2xl">👋</span>
-            <p className="text-sm text-amber-800 dark:text-amber-300 font-semibold">
-              Your waiter is on the way to collect payment.
+        <div className="px-4 pt-6 pb-10 max-w-lg mx-auto min-h-screen bg-transparent">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-semibold">
+              Your receipt
             </p>
           </div>
+          {/* ── Thermal receipt design ── */}
+          <div
+            className="mb-4 mx-auto w-full max-w-xs"
+            style={{ fontFamily: "'Courier New', Courier, monospace" }}
+          >
+            {/* Torn top edge */}
+            <div
+              style={{
+                height: 12,
+                backgroundImage:
+                  "radial-gradient(circle at 50% 0%, #f9f6e8 6px, transparent 6px)",
+                backgroundSize: "12px 12px",
+                backgroundRepeat: "repeat-x",
+                backgroundColor: "#d1d5db",
+              }}
+            />
+
+            <div style={{ background: "#f9f6e8", padding: "0 20px" }}>
+              {/* Header */}
+              <div style={{ textAlign: "center", padding: "12px 0 8px" }}>
+                <p
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: 4,
+                    color: "#9ca3af",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  — TabPro Receipt —
+                </p>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 900,
+                    color: "#111827",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginTop: 4,
+                  }}
+                >
+                  {venueName}
+                </p>
+                <p style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>
+                  {tableLabel}
+                </p>
+              </div>
+
+              <p
+                style={{
+                  textAlign: "center",
+                  color: "#d1d5db",
+                  fontSize: 10,
+                  letterSpacing: 2,
+                }}
+              >
+                {"- ".repeat(18)}
+              </p>
+
+              {/* Items */}
+              <div style={{ padding: "10px 0" }}>
+                {billLines.map((line, i) => (
+                  <div key={i} style={{ marginBottom: 8 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: 11,
+                        color: "#1f2937",
+                      }}
+                    >
+                      <span
+                        style={{ fontWeight: 700, textTransform: "uppercase" }}
+                      >
+                        {line.name}
+                      </span>
+                      <span style={{ fontWeight: 900 }}>
+                        {line.subtotal.toLocaleString()}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 10, color: "#9ca3af" }}>
+                      {line.quantity} × {line.unitPriceRwf.toLocaleString()} RWF
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <p
+                style={{
+                  textAlign: "center",
+                  color: "#d1d5db",
+                  fontSize: 10,
+                  letterSpacing: 2,
+                }}
+              >
+                {"- ".repeat(18)}
+              </p>
+
+              {/* Totals */}
+              <div style={{ padding: "10px 0" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 10,
+                    color: "#6b7280",
+                    marginBottom: 4,
+                  }}
+                >
+                  <span>SUBTOTAL (EXCL. VAT 18%)</span>
+                  <span>{Math.round(grandTotal / 1.18).toLocaleString()}</span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 10,
+                    color: "#6b7280",
+                    marginBottom: 8,
+                  }}
+                >
+                  <span>VAT 18%</span>
+                  <span>
+                    {(
+                      grandTotal - Math.round(grandTotal / 1.18)
+                    ).toLocaleString()}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 15,
+                    fontWeight: 900,
+                    color: "#111827",
+                    borderTop: "1px solid #e5e7eb",
+                    paddingTop: 8,
+                  }}
+                >
+                  <span>TOTAL</span>
+                  <span>{grandTotal.toLocaleString()} RWF</span>
+                </div>
+              </div>
+
+              <p
+                style={{
+                  textAlign: "center",
+                  color: "#d1d5db",
+                  fontSize: 10,
+                  letterSpacing: 2,
+                }}
+              >
+                {"= ".repeat(18)}
+              </p>
+
+              {/* EBM disclaimer */}
+              <div style={{ padding: "10px 0", textAlign: "center" }}>
+                <p
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 900,
+                    color: "#374151",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 4,
+                  }}
+                >
+                  ⚠ Important
+                </p>
+                <p style={{ fontSize: 9.5, color: "#6b7280", lineHeight: 1.6 }}>
+                  This is a{" "}
+                  <strong style={{ color: "#374151" }}>
+                    payment confirmation
+                  </strong>{" "}
+                  from TabPro, not a fiscal invoice. Your venue must issue you
+                  an official{" "}
+                  <strong style={{ color: "#374151" }}>EBM receipt</strong> as
+                  required by RRA law. Please collect it at the counter.
+                </p>
+              </div>
+
+              <p
+                style={{
+                  textAlign: "center",
+                  color: "#d1d5db",
+                  fontSize: 10,
+                  letterSpacing: 2,
+                }}
+              >
+                {"- ".repeat(18)}
+              </p>
+
+              {/* Ref */}
+              <div style={{ textAlign: "center", padding: "8px 0 12px" }}>
+                <p style={{ fontSize: 9, color: "#9ca3af", letterSpacing: 3 }}>
+                  {tabId?.replace(/-/g, "").slice(0, 16).toUpperCase()}
+                </p>
+                <p style={{ fontSize: 9, color: "#d1d5db", marginTop: 4 }}>
+                  Powered by TabPro
+                </p>
+              </div>
+            </div>
+
+            {/* Torn bottom edge */}
+            <div
+              style={{
+                height: 12,
+                backgroundImage:
+                  "radial-gradient(circle at 50% 100%, #f9f6e8 6px, transparent 6px)",
+                backgroundSize: "12px 12px",
+                backgroundRepeat: "repeat-x",
+                backgroundColor: "#d1d5db",
+              }}
+            />
+          </div>
+          {/* Mobile Money payment flow (pawaPay) */}
+          {payStep === "idle" && acceptsMobileMoney && (
+            <button
+              onClick={() => {
+                setPayPhone(phone);
+                setPayStep("entering_phone");
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-brand-500/30"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                <line x1="12" y1="18" x2="12.01" y2="18" />
+              </svg>
+              Pay with Mobile Money
+            </button>
+          )}
+
+          {payStep === "idle" && !acceptsMobileMoney && (
+            <div className="bg-gray-50 dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
+              <p className="text-sm font-bold text-gray-800 dark:text-white">Please pay your waiter</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                In-app Mobile Money isn't available at this venue yet.
+              </p>
+            </div>
+          )}
+
+          {payStep === "entering_phone" && (
+            <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <p className="text-sm font-black text-gray-900 dark:text-white">
+                  Confirm payment
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  We'll send a Mobile Money request to this number
+                </p>
+              </div>
+              {/* Amount */}
+              <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                  Amount
+                </p>
+                <p className="text-xl font-black text-gray-900 dark:text-white">
+                  {fmt(grandTotal)}
+                </p>
+              </div>
+              {/* Phone */}
+              <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
+                  MTN MoMo or Airtel Money number
+                </p>
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-brand-500 flex-shrink-0"
+                  >
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                    <line x1="12" y1="18" x2="12.01" y2="18" />
+                  </svg>
+                  <input
+                    type="tel"
+                    placeholder="e.g. 0781234567"
+                    value={payPhone}
+                    onChange={(e) => setPayPhone(e.target.value)}
+                    className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+                {payPhoneError && (
+                  <p className="text-xs text-red-500 mt-2">{payPhoneError}</p>
+                )}
+                {phone && payPhone === phone && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Same number you registered with
+                  </p>
+                )}
+              </div>
+              {/* Actions */}
+              <div className="px-5 py-4 flex flex-col gap-2">
+                <button
+                  onClick={handleMomoPay}
+                  className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                  Confirm & pay {fmt(grandTotal)}
+                </button>
+                <button
+                  onClick={() => setPayStep("idle")}
+                  className="w-full text-sm text-gray-400 hover:text-gray-600 py-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {payStep === "waiting" && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl px-5 py-6 text-center">
+              <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-sm font-black text-gray-800 dark:text-white mb-1">
+                Waiting for your approval
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Check{" "}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  {payPhone}
+                </span>{" "}
+                and approve the Mobile Money request for {fmt(grandTotal)}
+              </p>
+            </div>
+          )}
+
+          {payStep === "success" && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-2xl px-5 py-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-800/40 flex items-center justify-center mx-auto mb-3">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-green-600"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <p className="text-sm font-black text-gray-800 dark:text-white mb-1">
+                Payment confirmed!
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {fmt(grandTotal)} received. Your official RRA receipt will be
+                issued at the counter.
+              </p>
+            </div>
+          )}
+
+          {payStep === "failed" && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl px-5 py-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-800/40 flex items-center justify-center mx-auto mb-3">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-red-500"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </div>
+              <p className="text-sm font-black text-gray-800 dark:text-white mb-1">
+                Payment failed
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                {payFailReason || "The payment was not completed. Please try again."}
+              </p>
+              <button
+                onClick={() => setPayStep("idle")}
+                className="text-sm text-brand-500 font-bold hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -893,7 +1351,7 @@ export default function CustomerMenu() {
                     disabled={billLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
                   >
-                    <Receipt size={12} /> {billLoading ? "..." : "Request bill"}
+                    <Receipt size={12} /> {billLoading ? "..." : "Pay bill"}
                   </button>
                 </div>
               )}
@@ -1030,7 +1488,7 @@ export default function CustomerMenu() {
                 disabled={billLoading}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xl disabled:opacity-50"
               >
-                <Receipt size={13} /> {billLoading ? "..." : "Request bill"}
+                <Receipt size={13} /> {billLoading ? "..." : "Pay bill"}
               </button>
             </div>
           </div>
@@ -1199,7 +1657,7 @@ export default function CustomerMenu() {
               disabled={billLoading}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
             >
-              <Receipt size={13} /> {billLoading ? "..." : "Request bill"}
+              <Receipt size={13} /> {billLoading ? "..." : "Pay bill"}
             </button>
           </div>
         )}

@@ -10,6 +10,7 @@ import {
   handleClockOut,
   handleGetAttendance,
 } from '../controllers/clockin.controller';
+import { ownsVenue, venueFromParam } from '../middleware/venueAccess.middleware';
 
 const router = Router();
 
@@ -17,10 +18,10 @@ const router = Router();
 router.post('/scan', handleScanSticker);
 
 // Owner-authenticated
-router.get('/sticker/:venueId', requireAuth, handleGetStickerStatus);
-router.post('/claim/:venueId', requireAuth, handleClaimSticker);
-router.post('/pin/:venueId', requireAuth, handleSetClockInPin);
-router.get('/attendance/:venueId', requireAuth, handleGetAttendance);
+router.get('/sticker/:venueId', requireAuth, ownsVenue(venueFromParam()), handleGetStickerStatus);
+router.post('/claim/:venueId', requireAuth, ownsVenue(venueFromParam()), handleClaimSticker);
+router.post('/pin/:venueId', requireAuth, ownsVenue(venueFromParam()), handleSetClockInPin);
+router.get('/attendance/:venueId', requireAuth, ownsVenue(venueFromParam()), handleGetAttendance);
 
 // Staff-authenticated (existing waiter session)
 router.get('/my-shifts', requireStaffAuth, handleGetMyShifts);

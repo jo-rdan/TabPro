@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Store } from 'lucide-react';
+import { MapPin, Store, Phone } from 'lucide-react';
 import Logo from '../../components/Logo';
 import LogoUploader from '../../components/LogoUploader';
 import api from '../../lib/api';
@@ -13,17 +13,30 @@ export default function VenueSetup() {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [momoPhone, setMomoPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const validateMomoPhone = (p: string) => {
+    const digits = p.replace(/\D/g, '');
+    return /^07[2389]\d{7}$/.test(digits) || /^2507[2389]\d{7}$/.test(digits);
+  };
+
   const handleSubmit = async () => {
     if (!name.trim()) { setError('Venue name is required.'); return; }
+    if (!validateMomoPhone(momoPhone)) {
+      setError('Enter a valid MTN or Airtel Rwanda payout number (e.g. 0788123456).');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/venues', { name: name.trim(), location: location.trim() || undefined });
+      const res = await api.post('/venues', {
+        name: name.trim(),
+        location: location.trim() || undefined,
+        momoPhone: momoPhone.trim(),
+      });
       const venue = res.data.data;
-      // If logo was uploaded, save it now
       if (logoUrl && venue?.id) {
         await api.patch(`/venues/${venue.id}/logo`, { logoUrl });
       }
@@ -70,7 +83,7 @@ export default function VenueSetup() {
               />
             </div>
           </div>
-          <div className="mb-6">
+          <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Location <span className="text-gray-400 font-normal">(optional)</span>
             </label>
@@ -83,13 +96,26 @@ export default function VenueSetup() {
               />
             </div>
           </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Mobile Money payout number
+            </label>
+            <div className="relative">
+              <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input type="tel" value={momoPhone} onChange={(e) => setMomoPhone(e.target.value)}
+                placeholder="e.g. 0788123456"
+                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">MTN MoMo or Airtel Money. TabPro sends your share here when customers pay through the app.</p>
+          </div>
           {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
           <button onClick={handleSubmit} disabled={loading}
             className="w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
             {loading ? 'Setting up...' : 'Create my venue →'}
           </button>
         </div>
-        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">Your 30-day free trial starts now.</p>
+        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">Free to use. TabPro only earns when customers pay through the app.</p>
       </div>
     </div>
   );

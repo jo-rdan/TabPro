@@ -16,6 +16,7 @@ export const planEnum = pgEnum("plan", ["basic", "pro", "elite"]);
 export const tabStatusEnum = pgEnum("tab_status", [
   "open",
   "bill_requested",
+  "abandoned",
   "closed",
 ]);
 export const orderStatusEnum = pgEnum("order_status", [
@@ -66,8 +67,9 @@ export const venues = pgTable("venues", {
   plan: planEnum("plan").default("basic").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   trialEndsAt: timestamp("trial_ends_at").notNull(),
-  clockInPin: text("clock_in_pin"), // 4-digit code, set by owner, posted physically at venue
-  clockInStickerCode: text("clock_in_sticker_code").unique(), // permanent code bound to the physical QR sticker, never rotates
+  clockInPin: text("clock_in_pin"),
+  clockInStickerCode: text("clock_in_sticker_code").unique(),
+  momoPhone: text("momo_phone"), // venue's Pawapay payout number
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -152,6 +154,7 @@ export const tabs = pgTable("tabs", {
   status: tabStatusEnum("status").default("open").notNull(),
   openedAt: timestamp("opened_at").defaultNow().notNull(),
   closedAt: timestamp("closed_at"),
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
 });
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
@@ -401,12 +404,19 @@ export const momoPayments = pgTable("momo_payments", {
   venueId: uuid("venue_id")
     .references(() => venues.id, { onDelete: "cascade" })
     .notNull(),
-  plan: planEnum("plan").notNull(),
-  referenceId: uuid("reference_id").notNull().unique(), // MoMo transaction reference
+  type: text("type").notNull().default("subscription"), // 'subscription' | 'tab'
+  plan: planEnum("plan"), // null for tab payments
+  tabId: uuid("tab_id").references(() => tabs.id, { onDelete: "set null" }),
+  referenceId: uuid("reference_id").notNull().unique(),
   phone: text("phone").notNull(),
   amountRwf: integer("amount_rwf").notNull(),
+  tabproCommissionRwf: integer("tabpro_commission_rwf"),
+  venuePayoutRwf: integer("venue_payout_rwf"),
+  disbursementReferenceId: text("disbursement_reference_id").unique(),
+  disbursementStatus: text("disbursement_status"),
+  disbursedAt: timestamp("disbursed_at"),
   status: momoPaymentStatusEnum("status").default("pending").notNull(),
-  momoStatus: text("momo_status"), // raw status from MoMo API
+  momoStatus: text("momo_status"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
 });
@@ -415,6 +425,10 @@ export const momoPaymentsRelations = relations(momoPayments, ({ one }) => ({
   venue: one(venues, {
     fields: [momoPayments.venueId],
     references: [venues.id],
+  }),
+  tab: one(tabs, {
+    fields: [momoPayments.tabId],
+    references: [tabs.id],
   }),
 }));
 
@@ -471,6 +485,38 @@ export const shiftLogs = pgTable("shift_logs", {
 export const shiftLogsRelations = relations(shiftLogs, ({ one }) => ({
   staff: one(staff, { fields: [shiftLogs.staffId], references: [staff.id] }),
   shift: one(shifts, { fields: [shiftLogs.shiftId], references: [shifts.id] }),
+}));
+
+// ─── Tab Payments ─────────────────────────────────────────────────────────────
+
+export const tabPaymentStatusEnum = pgEnum("tab_payment_status", [
+  "pending",
+  "successful",
+  "failed",
+]);
+
+export const tabPayments = pgTable("tab_payments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tabId: uuid("tab_id")
+    .references(() => tabs.id, { onDelete: "cascade" })
+    .notNull(),
+  venueId: uuid("venue_id")
+    .references(() => venues.id, { onDelete: "cascade" })
+    .notNull(),
+  referenceId: uuid("reference_id").notNull().unique(),
+  customerPhone: text("customer_phone").notNull(),
+  totalAmountRwf: integer("total_amount_rwf").notNull(),
+  tabproFeeRwf: integer("tabpro_fee_rwf").notNull(),    // 3%
+  venueAmountRwf: integer("venue_amount_rwf").notNull(), // 97%
+  status: tabPaymentStatusEnum("status").default("pending").notNull(),
+  momoStatus: text("momo_status"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const tabPaymentsRelations = relations(tabPayments, ({ one }) => ({
+  tab: one(tabs, { fields: [tabPayments.tabId], references: [tabs.id] }),
+  venue: one(venues, { fields: [tabPayments.venueId], references: [venues.id] }),
 }));
 
 // ─── Clock-in Sessions ──────────────────────────────────────────────────────────

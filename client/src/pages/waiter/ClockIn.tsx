@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Clock, CheckCircle, LogOut } from "lucide-react";
 import Logo from "../../components/Logo";
+import { apiFetch } from "../../lib/apiFetch";
 
 const STORAGE_KEY = "tabpro_staff_session";
 
@@ -62,7 +63,7 @@ export default function ClockIn() {
       setScreen("expired");
       return;
     }
-    fetch("/api/clockin/scan", {
+    apiFetch("/clockin/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),
@@ -142,7 +143,7 @@ export default function ClockIn() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/staff/login", {
+      const res = await apiFetch("/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: phone.trim(), pin }),
@@ -170,7 +171,7 @@ export default function ClockIn() {
   async function loadMyShifts(s: Session) {
     setLoading(true);
     try {
-      const res = await fetch("/api/clockin/my-shifts", {
+      const res = await apiFetch("/clockin/my-shifts", {
         headers: { Authorization: `Bearer ${s.token}` },
       });
       const data = await res.json();
@@ -229,7 +230,7 @@ export default function ClockIn() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/clockin/clock-in", {
+      const res = await apiFetch("/clockin/clock-in", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -260,7 +261,7 @@ export default function ClockIn() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/clockin/clock-out", {
+      const res = await apiFetch("/clockin/clock-out", {
         method: "POST",
         headers: { Authorization: `Bearer ${session.token}` },
       });

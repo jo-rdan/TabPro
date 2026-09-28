@@ -17,11 +17,16 @@ import {
   Star,
   TrendingUp,
   MapPin,
+  LogOut,
 } from "lucide-react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { usePushNotifications } from "../../hooks/usePushNotifications";
 import { WsEvent } from "@tabpro/shared";
 import VenueLogo from "../../components/VenueLogo";
+import NotificationBell, {
+  NotificationItem,
+} from "../../components/NotificationBell";
+import { apiFetch } from "../../lib/apiFetch";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,7 +100,10 @@ function formatRwf(amount: number) {
 }
 
 function timeAgo(dateStr: string) {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  const diff = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000),
+  );
   if (diff < 60) return `${diff}s ago`;
   return `${Math.floor(diff / 60)}m ago`;
 }
@@ -125,6 +133,13 @@ const STATUS_CONFIG = {
 export default function WaiterOrders() {
   const [searchParams] = useSearchParams();
   const venueId = searchParams.get("venueId") ?? "";
+  // Needed to tag this device's push subscription as belonging to THIS staff
+  // member (not the owner). Previously never read from the URL, so every
+  // waiter's subscription was saved with staffId=null and the server treated
+  // it as an owner subscription — meaning sendPushToStaff() could never find
+  // it, and waiters silently never received new-order/nudge pushes at all.
+  const staffId =
+    searchParams.get("staffId") || localStorage.getItem("tabpro_staff_id") || "";
   const [venueName, setVenueName] = useState("");
   const [venueLogoUrl, setVenueLogoUrl] = useState<string | null>(null);
 
@@ -136,11 +151,29 @@ export default function WaiterOrders() {
 
   const [nudges, setNudges] = useState<NudgeAlert[]>([]);
   const [billRequests, setBillRequests] = useState<BillRequest[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  const pushNotification = (
+    kind: NotificationItem["kind"],
+    message: string,
+  ) => {
+    setNotifications((prev) => [
+      ...prev,
+      {
+        id: `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        kind,
+        message,
+        timestamp: new Date().toISOString(),
+        read: false,
+      },
+    ]);
+  };
 
   const { isSupported, permission, subscribe } = usePushNotifications();
   const [pushDismissed, setPushDismissed] = useState(false);
+  const [pushError, setPushError] = useState(false);
   const showPushBanner =
-    isSupported && permission === "default" && !pushDismissed;
+    isSupported && !pushDismissed && (permission === "default" || pushError);
 
   // ── PIN lock ──────────────────────────────────────────────────────────────
   const [pinUnlocked, setPinUnlocked] = useState(() => {
@@ -189,8 +222,16 @@ export default function WaiterOrders() {
 
   const handleEnablePush = async () => {
     if (!venueId) return;
-    await subscribe({ venueId });
-    setPushDismissed(true);
+    const ok = await subscribe({ venueId, staffId: staffId || undefined, token: staffToken });
+    if (ok) {
+      setPushDismissed(true);
+      setPushError(false);
+    } else {
+      // Don't silently dismiss on failure — permission may already be
+      // "granted" at this point, which would otherwise hide the banner
+      // and give no indication anything went wrong.
+      setPushError(true);
+    }
   };
 
   // ── Fetch open orders on mount ─────────────────────────────────────────────
@@ -198,7 +239,9 @@ export default function WaiterOrders() {
   const fetchOrders = useCallback(async () => {
     if (!venueId) return;
     try {
-      const res = await fetch(`/api/orders/venue/${venueId}`);
+      const res = await apiFetch(`/orders/venue/${venueId}`, {
+        headers: { Authorization: `Bearer ${staffToken}` },
+      });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
@@ -256,7 +299,7 @@ export default function WaiterOrders() {
 
   useEffect(() => {
     if (!venueId) return;
-    fetch(`/api/venues/public/${venueId}`)
+    apiFetch(`/venues/public/${venueId}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
@@ -271,6 +314,7 @@ export default function WaiterOrders() {
 
   useWebSocket({
     venueId,
+    token: staffToken || undefined,
     enabled: !!venueId,
     onEvent: (event: WsEvent) => {
       if (event.type === "new_order") {
@@ -292,6 +336,7 @@ export default function WaiterOrders() {
           },
           ...prev,
         ]);
+        pushNotification("new_order", `New order from ${p.tableLabel}`);
       }
 
       if (event.type === "order_status_update") {
@@ -325,6 +370,7 @@ export default function WaiterOrders() {
           () => setNudges((prev) => prev.filter((n) => n.id !== id)),
           30000,
         );
+        pushNotification("nudge", `${p.tableLabel} nudged you`);
       }
 
       if (event.type === "bill_requested") {
@@ -341,12 +387,38 @@ export default function WaiterOrders() {
             },
           ];
         });
+        pushNotification("bill_requested", `${p.tableLabel} requested the bill`);
+      }
+
+      if (event.type === "customer_away") {
+        const p = event.payload as any;
+        const id = `away-${p.tabId}-${Date.now()}`;
+        setNudges((prev) => [
+          ...prev,
+          { id, tableLabel: `${p.tableLabel} — customer may have stepped away`, tabId: p.tabId, timestamp: new Date().toISOString() },
+        ]);
+        // Auto-dismiss after 2 minutes
+        setTimeout(
+          () => setNudges((prev) => prev.filter((n) => n.id !== id)),
+          120_000,
+        );
+        pushNotification(
+          "customer_away",
+          `${p.tableLabel} — customer may have stepped away`,
+        );
       }
 
       if (event.type === "tab_closed") {
         const p = event.payload as any;
         setBillRequests((prev) => prev.filter((b) => b.tabId !== p.tabId));
         setOrders((prev) => prev.filter((o) => o.tabId !== p.tabId));
+        // Previously this cleared orders with zero visible trace of why —
+        // record it in the notification bell's history so the waiter can
+        // still see the tab was closed even after it disappears from the list.
+        pushNotification(
+          "tab_closed",
+          `${p.tableLabel ?? "A table"}'s tab was closed`,
+        );
       }
     },
   });
@@ -359,9 +431,12 @@ export default function WaiterOrders() {
   ) => {
     setUpdatingId(orderId);
     try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
+      const res = await apiFetch(`/orders/${orderId}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${staffToken}`,
+        },
         body: JSON.stringify({ status }),
       });
       const data = await res.json();
@@ -378,7 +453,10 @@ export default function WaiterOrders() {
   const handleCloseTab = async (tabId: string) => {
     setClosingTabId(tabId);
     try {
-      const res = await fetch(`/api/tabs/${tabId}/close`, { method: "POST" });
+      const res = await apiFetch(`/tabs/${tabId}/close`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${staffToken}` },
+      });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       // WebSocket tab_closed event will clean up state
@@ -401,7 +479,7 @@ export default function WaiterOrders() {
     setManualSuccess(false);
     if (tableOptions.length === 0) {
       try {
-        const res = await fetch(`/api/tables/public/${venueId}`);
+        const res = await apiFetch(`/tables/public/${venueId}`);
         const data = await res.json();
         if (data.success)
           setTableOptions(data.data.filter((t: TableOption) => t.isActive));
@@ -418,7 +496,7 @@ export default function WaiterOrders() {
     try {
       // Load menu if not yet loaded
       if (Object.keys(menuOptions).length === 0) {
-        const menuRes = await fetch(`/api/menu/${venueId}`);
+        const menuRes = await apiFetch(`/menu/${venueId}`);
         const menuData = await menuRes.json();
         if (menuData.success) {
           const grouped: Record<string, MenuItemOption[]> = {};
@@ -431,9 +509,12 @@ export default function WaiterOrders() {
         }
       }
       // Open or get existing tab for this table
-      const tabRes = await fetch("/api/tabs/staff-open", {
+      const tabRes = await apiFetch("/tabs/staff-open", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${staffToken}`,
+        },
         body: JSON.stringify({ tableId: table.id }),
       });
       const tabData = await tabRes.json();
@@ -483,7 +564,7 @@ export default function WaiterOrders() {
     setManualLoading(true);
     setManualError("");
     try {
-      const res = await fetch("/api/orders", {
+      const res = await apiFetch("/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -520,7 +601,7 @@ export default function WaiterOrders() {
     setPointsLoading(true);
     setPointsError("");
     try {
-      const res = await fetch("/api/staff/me/points", {
+      const res = await apiFetch("/staff/me/points", {
         headers: { Authorization: `Bearer ${staffToken}` },
       });
       const data = await res.json();
@@ -537,7 +618,7 @@ export default function WaiterOrders() {
     if (!staffToken) return;
     setTablesLoading(true);
     try {
-      const res = await fetch("/api/tables/my-tables", {
+      const res = await apiFetch("/tables/my-tables", {
         headers: { Authorization: `Bearer ${staffToken}` },
       });
       const data = await res.json();
@@ -583,7 +664,7 @@ export default function WaiterOrders() {
     setPinLoading(true);
     setPinError("");
     try {
-      const res = await fetch("/api/staff/me/verify-pin", {
+      const res = await apiFetch("/staff/me/verify-pin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -677,10 +758,62 @@ export default function WaiterOrders() {
   const deliveredOrders = orders.filter((o) => o.status === "delivered");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117]">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] md:ml-60">
+      {/* ── Side nav (desktop md+) — mirrors the owner dashboard's sidebar ──── */}
+      <aside className="hidden md:flex flex-col fixed top-0 left-0 h-full w-60 bg-white dark:bg-[#161B22] border-r border-gray-200 dark:border-gray-800 z-20">
+        <div className="px-5 py-5 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
+          <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={34} />
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate">
+              {venueName || "Waiter"}
+            </p>
+            <p className="text-xs text-gray-400">Live · updates automatically</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {(
+            [
+              { key: "orders", label: "Orders", icon: Receipt },
+              { key: "tables", label: "My Tables", icon: MapPin },
+              { key: "points", label: "My Points", icon: Trophy },
+            ] as const
+          ).map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                activeTab === key
+                  ? "bg-brand-500 text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <Icon size={17} />
+              <span className="flex-1 text-left">{label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="px-3 py-4 border-t border-gray-100 dark:border-gray-800">
+          <button
+            onClick={() => {
+              localStorage.removeItem("tabpro_staff_session");
+              localStorage.removeItem("tabpro_staff_token");
+              localStorage.removeItem("tabpro_staff_id");
+              localStorage.removeItem("tabpro_staff_venue");
+              window.location.href = "/waiter";
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <LogOut size={17} />
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* Header — full on mobile (no sidebar); trimmed to just live controls on desktop, since the sidebar already shows venue branding + sign out */}
       <div className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 px-4 py-4 sticky top-0 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 md:hidden">
           <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
           <div>
             <h1 className="font-bold text-gray-900 dark:text-white">
@@ -691,12 +824,25 @@ export default function WaiterOrders() {
             </p>
           </div>
         </div>
+        <h2 className="hidden md:block font-bold text-gray-900 dark:text-white capitalize">
+          {activeTab === "orders"
+            ? "Orders"
+            : activeTab === "tables"
+              ? "My Tables"
+              : "My Points"}
+        </h2>
         <div className="flex items-center gap-2">
           {activeOrders.length > 0 && (
             <span className="bg-brand-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
               {activeOrders.length}
             </span>
           )}
+          <NotificationBell
+            notifications={notifications}
+            onMarkAllRead={() =>
+              setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+            }
+          />
           <button
             onClick={() => {
               localStorage.removeItem("tabpro_staff_session");
@@ -705,7 +851,7 @@ export default function WaiterOrders() {
               localStorage.removeItem("tabpro_staff_venue");
               window.location.href = "/waiter";
             }}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="md:hidden text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Sign out"
           >
             Sign out
@@ -715,23 +861,48 @@ export default function WaiterOrders() {
       </div>
       {/* Push notification banner */}
       {showPushBanner && (
-        <div className="mx-4 mt-3 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-xl px-4 py-3 flex items-center justify-between">
+        <div
+          className={`mx-4 mt-3 border rounded-xl px-4 py-3 flex items-center justify-between ${
+            pushError
+              ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+              : "bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-800"
+          }`}
+        >
           <div className="flex items-center gap-2">
-            <BellRing size={16} className="text-brand-500" />
-            <p className="text-xs text-brand-700 dark:text-brand-300 font-medium">
-              Enable notifications to get alerts when screen is off
+            <BellRing
+              size={16}
+              className={pushError ? "text-red-500" : "text-brand-500"}
+            />
+            <p
+              className={`text-xs font-medium ${
+                pushError
+                  ? "text-red-700 dark:text-red-300"
+                  : "text-brand-700 dark:text-brand-300"
+              }`}
+            >
+              {pushError
+                ? "Couldn't enable notifications — check your connection and try again"
+                : "Enable notifications to get alerts when screen is off"}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleEnablePush}
-              className="text-xs px-3 py-1.5 bg-brand-500 text-white rounded-lg font-medium hover:bg-brand-600 transition-colors"
+              className={`text-xs px-3 py-1.5 text-white rounded-lg font-medium transition-colors ${
+                pushError
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-brand-500 hover:bg-brand-600"
+              }`}
             >
-              Enable
+              {pushError ? "Retry" : "Enable"}
             </button>
             <button
               onClick={() => setPushDismissed(true)}
-              className="text-brand-400 hover:text-brand-600"
+              className={
+                pushError
+                  ? "text-red-400 hover:text-red-600"
+                  : "text-brand-400 hover:text-brand-600"
+              }
             >
               <X size={14} />
             </button>
@@ -749,7 +920,7 @@ export default function WaiterOrders() {
         </div>
       )}
       {activeTab === "orders" && (
-        <div className="px-4 pt-4 max-w-lg mx-auto space-y-3 pb-28">
+        <div className="px-4 pt-4 max-w-lg mx-auto space-y-3 pb-28 md:pb-6">
           {/* Nudge alerts */}
           {nudges.map((nudge) => (
             <div
@@ -902,7 +1073,7 @@ export default function WaiterOrders() {
 
           {/* Delivered orders */}
           {deliveredOrders.length > 0 && (
-            <div className="pt-2 pb-24">
+            <div className="pt-2 pb-24 md:pb-6">
               <p className="text-xs text-gray-400 dark:text-gray-600 text-center mb-3">
                 {deliveredOrders.length} delivered this session
               </p>
@@ -942,7 +1113,7 @@ export default function WaiterOrders() {
       )}
       {/* ── My Tables tab ─────────────────────────────────────────────────── */}
       {activeTab === "tables" && (
-        <div className="px-4 pt-4 pb-28 min-h-screen">
+        <div className="px-4 pt-4 pb-28 md:pb-6 min-h-screen">
           {!staffToken ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
               <MapPin
@@ -1009,7 +1180,7 @@ export default function WaiterOrders() {
       )}
       {/* ── My Points tab ─────────────────────────────────────────────────── */}
       {activeTab === "points" && (
-        <div className="px-4 pt-4 pb-28 min-h-screen">
+        <div className="px-4 pt-4 pb-28 md:pb-6 min-h-screen">
           {!staffToken ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
               <Trophy
@@ -1132,8 +1303,8 @@ export default function WaiterOrders() {
           ) : null}
         </div>
       )}
-      {/* ── Bottom tab bar ────────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#161B22] border-t border-gray-200 dark:border-gray-800 flex">
+      {/* ── Bottom tab bar (mobile only — desktop uses the sidebar) ────────── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#161B22] border-t border-gray-200 dark:border-gray-800 flex">
         <button
           onClick={() => setActiveTab("orders")}
           className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${activeTab === "orders" ? "text-brand-500" : "text-gray-400 dark:text-gray-600"}`}

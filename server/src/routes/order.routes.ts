@@ -4,16 +4,17 @@ import {
   handleUpdateOrderStatus,
   handleGetVenueOrders,
 } from '../controllers/order.controller';
+import { venueMember, venueFromParam, venueOfOrder } from '../middleware/venueAccess.middleware';
 
 const router = Router();
 
 // Public — customer places order with their tabId
 router.post('/', handlePlaceOrder);
 
-// Waiter updates order status — Phase 5 will add staff auth here
-router.patch('/:orderId/status', handleUpdateOrderStatus);
+// Waiter (or owner) of the venue updates order status
+router.patch('/:orderId/status', venueMember(venueOfOrder()), handleUpdateOrderStatus);
 
 // Venue orders — used by waiter and owner views
-router.get('/venue/:venueId', handleGetVenueOrders);
+router.get('/venue/:venueId', venueMember(venueFromParam()), handleGetVenueOrders);
 
 export default router;

@@ -8,12 +8,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0D1117] flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Subtle dot grid background */}
-      <div className="absolute inset-0 dot-grid opacity-60 dark:opacity-100" />
-
-      {/* Radial fade over the grid */}
-      <div className="absolute inset-0 bg-radial-fade pointer-events-none" />
-
       {/* Card */}
       <div className="relative w-full max-w-sm">
         {/* Logo + wordmark */}

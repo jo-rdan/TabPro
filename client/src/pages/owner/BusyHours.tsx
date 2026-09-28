@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Lock, Lightbulb } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import Layout from '../../components/Layout';
 import { useAuthStore } from '../../lib/auth';
 import api from '../../lib/api';
@@ -80,38 +79,14 @@ export default function BusyHours() {
   }, []);
 
   useEffect(() => {
-    if (!venue || !isElite) { setLoading(false); return; }
+    if (!venue) { setLoading(false); return; }
     api.get(`/dashboard/busy-hours/${venue.id}`)
       .then((r) => setData(r.data.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [venue?.id, isElite]);
 
-  // ── Elite guard ─────────────────────────────────────────────────────────────
-  if (!isElite) {
-    return (
-      <Layout>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Busy Hours</h1>
-        </div>
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
-          <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Lock size={20} className="text-purple-500" />
-          </div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2">Elite feature</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xs mx-auto">
-            Busy hours heatmap shows you exactly when your venue is busiest so you can staff smarter. Upgrade to Elite to unlock this.
-          </p>
-          <Link
-            to="/subscription"
-            className="inline-block px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl transition-colors"
-          >
-            View plans →
-          </Link>
-        </div>
-      </Layout>
-    );
-  }
+  // ── Elite guard removed ───────────────────────────────────────────────────────
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading || !data) {

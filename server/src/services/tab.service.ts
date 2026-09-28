@@ -1,22 +1,47 @@
 import { db } from '../lib/db';
-import { tabs, tableAssignments, orders, orderItems, staffPoints, tables } from '../models/schema';
-import { eq, and, like } from 'drizzle-orm';
+import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues } from '../models/schema';
+import { eq, and, like, inArray } from 'drizzle-orm';
 import { getTableByQrCode } from './qr.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
-import { sendPushToVenue } from './push.service';
+import { sendPushToVenue, sendPushToStaff, sendPushToOwner } from './push.service';
 import { trackReturnVisit } from './campaign.service';
+import { isPawapayConfigured } from '../lib/pawapay';
+
+// What customers may see about a venue — never the payout number, clock-in
+// sticker code or PIN hash.
+function publicVenue(venue: typeof venues.$inferSelect) {
+  return {
+    id: venue.id,
+    name: venue.name,
+    logoUrl: venue.logoUrl,
+    acceptsMobileMoney: isPawapayConfigured() && !!venue.momoPhone,
+  };
+}
+
+// The table's current unpaid tab, if any. Everyone who scans the table joins
+// it (friends at the same table share one bill), and a customer who re-scans
+// gets their tab back. 'abandoned' is a legacy status from when a locked phone
+// froze the tab — revive those so the bill can still be collected.
+async function findUnsettledTab(tableId: string) {
+  const tab = await db.query.tabs.findFirst({
+    where: and(eq(tabs.tableId, tableId), inArray(tabs.status, ['open', 'bill_requested', 'abandoned'])),
+    with: { orders: { with: { items: { with: { menuItem: true } } } } },
+  });
+  if (tab?.status === 'abandoned') {
+    await db.update(tabs).set({ status: 'open', lastSeenAt: new Date() }).where(eq(tabs.id, tab.id));
+    tab.status = 'open';
+  }
+  return tab;
+}
 
 export async function openTab(qrCode: string, phone: string, name?: string) {
   const table = await getTableByQrCode(qrCode);
   if (!table) throw new Error('QR code not found or not linked to a table');
   if (!table.venue) throw new Error('Venue not found');
 
-  const existingTab = await db.query.tabs.findFirst({
-    where: and(eq(tabs.tableId, table.id), eq(tabs.status, 'open')),
-    with: { orders: { with: { items: { with: { menuItem: true } } } } },
-  });
+  const existingTab = await findUnsettledTab(table.id);
 
   const customer = await findOrCreateCustomer(phone, name);
 
@@ -25,7 +50,7 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
     return {
       tab: existingTab,
       isExisting: true,
-      venue: table.venue,
+      venue: publicVenue(table.venue),
       table: { id: table.id, label: table.label },
       customer,
       menuGrouped: grouped,
@@ -54,7 +79,7 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
   return {
     tab,
     isExisting: false,
-    venue: table.venue,
+    venue: publicVenue(table.venue),
     table: { id: table.id, label: table.label },
     customer,
     menuGrouped: grouped,
@@ -70,12 +95,10 @@ export async function openTabByTableId(tableId: string, phone?: string) {
   if (!table) throw new Error('Table not found');
   if (!table.venue) throw new Error('Venue not found');
 
-  // Re-use existing open tab if there is one
-  const existingTab = await db.query.tabs.findFirst({
-    where: and(eq(tabs.tableId, tableId), eq(tabs.status, 'open')),
-  });
+  // Re-use existing unsettled tab if there is one
+  const existingTab = await findUnsettledTab(tableId);
   if (existingTab) {
-    return { tab: existingTab, isExisting: true, venue: table.venue, table };
+    return { tab: existingTab, isExisting: true, venue: publicVenue(table.venue), table: { id: table.id, label: table.label } };
   }
 
   // Walk-in: use provided phone or a placeholder
@@ -102,21 +125,24 @@ export async function openTabByTableId(tableId: string, phone?: string) {
   // Track return visit for campaign analytics (fire-and-forget)
   trackReturnVisit(table.venue.id, customer.id).catch(() => {});
 
-  return { tab, isExisting: false, venue: table.venue, table };
+  return { tab, isExisting: false, venue: publicVenue(table.venue), table: { id: table.id, label: table.label } };
 }
 
 export async function getTab(tabId: string) {
-  return db.query.tabs.findFirst({
+  const tab = await db.query.tabs.findFirst({
     where: eq(tabs.id, tabId),
     with: {
       orders: {
         with: { items: { with: { menuItem: true } } },
       },
       table: { with: { venue: true } },
-      customer: true,
     },
   });
+  if (!tab) return tab;
+  const { table, ...rest } = tab;
+  return { ...rest, table: { id: table.id, label: table.label, venue: publicVenue(table.venue) } };
 }
+
 
 export async function getActiveTabForTable(tableId: string) {
   return db.query.tabs.findFirst({
@@ -195,10 +221,19 @@ export async function requestBill(tabId: string) {
     timestamp: new Date().toISOString(),
   });
 
-  await sendPushToVenue(
+  // Waiter notification — action-oriented, they need to move fast
+  await sendPushToStaff(
     tab.table.venueId,
-    `💳 ${tab.table.label} wants to pay`,
-    'A customer has requested the bill'
+    tab.tableId,
+    `💳 ${tab.table.label} is ready to pay`,
+    'Head over — the customer wants to settle up'
+  );
+
+  // Owner notification — financial awareness, calm and informative
+  await sendPushToOwner(
+    tab.table.venueId,
+    `💰 ${tab.table.label} payment incoming`,
+    'A customer is about to pay their tab'
   );
 
   return updated;

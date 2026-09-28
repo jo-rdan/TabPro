@@ -17,7 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@tabpro/shared": ["../shared/src/types/index.ts"]
+      "@tabpro/shared": ["../shared/src/index.ts"]
     },
     "types": ["node", "vite/client"]
   },

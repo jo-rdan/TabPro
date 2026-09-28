@@ -1,4 +1,7 @@
 import express from 'express';
+// Routes thrown errors from async handlers into errorMiddleware; without it
+// Express 4 leaves them unhandled and Node kills the whole process.
+import 'express-async-errors';
 import cors from 'cors';
 import passport from 'passport';
 import { createServer } from 'http';
@@ -43,6 +46,15 @@ app.get('/health', (_req, res) => {
 app.use(errorMiddleware);
 
 // ─── HTTP + WebSocket server ──────────────────────────────────────────────────
+import { startHeartbeatChecker } from './services/heartbeat.service';
+import { startPaymentReconciler } from './services/pawapay.service';
+import { isPawapayConfigured, PAWAPAY_ENV } from './lib/pawapay';
+
+// Last line of defence: a failure in a background job (heartbeat checker,
+// push send, etc.) must never take every venue offline.
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
 
 const server = createServer(app);
 initWebSocket(server);
@@ -50,6 +62,11 @@ initWebSocket(server);
 server.listen(PORT, () => {
   console.log(`✅ TabPro server running on http://localhost:${PORT}`);
   console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(isPawapayConfigured()
+    ? `✅ Mobile Money: pawaPay ${PAWAPAY_ENV}`
+    : '⚠️  Mobile Money: OFF — PAWAPAY_API_TOKEN not set, customers will be asked to pay their waiter');
+  startHeartbeatChecker();
+  startPaymentReconciler();
 });
 
 export default app;

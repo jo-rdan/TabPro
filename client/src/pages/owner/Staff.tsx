@@ -16,6 +16,8 @@ import Layout from "../../components/Layout";
 import { useAuthStore } from "../../lib/auth";
 import api from "../../lib/api";
 import Toast from "../../components/Toast";
+import { useWebSocket } from "../../hooks/useWebSocket";
+import type { WsEvent } from "@tabpro/shared";
 
 interface StaffRow {
   id: string;
@@ -42,7 +44,7 @@ interface ShiftAssignment {
 }
 
 export default function Staff() {
-  const { venues, fetchMe } = useAuthStore();
+  const { venues, fetchMe, token } = useAuthStore();
   const venue = venues[0];
   useEffect(() => {
     if (!venue) fetchMe();
@@ -106,6 +108,25 @@ export default function Staff() {
     load().catch(() => {});
   }, [venue]);
 
+  // Live-update invite status: when a waiter opens their invite link, flip
+  // "Invite sent" to "Active" immediately instead of waiting for a page refresh.
+  useWebSocket({
+    venueId: venue?.id ?? "",
+    token: token ?? undefined,
+    enabled: !!venue,
+    onEvent: (event: WsEvent) => {
+      if (event.type === "staff_invite_accepted") {
+        const { staffId, name } = event.payload as { staffId: string; name: string };
+        setStaffList((prev) =>
+          prev.map((s) =>
+            s.id === staffId ? { ...s, inviteStatus: "active", inviteToken: null } : s,
+          ),
+        );
+        setToast(`${name} accepted their invite`);
+      }
+    },
+  });
+
   const getAssignedIds = (staffId: string) =>
     assignments.find((a) => a.staffId === staffId)?.tableIds ?? [];
 
@@ -143,12 +164,11 @@ export default function Staff() {
     setCreating(true);
     setError("");
     try {
-      const res = await api.post("/staff", {
+      await api.post("/staff", {
         venueId: venue.id,
         name: name.trim(),
         phone: phone.trim(),
       });
-      const { whatsappLink } = res.data.data;
       setName("");
       setPhone("");
       setShowForm(false);
@@ -161,9 +181,9 @@ export default function Staff() {
           tableIds: a.tableIds,
         })),
       );
-      setToast("Staff added — tables auto-assigned evenly across your team");
-      // Open WhatsApp immediately so owner can send the invite
-      if (whatsappLink) window.open(whatsappLink, "_blank");
+      setToast(
+        "Staff added — tables auto-assigned evenly. Tap \"Send via WhatsApp\" to invite them.",
+      );
     } catch (err: any) {
       setError(err?.response?.data?.error || "Failed to add staff.");
     } finally {

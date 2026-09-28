@@ -11,10 +11,6 @@
     "resolveJsonModule": true,
     "declaration": true,
     "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@tabpro/shared": ["../shared/src/types/index.ts"]
-    },
     "typeRoots": ["./node_modules/@types", "../node_modules/@types"]
   },
   "include": ["src"],

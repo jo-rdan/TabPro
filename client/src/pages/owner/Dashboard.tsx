@@ -6,7 +6,9 @@ import LogoUploader from '../../components/LogoUploader';
 import { useAuthStore } from '../../lib/auth';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { WsEvent } from '@tabpro/shared';
+import Toast from '../../components/Toast';
 import api from '../../lib/api';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 
 interface Stats {
   revenueTonight: number;
@@ -28,7 +30,7 @@ interface LiveOrder {
 
 interface DashboardAlert {
   id: string;
-  type: 'nudge' | 'bill';
+  type: 'nudge' | 'bill' | 'away';
   tableLabel: string;
   tabId: string;
   timestamp: string;
@@ -47,7 +49,7 @@ function formatRwf(n: number) {
 }
 
 function timeAgo(d: string) {
-  const diff = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+  const diff = Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 1000));
   if (diff < 60) return `${diff}s ago`;
   return `${Math.floor(diff / 60)}m ago`;
 }
@@ -62,6 +64,24 @@ export default function Dashboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [alerts, setAlerts] = useState<DashboardAlert[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Push notifications — no staffId means the server correctly files this
+  // subscription under the owner, not a staff member.
+  const { isSupported, permission, subscribe } = usePushNotifications();
+  const [pushDismissed, setPushDismissed] = useState(false);
+  const [pushError, setPushError] = useState(false);
+  const showPushBanner = isSupported && !pushDismissed && (permission === 'default' || pushError);
+  const handleEnablePush = async () => {
+    if (!venue) return;
+    const ok = await subscribe({ venueId: venue.id });
+    if (ok) {
+      setPushDismissed(true);
+      setPushError(false);
+    } else {
+      setPushError(true);
+    }
+  };
 
   useEffect(() => {
     if (!owner) fetchMe();
@@ -91,6 +111,35 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [fetchStats]);
 
+  const fetchLiveOrders = useCallback(async () => {
+    if (!venue) return;
+    try {
+      const res = await api.get(`/orders/venue/${venue.id}`);
+      const flat: LiveOrder[] = [];
+      for (const tab of res.data.data) {
+        for (const order of tab.orders) {
+          if (order.status === 'delivered') continue;
+          flat.push({
+            orderId: order.id,
+            tableLabel: tab.table.label,
+            source: order.source,
+            status: order.status,
+            placedAt: order.placedAt,
+            items: order.items.map((i: any) => ({ name: i.menuItem.name, quantity: i.quantity })),
+            total: order.items.reduce((s: number, i: any) => s + i.unitPriceRwf * i.quantity, 0),
+          });
+        }
+      }
+      // Newest first
+      flat.sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
+      setLiveOrders(flat.slice(0, 20));
+    } catch {
+      // Non-fatal — live orders will still populate from the websocket as new ones arrive
+    }
+  }, [venue]);
+
+  useEffect(() => { fetchLiveOrders(); }, [fetchLiveOrders]);
+
   // Live orders via WebSocket
   useWebSocket({
     venueId: venue?.id ?? '',
@@ -99,15 +148,18 @@ export default function Dashboard() {
     onEvent: (event: WsEvent) => {
       if (event.type === 'new_order') {
         const p = event.payload as any;
-        setLiveOrders((prev) => [{
-          orderId: p.orderId,
-          tableLabel: p.tableLabel,
-          source: p.source,
-          status: 'pending',
-          placedAt: p.placedAt,
-          items: p.items,
-          total: p.total,
-        }, ...prev.slice(0, 19)]);
+        setLiveOrders((prev) => {
+          if (prev.find((o) => o.orderId === p.orderId)) return prev;
+          return [{
+            orderId: p.orderId,
+            tableLabel: p.tableLabel,
+            source: p.source,
+            status: 'pending',
+            placedAt: p.placedAt,
+            items: p.items,
+            total: p.total,
+          }, ...prev.slice(0, 19)];
+        });
         setStats((prev) => prev ? { ...prev, pendingOrders: prev.pendingOrders + 1 } : prev);
       }
       if (event.type === 'order_status_update') {
@@ -144,6 +196,24 @@ export default function Dashboard() {
           timestamp: event.timestamp,
         };
         setAlerts((prev) => [alert, ...prev.slice(0, 9)]);
+      }
+      if (event.type === 'tab_paid') {
+        const p = event.payload as any;
+        setToast(`💰 ${p.tableLabel} paid ${p.grandTotal?.toLocaleString()} RWF — payout of ${p.venuePayout?.toLocaleString()} RWF on its way to your Mobile Money`);
+        setAlerts((prev) => prev.filter((a) => a.tabId !== p.tabId));
+      }
+      if (event.type === 'customer_away') {
+        const p = event.payload as any;
+        const alert: DashboardAlert = {
+          id: `away-${p.tabId}-${Date.now()}`,
+          type: 'away',
+          tableLabel: p.tableLabel,
+          tabId: p.tabId,
+          timestamp: event.timestamp,
+        };
+        setAlerts((prev) => [alert, ...prev.slice(0, 9)]);
+        // Auto-dismiss after 2 minutes
+        setTimeout(() => setAlerts((prev) => prev.filter((a) => a.id !== alert.id)), 120_000);
       }
     },
   });
@@ -182,6 +252,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
+      {toast && <Toast message={toast} duration={6000} onDismiss={() => setToast(null)} />}
       <div className="mb-8 flex items-center gap-5 pb-6 border-b border-gray-100 dark:border-gray-800/60">
         <LogoUploader
           venueName={venue?.name ?? ''}
@@ -209,6 +280,40 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ── Push notification opt-in ────────────────────────────────────── */}
+      {showPushBanner && (
+        <div
+          className={`border rounded-xl px-4 py-3 mb-5 flex items-center justify-between ${
+            pushError
+              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              : 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-800'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <BellRing size={16} className={pushError ? 'text-red-500' : 'text-brand-500'} />
+            <p className={`text-xs font-medium ${pushError ? 'text-red-700 dark:text-red-300' : 'text-brand-700 dark:text-brand-300'}`}>
+              {pushError
+                ? "Couldn't enable notifications — check your connection and try again"
+                : 'Enable notifications to get alerts for bill requests and nudges when this tab is in the background'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleEnablePush}
+              className={`text-xs px-3 py-1.5 text-white rounded-lg font-medium transition-colors ${pushError ? 'bg-red-500 hover:bg-red-600' : 'bg-brand-500 hover:bg-brand-600'}`}
+            >
+              {pushError ? 'Retry' : 'Enable'}
+            </button>
+            <button
+              onClick={() => setPushDismissed(true)}
+              className={pushError ? 'text-red-400 hover:text-red-600' : 'text-brand-400 hover:text-brand-600'}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Live alerts: nudges & bill requests ─────────────────────────── */}
       {alerts.length > 0 && (
         <div className="space-y-2 mb-5">
@@ -218,6 +323,8 @@ export default function Dashboard() {
               className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${
                 alert.type === 'bill'
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200/70 dark:border-green-700/40'
+                  : alert.type === 'away'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200/70 dark:border-blue-700/40'
                   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200/70 dark:border-amber-700/40'
               }`}
             >
@@ -225,18 +332,26 @@ export default function Dashboard() {
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   alert.type === 'bill'
                     ? 'bg-green-100 dark:bg-green-900/40'
+                    : alert.type === 'away'
+                    ? 'bg-blue-100 dark:bg-blue-900/40'
                     : 'bg-amber-100 dark:bg-amber-900/40'
                 }`}>
                   {alert.type === 'bill'
                     ? <CreditCard size={15} className="text-green-600 dark:text-green-400" />
+                    : alert.type === 'away'
+                    ? <span style={{ fontSize: 15 }}>👀</span>
                     : <BellRing size={15} className="text-amber-600 dark:text-amber-400" />
                   }
                 </div>
                 <div>
                   <p className={`text-sm font-bold ${
-                    alert.type === 'bill' ? 'text-green-800 dark:text-green-300' : 'text-amber-800 dark:text-amber-300'
+                    alert.type === 'bill'
+                      ? 'text-green-800 dark:text-green-300'
+                      : alert.type === 'away'
+                      ? 'text-blue-800 dark:text-blue-300'
+                      : 'text-amber-800 dark:text-amber-300'
                   }`}>
-                    {alert.tableLabel} — {alert.type === 'bill' ? 'Wants to pay' : 'Needs attention'}
+                    {alert.tableLabel} — {alert.type === 'bill' ? 'Wants to pay' : alert.type === 'away' ? 'May have stepped away' : 'Needs attention'}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {new Date(alert.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
@@ -298,7 +413,9 @@ export default function Dashboard() {
             {liveOrders.length === 0 && (
               <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No orders yet tonight</p>
             )}
-            {liveOrders.map((order) => (
+            {[...new Map(liveOrders.map((o) => [o.orderId, o])).values()]
+              .filter((o) => o.status !== 'delivered')
+              .map((order) => (
               <div key={order.orderId} className="px-5 py-3 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
@@ -352,23 +469,38 @@ export default function Dashboard() {
 
       {/* Quick links */}
       <div className="grid grid-cols-3 gap-3 mt-4">
-        {[
-          { label: 'Tables', href: '/tables', desc: 'QR codes & management' },
-          { label: 'Staff', href: '/staff', desc: 'Invite & track points' },
-          { label: 'Activity log', href: '/activity', desc: "Tonight's orders" },
-        ].map((link) => (
-          <Link
-            key={link.href}
-            to={link.href}
-            className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">{link.label}</span>
-              <ArrowUpRight size={14} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{link.desc}</p>
-          </Link>
-        ))}
+        {/* Tables */}
+        <Link
+          to="/tables"
+          className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Tables</span>
+            <ArrowUpRight size={14} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">QR codes & management</p>
+        </Link>
+
+        {/* Staff */}
+        <Link
+          to="/staff"
+          className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Staff</span>
+            <ArrowUpRight size={14} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Invite & track points</p>
+        </Link>
+
+        {/* Payment History — coming soon, no redirect */}
+        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 opacity-70 cursor-default">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Payments</span>
+            <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-full">Soon</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Payment history</p>
+        </div>
       </div>
       {receiptTabId && (
         <ReceiptModal tabId={receiptTabId} onClose={() => setReceiptTabId(null)} />

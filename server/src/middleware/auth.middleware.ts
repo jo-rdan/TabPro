@@ -35,6 +35,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    // Staff tokens are signed with the same secret — don't let them through as owners.
+    if (!payload.ownerId) throw new Error('Not an owner token');
     req.owner = payload;
     next();
   } catch {

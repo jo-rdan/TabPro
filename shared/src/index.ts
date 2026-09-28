@@ -37,6 +37,7 @@ export interface Venue {
   trialEndsAt: string;
   createdAt: string;
   logoUrl?: string | null;
+  momoPhone?: string | null;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────
@@ -189,7 +190,11 @@ export type WsEventType =
   | "new_nudge"
   | "bill_requested"
   | "tab_closed"
-  | "new_rating";
+  | "new_rating"
+  | "customer_away"
+  | "staff_invite_accepted"
+  | "tab_paid"
+  | "disbursement_failed";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;

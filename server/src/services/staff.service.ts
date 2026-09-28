@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { sendInviteSms, buildWhatsAppLink } from './messaging.service';
+import { broadcastToVenue } from '../lib/websocket';
 
 export async function setPin(staffId: string, pin: string): Promise<void> {
   if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits');
@@ -14,24 +15,68 @@ export async function setPin(staffId: string, pin: string): Promise<void> {
 }
 
 export async function verifyPin(staffId: string, pin: string): Promise<boolean> {
+  if (isLockedOut(staffId)) throw new Error('Too many wrong PINs. Try again in 15 minutes.');
   const member = await db.query.staff.findFirst({ where: eq(staff.id, staffId) });
   if (!member || !member.pin) return false;
-  return bcrypt.compare(pin, member.pin);
+  const ok = await bcrypt.compare(pin, member.pin);
+  if (ok) failedLogins.delete(staffId);
+  else recordFailedLogin(staffId);
+  return ok;
+}
+
+// Staff phones are stored as 07XXXXXXXX so "+250 788…", "0788…" and
+// "788…" all match the same person.
+export function normalizeStaffPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('250')) return '0' + digits.slice(3);
+  if (digits.length === 9 && digits.startsWith('7')) return '0' + digits;
+  return digits;
+}
+
+// A 4-digit PIN is only safe if guessing is slow: lock a phone number out for
+// 15 minutes after 5 wrong PINs.
+const MAX_FAILED_LOGINS = 5;
+const LOCKOUT_MS = 15 * 60_000;
+const failedLogins = new Map<string, { count: number; firstAt: number }>();
+
+function isLockedOut(key: string): boolean {
+  const entry = failedLogins.get(key);
+  if (!entry) return false;
+  if (Date.now() - entry.firstAt > LOCKOUT_MS) {
+    failedLogins.delete(key);
+    return false;
+  }
+  return entry.count >= MAX_FAILED_LOGINS;
+}
+
+function recordFailedLogin(key: string) {
+  const entry = failedLogins.get(key);
+  if (!entry || Date.now() - entry.firstAt > LOCKOUT_MS) failedLogins.set(key, { count: 1, firstAt: Date.now() });
+  else entry.count += 1;
 }
 
 export async function loginByPhone(phone: string, pin: string): Promise<{ token: string; staffId: string; venueId: string; name: string } | null> {
-  const normalizedPhone = phone.replace(/\s/g, '');
-  const member = await db.query.staff.findFirst({
+  const normalizedPhone = normalizeStaffPhone(phone);
+  if (isLockedOut(normalizedPhone)) {
+    throw new Error('Too many wrong PINs. Try again in 15 minutes or ask your manager.');
+  }
+
+  // The same person can work at several venues — one staff record each.
+  const members = await db.query.staff.findMany({
     where: and(eq(staff.phone, normalizedPhone), eq(staff.isActive, true)),
+    orderBy: [desc(staff.createdAt)],
   });
 
-  if (!member || !member.pin) return null;
+  for (const member of members) {
+    if (member.pin && (await bcrypt.compare(pin, member.pin))) {
+      failedLogins.delete(normalizedPhone);
+      const token = signStaffJwt(member.id, member.venueId);
+      return { token, staffId: member.id, venueId: member.venueId, name: member.name };
+    }
+  }
 
-  const valid = await bcrypt.compare(pin, member.pin);
-  if (!valid) return null;
-
-  const token = signStaffJwt(member.id, member.venueId);
-  return { token, staffId: member.id, venueId: member.venueId, name: member.name };
+  recordFailedLogin(normalizedPhone);
+  return null;
 }
 
 export function signStaffJwt(staffId: string, venueId: string): string {
@@ -93,10 +138,12 @@ export async function toggleStaffActive(staffId: string, isActive: boolean) {
   return updated;
 }
 
-export async function createStaff(venueId: string, name: string, phone: string) {
-  // Check if staff with this phone already exists in venue
+export async function createStaff(venueId: string, name: string, rawPhone: string) {
+  const phone = normalizeStaffPhone(rawPhone);
+
+  // Re-inviting someone already on this venue's staff re-uses their record.
   const existing = await db.query.staff.findFirst({
-    where: eq(staff.phone, phone),
+    where: and(eq(staff.venueId, venueId), eq(staff.phone, phone)),
   });
 
   let staffMember = existing;
@@ -155,14 +202,28 @@ export async function acceptInvite(token: string) {
   });
 
   if (!invite) throw new Error('Invite not found');
-  if (invite.acceptedAt) throw new Error('Invite already accepted');
+  // The link stays usable until the waiter has actually set a PIN — otherwise
+  // opening it once (then getting interrupted) locks them out for good, since
+  // "resend" sends the same link.
+  if (invite.acceptedAt && invite.staff.pin) throw new Error('Invite already accepted');
 
-  await db
-    .update(staffInvites)
-    .set({ acceptedAt: new Date() })
-    .where(eq(staffInvites.id, invite.id));
+  if (!invite.acceptedAt) {
+    await db
+      .update(staffInvites)
+      .set({ acceptedAt: new Date() })
+      .where(eq(staffInvites.id, invite.id));
+  }
 
   const staffJwt = signStaffJwt(invite.staff.id, invite.staff.venueId);
+
+  // Let the owner dashboard know in real time so "Invite sent" flips to "Active"
+  // without needing a manual page refresh.
+  broadcastToVenue(invite.staff.venueId, {
+    type: 'staff_invite_accepted',
+    payload: { staffId: invite.staff.id, name: invite.staff.name },
+    venueId: invite.staff.venueId,
+    timestamp: new Date().toISOString(),
+  });
 
   return { staff: invite.staff, token: staffJwt };
 }
