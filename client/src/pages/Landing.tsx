@@ -14,7 +14,6 @@ import {
   Wallet,
   Smartphone,
   LayoutDashboard,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import Logo from "../components/Logo";
@@ -32,11 +31,9 @@ import {
   OrderFeed,
 } from "./landing/mockups";
 
-// Legal and contact details — must match the RDB registration of VNT250 Ltd.
+// Legal name and contact details shown on the site.
 const COMPANY = {
   legalName: "VNT250 Ltd",
-  tin: "156430843",
-  address: "KG 31 St, Ngaruyinka, Murama, Kinyinya, Gasabo, Kigali, Rwanda",
   email: "iga.enterprise.ltd@gmail.com",
   phone: "+250 781 268 924",
   whatsapp: "https://wa.me/250781268924?text=Hi%20TabPro%2C%20I%27d%20like%20TabPro%20for%20my%20venue",
@@ -617,11 +614,7 @@ function Footer() {
           </div>
           <p className="mt-5 max-w-sm text-[14px] leading-relaxed text-white/50">
             TabPro is a product of <span className="font-semibold text-white/80">{COMPANY.legalName}</span>, a company
-            registered in Rwanda (Company code / TIN {COMPANY.tin}).
-          </p>
-          <p className="mt-4 flex max-w-sm items-start gap-2 text-[14px] leading-relaxed text-white/50">
-            <ShieldCheck size={16} className="mt-0.5 flex-shrink-0 text-emerald-400" />
-            Registered office: {COMPANY.address}
+            registered in Rwanda.
           </p>
         </div>
         <div>
@@ -645,7 +638,7 @@ function Footer() {
       <div className="border-t border-white/[0.06]">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-[12.5px] text-white/35 sm:flex-row sm:justify-between sm:px-8">
           <span>© {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</span>
-          <span>TabPro is operated by {COMPANY.legalName}, Kigali, Rwanda.</span>
+          <span>TabPro is operated by {COMPANY.legalName}.</span>
         </div>
       </div>
     </footer>
