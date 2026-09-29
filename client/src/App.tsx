@@ -30,6 +30,7 @@ import CustomerMenu from "./pages/customer/Menu";
 
 // Shared
 import Receipt from "./pages/Receipt";
+import Landing from "./pages/Landing";
 
 export default function App() {
   const { init } = useThemeStore();
@@ -158,8 +159,8 @@ export default function App() {
         <Route path="/privacy.html" element={null} />
         <Route path="/terms.html" element={null} />
 
-        {/* Catch-all */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Public homepage + catch-all */}
+        <Route path="/" element={<Landing />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
