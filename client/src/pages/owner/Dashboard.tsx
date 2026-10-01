@@ -30,7 +30,7 @@ interface LiveOrder {
 
 interface DashboardAlert {
   id: string;
-  type: 'nudge' | 'bill' | 'away';
+  type: 'nudge' | 'bill' | 'away' | 'seated';
   tableLabel: string;
   tabId: string;
   timestamp: string;
@@ -173,6 +173,20 @@ export default function Dashboard() {
         setStats((prev) => prev ? { ...prev, activeTables: Math.max(0, prev.activeTables - 1) } : prev);
         fetchStats();
       }
+      if (event.type === 'tab_opened') {
+        const p = event.payload as any;
+        const alert: DashboardAlert = {
+          id: `seated-${p.tabId}`,
+          type: 'seated',
+          tableLabel: p.tableLabel,
+          tabId: p.tabId,
+          timestamp: event.timestamp,
+        };
+        setStats((prev) => prev ? { ...prev, activeTables: prev.activeTables + 1 } : prev);
+        setAlerts((prev) => [alert, ...prev.slice(0, 9)]);
+        // Informational only — clears itself after 20s
+        setTimeout(() => setAlerts((prev) => prev.filter((a) => a.id !== alert.id)), 20_000);
+      }
       if (event.type === 'new_nudge') {
         const p = event.payload as any;
         const alert: DashboardAlert = {
@@ -308,7 +322,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Live alerts: nudges & bill requests ─────────────────────────── */}
+      {/* ── Live alerts: guests seated, nudges & bill requests ──────────── */}
       {alerts.length > 0 && (
         <div className="space-y-2 mb-5">
           {alerts.map((alert) => (
@@ -317,6 +331,8 @@ export default function Dashboard() {
               className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${
                 alert.type === 'bill'
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200/70 dark:border-green-700/40'
+                  : alert.type === 'seated'
+                  ? 'bg-white dark:bg-[#161B22] border-gray-200 dark:border-gray-800'
                   : alert.type === 'away'
                   ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200/70 dark:border-blue-700/40'
                   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200/70 dark:border-amber-700/40'
@@ -326,12 +342,16 @@ export default function Dashboard() {
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   alert.type === 'bill'
                     ? 'bg-green-100 dark:bg-green-900/40'
+                    : alert.type === 'seated'
+                    ? 'bg-brand-50 dark:bg-brand-900/30'
                     : alert.type === 'away'
                     ? 'bg-blue-100 dark:bg-blue-900/40'
                     : 'bg-amber-100 dark:bg-amber-900/40'
                 }`}>
                   {alert.type === 'bill'
                     ? <CreditCard size={15} className="text-green-600 dark:text-green-400" />
+                    : alert.type === 'seated'
+                    ? <Users size={15} className="text-brand-600 dark:text-brand-400" />
                     : alert.type === 'away'
                     ? <span style={{ fontSize: 15 }}>👀</span>
                     : <BellRing size={15} className="text-amber-600 dark:text-amber-400" />
@@ -341,11 +361,13 @@ export default function Dashboard() {
                   <p className={`text-sm font-bold ${
                     alert.type === 'bill'
                       ? 'text-green-800 dark:text-green-300'
+                      : alert.type === 'seated'
+                      ? 'text-gray-900 dark:text-white'
                       : alert.type === 'away'
                       ? 'text-blue-800 dark:text-blue-300'
                       : 'text-amber-800 dark:text-amber-300'
                   }`}>
-                    {alert.tableLabel} — {alert.type === 'bill' ? 'Wants to pay' : alert.type === 'away' ? 'May have stepped away' : 'Needs attention'}
+                    {alert.tableLabel} — {alert.type === 'bill' ? 'Wants to pay' : alert.type === 'seated' ? 'Guests seated' : alert.type === 'away' ? 'May have stepped away' : 'Needs attention'}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {new Date(alert.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
