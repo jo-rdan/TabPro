@@ -50,20 +50,8 @@ const SESSION_KEY = (qr: string) => `tabpro_tab_${qr}`;
 const fmt = (n: number) => `${n.toLocaleString()} RWF`;
 
 // ─── Foodish API category mapping ────────────────────────────────────────────
-const FOODISH_CATEGORIES = [
-  "biryani",
-  "burger",
-  "butter-chicken",
-  "dessert",
-  "dosa",
-  "idly",
-  "pasta",
-  "pizza",
-  "rice",
-  "samosa",
-];
 
-function getFoodishCategory(name: string, cat: string): string {
+function getFoodishCategory(name: string, cat: string): string | null {
   const s = (name + " " + cat).toLowerCase();
   if (s.includes("burger") || s.includes("hamburger")) return "burger";
   if (s.includes("pizza")) return "pizza";
@@ -79,11 +67,8 @@ function getFoodishCategory(name: string, cat: string): string {
     return "samosa";
   if (s.includes("idly") || s.includes("dosa") || s.includes("indian"))
     return "idly";
-  // fallback: pick a deterministic random category based on item name hash
-  let hash = 0;
-  for (let i = 0; i < name.length; i++)
-    hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
-  return FOODISH_CATEGORIES[Math.abs(hash) % FOODISH_CATEGORIES.length];
+  // No match: show the category icon rather than a photo of a different dish.
+  return null;
 }
 
 // Cache images so we don't refetch on re-render
@@ -96,6 +81,7 @@ async function fetchFoodImage(
 ): Promise<string> {
   if (imageCache[itemId]) return imageCache[itemId];
   const foodCat = getFoodishCategory(name, cat);
+  if (!foodCat) return "";
   try {
     const res = await fetch(`https://foodish-api.com/api/images/${foodCat}`);
     const data = await res.json();

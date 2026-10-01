@@ -271,12 +271,6 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">
             {venue?.name ?? 'Your venue'}
           </h1>
-          <div className="mt-1">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 capitalize">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-500 inline-block" />
-              {venue?.plan ?? 'basic'} plan
-            </span>
-          </div>
         </div>
       </div>
 
