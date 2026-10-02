@@ -24,6 +24,10 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tabpro_test
       JWT_SECRET: ci-e2e-secret
+      # Placeholders: the server needs them to start; tests don't use Google login.
+      GOOGLE_CLIENT_ID: ci-placeholder
+      GOOGLE_CLIENT_SECRET: ci-placeholder
+      GOOGLE_CALLBACK_URL: http://localhost:3099/api/auth/google/callback
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
