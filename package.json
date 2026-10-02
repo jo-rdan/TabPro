@@ -16,7 +16,8 @@
     "db:generate": "yarn workspace @tabpro/server db:generate",
     "db:migrate": "yarn workspace @tabpro/server db:migrate",
     "db:studio": "yarn workspace @tabpro/server db:studio",
-    "pawapay:check": "yarn workspace @tabpro/server pawapay:check"
+    "pawapay:check": "yarn workspace @tabpro/server pawapay:check",
+    "test:e2e:local": "bash tests/e2e/local.sh"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

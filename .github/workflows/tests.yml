@@ -1,0 +1,51 @@
+name: Tests
+
+# Runs on every pull request and every push to main: builds both apps, then
+# plays a whole night at a venue (orders, payments, security) against a real
+# server and database. A red run means "don't merge".
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tabpro_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tabpro_test
+      JWT_SECRET: ci-e2e-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - name: Build server and website
+        run: yarn build
+      - name: Create database tables
+        working-directory: server
+        run: npx drizzle-kit migrate
+      - name: Start server
+        working-directory: server
+        run: |
+          PORT=3099 CLIENT_URL=http://localhost:5199 \
+          PAWAPAY_API_TOKEN=fake-test-token PAWAPAY_BASE_URL=http://localhost:3098 \
+          node dist/app.js > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3099/health && exit 0; sleep 1; done
+          cat server.log; exit 1
+      - name: End-to-end tests
+        run: API_URL=http://localhost:3099 node tests/e2e/run.mjs
+      - name: Server log
+        if: failure()
+        run: cat server/server.log
