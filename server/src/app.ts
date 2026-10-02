@@ -56,6 +56,7 @@ app.use(errorMiddleware);
 // ─── HTTP + WebSocket server ──────────────────────────────────────────────────
 import { startHeartbeatChecker } from './services/heartbeat.service';
 import { startPaymentReconciler } from './services/pawapay.service';
+import { startKeepAlive } from './lib/keepAlive';
 import { isPawapayConfigured, PAWAPAY_ENV } from './lib/pawapay';
 
 // Last line of defence: a failure in a background job (heartbeat checker,
@@ -75,6 +76,7 @@ server.listen(PORT, () => {
     : '⚠️  Mobile Money: OFF — PAWAPAY_API_TOKEN not set, customers will be asked to pay their waiter');
   startHeartbeatChecker();
   startPaymentReconciler();
+  startKeepAlive();
 });
 
 export default app;
