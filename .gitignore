@@ -5,3 +5,5 @@ dist/
 .DS_Store
 drizzle/migrations/
 *.log
+
+.claude/settings.local.json
