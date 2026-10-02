@@ -16,7 +16,8 @@ function publicVenue(venue: typeof venues.$inferSelect) {
     id: venue.id,
     name: venue.name,
     logoUrl: venue.logoUrl,
-    acceptsMobileMoney: isPawapayConfigured() && !!venue.momoPhone,
+    isDemo: venue.isDemo,
+    acceptsMobileMoney: venue.isDemo || (isPawapayConfigured() && !!venue.momoPhone),
   };
 }
 

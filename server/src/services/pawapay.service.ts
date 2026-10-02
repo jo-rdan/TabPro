@@ -12,6 +12,7 @@ import {
   getDeposit,
   getPayout,
   failureMessage,
+  toRwandaMsisdn,
   PaymentRefusedError,
   PawapayError,
 } from "../lib/pawapay";
@@ -24,6 +25,9 @@ const PENDING_DEPOSIT_REUSE_MS = 3 * 60_000;
 
 // A transfer pawaPay still doesn't know about after this long never reached it.
 const NOT_FOUND_GIVE_UP_MS = 10 * 60_000;
+
+// Demo venues never touch pawaPay: the payment "approves" itself after this.
+const DEMO_APPROVAL_MS = 4000;
 
 type Outcome = "pending" | "successful" | "failed";
 
@@ -38,8 +42,8 @@ function statementText(venueName: string): string {
 const failureCodeOf = (momoStatus: string | null) => momoStatus?.split(":")[1];
 
 /** Can customers of this venue pay through the app right now? */
-export function venueAcceptsMobileMoney(venue: { momoPhone: string | null }): boolean {
-  return isPawapayConfigured() && !!venue.momoPhone;
+export function venueAcceptsMobileMoney(venue: { momoPhone: string | null; isDemo?: boolean }): boolean {
+  return !!venue.isDemo || (isPawapayConfigured() && !!venue.momoPhone);
 }
 
 // ─── Collect from customer (tab payment) ──────────────────────────────────────
@@ -75,6 +79,23 @@ export async function requestTabPayment(
       commission: recent.tabproCommissionRwf ?? 0,
       venuePayout: recent.venuePayoutRwf ?? 0,
     };
+  }
+
+  // Demo venue: record a simulated payment, never call pawaPay.
+  if (venue.isDemo) {
+    const depositId = uuidv4();
+    await db.insert(momoPayments).values({
+      venueId: venue.id,
+      type: "demo",
+      tabId,
+      referenceId: depositId,
+      phone: toRwandaMsisdn(customerPhone),
+      amountRwf: grandTotal,
+      tabproCommissionRwf: 0,
+      venuePayoutRwf: 0,
+      status: "pending",
+    });
+    return { depositId, grandTotal, commission: 0, venuePayout: 0 };
   }
 
   // Validates the number and works out MTN vs Airtel (throws PaymentRefusedError).
@@ -133,6 +154,8 @@ export async function checkTabPaymentAndMaybeDisburse(depositId: string): Promis
   });
   if (!payment) throw new Error("Payment record not found");
 
+  if (payment.type === "demo") return settleDemoPayment(payment);
+
   let status: Outcome = payment.status;
   let momoStatus = payment.momoStatus;
   if (status === "pending") {
@@ -166,6 +189,20 @@ export async function checkTabPaymentAndMaybeDisburse(depositId: string): Promis
     where: eq(momoPayments.referenceId, depositId),
   });
   return { status, disbursementStatus: updated?.disbursementStatus ?? null };
+}
+
+// Simulated payment for demo venues: approves itself, closes the tab, no payout.
+async function settleDemoPayment(payment: typeof momoPayments.$inferSelect) {
+  if (payment.status === "pending" && Date.now() - payment.createdAt.getTime() < DEMO_APPROVAL_MS) {
+    return { status: "pending" as Outcome, disbursementStatus: null };
+  }
+  if (payment.status === "pending") {
+    await db.update(momoPayments)
+      .set({ status: "successful", momoStatus: "DEMO", resolvedAt: new Date() })
+      .where(and(eq(momoPayments.referenceId, payment.referenceId), eq(momoPayments.status, "pending")));
+  }
+  await markTabPaid(payment);
+  return { status: "successful" as Outcome, disbursementStatus: null };
 }
 
 async function markTabPaid(payment: typeof momoPayments.$inferSelect) {

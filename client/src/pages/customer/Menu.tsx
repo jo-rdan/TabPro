@@ -346,6 +346,8 @@ export default function CustomerMenu() {
   // False when the venue has no payout number or payments aren't configured —
   // the customer is asked to pay the waiter instead.
   const [acceptsMobileMoney, setAcceptsMobileMoney] = useState(true);
+  // Demo venue: everything works, but payments are simulated.
+  const [isDemo, setIsDemo] = useState(false);
   const [payReferenceId, setPayReferenceId] = useState("");
   const [foodScore, setFoodScore] = useState(0);
   const [waiterScore, setWaiterScore] = useState(0);
@@ -363,6 +365,7 @@ export default function CustomerMenu() {
     setVenueId(s.venueId);
     setVenueName(s.venueName);
     setAcceptsMobileMoney(s.acceptsMobileMoney !== false);
+    setIsDemo(!!s.isDemo);
     setTableLabel(s.tableLabel);
     setPhone(s.phone);
     const mg = s.menuGrouped as Record<string, MenuItemData[]>;
@@ -446,6 +449,7 @@ export default function CustomerMenu() {
       setVenueName(venue.name);
       if (venue.logoUrl) setVenueLogoUrl(venue.logoUrl);
       setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
+      setIsDemo(!!venue.isDemo);
       setTableLabel(table.label);
       setMenuGrouped(mg);
       setAllItems(Object.values(mg).flat() as MenuItemData[]);
@@ -459,6 +463,7 @@ export default function CustomerMenu() {
           venueId: venue.id,
           venueName: venue.name,
           acceptsMobileMoney: venue.acceptsMobileMoney !== false,
+          isDemo: !!venue.isDemo,
           tableLabel: table.label,
           phone: phone.trim(),
           menuGrouped: mg,
@@ -777,7 +782,7 @@ export default function CustomerMenu() {
               <h1 className="font-black text-gray-900 dark:text-white text-lg">
                 {venueName}
               </h1>
-              <p className="text-xs text-gray-400 mt-0.5">{tableLabel}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{tableLabel}{isDemo && <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">Demo · no real money</span>}</p>
             </div>
           </div>
         </div>
@@ -1044,7 +1049,9 @@ export default function CustomerMenu() {
                   Confirm payment
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  We'll send a Mobile Money request to this number
+                  {isDemo
+                    ? "Demo restaurant: no real Mobile Money request is sent and nothing is charged."
+                    : "We'll send a Mobile Money request to this number"}
                 </p>
               </div>
               {/* Amount */}
@@ -1130,11 +1137,17 @@ export default function CustomerMenu() {
                 Waiting for your approval
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Check{" "}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                  {payPhone}
-                </span>{" "}
-                and approve the Mobile Money request for {fmt(grandTotal)}
+                {isDemo ? (
+                  <>Demo payment: this completes by itself in a few seconds. No real money is charged.</>
+                ) : (
+                  <>
+                    Check{" "}
+                    <span className="font-semibold text-gray-700 dark:text-gray-300">
+                      {payPhone}
+                    </span>{" "}
+                    and approve the Mobile Money request for {fmt(grandTotal)}
+                  </>
+                )}
               </p>
             </div>
           )}
@@ -1314,6 +1327,7 @@ export default function CustomerMenu() {
                   </h1>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-gray-400">{tableLabel}</span>
+                    {isDemo && <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">Demo · no real money</span>}
                     {isGroupTab && (
                       <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full font-bold">
                         <Users size={10} /> Group tab

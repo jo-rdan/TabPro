@@ -10,6 +10,11 @@ TEST_URL="${DEV_URL%/*}/tabpro_test"
 PORT=3099
 export JWT_SECRET="local-e2e-secret"
 
+# A leftover server from an earlier run would answer with old code.
+if curl -sf "http://localhost:$PORT/health" >/dev/null; then
+  echo "Port $PORT is busy (old test server?). Stop it first: lsof -ti:$PORT | xargs kill" >&2; exit 1
+fi
+
 psql "$DEV_URL" -qc "drop database if exists tabpro_test" -c "create database tabpro_test" 2>/dev/null
 (cd "$ROOT/server" && DATABASE_URL="$TEST_URL" npx drizzle-kit migrate >/dev/null && yarn -s build)
 

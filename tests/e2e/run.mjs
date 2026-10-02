@@ -121,7 +121,7 @@ r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788111222', na
 const tabId = r.json?.data?.tab?.id;
 check('Customer scans QR → tab opens with waiter', r.status === 201 && !!r.json?.data?.tab?.staffId, `status ${r.status}`);
 const vkeys = Object.keys(r.json?.data?.venue ?? {}).sort().join(',');
-check('Customers only see public venue info', vkeys === 'acceptsMobileMoney,id,logoUrl,name', vkeys);
+check('Customers only see public venue info', vkeys === 'acceptsMobileMoney,id,isDemo,logoUrl,name', vkeys);
 const bobWs = socket(`venueId=${venueId}&tabId=${tabId}`);
 const anonWs = socket(`venueId=${venueId}`);
 await sleep(600);
@@ -254,6 +254,29 @@ check('…and no money is requested', r.status === 400 && pawa.state.deposits.si
 r = await call('PATCH', `/venues/${venueId}/momo-phone`, { momoPhone: '0788 123 456' }, ownerTok);
 check('Owner can set payout number later', r.status === 200 && r.json?.data?.momoPhone === '0788123456');
 check('Every request matched the pawaPay v2 format', pawa.state.schemaErrors.length === 0, pawa.state.schemaErrors.join(' | '));
+
+// ── Demo venue: payments are simulated, no money moves ───────────────────────
+console.log('\n── Demo venue');
+const owner1 = await q1(`select owner_id from venues where id=$1`, [venueId]);
+const demo = await q1(`insert into venues (owner_id,name,trial_ends_at,is_demo) values ($1,'Demo Lounge',now()+interval '30 days',true) returning id`, [owner1.owner_id]);
+const demoTable = await q1(`insert into tables (venue_id,label) values ($1,'Table 1') returning id`, [demo.id]);
+const demoCode = rnd() + rnd();
+await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [demoCode, demoTable.id]);
+const demoItem = await q1(`insert into menu_items (venue_id,name,category,price_rwf) values ($1,'Primus','Beers',1500) returning id`, [demo.id]);
+r = await call('POST', '/tabs/open', { qrCode: demoCode, phone: '0788444333' });
+const td = r.json?.data?.tab?.id;
+check('Demo venue: customer sees "demo" and can pay', r.json?.data?.venue?.isDemo === true && r.json?.data?.venue?.acceptsMobileMoney === true, `status ${r.status}`);
+await call('POST', '/orders', { tabId: td, items: [{ menuItemId: demoItem.id, quantity: 2 }] });
+const depsBefore = pawa.state.deposits.size, payoutsBefore = pawa.state.payouts.length;
+r = await call('POST', `/tabpayment/${td}/pay`, { phone: '0788444333' });
+const depD = r.json?.data?.depositId;
+check('Demo payment starts without asking pawaPay for money', r.status === 200 && !!depD && pawa.state.deposits.size === depsBefore, r.json?.error);
+r = await call('GET', `/tabpayment/${td}/pay/status/${depD}`);
+check('Demo payment shows "waiting" first', r.json?.data?.status === 'pending');
+await sleep(4500);
+r = await call('GET', `/tabpayment/${td}/pay/status/${depD}`);
+check('Demo payment "succeeds" after a few seconds, tab closed', r.json?.data?.status === 'successful' && (await q1('select status from tabs where id=$1', [td])).status === 'closed');
+check('Demo venue: no money paid out', pawa.state.payouts.length === payoutsBefore && pawa.state.deposits.size === depsBefore);
 
 // ── 4. Locked phone ──────────────────────────────────────────────────────────
 console.log('\n── Locked phone');
