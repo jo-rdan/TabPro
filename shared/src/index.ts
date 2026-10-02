@@ -38,6 +38,7 @@ export interface Venue {
   createdAt: string;
   logoUrl?: string | null;
   momoPhone?: string | null;
+  isDemo?: boolean;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────

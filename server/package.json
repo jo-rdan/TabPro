@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "pawapay:check": "tsx src/scripts/pawapay-check.ts"
+    "pawapay:check": "tsx src/scripts/pawapay-check.ts",
+    "demo:create": "tsx src/scripts/create-demo.ts"
   },
   "dependencies": {
     "@google/genai": "^1.15.0",

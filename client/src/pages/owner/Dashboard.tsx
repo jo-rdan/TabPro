@@ -285,6 +285,11 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">
             {venue?.name ?? 'Your venue'}
           </h1>
+          {venue?.isDemo && (
+            <span className="mt-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+              Demo venue · payments are simulated
+            </span>
+          )}
         </div>
       </div>
 
