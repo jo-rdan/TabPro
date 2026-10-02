@@ -36,6 +36,17 @@ async function findUnsettledTab(tableId: string) {
   return tab;
 }
 
+// Tells the venue's screens that guests just sat down and opened a tab.
+function announceTabOpened(venueId: string, tab: { id: string; tableId: string }, tableLabel: string) {
+  broadcastToVenue(venueId, {
+    type: 'tab_opened',
+    payload: { tabId: tab.id, tableId: tab.tableId, tableLabel },
+    venueId,
+    tableId: tab.tableId,
+    timestamp: new Date().toISOString(),
+  });
+}
+
 export async function openTab(qrCode: string, phone: string, name?: string) {
   const table = await getTableByQrCode(qrCode);
   if (!table) throw new Error('QR code not found or not linked to a table');
@@ -74,6 +85,7 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
     })
     .returning();
 
+  announceTabOpened(table.venue.id, tab, table.label);
   const { grouped } = await getMenuForVenue(table.venue.id);
 
   return {
@@ -121,6 +133,8 @@ export async function openTabByTableId(tableId: string, phone?: string) {
       status: 'open',
     })
     .returning();
+
+  announceTabOpened(table.venue.id, tab, table.label);
 
   // Track return visit for campaign analytics (fire-and-forget)
   trackReturnVisit(table.venue.id, customer.id).catch(() => {});

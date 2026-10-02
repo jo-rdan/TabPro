@@ -189,6 +189,7 @@ export type WsEventType =
   | "order_status_update"
   | "new_nudge"
   | "bill_requested"
+  | "tab_opened"
   | "tab_closed"
   | "new_rating"
   | "customer_away"

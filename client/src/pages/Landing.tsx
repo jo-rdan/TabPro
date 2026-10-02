@@ -146,8 +146,8 @@ function Hero() {
           </Reveal>
           <Reveal delay={160}>
             <p className="mx-auto mt-7 max-w-2xl text-[17px] leading-relaxed text-white/60 sm:text-lg">
-              TabPro turns every table into a place to order and pay. Guests scan, order and settle with Mobile Money from
-              their own phone — your team serves faster, and you see everything, live.
+              Guests order and pay with Mobile Money from their own phone. You see every table, order and payment as it
+              happens — and run your venue from anywhere.
             </p>
           </Reveal>
           <Reveal delay={240}>
