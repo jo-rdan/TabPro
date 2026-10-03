@@ -1,6 +1,14 @@
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? '' });
+// Overridable so a retired model can be swapped without a code change.
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+function assertConfigured() {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('Reading menus from photos is not switched on yet. Please add items by hand for now.');
+  }
+}
 
 interface ExtractedItem {
   name: string;
@@ -30,8 +38,9 @@ function parseResponse(text: string): ExtractedItem[] {
 }
 
 export async function extractMenuFromImage(base64Data: string, mimeType: string): Promise<ExtractedItem[]> {
+  assertConfigured();
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-001',
+    model: MODEL,
     contents: [
       {
         inlineData: {
@@ -52,8 +61,9 @@ export async function extractMenuFromImage(base64Data: string, mimeType: string)
 }
 
 export async function extractMenuFromText(text: string): Promise<ExtractedItem[]> {
+  assertConfigured();
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-001',
+    model: MODEL,
     contents: `${EXTRACT_PROMPT}\n\nMenu text:\n${text}`,
   });
 
