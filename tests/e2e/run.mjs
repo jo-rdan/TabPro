@@ -380,18 +380,30 @@ pushHits.length = 0;
 console.log('… waiting for the "order waiting" check (≤ 65s)');
 for (let i = 0; i < 65 && !pushHits.includes('/owner'); i++) await sleep(1000);
 check('Order waiting 10+ min → waiter and owner reminded', pushHits.includes('/eric') && pushHits.includes('/owner'), pushHits.join(' '));
-// Customer closes the page: a reload comes back within seconds (no alert),
-// leaving for real alerts the waiter and owner within ~20s.
+// Customer closes the page: never an alarm (people talk for hours with their
+// phone away), just a quiet sign on staff screens that clears when they're back.
 pushHits.length = 0;
+const awayBefore2 = ownerWs.events.filter((e) => e.type === 'customer_away' && e.payload?.tabId === pushTab).length;
 await call('POST', `/tabs/${pushTab}/left`);
 await sleep(2000);
 await call('POST', `/tabs/${pushTab}/heartbeat`);
-console.log('… checking the "customer left" alerts (≈45s)');
+console.log('… checking the "phone closed" sign (≈45s)');
 await sleep(21000);
-check('Customer reloads the page → no false alarm', !pushHits.includes('/owner'), pushHits.join(' '));
+check('Customer reloads the page → no sign, no alert', ownerWs.events.filter((e) => e.type === 'customer_away' && e.payload?.tabId === pushTab).length === awayBefore2);
 await call('POST', `/tabs/${pushTab}/left`);
 await sleep(21500);
-check('Customer closes the page with a bill unpaid → waiter and owner told in seconds', pushHits.includes('/eric') && pushHits.includes('/owner'), pushHits.join(' '));
+check('Customer closes the page → quiet "phone closed" sign on staff screens', ownerWs.events.filter((e) => e.type === 'customer_away' && e.payload?.tabId === pushTab).length === awayBefore2 + 1);
+check('…and nobody\'s phone buzzes for it', pushHits.length === 0, pushHits.join(' '));
+await call('POST', `/tabs/${pushTab}/heartbeat`);
+await sleep(500);
+check('Guest opens TabPro again → the sign goes away', ownerWs.events.some((e) => e.type === 'customer_back' && e.payload?.tabId === pushTab));
+// A bill nobody has touched for hours shows up for the owner, with the guest's number.
+await pg.query(`update tabs set last_seen_at = now() - interval '3 hours', opened_at = now() - interval '4 hours' where id=$1`, [pushTab]);
+r = await call('GET', `/dashboard/open-bills/${venueId}`, null, ownerTok);
+const leftOpen = (r.json?.data ?? []).find((b) => b.tabId === pushTab);
+check('Owner sees bills left open, with amount and guest phone', !!leftOpen && leftOpen.total > 0 && /^07\d{8}$/.test(leftOpen.phone ?? ''), JSON.stringify(leftOpen));
+r = await call('GET', `/dashboard/open-bills/${venueId}`, null, rivalTokEarly);
+check('Another owner CANNOT see my open bills', r.status === 403, `status ${r.status}`);
 pushHits.length = 0;
 await call('POST', `/tabs/${pushTab}/close`, null, ericTok);
 await sleep(800);

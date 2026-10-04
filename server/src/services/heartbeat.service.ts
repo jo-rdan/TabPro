@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { tabs, orders } from '../models/schema';
+import { tabs, orders, tables } from '../models/schema';
 import { eq, and, lt, inArray, isNull } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
 import { notifyTable } from './push.service';
@@ -19,11 +19,24 @@ const alertedTabs = new Set<string>();
 
 // ─── Update last seen timestamp ───────────────────────────────────────────────
 export async function recordHeartbeat(tabId: string) {
-  alertedTabs.delete(tabId);
-  await db
+  const [tab] = await db
     .update(tabs)
     .set({ lastSeenAt: new Date() })
-    .where(and(eq(tabs.id, tabId), inArray(tabs.status, ['open', 'bill_requested'])));
+    .where(and(eq(tabs.id, tabId), inArray(tabs.status, ['open', 'bill_requested'])))
+    .returning();
+  // They're back: take the "phone closed" sign off the waiter's and owner's screens.
+  if (alertedTabs.delete(tabId) && tab) {
+    const table = await db.query.tables.findFirst({ where: eq(tables.id, tab.tableId) });
+    if (table) {
+      broadcastToVenue(table.venueId, {
+        type: 'customer_back',
+        payload: { tabId, tableId: tab.tableId, tableLabel: table.label },
+        venueId: table.venueId,
+        tableId: tab.tableId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
 }
 
 type WatchedTab = NonNullable<Awaited<ReturnType<typeof loadTab>>>;
@@ -45,38 +58,21 @@ function unpaidTotal(tab: WatchedTab) {
   return tab.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.unitPriceRwf * i.quantity, 0), 0);
 }
 
+// A closed page or a quiet phone doesn't mean the guest left: people talk for
+// hours with their phone in their pocket. So no buzzing and no alarm, just a
+// quiet "phone closed" sign next to the table on staff screens. Unpaid bills
+// are summed up for the owner after closing (see checkUnpaidBills).
 async function raiseAway(tab: WatchedTab, reason: 'closed' | 'silent') {
   if (alertedTabs.has(tab.id)) return;
   alertedTabs.add(tab.id);
 
-  const venueId = tab.table.venueId;
-  const tableLabel = tab.table.label;
-  const total = unpaidTotal(tab);
-  const owed = total > 0 ? `${total.toLocaleString('en-US')} RWF` : 'the bill';
-
-  broadcastToVenue(venueId, {
+  broadcastToVenue(tab.table.venueId, {
     type: 'customer_away',
-    payload: { tabId: tab.id, tableId: tab.tableId, tableLabel, lastSeenAt: tab.lastSeenAt, reason, total },
-    venueId,
+    payload: { tabId: tab.id, tableId: tab.tableId, tableLabel: tab.table.label, lastSeenAt: tab.lastSeenAt, reason, total: unpaidTotal(tab) },
+    venueId: tab.table.venueId,
     tableId: tab.tableId,
     timestamp: new Date().toISOString(),
   });
-
-  const title =
-    reason === 'closed'
-      ? `🚪 ${tableLabel} closed TabPro with ${owed} unpaid`
-      : `👀 ${tableLabel}: customer may have left`;
-  const detail =
-    reason === 'closed'
-      ? 'Their page was just closed. Check they are still at the table.'
-      : `No sign of them for 5 minutes and ${owed} is still unpaid.`;
-  await notifyTable(
-    venueId,
-    tab.tableId,
-    tab.staffId,
-    { title, body: `${detail} Go check now.` },
-    { title, body: `${detail} Their waiter has been told.` },
-  );
 }
 
 // ─── The customer's page says it's closing ───────────────────────────────────

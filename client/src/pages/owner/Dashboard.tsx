@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';import { TrendingUp, Users, Clock, Star, ChevronRight, ArrowUpRight, BellRing, CreditCard, X } from 'lucide-react';
+import { Link } from 'react-router-dom';import { TrendingUp, Users, Clock, Star, ChevronRight, ArrowUpRight, BellRing, CreditCard, X, PhoneOff } from 'lucide-react';
+import OpenBills from '../../components/OpenBills';
 import Layout from '../../components/Layout';
 import ReceiptModal from '../../components/ReceiptModal';
 import JoinRequests from '../../components/JoinRequests';
@@ -250,18 +251,22 @@ export default function Dashboard() {
         setJoinRefresh((n) => n + 1);
         setToast(`👋 ${p.name} wants to join your team`);
       }
+      // A closed page isn't a guest who left: show a quiet sign until they
+      // come back or the bill is settled.
       if (event.type === 'customer_away') {
         const p = event.payload as any;
         const alert: DashboardAlert = {
-          id: `away-${p.tabId}-${Date.now()}`,
+          id: `away-${p.tabId}`,
           type: 'away',
           tableLabel: p.tableLabel,
           tabId: p.tabId,
           timestamp: event.timestamp,
         };
-        setAlerts((prev) => [alert, ...prev.slice(0, 9)]);
-        // Auto-dismiss after 2 minutes
-        setTimeout(() => setAlerts((prev) => prev.filter((a) => a.id !== alert.id)), 120_000);
+        setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id).slice(0, 9)]);
+      }
+      if (event.type === 'customer_back') {
+        const p = event.payload as any;
+        setAlerts((prev) => prev.filter((a) => a.id !== `away-${p.tabId}`));
       }
     },
   });
@@ -365,6 +370,8 @@ export default function Dashboard() {
 
       {venue && <JoinRequests venueId={venue.id} refreshKey={joinRefresh} />}
 
+      {venue && <OpenBills venueId={venue.id} />}
+
       {/* ── Live alerts: guests seated, nudges & bill requests ──────────── */}
       {alerts.length > 0 && (
         <div className="space-y-2 mb-5">
@@ -377,7 +384,7 @@ export default function Dashboard() {
                   : alert.type === 'seated'
                   ? 'bg-white dark:bg-[#161B22] border-gray-200 dark:border-gray-800'
                   : alert.type === 'away'
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200/70 dark:border-blue-700/40'
+                  ? 'bg-white dark:bg-[#161B22] border-gray-200 dark:border-gray-800'
                   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200/70 dark:border-amber-700/40'
               }`}
             >
@@ -388,7 +395,7 @@ export default function Dashboard() {
                     : alert.type === 'seated'
                     ? 'bg-brand-50 dark:bg-brand-900/30'
                     : alert.type === 'away'
-                    ? 'bg-blue-100 dark:bg-blue-900/40'
+                    ? 'bg-gray-100 dark:bg-gray-800'
                     : 'bg-amber-100 dark:bg-amber-900/40'
                 }`}>
                   {alert.type === 'bill'
@@ -396,7 +403,7 @@ export default function Dashboard() {
                     : alert.type === 'seated'
                     ? <Users size={15} className="text-brand-600 dark:text-brand-400" />
                     : alert.type === 'away'
-                    ? <span style={{ fontSize: 15 }}>👀</span>
+                    ? <PhoneOff size={15} className="text-gray-500 dark:text-gray-400" />
                     : <BellRing size={15} className="text-amber-600 dark:text-amber-400" />
                   }
                 </div>
@@ -407,10 +414,10 @@ export default function Dashboard() {
                       : alert.type === 'seated'
                       ? 'text-gray-900 dark:text-white'
                       : alert.type === 'away'
-                      ? 'text-blue-800 dark:text-blue-300'
+                      ? 'text-gray-900 dark:text-white'
                       : 'text-amber-800 dark:text-amber-300'
                   }`}>
-                    {alert.tableLabel} — {alert.type === 'bill' ? 'Wants to pay' : alert.type === 'seated' ? 'Guests seated' : alert.type === 'away' ? 'May have stepped away' : 'Needs attention'}
+                    {alert.tableLabel} — {alert.type === 'bill' ? 'Wants to pay' : alert.type === 'seated' ? 'Guests seated' : alert.type === 'away' ? 'Phone closed · bill still open' : 'Needs attention'}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {new Date(alert.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}

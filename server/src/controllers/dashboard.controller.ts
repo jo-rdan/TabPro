@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getDashboardStats, getActivityLog, getEndOfNightReport } from '../services/dashboard.service';
 import { getBusyHoursHeatmap } from '../services/heatmap.service';
+import { getLeftOpenBills } from '../services/unpaid.service';
 import { ApiResponse } from '@tabpro/shared';
 
 export async function handleGetStats(req: Request, res: Response) {
@@ -23,6 +24,12 @@ export async function handleGetEndOfNightReport(req: Request, res: Response) {
 
 export async function handleGetBusyHours(req: Request, res: Response) {
   const data = await getBusyHoursHeatmap(req.params.venueId);
+  const body: ApiResponse = { success: true, data };
+  res.json(body);
+}
+
+export async function handleGetOpenBills(req: Request, res: Response) {
+  const data = await getLeftOpenBills(req.params.venueId);
   const body: ApiResponse = { success: true, data };
   res.json(body);
 }
