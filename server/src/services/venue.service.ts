@@ -23,6 +23,7 @@ export async function createVenue(ownerId: string, name: string, location?: stri
 export async function getVenuesByOwner(ownerId: string) {
   return db.query.venues.findMany({
     where: eq(venues.ownerId, ownerId),
+    orderBy: (v, { asc }) => [asc(v.createdAt)],
     with: { subscription: true },
   });
 }

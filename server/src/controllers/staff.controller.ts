@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createStaff, acceptInvite, getStaffForVenue, getMyPoints, toggleStaffActive, resendInvite, setPin, verifyPin, loginByPhone } from '../services/staff.service';
+import { createStaff, acceptInvite, getStaffForVenue, getMyPoints, toggleStaffActive, resendInvite, setPin, verifyPin, loginByPhone, requestToJoin, approveJoinRequest, declineJoinRequest } from '../services/staff.service';
 import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
 
@@ -117,4 +117,51 @@ export async function handleStaffLogin(req: Request, res: Response) {
 
   const body: ApiResponse = { success: true, data: result };
   res.json(body);
+}
+
+const joinSchema = z.object({
+  code: z.string().min(1, 'Missing sticker code'),
+  name: z.string().trim().min(2, 'Enter your name'),
+  phone: z.string().min(9, 'Enter your phone number'),
+  pin: z.string().regex(/^\d{4}$/, 'PIN must be 4 digits'),
+});
+
+export async function handleJoinRequest(req: Request, res: Response) {
+  const parsed = joinSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const body: ApiResponse = { success: false, error: parsed.error.errors[0].message };
+    res.status(400).json(body);
+    return;
+  }
+  try {
+    const { code, name, phone, pin } = parsed.data;
+    const result = await requestToJoin(code, name, phone, pin);
+    const body: ApiResponse = { success: true, data: result };
+    res.status(201).json(body);
+  } catch (err: any) {
+    const body: ApiResponse = { success: false, error: err.message };
+    res.status(400).json(body);
+  }
+}
+
+export async function handleApproveJoin(req: Request, res: Response) {
+  try {
+    const member = await approveJoinRequest(req.params.staffId);
+    const body: ApiResponse = { success: true, data: { id: member.id, name: member.name } };
+    res.json(body);
+  } catch (err: any) {
+    const body: ApiResponse = { success: false, error: err.message };
+    res.status(400).json(body);
+  }
+}
+
+export async function handleDeclineJoin(req: Request, res: Response) {
+  try {
+    await declineJoinRequest(req.params.staffId);
+    const body: ApiResponse = { success: true, data: null };
+    res.json(body);
+  } catch (err: any) {
+    const body: ApiResponse = { success: false, error: err.message };
+    res.status(400).json(body);
+  }
 }

@@ -292,6 +292,38 @@ await pg.query(`update tabs set status='abandoned' where id=$1`, [t4]);
 r = await call('POST', '/tabs/open', { qrCode: codes[1], phone: '0788999111' });
 check('Old "abandoned" tab recovered on re-scan', r.json?.data?.tab?.id === t4 && r.json?.data?.tab?.status === 'open');
 
+// ── Join the team (waiter scans the clock-in sticker) ────────────────────────
+console.log('\n── Join the team');
+const rivalTokEarly = await newOwner('Rival early');
+const clockCode = ('CK' + rnd()).toUpperCase();
+r = await call('POST', `/clockin/claim/${venueId}`, { code: clockCode }, ownerTok);
+check('Owner claims the clock-in sticker', r.status === 200, r.json?.error);
+const newPhone = phone();
+r = await call('POST', '/staff/join', { code: clockCode, name: 'Eric', phone: newPhone, pin: '4321' });
+const ericId = (await q1('select id from staff where phone=$1 and venue_id=$2', [newPhone, venueId]))?.id;
+check('New waiter asks to join by scanning the sticker', r.status === 201 && !!ericId, r.json?.error);
+await sleep(300);
+check('Owner is told live "Eric wants to join"', ownerWs.events.some((e) => e.type === 'staff_join_request' && e.payload?.name === 'Eric'));
+r = await call('POST', '/staff/login', { phone: newPhone, pin: '4321' });
+check('Waiter cannot log in before approval (clear reason)', r.status !== 200 && /approved/.test(r.json?.error ?? ''), r.json?.error);
+r = await call('POST', '/staff/join', { code: 'NOPE123', name: 'Eve', phone: phone(), pin: '1111' });
+check('Unknown sticker → join refused', r.status === 400);
+r = await call('POST', `/staff/${ericId}/approve`, null, rivalTokEarly);
+check('Another owner CANNOT approve my join requests', r.status === 403, `status ${r.status}`);
+r = await call('POST', `/staff/${ericId}/approve`, null, ownerTok);
+check('Owner approves with one tap', r.status === 200, r.json?.error);
+r = await call('POST', '/staff/login', { phone: newPhone, pin: '4321' });
+check('Approved waiter logs in with the PIN they chose', r.status === 200, r.json?.error);
+r = await call('GET', `/tables/assignments/${venueId}`, null, ownerTok);
+check('Approved waiter gets tables automatically', (r.json?.data ?? []).some((a) => a.staffId === ericId && a.tableIds.length > 0));
+r = await call('POST', '/staff/join', { code: clockCode, name: 'Eric', phone: newPhone, pin: '4321' });
+check('Already on the team → told to log in instead', r.status === 400 && /already on the team/.test(r.json?.error ?? ''), r.json?.error);
+const strangerPhone = phone();
+await call('POST', '/staff/join', { code: clockCode, name: 'Stranger', phone: strangerPhone, pin: '9999' });
+const strangerId = (await q1('select id from staff where phone=$1', [strangerPhone]))?.id;
+r = await call('DELETE', `/staff/${strangerId}/join-request`, null, ownerTok);
+check('Owner declines a stranger → removed', r.status === 200 && !(await q1('select id from staff where id=$1', [strangerId])));
+
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');

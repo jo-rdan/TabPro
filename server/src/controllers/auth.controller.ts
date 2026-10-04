@@ -41,6 +41,8 @@ export async function getMe(req: Request, res: Response) {
       where: eq(owners.id, ownerId),
       with: {
         venues: {
+          // Oldest first, so the dashboard always opens the same venue.
+          orderBy: (v, { asc }) => [asc(v.createdAt)],
           with: {
             subscription: true,
           },

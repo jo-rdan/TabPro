@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';import { TrendingUp, Users, Clock, Star, ChevronRight, ArrowUpRight, BellRing, CreditCard, X } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ReceiptModal from '../../components/ReceiptModal';
+import JoinRequests from '../../components/JoinRequests';
 import LogoUploader from '../../components/LogoUploader';
 import { useAuthStore } from '../../lib/auth';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -65,6 +66,7 @@ export default function Dashboard() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [alerts, setAlerts] = useState<DashboardAlert[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [joinRefresh, setJoinRefresh] = useState(0);
 
   // Push notifications — no staffId means the server correctly files this
   // subscription under the owner, not a staff member.
@@ -216,6 +218,11 @@ export default function Dashboard() {
         setToast(`💰 ${p.tableLabel} paid ${p.grandTotal?.toLocaleString()} RWF — payout of ${p.venuePayout?.toLocaleString()} RWF on its way to your Mobile Money`);
         setAlerts((prev) => prev.filter((a) => a.tabId !== p.tabId));
       }
+      if (event.type === 'staff_join_request') {
+        const p = event.payload as any;
+        setJoinRefresh((n) => n + 1);
+        setToast(`👋 ${p.name} wants to join your team`);
+      }
       if (event.type === 'customer_away') {
         const p = event.payload as any;
         const alert: DashboardAlert = {
@@ -326,6 +333,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {venue && <JoinRequests venueId={venue.id} refreshKey={joinRefresh} />}
 
       {/* ── Live alerts: guests seated, nudges & bill requests ──────────── */}
       {alerts.length > 0 && (

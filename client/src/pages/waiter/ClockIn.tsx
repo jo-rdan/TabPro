@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clock, CheckCircle, LogOut } from "lucide-react";
+import { Clock, CheckCircle, LogOut, UserPlus } from "lucide-react";
 import Logo from "../../components/Logo";
 import { apiFetch } from "../../lib/apiFetch";
 
@@ -27,7 +27,7 @@ interface ClockStatus {
   clockedInAt?: string;
 }
 
-type ScreenState = "resolving" | "expired" | "login" | "picker" | "pin" | "active" | "done";
+type ScreenState = "resolving" | "expired" | "login" | "picker" | "pin" | "active" | "done" | "join" | "joined";
 
 export default function ClockIn() {
   const [searchParams] = useSearchParams();
@@ -55,6 +55,11 @@ export default function ClockIn() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [doneMessage, setDoneMessage] = useState("");
+
+  // Join request (waiter not on the team yet)
+  const [joinName, setJoinName] = useState("");
+  const [joinPin, setJoinPin] = useState("");
+  const [joinedVenue, setJoinedVenue] = useState("");
 
   // ── Step 1: scanning the sticker mints a fresh 90s one-time session ───────────
   useEffect(() => {
@@ -93,7 +98,8 @@ export default function ClockIn() {
       setSecondsLeft((s) => {
         if (s <= 1) {
           if (countdownRef.current) clearInterval(countdownRef.current);
-          setScreen((cur) => (cur === "active" || cur === "done" ? cur : "expired"));
+          // Joining has no time limit — the request needs the owner's approval anyway.
+          setScreen((cur) => (["active", "done", "join", "joined"].includes(cur) ? cur : "expired"));
           setError("Your 90 seconds ran out. Scan the sticker again.");
           return 0;
         }
@@ -254,6 +260,35 @@ export default function ClockIn() {
     }
   }
 
+  // ── Join the team (waiter not registered yet) ────────────────────────────────
+
+  async function submitJoin() {
+    if (!joinName.trim() || !phone.trim() || !/^\d{4}$/.test(joinPin)) {
+      setError("Enter your name, phone number and a 4-digit PIN.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const res = await apiFetch("/staff/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, name: joinName.trim(), phone: phone.trim(), pin: joinPin }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error || "Could not send your request.");
+        return;
+      }
+      setJoinedVenue(data.data.venueName);
+      setScreen("joined");
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // ── Clock out ───────────────────────────────────────────────────────────────────
 
   async function handleClockOut() {
@@ -357,7 +392,87 @@ export default function ClockIn() {
               >
                 {loading ? "Signing in…" : "Continue"}
               </button>
+
+              <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">New here and not on TabPro yet?</p>
+                <button
+                  onClick={() => { setError(""); setScreen("join"); }}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700"
+                >
+                  <UserPlus size={15} /> Join the team
+                </button>
+              </div>
             </>
+          )}
+
+          {screen === "join" && (
+            <>
+              <div className="w-11 h-11 rounded-2xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center mb-4">
+                <UserPlus size={20} className="text-brand-500" />
+              </div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Join the team</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                Your manager gets your request and approves it with one tap.
+              </p>
+
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Your name</label>
+              <input
+                value={joinName}
+                onChange={(e) => setJoinName(e.target.value)}
+                placeholder="e.g. Eric"
+                autoComplete="name"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+              />
+
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Phone number</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. 0781234567"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+              />
+
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                Choose a 4-digit PIN <span className="font-normal text-gray-400">(you'll use it to log in)</span>
+              </label>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                value={joinPin}
+                onChange={(e) => { if (/^\d{0,4}$/.test(e.target.value)) setJoinPin(e.target.value); }}
+                placeholder="••••"
+                className="w-full px-4 py-2.5 text-center tracking-[0.6em] text-lg font-bold border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+              />
+
+              {error && <p className="text-xs text-red-500 mb-3 text-center">{error}</p>}
+
+              <button
+                onClick={submitJoin}
+                disabled={loading}
+                className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+              >
+                {loading ? "Sending…" : "Send request"}
+              </button>
+              <button
+                onClick={() => { setError(""); setScreen("login"); }}
+                className="w-full mt-2 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 py-2"
+              >
+                I already have an account
+              </button>
+            </>
+          )}
+
+          {screen === "joined" && (
+            <div className="text-center py-4">
+              <CheckCircle size={32} className="text-green-500 mx-auto mb-3" />
+              <h1 className="text-base font-bold text-gray-900 dark:text-white mb-1">Request sent!</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Ask your manager to approve you in TabPro{joinedVenue ? ` for ${joinedVenue}` : ""}.
+                Then scan this sticker again and log in with your phone number and PIN.
+              </p>
+            </div>
           )}
 
           {screen === "picker" && (
