@@ -375,7 +375,8 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   venueId: uuid("venue_id")
     .references(() => venues.id, { onDelete: "cascade" })
     .notNull(),
-  endpoint: text("endpoint").notNull().unique(),
+  // Not unique: one browser can be signed up as the owner and as a waiter.
+  endpoint: text("endpoint").notNull(),
   p256dh: text("p256dh").notNull(),
   auth: text("auth").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

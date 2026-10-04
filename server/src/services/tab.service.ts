@@ -5,7 +5,7 @@ import { getTableByQrCode } from './qr.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
-import { sendPushToVenue, sendPushToStaff, sendPushToOwner } from './push.service';
+import { notifyTable } from './push.service';
 import { trackReturnVisit } from './campaign.service';
 import { isPawapayConfigured } from '../lib/pawapay';
 
@@ -187,10 +187,12 @@ export async function nudgeWaiter(tabId: string) {
     timestamp: new Date().toISOString(),
   });
 
-  await sendPushToVenue(
+  await notifyTable(
     tab.table.venueId,
-    `👋 ${tab.table.label} needs you`,
-    'A customer is nudging for attention'
+    tab.tableId,
+    tab.staffId,
+    { title: `👋 ${tab.table.label} needs you`, body: 'A customer is calling for a waiter' },
+    { title: `👋 ${tab.table.label} called a waiter`, body: 'Their waiter has been notified' },
   );
 
   // Deduct points from assigned waiter: −2 first nudge, −5 on repeat
@@ -236,19 +238,13 @@ export async function requestBill(tabId: string) {
     timestamp: new Date().toISOString(),
   });
 
-  // Waiter notification — action-oriented, they need to move fast
-  await sendPushToStaff(
+  // Waiter: action-oriented, they need to move fast. Owner: calm, informative.
+  await notifyTable(
     tab.table.venueId,
     tab.tableId,
-    `💳 ${tab.table.label} is ready to pay`,
-    'Head over — the customer wants to settle up'
-  );
-
-  // Owner notification — financial awareness, calm and informative
-  await sendPushToOwner(
-    tab.table.venueId,
-    `💰 ${tab.table.label} payment incoming`,
-    'A customer is about to pay their tab'
+    tab.staffId,
+    { title: `💳 ${tab.table.label} is ready to pay`, body: 'Head over — the customer wants to settle up' },
+    { title: `💰 ${tab.table.label} payment incoming`, body: 'A customer is about to pay their tab' },
   );
 
   return updated;

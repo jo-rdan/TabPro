@@ -20,6 +20,7 @@ psql "$DEV_URL" -qc "drop database if exists tabpro_test" -c "create database ta
 
 (cd "$ROOT/server" && DATABASE_URL="$TEST_URL" PORT=$PORT CLIENT_URL=http://localhost:5199 \
   PAWAPAY_API_TOKEN=fake-test-token PAWAPAY_BASE_URL=http://localhost:3098 \
+  NODE_TLS_REJECT_UNAUTHORIZED=0 VAPID_PUBLIC_KEY=BN1WjYdFaRJGeLI_bwwEqPGyyki_umEOR7ys5wA1dilR_50BUGE5NU6yTjCXRHaBs1m0GNPJ0UjDzoKozLWKGyc VAPID_PRIVATE_KEY=U654T5SlyDptUP8iTr6udaHtzRwYPQOPX1oSUzBl7Tk \
   exec node dist/app.js > /tmp/tabpro-e2e-server.log 2>&1) &
 SERVER_PID=$!
 trap 'kill $SERVER_PID 2>/dev/null; psql "$DEV_URL" -qc "drop database if exists tabpro_test" 2>/dev/null || true' EXIT

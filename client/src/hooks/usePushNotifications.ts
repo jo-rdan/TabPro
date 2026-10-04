@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../lib/api";
 
 interface PushSubscribeOptions {
@@ -17,6 +17,13 @@ export function usePushNotifications() {
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
     "PushManager" in window;
+
+  // iPhones only allow web notifications for sites added to the Home Screen.
+  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches || (navigator as any).standalone === true);
+  const needsHomeScreen = isIOS && !isStandalone;
 
   const subscribe = async ({
     venueId,
@@ -76,7 +83,23 @@ export function usePushNotifications() {
     }
   };
 
-  return { isSupported, permission, subscribe };
+  return { isSupported, permission, subscribe, needsHomeScreen };
+}
+
+// Already allowed on this device? Quietly (re)register it on every visit: the
+// server may have forgotten it (new database, expired subscription), and the
+// "Enable" banner only shows while permission is still undecided.
+export function useKeepPushSubscribed(options: PushSubscribeOptions | null) {
+  const { isSupported, subscribe } = usePushNotifications();
+  const done = useRef("");
+  const key = options ? `${options.venueId}|${options.staffId ?? ""}|${options.token ?? ""}` : "";
+  useEffect(() => {
+    if (!options || !isSupported || done.current === key) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    done.current = key;
+    subscribe(options).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, isSupported]);
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {

@@ -9,7 +9,8 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { WsEvent } from '@tabpro/shared';
 import Toast from '../../components/Toast';
 import api from '../../lib/api';
-import { usePushNotifications } from '../../hooks/usePushNotifications';
+import { usePushNotifications, useKeepPushSubscribed } from '../../hooks/usePushNotifications';
+import NotificationNotice from '../../components/NotificationNotice';
 
 interface Stats {
   revenueTonight: number;
@@ -81,6 +82,7 @@ export default function Dashboard() {
   const [pushDismissed, setPushDismissed] = useState(false);
   const [pushError, setPushError] = useState(false);
   const showPushBanner = isSupported && !pushDismissed && (permission === 'default' || pushError);
+  useKeepPushSubscribed(venue ? { venueId: venue.id } : null);
   const handleEnablePush = async () => {
     if (!venue) return;
     const ok = await subscribe({ venueId: venue.id });
@@ -325,6 +327,8 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <NotificationNotice />
+
       {/* ── Push notification opt-in ────────────────────────────────────── */}
       {showPushBanner && (
         <div
@@ -339,7 +343,7 @@ export default function Dashboard() {
             <p className={`text-xs font-medium ${pushError ? 'text-red-700 dark:text-red-300' : 'text-brand-700 dark:text-brand-300'}`}>
               {pushError
                 ? "Couldn't enable notifications — check your connection and try again"
-                : 'Enable notifications to get alerts for bill requests and nudges when this tab is in the background'}
+                : 'Turn on notifications to hear about orders, waiter calls and payments, even when TabPro is closed'}
             </p>
           </div>
           <div className="flex items-center gap-2">

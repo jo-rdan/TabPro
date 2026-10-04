@@ -20,7 +20,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import { usePushNotifications } from "../../hooks/usePushNotifications";
+import { usePushNotifications, useKeepPushSubscribed } from "../../hooks/usePushNotifications";
+import NotificationNotice from "../../components/NotificationNotice";
 import { WsEvent } from "@tabpro/shared";
 import VenueLogo from "../../components/VenueLogo";
 import NotificationBell, {
@@ -219,6 +220,8 @@ export default function WaiterOrders() {
   }
   const [myTables, setMyTables] = useState<AssignedTable[]>([]);
   const [tablesLoading, setTablesLoading] = useState(false);
+
+  useKeepPushSubscribed(venueId && staffToken ? { venueId, staffId: staffId || undefined, token: staffToken } : null);
 
   const handleEnablePush = async () => {
     if (!venueId) return;
@@ -860,6 +863,8 @@ export default function WaiterOrders() {
         </div>
       </div>
       {/* Push notification banner */}
+      <NotificationNotice className="px-4 pt-3" />
+
       {showPushBanner && (
         <div
           className={`mx-4 mt-3 border rounded-xl px-4 py-3 flex items-center justify-between ${
@@ -882,7 +887,7 @@ export default function WaiterOrders() {
             >
               {pushError
                 ? "Couldn't enable notifications — check your connection and try again"
-                : "Enable notifications to get alerts when screen is off"}
+                : "Turn on notifications to hear about your tables, even when your screen is off"}
             </p>
           </div>
           <div className="flex items-center gap-2">

@@ -8,6 +8,12 @@
 // Exits 1 if any check fails.
 import { createRequire } from 'module';
 import { startFakePawapay } from './fake-pawapay.mjs';
+import https from 'https';
+import crypto from 'crypto';
+import { execSync } from 'child_process';
+import { mkdtempSync, readFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 const require = createRequire(new URL('../../server/package.json', import.meta.url));
 const jwt = require('jsonwebtoken');
@@ -318,6 +324,47 @@ r = await call('GET', `/tables/assignments/${venueId}`, null, ownerTok);
 check('Approved waiter gets tables automatically', (r.json?.data ?? []).some((a) => a.staffId === ericId && a.tableIds.length > 0));
 r = await call('POST', '/staff/join', { code: clockCode, name: 'Eric', phone: newPhone, pin: '4321' });
 check('Already on the team → told to log in instead', r.status === 400 && /already on the team/.test(r.json?.error ?? ''), r.json?.error);
+
+// ── Notifications reach the right phones (fake push service on :3097) ───────
+console.log('\n── Notifications');
+const pushHits = [];
+// Push services are always https: serve a throwaway self-signed certificate
+// (the test server runs with NODE_TLS_REJECT_UNAUTHORIZED=0).
+const certDir = mkdtempSync(join(tmpdir(), 'tabpro-push-'));
+execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout ${certDir}/k.pem -out ${certDir}/c.pem -days 1 -subj /CN=localhost`, { stdio: 'ignore' });
+const pushServer = https
+  .createServer({ key: readFileSync(`${certDir}/k.pem`), cert: readFileSync(`${certDir}/c.pem`) }, (req, res) => { pushHits.push(req.url); req.resume(); res.statusCode = 201; res.end(); })
+  .listen(3097);
+const device = (name) => {
+  const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys();
+  return { endpoint: `https://localhost:3097/${name}`, keys: { p256dh: ecdh.getPublicKey('base64url'), auth: crypto.randomBytes(16).toString('base64url') } };
+};
+const ericTok = r.json?.data?.token ?? (await call('POST', '/staff/login', { phone: newPhone, pin: '4321' })).json?.data?.token;
+const sameDevice = device('jordan-phone');
+r = await call('POST', '/push/subscribe', { venueId, subscription: device('owner') }, ownerTok);
+check('Owner turns on notifications', r.status === 201, r.json?.error);
+r = await call('POST', '/push/subscribe', { venueId, subscription: device('alice') }, staffTok);
+check('Waiter turns on notifications', r.status === 201, r.json?.error);
+await call('POST', '/push/subscribe', { venueId, subscription: device('eric') }, ericTok);
+await call('POST', '/push/subscribe', { venueId, subscription: sameDevice }, ownerTok);
+r = await call('POST', '/push/subscribe', { venueId, subscription: sameDevice }, ericTok);
+const sameRows = await q1('select count(*)::int n from push_subscriptions where endpoint=$1', [sameDevice.endpoint]);
+check('One phone can get alerts as owner AND as waiter', r.status === 201 && sameRows.n === 2, `${sameRows.n} rows`);
+const pushTableRow = await q1(`insert into tables (venue_id,label) values ($1,'Terrace 1') returning id`, [venueId]);
+const pushCode = rnd() + rnd();
+await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [pushCode, pushTableRow.id]);
+await pg.query(`insert into table_assignments (table_id,staff_id,shift_date) values ($1,$2,'permanent')`, [pushTableRow.id, ericId]);
+const ericTable = { code: pushCode };
+pushHits.length = 0;
+r = await call('POST', '/tabs/open', { qrCode: ericTable.code, phone: phone() });
+const pushTab = r.json?.data?.tab?.id;
+await call('POST', '/orders', { tabId: pushTab, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
+await sleep(800);
+check('New order → that table\'s waiter and the owner are notified', pushHits.includes('/eric') && pushHits.includes('/owner'), pushHits.join(' '));
+check('…and other waiters are not disturbed', !pushHits.includes('/alice'), pushHits.join(' '));
+check('A phone signed in twice gets the alert once', pushHits.filter((h) => h === '/jordan-phone').length === 1, pushHits.join(' '));
+pushServer.close();
+
 const strangerPhone = phone();
 await call('POST', '/staff/join', { code: clockCode, name: 'Stranger', phone: strangerPhone, pin: '9999' });
 const strangerId = (await q1('select id from staff where phone=$1', [strangerPhone]))?.id;
