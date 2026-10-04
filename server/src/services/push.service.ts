@@ -9,7 +9,7 @@ dotenv.config();
 // Initialize VAPID
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    process.env.VAPID_EMAIL || "mailto:admin@tabpro.app",
+    process.env.VAPID_EMAIL || "mailto:info@tabpro.lol",
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY,
   );

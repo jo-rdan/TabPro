@@ -34,7 +34,7 @@ import {
 // Legal name and contact details shown on the site.
 const COMPANY = {
   legalName: "VNT250 Ltd",
-  email: "iga.enterprise.ltd@gmail.com",
+  email: "info@tabpro.lol",
   phone: "+250 781 268 924",
   whatsapp: "https://wa.me/250781268924?text=Hi%20TabPro%2C%20I%27d%20like%20TabPro%20for%20my%20venue",
 };
