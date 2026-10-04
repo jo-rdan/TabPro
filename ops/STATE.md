@@ -26,7 +26,7 @@ Keep this short and current. The bot and interactive sessions both update it.
 
 ## Needs Jordan
 - **Aug 2027:** renew tabpro.lol before 2027-09-29 (auto-renew is OFF; renewal ≈ $26.26 at Porkbun).
-- Email: Gmail Apps Script (EMAIL_SCRIPT_URL/SECRET on Render) + Porkbun forwarding hello@/info@tabpro.lol → then update the website contact email.
+- Email: info@tabpro.lol forwards to Gmail (done 2026-10-04). Still to do: Gmail Apps Script (EMAIL_SCRIPT_URL/SECRET on Render) for demo-request emails.
 - PR #19 (Tonight's summary) can't be merged: its `Tests` run is waiting for approval. Open the PR → "Approve and run" (or Settings → Actions → General → fork/approval settings), then the bot merges it.
 - Bank document → pawaPay email (Mon 2026-10-05).
 - Buffer: an access token so posts can be scheduled automatically.
