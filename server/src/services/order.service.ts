@@ -2,7 +2,7 @@ import { db } from '../lib/db';
 import { orders, orderItems, tabs, menuItems, staffPoints, tableAssignments } from '../models/schema';
 import { eq, and } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
-import { sendPushToVenue } from './push.service';
+import { notifyTable } from './push.service';
 
 interface OrderItemInput {
   menuItemId: string;
@@ -91,13 +91,10 @@ export async function placeOrder(
     timestamp: new Date().toISOString(),
   });
 
-  // Push notification to waiter
+  // Push notification to the table's waiter and the owner
   const itemSummary = items.map((item, i) => `${menuItemRecords[i]!.name} ×${item.quantity}`).join(', ');
-  await sendPushToVenue(
-    tab.table.venueId,
-    `New order — ${tab.table.label}`,
-    itemSummary
-  );
+  const message = { title: `New order — ${tab.table.label}`, body: itemSummary };
+  await notifyTable(tab.table.venueId, tab.tableId, tab.staffId, message, message);
 
   return { order, items: createdItems, total, orderPayload };
 }

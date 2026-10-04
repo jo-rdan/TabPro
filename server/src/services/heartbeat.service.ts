@@ -2,7 +2,7 @@ import { db } from '../lib/db';
 import { tabs } from '../models/schema';
 import { eq, and, lt, inArray } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
-import { sendPushToStaff, sendPushToOwner } from './push.service';
+import { notifyTable } from './push.service';
 
 // A locked phone stops pinging, so silence alone is normal at a bar. Only
 // flag a tab once it has gone quiet for a long time, and never change its
@@ -59,17 +59,18 @@ export async function checkAbandonedTabs() {
     });
 
     // Push notification — soft tone, not alarming
-    await sendPushToStaff(
+    await notifyTable(
       venueId,
       tab.tableId,
-      `👀 ${tableLabel} — customer may have stepped away`,
-      'No activity for 10 minutes and the bill is still open. Worth a quick check.',
-    );
-
-    await sendPushToOwner(
-      venueId,
-      `👀 ${tableLabel} — customer may have stepped away`,
-      'No activity for 10 minutes and the bill is still open. Staff have been notified.',
+      tab.staffId,
+      {
+        title: `👀 ${tableLabel} — customer may have stepped away`,
+        body: 'No activity for 10 minutes and the bill is still open. Worth a quick check.',
+      },
+      {
+        title: `👀 ${tableLabel} — customer may have stepped away`,
+        body: 'No activity for 10 minutes and the bill is still open. Staff have been notified.',
+      },
     );
   }
 }

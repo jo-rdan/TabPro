@@ -9,7 +9,8 @@ self.addEventListener('push', function (event) {
     badge: '/favicon.svg',
     vibrate: [200, 100, 200],
     data: data.data || {},
-    actions: [{ action: 'open', title: 'View orders' }],
+    // Each table's alert gets its own notification instead of replacing the last.
+    tag: (data.data && data.data.url ? data.data.url : '') + ':' + Date.now(),
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -17,20 +18,20 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
+  // The server says where to go: the owner dashboard or the waiter's orders.
+  const url = (event.notification.data && event.notification.data.url) || '/waiter/orders';
 
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then(function (clientList) {
-        // If waiter tab is already open, focus it
         for (const client of clientList) {
-          if (client.url.includes('/waiter') && 'focus' in client) {
+          if (new URL(client.url).pathname.startsWith(url) && 'focus' in client) {
             return client.focus();
           }
         }
-        // Otherwise open new tab
         if (clients.openWindow) {
-          return clients.openWindow('/waiter');
+          return clients.openWindow(url);
         }
       })
   );
