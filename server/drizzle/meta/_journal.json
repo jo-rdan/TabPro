@@ -127,6 +127,13 @@
       "when": 1791127027924,
       "tag": "0017_push_per_role",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791133181676,
+      "tag": "0018_guest_alerts_order_wait",
+      "breakpoints": true
     }
   ]
 }

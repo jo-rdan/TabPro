@@ -5,7 +5,7 @@ import { getTableByQrCode } from './qr.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
-import { notifyTable } from './push.service';
+import { notifyTable, sendPushToOwner } from './push.service';
 import { trackReturnVisit } from './campaign.service';
 import { isPawapayConfigured } from '../lib/pawapay';
 
@@ -38,7 +38,7 @@ async function findUnsettledTab(tableId: string) {
 }
 
 // Tells the venue's screens that guests just sat down and opened a tab.
-function announceTabOpened(venueId: string, tab: { id: string; tableId: string }, tableLabel: string) {
+function announceTabOpened(venueId: string, tab: { id: string; tableId: string; staffId: string | null }, tableLabel: string) {
   broadcastToVenue(venueId, {
     type: 'tab_opened',
     payload: { tabId: tab.id, tableId: tab.tableId, tableLabel },
@@ -46,6 +46,9 @@ function announceTabOpened(venueId: string, tab: { id: string; tableId: string }
     tableId: tab.tableId,
     timestamp: new Date().toISOString(),
   });
+  // The waiter can greet them before they even order.
+  notifyTable(venueId, tab.tableId, tab.staffId, { title: `🪑 ${tableLabel}: new guests seated`, body: 'Go say hello. They can order from their phone.' }, null)
+    .catch((err) => console.error('[push] seated', err));
 }
 
 export async function openTab(qrCode: string, phone: string, name?: string) {
@@ -297,7 +300,8 @@ export async function getTabBill(tabId: string) {
   };
 }
 
-export async function closeTab(tabId: string) {
+// paidByMomo: closed because the guest paid in the app (that alert is sent by the payment code).
+export async function closeTab(tabId: string, { paidByMomo = false }: { paidByMomo?: boolean } = {}) {
   const tab = await db.query.tabs.findFirst({
     where: eq(tabs.id, tabId),
     with: { table: { with: { venue: true } } },
@@ -323,6 +327,17 @@ export async function closeTab(tabId: string) {
     tableId: tab.tableId,
     timestamp: new Date().toISOString(),
   });
+
+  if (!paidByMomo) {
+    // Owners want to know every franc: a bill closed by staff was paid outside the app.
+    const bill = await getTabBill(tabId).catch(() => null);
+    const total = bill?.grandTotal ?? 0;
+    await sendPushToOwner(
+      tab.table.venueId,
+      `🧾 ${tab.table.label} closed${total ? ` · ${total.toLocaleString('en-US')} RWF` : ''}`,
+      'Closed by staff (paid in cash or outside TabPro)',
+    );
+  }
 
   // Zero-nudge bonus: +5 pts if waiter had no nudge penalties on this tab
   const resolvedStaffId = tab.staffId ?? (await db.query.tableAssignments.findFirst({

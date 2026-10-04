@@ -1,3 +1,4 @@
+import { sendPushToOwner } from './push.service';
 import { db } from '../lib/db';
 import { ratings, staffPoints, tabs, staff } from '../models/schema';
 import { eq, desc, sum } from 'drizzle-orm';
@@ -43,6 +44,15 @@ export async function submitRating(
       comment: comment?.trim() || null,
     })
     .returning();
+
+  // A disappointed guest is something the owner wants to know about tonight, not next week.
+  if (overallScore <= 2) {
+    await sendPushToOwner(
+      tab.table.venueId,
+      `⭐ ${tab.table.label} rated their visit ${overallScore}/5`,
+      comment?.trim() ? `"${comment.trim().slice(0, 120)}"` : 'No comment left. Worth checking on the floor.',
+    );
+  }
 
   // Award points to waiter if one was assigned
   if (tab.staffId) {

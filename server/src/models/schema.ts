@@ -172,6 +172,8 @@ export const orders = pgTable("orders", {
   source: orderSourceEnum("source").default("customer").notNull(),
   isNudge: boolean("is_nudge").default(false).notNull(),
   placedAt: timestamp("placed_at").defaultNow().notNull(),
+  // When staff were told this order has been waiting too long (once per order).
+  waitAlertAt: timestamp("wait_alert_at"),
 });
 
 export const orderItems = pgTable("order_items", {
@@ -375,6 +377,8 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   venueId: uuid("venue_id")
     .references(() => venues.id, { onDelete: "cascade" })
     .notNull(),
+  // Set for a guest's phone: alerts about their own bill only.
+  tabId: uuid("tab_id").references(() => tabs.id, { onDelete: "cascade" }),
   // Not unique: one browser can be signed up as the owner and as a waiter.
   endpoint: text("endpoint").notNull(),
   p256dh: text("p256dh").notNull(),
