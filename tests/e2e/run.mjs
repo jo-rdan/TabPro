@@ -412,6 +412,58 @@ pushHits.length = 0;
 await call('POST', '/ratings', { tabId: pushTab, foodScore: 2, waiterScore: 2, overallScore: 2, comment: 'Slow service' });
 await sleep(800);
 check('Bad rating → owner is told tonight', pushHits.includes('/owner'), pushHits.join(' '));
+
+// ── Managers and waiters without a smartphone ───────────────────────────────
+console.log('\n── Managers & waiters without a smartphone');
+r = await call('POST', '/staff', { venueId, name: 'Grace', phone: phone(), hasSmartphone: false }, ownerTok);
+const graceId = r.json?.data?.staff?.id;
+check('Owner adds a waiter without a smartphone (no invite needed)', r.status === 201 && !r.json?.data?.token && r.json?.data?.inviteUrl === null, r.json?.error);
+r = await call('GET', `/staff/${venueId}`, null, ownerTok);
+check('Staff list shows "no smartphone"', (r.json?.data ?? []).find((m) => m.id === graceId)?.inviteStatus === 'no_phone');
+const managerPhone = phone();
+r = await call('POST', '/staff', { venueId, name: 'Mama Kevin', phone: managerPhone, role: 'manager' }, ownerTok);
+const managerId = r.json?.data?.staff?.id;
+const mInvite = r.json?.data?.token;
+check('Owner adds a manager', r.status === 201 && r.json?.data?.staff?.role === 'manager', r.json?.error);
+let managerTok = (await call('GET', `/staff/invite/${mInvite}`)).json?.data?.token;
+await call('POST', '/staff/me/set-pin', { pin: '2468' }, managerTok);
+r = await call('POST', '/staff/login', { phone: managerPhone, pin: '2468' });
+managerTok = r.json?.data?.token;
+check('Manager logs in like a waiter', r.status === 200 && r.json?.data?.role === 'manager', r.json?.error);
+r = await call('GET', '/staff/me', null, managerTok);
+check('App knows they are a manager', r.json?.data?.role === 'manager');
+r = await call('GET', `/tables/assignments/${venueId}`, null, ownerTok);
+check('Manager is not given tables (waiters serve them)', !(r.json?.data ?? []).some((a) => a.staffId === managerId && a.tableIds.length > 0));
+r = await call('GET', '/tables/my-tables', null, managerTok);
+check('Manager sees the whole floor with each table\'s waiter', (r.json?.data ?? []).length >= 3 && (r.json?.data ?? []).some((t) => t.waiterName === 'Grace' && t.waiterHasSmartphone === false), JSON.stringify((r.json?.data ?? []).map((t) => t.waiterName)));
+r = await call('PATCH', `/staff/${graceId}`, { role: 'manager' }, rivalTokEarly);
+check('Another owner CANNOT change my staff', r.status === 403, `status ${r.status}`);
+
+// Grace's table: alerts go to the manager's phone, naming Grace
+const graceTable = await q1(`insert into tables (venue_id,label) values ($1,'Garden 1') returning id`, [venueId]);
+const graceCode = rnd() + rnd();
+await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [graceCode, graceTable.id]);
+await pg.query(`insert into table_assignments (table_id,staff_id,shift_date) values ($1,$2,'permanent')`, [graceTable.id, graceId]);
+r = await call('POST', '/tabs/open', { qrCode: graceCode, phone: phone() });
+const graceTab = r.json?.data?.tab?.id;
+await sleep(600);
+pushHits.length = 0;
+await call('POST', `/tabs/${graceTab}/nudge`);
+await sleep(800);
+check('No manager phone signed up yet → the owner covers Grace\'s table', pushHits.includes('/owner') && !pushHits.includes('/eric'), pushHits.join(' '));
+await call('POST', '/push/subscribe', { venueId, subscription: device('manager') }, managerTok);
+pushHits.length = 0;
+await call('POST', `/tabs/${graceTab}/nudge`);
+await sleep(800);
+check('Customer calls at Grace\'s table → her manager\'s phone buzzes', pushHits.includes('/manager') && !pushHits.includes('/eric') && !pushHits.includes('/alice'), pushHits.join(' '));
+check('…and the owner still hears about it', pushHits.includes('/owner'), pushHits.join(' '));
+// A table whose waiter has their own phone: that waiter is told, not the manager.
+const phoneWaiterTable = await q1(`select t.id, s.code from tables t join qr_stickers s on s.table_id=t.id join table_assignments a on a.table_id=t.id join staff w on w.id=a.staff_id where t.venue_id=$1 and w.has_smartphone and w.role='waiter' and w.name in ('Alice','Eric') and not exists (select 1 from tabs x where x.table_id=t.id and x.status<>'closed') limit 1`, [venueId]);
+r = await call('POST', '/tabs/open', { qrCode: phoneWaiterTable.code, phone: phone() });
+pushHits.length = 0;
+await call('POST', '/orders', { tabId: r.json?.data?.tab?.id, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
+await sleep(800);
+check('Waiters with their own phone are not covered by the manager', (pushHits.includes('/eric') || pushHits.includes('/alice')) && !pushHits.includes('/manager'), pushHits.join(' '));
 pushServer.close();
 
 const strangerPhone = phone();

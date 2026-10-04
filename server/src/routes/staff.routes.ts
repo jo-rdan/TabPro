@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { handleCreateStaff, handleAcceptInvite, handleGetStaff, handleGetMyPoints, handleToggleStaffActive, handleResendInvite, handleSetPin, handleVerifyPin, handleStaffLogin, handleJoinRequest, handleApproveJoin, handleDeclineJoin } from '../controllers/staff.controller';
+import { handleCreateStaff, handleAcceptInvite, handleGetStaff, handleGetMyPoints, handleToggleStaffActive, handleResendInvite, handleSetPin, handleVerifyPin, handleStaffLogin, handleJoinRequest, handleApproveJoin, handleDeclineJoin, handleUpdateStaff, handleGetMe } from '../controllers/staff.controller';
 import { requireAuth, requireStaffAuth } from '../middleware/auth.middleware';
 import { ownsVenue, venueFromParam, venueFromBody, venueOfStaff } from '../middleware/venueAccess.middleware';
 
@@ -11,6 +11,7 @@ router.post('/login', handleStaffLogin);
 router.post('/join', handleJoinRequest);
 
 // Staff-auth
+router.get('/me', requireStaffAuth, handleGetMe);
 router.get('/me/points', requireStaffAuth, handleGetMyPoints);
 router.post('/me/set-pin', requireStaffAuth, handleSetPin);
 router.post('/me/verify-pin', requireStaffAuth, handleVerifyPin);
@@ -20,6 +21,7 @@ router.use(requireAuth);
 router.post('/', ownsVenue(venueFromBody()), handleCreateStaff);
 router.get('/:venueId', ownsVenue(venueFromParam()), handleGetStaff);
 router.patch('/:staffId/active', ownsVenue(venueOfStaff()), handleToggleStaffActive);
+router.patch('/:staffId', ownsVenue(venueOfStaff()), handleUpdateStaff);
 router.post('/:staffId/resend-invite', ownsVenue(venueOfStaff()), handleResendInvite);
 router.post('/:staffId/approve', ownsVenue(venueOfStaff()), handleApproveJoin);
 router.delete('/:staffId/join-request', ownsVenue(venueOfStaff()), handleDeclineJoin);

@@ -56,7 +56,7 @@ function recordFailedLogin(key: string) {
   else entry.count += 1;
 }
 
-export async function loginByPhone(phone: string, pin: string): Promise<{ token: string; staffId: string; venueId: string; name: string } | null> {
+export async function loginByPhone(phone: string, pin: string): Promise<{ token: string; staffId: string; venueId: string; name: string; role: 'waiter' | 'manager' } | null> {
   const normalizedPhone = normalizeStaffPhone(phone);
   if (isLockedOut(normalizedPhone)) {
     throw new Error('Too many wrong PINs. Try again in 15 minutes or ask your manager.');
@@ -72,7 +72,7 @@ export async function loginByPhone(phone: string, pin: string): Promise<{ token:
     if (member.pin && (await bcrypt.compare(pin, member.pin))) {
       failedLogins.delete(normalizedPhone);
       const token = signStaffJwt(member.id, member.venueId);
-      return { token, staffId: member.id, venueId: member.venueId, name: member.name };
+      return { token, staffId: member.id, venueId: member.venueId, name: member.name, role: member.role };
     }
   }
 
@@ -146,7 +146,12 @@ export async function toggleStaffActive(staffId: string, isActive: boolean) {
   return updated;
 }
 
-export async function createStaff(venueId: string, name: string, rawPhone: string) {
+export async function createStaff(
+  venueId: string,
+  name: string,
+  rawPhone: string,
+  { role = 'waiter', hasSmartphone = true }: { role?: 'waiter' | 'manager'; hasSmartphone?: boolean } = {},
+) {
   const phone = normalizeStaffPhone(rawPhone);
 
   // Re-inviting someone already on this venue's staff re-uses their record.
@@ -168,7 +173,7 @@ export async function createStaff(venueId: string, name: string, rawPhone: strin
   if (!staffMember) {
     const [created] = await db
       .insert(staff)
-      .values({ venueId, name, phone, role: 'waiter' })
+      .values({ venueId, name, phone, role, hasSmartphone })
       .returning();
     staffMember = created;
   }
@@ -176,6 +181,11 @@ export async function createStaff(venueId: string, name: string, rawPhone: strin
   // ── Auto-assign tables and shifts evenly across all active waiters ────────
   await autoAssignTablesForVenue(venueId);
   await autoAssignShiftsForVenue(venueId);
+
+  // No smartphone: nothing to send. They're on the team right away.
+  if (!hasSmartphone) {
+    return { staff: staffMember, invite: null, token: null, smsSent: false, whatsappLink: null };
+  }
 
   // Create invite token
   const token = randomBytes(16).toString('hex');
@@ -262,7 +272,7 @@ export async function getStaffForVenue(venueId: string) {
       ? Math.round((s.ratings.reduce((sum, r) => sum + r.waiterScore, 0) / ratingCount) * 10) / 10
       : null;
     const latestInvite = s.invites[0] ?? null;
-    const inviteStatus = !latestInvite ? (s.pin ? 'active' : 'none')
+    const inviteStatus = !s.hasSmartphone ? 'no_phone' : !latestInvite ? (s.pin ? 'active' : 'none')
       : latestInvite.acceptedAt ? 'active'
       : 'invited';
 
@@ -271,6 +281,7 @@ export async function getStaffForVenue(venueId: string) {
       name: s.name,
       phone: s.phone,
       role: s.role,
+      hasSmartphone: s.hasSmartphone,
       isActive: s.isActive,
       pendingApproval: s.pendingApproval,
       inviteStatus,
@@ -354,4 +365,13 @@ export async function declineJoinRequest(staffId: string) {
     .where(and(eq(staff.id, staffId), eq(staff.pendingApproval, true)))
     .returning();
   if (!member) throw new Error('This request was already handled.');
+}
+
+// ─── Owner edits a team member: manager or waiter, smartphone or not ─────────
+export async function updateStaff(staffId: string, changes: { role?: 'waiter' | 'manager'; hasSmartphone?: boolean }) {
+  const [updated] = await db.update(staff).set(changes).where(eq(staff.id, staffId)).returning();
+  if (!updated) throw new Error('Staff not found');
+  // Managers don't serve tables when there are waiters: share tables out again.
+  if (changes.role) await autoAssignTablesForVenue(updated.venueId);
+  return updated;
 }

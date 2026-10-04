@@ -141,6 +141,13 @@
       "when": 1791145303240,
       "tag": "0019_demo_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791152624110,
+      "tag": "0020_staff_smartphone",
+      "breakpoints": true
     }
   ]
 }

@@ -85,6 +85,9 @@ export const staff = pgTable("staff", {
   name: text("name").notNull(),
   phone: text("phone").notNull(),
   role: staffRoleEnum("role").default("waiter").notNull(),
+  // Waiters without a smartphone still get tables, credit and tips; their
+  // alerts go to a manager (or the owner if there's no manager).
+  hasSmartphone: boolean("has_smartphone").default(true).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   pin: text("pin"), // bcrypt hash, null until waiter sets it on first login
   // Joined by scanning the clock-in sticker; inactive until the owner approves.

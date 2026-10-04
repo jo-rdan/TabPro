@@ -1,0 +1,1 @@
+ALTER TABLE "staff" ADD COLUMN "has_smartphone" boolean DEFAULT true NOT NULL;

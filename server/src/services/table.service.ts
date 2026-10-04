@@ -42,6 +42,29 @@ export async function getVenueAssignments(venueId: string) {
 
 // Waiter: get their assigned tables
 export async function getMyAssignedTables(staffId: string) {
+  const me = await db.query.staff.findFirst({ where: eq(staff.id, staffId) });
+
+  // Managers see the whole floor: every table and who serves it.
+  if (me?.role === 'manager') {
+    const venueTables = await db.query.tables.findMany({
+      where: and(eq(tables.venueId, me.venueId), eq(tables.isActive, true)),
+      with: { assignments: { with: { staff: true } } },
+    });
+    return venueTables
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
+      .map((t) => {
+        const waiter = t.assignments[0]?.staff ?? null;
+        return {
+          tableId: t.id,
+          label: t.label,
+          isActive: t.isActive,
+          waiterName: waiter?.name ?? null,
+          waiterHasSmartphone: waiter?.hasSmartphone ?? true,
+          mine: waiter?.id === staffId,
+        };
+      });
+  }
+
   const assignments = await db.query.tableAssignments.findMany({
     where: eq(tableAssignments.staffId, staffId),
     with: { table: true },

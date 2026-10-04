@@ -31,9 +31,13 @@ export async function autoAssignTablesForVenue(venueId: string): Promise<void> {
   const staffIds = activeStaff.map((s) => s.id);
   await db.delete(tableAssignments).where(inArray(tableAssignments.staffId, staffIds));
 
+  // Managers run the floor rather than serve tables, unless nobody else can.
+  const waiters = activeStaff.filter((s) => s.role === 'waiter');
+  const servers = waiters.length > 0 ? waiters : activeStaff;
+
   // Round-robin distribution
   const rows = allTables.map((table, i) => ({
-    staffId: activeStaff[i % activeStaff.length].id,
+    staffId: servers[i % servers.length].id,
     tableId: table.id,
     shiftDate: 'permanent',
   }));

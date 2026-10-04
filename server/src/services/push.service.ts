@@ -1,6 +1,6 @@
 import webpush from "web-push";
 import { db } from "../lib/db";
-import { pushSubscriptions, tableAssignments, tabs, qrStickers, owners, venues } from "../models/schema";
+import { pushSubscriptions, tableAssignments, tabs, qrStickers, owners, venues, staff } from "../models/schema";
 import { and, eq, inArray, isNull, isNotNull } from "drizzle-orm";
 import * as dotenv from "dotenv";
 
@@ -82,10 +82,13 @@ async function send(subs: Sub[], title: string, body: string, url: string, data?
 }
 
 // ─── Who to notify ────────────────────────────────────────────────────────────
-// The tab's waiter, else the table's assigned waiter. If that person has no
-// device signed up (or nobody is assigned), every waiter is told instead so
-// the request is never lost.
-async function tableWaiterSubs(venueId: string, tableId: string, tabStaffId: string | null) {
+// The table's waiter (the tab's waiter, else the assigned one) on their own
+// phone. If they have no smartphone, or no device signed up, a manager covers
+// for them; with no manager either, the owner does (no smartphone) or every
+// waiter is told (just no device yet), so a request is never lost.
+type Route = { subs: Sub[]; ownerCovers: boolean; coveringFor: string | null };
+
+async function tableWaiterRoute(venueId: string, tableId: string, tabStaffId: string | null): Promise<Route> {
   const staffSubs = await db.query.pushSubscriptions.findMany({
     where: and(eq(pushSubscriptions.venueId, venueId), isNotNull(pushSubscriptions.staffId)),
   });
@@ -93,8 +96,23 @@ async function tableWaiterSubs(venueId: string, tableId: string, tabStaffId: str
     tabStaffId ??
     (await db.query.tableAssignments.findFirst({ where: eq(tableAssignments.tableId, tableId) }))?.staffId ??
     null;
-  const theirs = staffId ? staffSubs.filter((s) => s.staffId === staffId) : [];
-  return theirs.length > 0 ? theirs : staffSubs;
+  const waiter = staffId ? await db.query.staff.findFirst({ where: eq(staff.id, staffId) }) : null;
+
+  if (waiter?.hasSmartphone) {
+    const theirs = staffSubs.filter((s) => s.staffId === waiter.id);
+    if (theirs.length > 0) return { subs: theirs, ownerCovers: false, coveringFor: null };
+  }
+
+  const managers = await db.query.staff.findMany({
+    where: and(eq(staff.venueId, venueId), eq(staff.role, 'manager'), eq(staff.isActive, true)),
+    columns: { id: true },
+  });
+  const managerIds = new Set(managers.map((m) => m.id));
+  const managerSubs = staffSubs.filter((s) => s.staffId && managerIds.has(s.staffId));
+  const coveringFor = waiter && waiter.role === 'waiter' ? waiter.name : null;
+  if (managerSubs.length > 0) return { subs: managerSubs, ownerCovers: false, coveringFor };
+  if (waiter && !waiter.hasSmartphone) return { subs: [], ownerCovers: true, coveringFor };
+  return { subs: staffSubs, ownerCovers: false, coveringFor: null };
 }
 
 function ownerSubs(venueId: string) {
@@ -116,11 +134,19 @@ export async function notifyTable(
   toOwner: Message | null,
 ) {
   if (!pushEnabled()) return;
-  const waiters = toWaiter ? await tableWaiterSubs(venueId, tableId, tabStaffId) : [];
+  const route = toWaiter ? await tableWaiterRoute(venueId, tableId, tabStaffId) : null;
+  // Whoever covers for a waiter without a phone sees whose table it is.
+  const forWaiter = toWaiter && route?.coveringFor ? { ...toWaiter, body: `${toWaiter.body} (${route.coveringFor}'s table)` } : toWaiter;
+
+  const waiters = route?.subs ?? [];
   const waiterEndpoints = new Set(waiters.map((s) => s.endpoint));
-  const owners = toOwner ? (await ownerSubs(venueId)).filter((s) => !waiterEndpoints.has(s.endpoint)) : [];
-  if (toWaiter) await send(waiters, toWaiter.title, toWaiter.body, STAFF_URL);
-  if (toOwner) await send(owners, toOwner.title, toOwner.body, OWNER_URL);
+  const owners = (await ownerSubs(venueId)).filter((s) => !waiterEndpoints.has(s.endpoint));
+  if (forWaiter && waiters.length > 0) await send(waiters, forWaiter.title, forWaiter.body, STAFF_URL);
+
+  // No manager to cover a waiter without a phone: the owner gets the waiter's
+  // (actionable) alert instead of the usual owner one.
+  const ownerMessage = route?.ownerCovers ? forWaiter : toOwner;
+  if (ownerMessage) await send(owners, ownerMessage.title, ownerMessage.body, OWNER_URL);
 }
 
 // ─── Guests ───────────────────────────────────────────────────────────────────
