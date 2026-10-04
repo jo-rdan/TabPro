@@ -46,8 +46,14 @@ function announceTabOpened(venueId: string, tab: { id: string; tableId: string; 
     tableId: tab.tableId,
     timestamp: new Date().toISOString(),
   });
-  // The waiter can greet them before they even order.
-  notifyTable(venueId, tab.tableId, tab.staffId, { title: `🪑 ${tableLabel}: new guests seated`, body: 'Go say hello. They can order from their phone.' }, null)
+  // The waiter can greet them before they even order; the owner sees the room filling up.
+  notifyTable(
+    venueId,
+    tab.tableId,
+    tab.staffId,
+    { title: `🪑 ${tableLabel}: new guests seated`, body: 'Go say hello. They can order from their phone.' },
+    { title: `🪑 ${tableLabel}: new guests seated`, body: 'Their waiter has been told.' },
+  )
     .catch((err) => console.error('[push] seated', err));
 }
 
