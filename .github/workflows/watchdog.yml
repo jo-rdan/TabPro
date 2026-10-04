@@ -1,0 +1,49 @@
+name: Watchdog
+
+# Checks the live site every 30 minutes, like a customer would. If something is
+# broken it opens one "🚨 Watchdog" issue (GitHub emails the owner); when the
+# site is healthy again it closes that issue. The daily Claude routine reads
+# these issues and fixes the cause.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SITE: https://tabpro.lol
+      API: https://tabpro-backend.onrender.com
+      DEMO_VENUE: e0df2a3d-d303-4a77-8115-0a76ade35d85
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check the live site
+        id: probe
+        run: |
+          fail=""
+          # The free server can take ~1 min to wake up, so retry before calling it down.
+          try() { for i in 1 2 3; do out=$(curl -s -m 60 "$1") && echo "$out" | grep -q "$2" && return 0; sleep 20; done; return 1; }
+          try "$API/health" '"status":"ok"'                      || fail="$fail\n- Server health check failed ($API/health)"
+          try "$SITE/" '<div id="root">'                          || fail="$fail\n- Website did not load ($SITE)"
+          try "$SITE/t/5e5aec0c2f" '<div id="root">'              || fail="$fail\n- Table QR link did not load"
+          try "$API/api/menu/$DEMO_VENUE" '"priceRwf"'            || fail="$fail\n- Demo Lounge menu did not load"
+          printf "%b" "$fail" > problems.txt
+          cat problems.txt
+          [ -z "$fail" ] && echo "healthy=true" >> "$GITHUB_OUTPUT" || echo "healthy=false" >> "$GITHUB_OUTPUT"
+      - name: Report
+        run: |
+          repo="${{ github.repository }}"
+          open=$(gh issue list -R "$repo" --label watchdog --state open --json number -q '.[0].number')
+          if [ "${{ steps.probe.outputs.healthy }}" = "true" ]; then
+            [ -n "$open" ] && gh issue close "$open" -R "$repo" -c "✅ Everything is working again ($(date -u '+%Y-%m-%d %H:%M UTC'))."
+            exit 0
+          fi
+          gh label create watchdog -R "$repo" -c D93F0B -d "Opened by the watchdog" 2>/dev/null || true
+          body=$(printf "The watchdog found a problem at %s:\n%s\n\nRun: %s" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$(cat problems.txt)" "${{ github.server_url }}/$repo/actions/runs/${{ github.run_id }}")
+          if [ -n "$open" ]; then gh issue comment "$open" -R "$repo" -b "$body"
+          else gh issue create -R "$repo" -t "🚨 Watchdog: tabpro.lol has a problem" -l watchdog -b "$body"; fi
