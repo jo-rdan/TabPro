@@ -4,7 +4,7 @@ import {
   ArrowRight,
   Check,
   X,
-  MessageCircle,
+  ArrowUpRight,
   Plus,
   Minus,
   QrCode,
@@ -31,12 +31,9 @@ import {
   OrderFeed,
 } from "./landing/mockups";
 
-// Legal name and contact details shown on the site.
+// Legal name only: contact goes through "Book a demo", not public numbers.
 const COMPANY = {
   legalName: "VNT250 Ltd",
-  email: "info@tabpro.lol",
-  phone: "+250 781 268 924",
-  whatsapp: "https://wa.me/250781268924?text=Hi%20TabPro%2C%20I%27d%20like%20TabPro%20for%20my%20venue",
 };
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
@@ -540,8 +537,11 @@ function Faq() {
             Questions, <Serif>answered.</Serif>
           </h2>
           <p className="mt-5 max-w-sm text-[16px] leading-relaxed text-gray-500">
-            Something else on your mind? We reply fast on{" "}
-            <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4">WhatsApp</a>.
+            Something else on your mind?{" "}
+            <button onClick={openBookDemo} className="font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4 hover:decoration-emerald-600">
+              Ask us during a free demo
+            </button>
+            .
           </p>
         </Reveal>
         <Reveal delay={100}>
@@ -590,9 +590,6 @@ function FinalCta() {
               <button onClick={openBookDemo} className="lp-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-emerald-400 px-8 py-4 text-[15px] font-bold text-emerald-950 transition hover:bg-emerald-300 sm:w-auto">
                 Book a free demo <ArrowRight size={17} className="transition group-hover:translate-x-1" />
               </button>
-              <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-[15px] font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/5 sm:w-auto">
-                <MessageCircle size={16} /> WhatsApp us
-              </a>
             </div>
           </div>
         </div>
@@ -606,7 +603,39 @@ function FinalCta() {
 function Footer() {
   return (
     <footer className="bg-[#06140f] text-white">
-      <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 md:grid-cols-[1.5fr_1fr_1fr]">
+      {/* Sign-off: one confident line and a spinning "Book a demo" badge */}
+      <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 border-b border-white/[0.06] px-5 py-16 sm:px-8 md:flex-row md:items-center">
+        <div>
+          <p className="flex items-center gap-2 text-[13px] font-semibold text-emerald-300/90">
+            <span className="relative flex h-2 w-2">
+              <span className="lp-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            Now setting up venues in Kigali
+          </p>
+          <h2 className="mt-4 text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
+            Ready when <Serif>you are.</Serif>
+          </h2>
+        </div>
+        <button onClick={openBookDemo} aria-label="Book a demo" className="group relative h-36 w-36 flex-shrink-0 rounded-full sm:h-40 sm:w-40">
+          <svg viewBox="0 0 200 200" className="lp-spin absolute inset-0 h-full w-full" aria-hidden="true">
+            <defs>
+              <path id="lp-ring" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" />
+            </defs>
+            {/* textLength = the ring's circumference (2π·78), so the words close the loop exactly */}
+            <text fill="rgba(255,255,255,0.75)" fontSize="15" fontWeight="700">
+              <textPath href="#lp-ring" textLength="488" lengthAdjust="spacing">
+                BOOK A DEMO · FREE SETUP · BOOK A DEMO · FREE SETUP ·
+              </textPath>
+            </text>
+          </svg>
+          <span className="absolute inset-[30%] flex items-center justify-center rounded-full bg-emerald-400 text-emerald-950 shadow-[0_10px_40px_-6px_rgba(52,211,153,0.7)] transition duration-300 group-hover:scale-110 group-hover:bg-emerald-300">
+            <ArrowUpRight size={26} strokeWidth={2.5} className="transition duration-300 group-hover:rotate-45" />
+          </span>
+        </button>
+      </div>
+
+      <div className="mx-auto grid max-w-7xl gap-12 px-5 py-14 sm:px-8 md:grid-cols-[2fr_1fr]">
         <div>
           <div className="flex items-center gap-2.5">
             <Logo size={30} />
@@ -616,14 +645,6 @@ function Footer() {
             TabPro is a product of <span className="font-semibold text-white/80">{COMPANY.legalName}</span>, a company
             registered in Rwanda.
           </p>
-        </div>
-        <div>
-          <p className="text-[13px] font-bold uppercase tracking-[0.15em] text-white/40">Contact</p>
-          <ul className="mt-5 space-y-3 text-[14px] text-white/70">
-            <li><a className="hover:text-emerald-300" href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a></li>
-            <li><a className="hover:text-emerald-300" href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}>{COMPANY.phone}</a></li>
-            <li><a className="hover:text-emerald-300" href={COMPANY.whatsapp} target="_blank" rel="noreferrer">WhatsApp</a></li>
-          </ul>
         </div>
         <div>
           <p className="text-[13px] font-bold uppercase tracking-[0.15em] text-white/40">Legal & access</p>
@@ -679,9 +700,14 @@ const STYLES = `
 .lp-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; outline: none; }
 .lp-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px rgba(52,211,153,.35), 0 4px 10px rgba(0,0,0,.4); cursor: pointer; }
 .lp-range::-moz-range-thumb { width: 22px; height: 22px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px rgba(52,211,153,.35); cursor: pointer; }
+@keyframes lp-spin { to { transform: rotate(360deg) } }
+.lp-spin { animation: lp-spin 18s linear infinite; transform-origin: 50% 50%; }
+button:hover > .lp-spin { animation-duration: 6s; }
+@keyframes lp-ping { 75%, 100% { transform: scale(2.4); opacity: 0 } }
+.lp-ping { animation: lp-ping 1.8s cubic-bezier(0,0,.2,1) infinite; }
 @media (prefers-reduced-motion: reduce) {
   .lp-reveal { opacity: 1; transform: none; transition: none; }
-  .lp-float, .lp-float-slow, .lp-marquee, .lp-scanline, .lp-shine::after, .lp-progress { animation: none; }
+  .lp-float, .lp-float-slow, .lp-marquee, .lp-scanline, .lp-shine::after, .lp-progress, .lp-spin, .lp-ping { animation: none; }
 }
 `;
 
@@ -706,7 +732,7 @@ export default function Landing() {
         <FinalCta />
       </main>
       <Footer />
-      <BookDemo whatsapp={COMPANY.whatsapp} />
+      <BookDemo />
     </div>
   );
 }
