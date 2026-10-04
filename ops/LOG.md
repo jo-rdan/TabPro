@@ -2,6 +2,13 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-04 evening · interactive
+- Did: notifications overhaul (PRs #21, #22): devices re-register on every visit; alerts go to the
+  table's waiter + owner; guests can opt in ("Notify me"); new alerts for seated, paid, cash close,
+  payout delayed, order waiting 10 min, bad rating, join request. Defined missing brand shades
+  (light borders in dark mode). 105 E2E checks.
+- Left off: Jordan's real-device test on his Mac (Chrome/Arc). Venue agreement still to write.
+
 ## 2026-10-04 14:15 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; last Tests runs green.
 - Did: opened PR #19 "Tonight's summary" (PR creation works now). Merged main into the branch;
