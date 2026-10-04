@@ -18,7 +18,7 @@ import Logo from "../../components/Logo";
 import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { WsEvent } from "@tabpro/shared";
-import { apiFetch } from "../../lib/apiFetch";
+import { apiFetch, apiBeacon } from "../../lib/apiFetch";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MenuItemData {
@@ -576,7 +576,18 @@ export default function CustomerMenu() {
     const ping = () => api.post(`/tabs/${tabId}/heartbeat`).catch(() => {});
     ping(); // immediate first ping
     const interval = setInterval(ping, 30_000);
-    return () => clearInterval(interval);
+    // Back on the page (unlocked phone, returned to the tab): say so at once.
+    const onVisible = () => { if (document.visibilityState === "visible") ping(); };
+    // Page closing: tell staff right away; the server waits a few seconds in
+    // case this is just a reload.
+    const onLeave = () => apiBeacon(`/tabs/${tabId}/left`);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pagehide", onLeave);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pagehide", onLeave);
+    };
   }, [tabId, tabStatus]);
 
   const handleMomoPay = async () => {
@@ -1397,7 +1408,6 @@ export default function CustomerMenu() {
 
         {/* Menu content */}
         <div className="flex-1 px-4 pt-4 overflow-y-auto">
-          {tabId && placedOrders.length > 0 && tabStatus !== "closed" && <GuestAlerts tabId={tabId} />}
           {/* Search results */}
           {filteredItems && (
             <div className="mb-6">
@@ -1747,6 +1757,8 @@ export default function CustomerMenu() {
           </div>
         </div>
       )}
+
+      {tabId && placedOrders.length > 0 && tabStatus !== "closed" && !cartOpen && <GuestAlerts tabId={tabId} />}
 
       {/* Order placed toast */}
       {justOrdered && (

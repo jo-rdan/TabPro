@@ -854,7 +854,7 @@ export default function WaiterOrders() {
               localStorage.removeItem("tabpro_staff_venue");
               window.location.href = "/waiter";
             }}
-            className="md:hidden text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="md:hidden whitespace-nowrap text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Sign out"
           >
             Sign out

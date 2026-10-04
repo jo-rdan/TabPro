@@ -12,7 +12,7 @@ import {
   handleInitiateTabPayment,
   handleCheckTabPayment,
 } from '../controllers/tabPayment.controller';
-import { handleHeartbeat } from '../controllers/heartbeat.controller';
+import { handleHeartbeat, handleCustomerLeft } from '../controllers/heartbeat.controller';
 import { venueMember, venueOfTable, venueOfTab } from '../middleware/venueAccess.middleware';
 
 const router = Router();
@@ -33,5 +33,6 @@ router.get('/:tabId/pay/:depositId', handleCheckTabPayment);
 
 // ─── Customer presence heartbeat ──────────────────────────────────────────────
 router.post('/:tabId/heartbeat', handleHeartbeat);
+router.post('/:tabId/left', handleCustomerLeft);
 
 export default router;

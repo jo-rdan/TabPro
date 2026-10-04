@@ -84,13 +84,15 @@ export default function NotificationBell({ notifications, onMarkAllRead }: Props
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl z-30 overflow-hidden">
+        // Phones: a full-width sheet under the header, never off-screen.
+        // Larger screens: a dropdown under the bell.
+        <div className="fixed left-3 right-3 top-24 sm:absolute sm:left-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl z-40 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">
               Notifications
             </h3>
           </div>
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-8">
                 No notifications yet.
