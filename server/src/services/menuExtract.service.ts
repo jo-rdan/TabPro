@@ -1,8 +1,56 @@
 import { GoogleGenAI } from '@google/genai';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? '' });
-// Overridable so a retired model can be swapped without a code change.
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+// Google retires models often (and blocks old ones for new keys), so try a few
+// and remember the first that answers. GEMINI_MODEL can force one.
+const MODEL_CANDIDATES = [process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-3.8-flash'].filter(Boolean) as string[];
+let workingModel: string | null = null;
+
+const isModelGone = (err: any) => /NOT_FOUND|no longer available|not found/i.test(String(err?.message ?? err));
+
+// Last resort: ask Google which "flash" models this key can use.
+async function discoverFlashModel(): Promise<string | null> {
+  try {
+    const pager = await ai.models.list();
+    const names: string[] = [];
+    for await (const m of pager) {
+      if (m.name && /flash/.test(m.name) && !/lite|image|tts|live|audio/.test(m.name)) names.push(m.name.replace(/^models\//, ''));
+    }
+    return names.sort().reverse()[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function generate(contents: any): Promise<string> {
+  const tried = new Set<string>();
+  const queue = workingModel ? [workingModel, ...MODEL_CANDIDATES] : [...MODEL_CANDIDATES];
+  let discovered = false;
+  while (true) {
+    const model = queue.find((m) => !tried.has(m));
+    if (!model) {
+      if (discovered) break;
+      discovered = true;
+      const found = await discoverFlashModel();
+      if (found && !tried.has(found)) { queue.push(found); continue; }
+      break;
+    }
+    tried.add(model);
+    try {
+      const response = await ai.models.generateContent({ model, contents });
+      workingModel = model;
+      return response.text ?? '';
+    } catch (err: any) {
+      if (!isModelGone(err)) {
+        console.error('[menuExtract]', err?.message ?? err);
+        throw new Error('Could not read the menu right now. Try again, or add items by hand.');
+      }
+    }
+  }
+  console.error('[menuExtract] no Gemini model available; tried', [...tried].join(', '));
+  throw new Error('Could not read the menu right now. Try again, or add items by hand.');
+}
 
 function assertConfigured() {
   if (!process.env.GEMINI_API_KEY) {
@@ -39,9 +87,7 @@ function parseResponse(text: string): ExtractedItem[] {
 
 export async function extractMenuFromImage(base64Data: string, mimeType: string): Promise<ExtractedItem[]> {
   assertConfigured();
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: [
+  const text = await generate([
       {
         inlineData: {
           mimeType: mimeType as any,
@@ -49,10 +95,8 @@ export async function extractMenuFromImage(base64Data: string, mimeType: string)
         },
       },
       { text: EXTRACT_PROMPT },
-    ],
-  });
+    ]);
 
-  const text = response.text ?? '';
   try {
     return parseResponse(text);
   } catch {
@@ -62,12 +106,7 @@ export async function extractMenuFromImage(base64Data: string, mimeType: string)
 
 export async function extractMenuFromText(text: string): Promise<ExtractedItem[]> {
   assertConfigured();
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: `${EXTRACT_PROMPT}\n\nMenu text:\n${text}`,
-  });
-
-  const raw = response.text ?? '';
+  const raw = await generate(`${EXTRACT_PROMPT}\n\nMenu text:\n${text}`);
   try {
     return parseResponse(raw);
   } catch {
