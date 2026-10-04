@@ -23,6 +23,20 @@ async function discoverFlashModel(): Promise<string | null> {
   }
 }
 
+const isBusy = (err: any) => /UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|\b503\b|\b429\b/i.test(String(err?.message ?? err));
+
+// Google's free tier is often briefly overloaded: wait and try again.
+async function withBusyRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (!isBusy(err) || attempt >= 3) throw err;
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+}
+
 async function generate(contents: any): Promise<string> {
   const tried = new Set<string>();
   const queue = workingModel ? [workingModel, ...MODEL_CANDIDATES] : [...MODEL_CANDIDATES];
@@ -38,7 +52,7 @@ async function generate(contents: any): Promise<string> {
     }
     tried.add(model);
     try {
-      const response = await ai.models.generateContent({ model, contents });
+      const response = await withBusyRetry(() => ai.models.generateContent({ model, contents }));
       workingModel = model;
       return response.text ?? '';
     } catch (err: any) {
@@ -71,7 +85,8 @@ const EXTRACT_PROMPT = `Extract all menu items from this menu. Return ONLY a val
 [{"name": "Item name", "category": "Category", "priceRwf": 1500}]
 
 Rules:
-- Categories should be consistent groups like "Drinks", "Food", "Starters", "Desserts"
+- Use the menu's own section headings as categories (e.g. "Brochettes", "Beers", "Soft drinks"); if there are none, use simple groups like "Food" and "Drinks"
+- Keep the full item name as written, including the section word when it is part of the dish (e.g. "Brochette Chèvre")
 - priceRwf must be an integer (Rwandan Francs). If unclear or missing, use 0
 - Include every item you can read
 - Do not include any text outside the JSON array`;
