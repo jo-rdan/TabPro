@@ -1,12 +1,17 @@
 import { Request, Response } from 'express';
-import { createStaff, acceptInvite, getStaffForVenue, getMyPoints, toggleStaffActive, resendInvite, setPin, verifyPin, loginByPhone, requestToJoin, approveJoinRequest, declineJoinRequest } from '../services/staff.service';
+import { createStaff, acceptInvite, getStaffForVenue, getMyPoints, toggleStaffActive, resendInvite, setPin, verifyPin, loginByPhone, requestToJoin, approveJoinRequest, declineJoinRequest, updateStaff } from '../services/staff.service';
 import { ApiResponse } from '@tabpro/shared';
+import { db } from '../lib/db';
+import { staff } from '../models/schema';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const createStaffSchema = z.object({
   venueId: z.string().uuid(),
   name: z.string().min(1).max(100),
   phone: z.string().min(9).max(15),
+  role: z.enum(['waiter', 'manager']).optional(),
+  hasSmartphone: z.boolean().optional(),
 });
 
 export async function handleCreateStaff(req: Request, res: Response) {
@@ -17,8 +22,9 @@ export async function handleCreateStaff(req: Request, res: Response) {
     return;
   }
 
-  const result = await createStaff(parsed.data.venueId, parsed.data.name, parsed.data.phone);
-  const inviteUrl = `${process.env.CLIENT_URL}/invite/${result.token}`;
+  const { venueId, name, phone, role, hasSmartphone } = parsed.data;
+  const result = await createStaff(venueId, name, phone, { role, hasSmartphone });
+  const inviteUrl = result.token ? `${process.env.CLIENT_URL}/invite/${result.token}` : null;
 
   const body: ApiResponse = { success: true, data: { ...result, inviteUrl } };
   res.status(201).json(body);
@@ -164,4 +170,32 @@ export async function handleDeclineJoin(req: Request, res: Response) {
     const body: ApiResponse = { success: false, error: err.message };
     res.status(400).json(body);
   }
+}
+
+const updateStaffSchema = z
+  .object({ role: z.enum(['waiter', 'manager']).optional(), hasSmartphone: z.boolean().optional() })
+  .refine((v) => v.role !== undefined || v.hasSmartphone !== undefined, 'Nothing to change');
+
+export async function handleUpdateStaff(req: Request, res: Response) {
+  const parsed = updateStaffSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const body: ApiResponse = { success: false, error: parsed.error.errors[0].message };
+    res.status(400).json(body);
+    return;
+  }
+  const member = await updateStaff(req.params.staffId, parsed.data);
+  const body: ApiResponse = { success: true, data: { id: member.id, role: member.role, hasSmartphone: member.hasSmartphone } };
+  res.json(body);
+}
+
+// GET /staff/me — who the signed-in staff member is (the app adapts to managers)
+export async function handleGetMe(req: Request, res: Response) {
+  const me = await db.query.staff.findFirst({ where: eq(staff.id, req.staffMember!.staffId) });
+  if (!me) {
+    const body: ApiResponse = { success: false, error: 'Staff not found' };
+    res.status(404).json(body);
+    return;
+  }
+  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, role: me.role, hasSmartphone: me.hasSmartphone } };
+  res.json(body);
 }

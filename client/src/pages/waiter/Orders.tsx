@@ -219,9 +219,18 @@ export default function WaiterOrders() {
     tableId: string;
     label: string;
     isActive: boolean;
+    // Managers only: who serves the table
+    waiterName?: string | null;
+    waiterHasSmartphone?: boolean;
+    mine?: boolean;
   }
   const [myTables, setMyTables] = useState<AssignedTable[]>([]);
   const [tablesLoading, setTablesLoading] = useState(false);
+  const [isManager, setIsManager] = useState(false);
+  // Managers: tables whose waiter has no smartphone, by label → waiter name
+  const coveredTables = new Map(
+    myTables.filter((t) => t.waiterHasSmartphone === false && t.waiterName).map((t) => [t.label, t.waiterName as string]),
+  );
 
   useKeepPushSubscribed(venueId && staffToken ? { venueId, staffId: staffId || undefined, token: staffToken } : null);
 
@@ -634,6 +643,20 @@ export default function WaiterOrders() {
     if (activeTab === "tables") fetchMyTables();
   }, [activeTab, fetchMyPoints, fetchMyTables]);
 
+  // Managers see the whole floor and cover waiters without a smartphone.
+  useEffect(() => {
+    if (!staffToken) return;
+    apiFetch("/staff/me", { headers: { Authorization: `Bearer ${staffToken}` } })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data.role === "manager") {
+          setIsManager(true);
+          fetchMyTables();
+        }
+      })
+      .catch(() => {});
+  }, [staffToken, fetchMyTables]);
+
   const handlePinInput = (val: string, idx: number) => {
     if (!/^\d?$/.test(val)) return;
     const next = [...pinDigits];
@@ -774,7 +797,7 @@ export default function WaiterOrders() {
           {(
             [
               { key: "orders", label: "Orders", icon: Receipt },
-              { key: "tables", label: "My Tables", icon: MapPin },
+              { key: "tables", label: isManager ? "Floor" : "My Tables", icon: MapPin },
               { key: "points", label: "My Points", icon: Trophy },
             ] as const
           ).map(({ key, label, icon: Icon }) => (
@@ -815,8 +838,13 @@ export default function WaiterOrders() {
         <div className="flex items-center gap-3 md:hidden">
           <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
           <div>
-            <h1 className="font-bold text-gray-900 dark:text-white">
+            <h1 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
               {venueName || "Orders"}
+              {isManager && (
+                <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+                  Manager
+                </span>
+              )}
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Live · updates automatically
@@ -827,7 +855,7 @@ export default function WaiterOrders() {
           {activeTab === "orders"
             ? "Orders"
             : activeTab === "tables"
-              ? "My Tables"
+              ? isManager ? "Floor" : "My Tables"
               : "My Points"}
         </h2>
         <div className="flex items-center gap-2">
@@ -1015,6 +1043,11 @@ export default function WaiterOrders() {
                     <span className="text-sm font-bold text-gray-900 dark:text-white">
                       {order.tableLabel}
                     </span>
+                    {isManager && coveredTables.has(order.tableLabel) && (
+                      <span title="This waiter has no smartphone: you're covering their table." className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
+                        📵 Covering {coveredTables.get(order.tableLabel)}
+                      </span>
+                    )}
                     {phoneClosed.has(order.tabId) && (
                       <span title="The guest closed TabPro on their phone. They may still be at the table." className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                         📵 Phone closed
@@ -1155,7 +1188,7 @@ export default function WaiterOrders() {
             <>
               <div className="mb-4">
                 <h2 className="text-lg font-black text-gray-900 dark:text-white">
-                  My Tables
+                  {isManager ? "The floor" : "My Tables"}
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {new Date().toLocaleDateString("en-GB", {
@@ -1177,6 +1210,14 @@ export default function WaiterOrders() {
                     <p className="text-sm font-black text-gray-900 dark:text-white">
                       {table.label}
                     </p>
+                    {isManager && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-snug">
+                        {table.mine ? "You" : table.waiterName ?? "No waiter"}
+                        {table.waiterHasSmartphone === false && (
+                          <span className="block mt-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">📵 You cover this table</span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1323,7 +1364,7 @@ export default function WaiterOrders() {
           className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${activeTab === "tables" ? "text-brand-500" : "text-gray-400 dark:text-gray-600"}`}
         >
           <MapPin size={20} />
-          <span className="text-[10px] font-bold">My Tables</span>
+          <span className="text-[10px] font-bold">{isManager ? "Floor" : "My Tables"}</span>
         </button>
         <button
           onClick={() => setActiveTab("points")}

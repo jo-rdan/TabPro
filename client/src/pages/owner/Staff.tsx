@@ -24,9 +24,10 @@ interface StaffRow {
   id: string;
   name: string;
   phone: string;
-  role: string;
+  role: "waiter" | "manager";
+  hasSmartphone: boolean;
   isActive: boolean;
-  inviteStatus: "none" | "invited" | "active";
+  inviteStatus: "none" | "invited" | "active" | "no_phone";
   inviteToken: string | null;
   totalPoints: number;
   ratingCount: number;
@@ -56,6 +57,9 @@ export default function Staff() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [newRole, setNewRole] = useState<"waiter" | "manager">("waiter");
+  const [newHasPhone, setNewHasPhone] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState<string | null>(null);
@@ -166,6 +170,30 @@ export default function Staff() {
     }
   };
 
+  const handleUpdate = async (member: StaffRow, changes: { role?: "waiter" | "manager"; hasSmartphone?: boolean }) => {
+    if (!venue) return;
+    setUpdating(member.id);
+    try {
+      await api.patch(`/staff/${member.id}`, changes);
+      await fetchStaff();
+      const assignRes = await api.get(`/tables/assignments/${venue.id}`);
+      setAssignments(assignRes.data.data.map((a: any) => ({ staffId: a.staffId, tableIds: a.tableIds })));
+      setToast(
+        changes.role === "manager"
+          ? `${member.name} is now a manager: they see every table and cover waiters without a smartphone.`
+          : changes.role === "waiter"
+            ? `${member.name} is a waiter again.`
+            : changes.hasSmartphone === false
+              ? `${member.name}'s alerts will go to your manager (or to you).`
+              : `${member.name} will get their own alerts. Send them their invite link.`,
+      );
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "Couldn't save that change.");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   const handleCreate = async () => {
     if (!name.trim() || !phone.trim() || !venue) return;
     setCreating(true);
@@ -175,9 +203,14 @@ export default function Staff() {
         venueId: venue.id,
         name: name.trim(),
         phone: phone.trim(),
+        role: newRole,
+        hasSmartphone: newHasPhone,
       });
+      const addedWithoutPhone = !newHasPhone;
       setName("");
       setPhone("");
+      setNewRole("waiter");
+      setNewHasPhone(true);
       setShowForm(false);
       await fetchStaff();
       // Reload assignments since they just got redistributed
@@ -189,7 +222,9 @@ export default function Staff() {
         })),
       );
       setToast(
-        "Staff added — tables auto-assigned evenly. Tap \"Send via WhatsApp\" to invite them.",
+        addedWithoutPhone
+          ? "Added. Their tables' alerts will go to your manager (or to you)."
+          : "Staff added — tables auto-assigned evenly. Tap \"Send via WhatsApp\" to invite them.",
       );
     } catch (err: any) {
       setError(err?.response?.data?.error || "Failed to add staff.");
@@ -310,17 +345,44 @@ export default function Staff() {
               className="px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-4">
+            <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
+              {(["waiter", "manager"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setNewRole(r)}
+                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors ${
+                    newRole === r ? "bg-white dark:bg-[#161B22] text-gray-900 dark:text-white shadow-sm" : "text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <label className="inline-flex items-center gap-2.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+              <input id="new-has-phone" type="checkbox" checked={newHasPhone} onChange={(e) => setNewHasPhone(e.target.checked)} className="w-4 h-4 accent-brand-500" />
+              Has a smartphone
+            </label>
+          </div>
+          {!newHasPhone && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
+              No invite needed. They still get tables and points; alerts for their tables go to your manager, or to you.
+            </p>
+          )}
           {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
           <button
             onClick={handleCreate}
             disabled={creating || !name.trim() || !phone.trim()}
             className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors"
           >
-            {creating ? "Adding..." : "Add & generate invite link"}
+            {creating ? "Adding..." : newHasPhone ? "Add & generate invite link" : "Add to team"}
           </button>
-          <p className="text-xs text-gray-400 mt-2">
-            An invite link will be generated. Share it with them via WhatsApp.
-          </p>
+          {newHasPhone && (
+            <p className="text-xs text-gray-400 mt-2">
+              An invite link will be generated. Share it with them via WhatsApp.
+            </p>
+          )}
         </div>
       )}
 
@@ -370,11 +432,42 @@ export default function Staff() {
                           ? "Active"
                           : member.inviteStatus === "invited"
                             ? "Invite sent"
-                            : "No invite"}
+                            : member.inviteStatus === "no_phone"
+                              ? "On the team"
+                              : "No invite"}
+                      </span>
+                    )}
+                    {member.role === "manager" && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+                        Manager
+                      </span>
+                    )}
+                    {!member.hasSmartphone && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                        📵 No smartphone
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">{member.phone}</p>
+                  {member.isActive && (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs">
+                      <button
+                        onClick={() => handleUpdate(member, { role: member.role === "manager" ? "waiter" : "manager" })}
+                        disabled={updating === member.id}
+                        className="font-semibold text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
+                      >
+                        {member.role === "manager" ? "Make waiter" : "Make manager"}
+                      </button>
+                      <span className="text-gray-300 dark:text-gray-700">·</span>
+                      <button
+                        onClick={() => handleUpdate(member, { hasSmartphone: !member.hasSmartphone })}
+                        disabled={updating === member.id}
+                        className="font-semibold text-gray-500 dark:text-gray-400 hover:underline disabled:opacity-50"
+                      >
+                        {member.hasSmartphone ? "Mark as no smartphone" : "Mark as having a smartphone"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -414,7 +507,7 @@ export default function Staff() {
               </div>
             </div>
 
-            {member.isActive && member.inviteToken && (
+            {member.isActive && member.inviteToken && member.hasSmartphone && (
               <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <p className="text-xs text-gray-400 font-mono truncate mb-2">
                   {getInviteUrl(member.inviteToken)}
