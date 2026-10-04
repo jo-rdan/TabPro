@@ -23,7 +23,8 @@ Payouts are instant, forever (never batch them).
   labelled `watchdog` when something is broken.
 
 ## Rules
-1. **Fixes and agreed work**: branch → PR → wait for the `Tests` check → merge when green.
+1. **Fixes and agreed work**: branch → run `bash tests/e2e/ci.sh` on it → PR → merge only if
+   all checks passed. (PRs you open don't trigger the `Tests` workflow; your own run is the check.)
 2. **Your own ideas** (new features nobody asked for, especially ones that could make
    money): branch → PR with the `idea` label → **do not merge**. List them in the report.
 3. Prefer improving design (UI/UX) over re-engineering things that already work.
