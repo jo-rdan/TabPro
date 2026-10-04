@@ -52,7 +52,6 @@ const statusStyles: Record<AttendanceRow['status'], { label: string; className: 
 export default function Shifts() {
   const { venues, fetchMe } = useAuthStore();
   const venue = venues[0];
-  const isElite = venue?.plan === 'elite';
 
   useEffect(() => { if (!venue) fetchMe(); }, []);
 
@@ -95,9 +94,9 @@ export default function Shifts() {
   };
 
   useEffect(() => {
-    if (!venue || !isElite || tab !== 'attendance') return;
+    if (!venue || tab !== 'attendance') return;
     fetchStickerStatus();
-  }, [venue, isElite, tab]);
+  }, [venue, tab]);
 
   const handleClaimSticker = async () => {
     if (!venue || !claimInput.trim()) return;
@@ -159,9 +158,9 @@ export default function Shifts() {
   };
 
   useEffect(() => {
-    if (!venue || !isElite || tab !== 'attendance') return;
+    if (!venue || tab !== 'attendance') return;
     fetchAttendance();
-  }, [venue, isElite, tab]);
+  }, [venue, tab]);
 
   const fetchShifts = async () => {
     if (!venue) return;
@@ -175,7 +174,6 @@ export default function Shifts() {
   useEffect(() => { fetchShifts(); }, [venue]);
 
   // ── Elite guard ──────────────────────────────────────────────────────────
-  if (venue && !isElite) { /* guard removed */ }
 
   const resetForm = () => {
     setName(''); setStartTime(''); setEndTime('');

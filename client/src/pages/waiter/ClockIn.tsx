@@ -60,6 +60,8 @@ export default function ClockIn() {
   const [joinName, setJoinName] = useState("");
   const [joinPin, setJoinPin] = useState("");
   const [joinedVenue, setJoinedVenue] = useState("");
+  // A brand-new sticker nobody has set up yet: offer the owner to claim it.
+  const [unclaimed, setUnclaimed] = useState(false);
 
   // ── Step 1: scanning the sticker mints a fresh 90s one-time session ───────────
   useEffect(() => {
@@ -76,6 +78,7 @@ export default function ClockIn() {
       .then((r) => r.json())
       .then((data) => {
         if (!data.success) {
+          if (/invalid clock-in sticker/i.test(data.error ?? "")) setUnclaimed(true);
           setError(data.error || "This sticker isn't recognized.");
           setScreen("expired");
           return;
@@ -334,7 +337,26 @@ export default function ClockIn() {
             </div>
           )}
 
-          {screen === "expired" && (
+          {screen === "expired" && unclaimed && (
+            <div className="text-center py-4">
+              <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center mx-auto mb-4">
+                <Clock size={22} className="text-brand-500" />
+              </div>
+              <h1 className="text-base font-bold text-gray-900 dark:text-white mb-1">New clock-in sticker</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                This sticker isn't set up yet. If you're the owner, link it to your venue. Your team will then scan it to clock in and to join.
+              </p>
+              <a
+                href={`/claim-sticker?code=${encodeURIComponent(code ?? "")}`}
+                className="inline-flex w-full items-center justify-center bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+              >
+                Set up this sticker
+              </a>
+              <p className="text-xs text-gray-400 mt-3">Waiters: ask your manager to set it up first.</p>
+            </div>
+          )}
+
+          {screen === "expired" && !unclaimed && (
             <div className="text-center py-4">
               <Clock size={32} className="text-amber-500 mx-auto mb-3" />
               <h1 className="text-base font-bold text-gray-900 dark:text-white mb-1">Can't clock in</h1>
