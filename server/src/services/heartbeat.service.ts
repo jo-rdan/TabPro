@@ -1,6 +1,6 @@
 import { db } from '../lib/db';
-import { tabs } from '../models/schema';
-import { eq, and, lt, inArray } from 'drizzle-orm';
+import { tabs, orders } from '../models/schema';
+import { eq, and, lt, inArray, isNull } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
 import { notifyTable } from './push.service';
 
@@ -75,8 +75,42 @@ export async function checkAbandonedTabs() {
   }
 }
 
+// ─── Orders nobody has started ───────────────────────────────────────────────
+// A guest waiting 10 minutes for a drink nobody saw is the worst night out.
+// Tell the waiter and the owner once per order.
+const ORDER_WAIT_ALERT_MS = 10 * 60_000;
+
+export async function checkWaitingOrders() {
+  const cutoff = new Date(Date.now() - ORDER_WAIT_ALERT_MS);
+  const waiting = await db.query.orders.findMany({
+    where: and(eq(orders.status, 'pending'), eq(orders.isNudge, false), lt(orders.placedAt, cutoff), isNull(orders.waitAlertAt)),
+    with: { tab: { with: { table: true } } },
+  });
+
+  for (const order of waiting) {
+    // Claim it first so two checkers never alert twice.
+    const [claimed] = await db
+      .update(orders)
+      .set({ waitAlertAt: new Date() })
+      .where(and(eq(orders.id, order.id), isNull(orders.waitAlertAt)))
+      .returning();
+    if (!claimed || !order.tab || order.tab.status === 'closed') continue;
+
+    const label = order.tab.table.label;
+    const minutes = Math.round((Date.now() - order.placedAt.getTime()) / 60_000);
+    await notifyTable(
+      order.tab.table.venueId,
+      order.tab.tableId,
+      order.tab.staffId,
+      { title: `⏰ ${label}: order waiting ${minutes} min`, body: 'Nobody has started it yet. Mark it "preparing" once it is.' },
+      { title: `⏰ ${label}: an order has waited ${minutes} min`, body: 'Their waiter has been reminded.' },
+    );
+  }
+}
+
 // ─── Start the background checker ────────────────────────────────────────────
 export function startHeartbeatChecker() {
   setInterval(() => checkAbandonedTabs().catch((err) => console.error('[heartbeat]', err)), 30_000);
+  setInterval(() => checkWaitingOrders().catch((err) => console.error('[order-wait]', err)), 60_000);
   console.log('[heartbeat] Abandoned tab checker started');
 }

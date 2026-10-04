@@ -1,6 +1,6 @@
 import webpush from "web-push";
 import { db } from "../lib/db";
-import { pushSubscriptions, tableAssignments } from "../models/schema";
+import { pushSubscriptions, tableAssignments, tabs, qrStickers } from "../models/schema";
 import { and, eq, isNull, isNotNull } from "drizzle-orm";
 import * as dotenv from "dotenv";
 
@@ -99,7 +99,7 @@ async function tableWaiterSubs(venueId: string, tableId: string, tabStaffId: str
 
 function ownerSubs(venueId: string) {
   return db.query.pushSubscriptions.findMany({
-    where: and(eq(pushSubscriptions.venueId, venueId), isNull(pushSubscriptions.staffId)),
+    where: and(eq(pushSubscriptions.venueId, venueId), isNull(pushSubscriptions.staffId), isNull(pushSubscriptions.tabId)),
   });
 }
 
@@ -107,19 +107,50 @@ type Message = { title: string; body: string };
 
 // Something happened at a table: tell its waiter and the owner. A phone that
 // is signed in as both (the founder's, during a demo) gets the waiter's alert only.
+// Pass null to skip the waiter or the owner for a given event.
 export async function notifyTable(
   venueId: string,
   tableId: string,
   tabStaffId: string | null,
-  toWaiter: Message,
-  toOwner: Message,
+  toWaiter: Message | null,
+  toOwner: Message | null,
 ) {
   if (!pushEnabled()) return;
-  const waiters = await tableWaiterSubs(venueId, tableId, tabStaffId);
+  const waiters = toWaiter ? await tableWaiterSubs(venueId, tableId, tabStaffId) : [];
   const waiterEndpoints = new Set(waiters.map((s) => s.endpoint));
-  const owners = (await ownerSubs(venueId)).filter((s) => !waiterEndpoints.has(s.endpoint));
-  await send(waiters, toWaiter.title, toWaiter.body, STAFF_URL);
-  await send(owners, toOwner.title, toOwner.body, OWNER_URL);
+  const owners = toOwner ? (await ownerSubs(venueId)).filter((s) => !waiterEndpoints.has(s.endpoint)) : [];
+  if (toWaiter) await send(waiters, toWaiter.title, toWaiter.body, STAFF_URL);
+  if (toOwner) await send(owners, toOwner.title, toOwner.body, OWNER_URL);
+}
+
+// ─── Guests ───────────────────────────────────────────────────────────────────
+// A guest can ask to be told when their order is ready. Their phone is tied to
+// their tab only, and tapping the alert brings them back to their table's menu.
+export async function saveTabSubscription(tabId: string, endpoint: string, p256dh: string, auth: string) {
+  const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: true } });
+  if (!tab || tab.status === "closed") throw new Error("This bill is already closed");
+  const existing = await db.query.pushSubscriptions.findFirst({
+    where: and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.tabId, tabId)),
+  });
+  if (existing) return existing;
+  const [created] = await db
+    .insert(pushSubscriptions)
+    .values({ venueId: tab.table.venueId, tabId, endpoint, p256dh, auth })
+    .returning();
+  return created;
+}
+
+export async function notifyGuest(tabId: string, message: Message, url?: string) {
+  if (!pushEnabled()) return;
+  const subs = await db.query.pushSubscriptions.findMany({ where: eq(pushSubscriptions.tabId, tabId) });
+  if (subs.length === 0) return;
+  let target = url;
+  if (!target) {
+    const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId) });
+    const sticker = tab ? await db.query.qrStickers.findFirst({ where: eq(qrStickers.tableId, tab.tableId) }) : null;
+    target = sticker ? `/t/${sticker.code}` : "/";
+  }
+  await send(subs, message.title, message.body, target);
 }
 
 // ─── The owner only ───────────────────────────────────────────────────────────

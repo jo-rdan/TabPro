@@ -2,7 +2,7 @@ import { db } from '../lib/db';
 import { orders, orderItems, tabs, menuItems, staffPoints, tableAssignments } from '../models/schema';
 import { eq, and } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
-import { notifyTable } from './push.service';
+import { notifyTable, notifyGuest } from './push.service';
 
 interface OrderItemInput {
   menuItemId: string;
@@ -118,6 +118,13 @@ export async function updateOrderStatus(
   });
 
   if (tab) {
+    await notifyGuest(
+      updated.tabId,
+      status === 'preparing'
+        ? { title: '👨‍🍳 Your order is being prepared', body: `${tab.table.label}: it's on its way soon.` }
+        : { title: '🍽️ Your order has been served', body: 'Enjoy! Need anything else? Order from your phone.' },
+    );
+
     broadcastToVenue(tab.table.venueId, {
       type: 'order_status_update',
       payload: { orderId, status, tabId: updated.tabId, tableId: tab.tableId },

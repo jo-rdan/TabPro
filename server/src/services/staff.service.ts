@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { sendInviteSms, buildWhatsAppLink } from './messaging.service';
 import { broadcastToVenue } from '../lib/websocket';
+import { sendPushToOwner } from './push.service';
 
 export async function setPin(staffId: string, pin: string): Promise<void> {
   if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits');
@@ -328,6 +329,8 @@ export async function requestToJoin(stickerCode: string, name: string, rawPhone:
     venueId: venue.id,
     timestamp: new Date().toISOString(),
   });
+
+  await sendPushToOwner(venue.id, `👋 ${member.name} wants to join your team`, 'Open TabPro to approve or decline.');
 
   return { name: member.name, venueName: venue.name };
 }

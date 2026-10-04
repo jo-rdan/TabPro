@@ -3,6 +3,7 @@ import { db } from "../lib/db";
 import { momoPayments, venues, tabs } from "../models/schema";
 import { eq, and, isNull, or, lt, desc } from "drizzle-orm";
 import { getTabBill, closeTab } from "./tab.service";
+import { notifyTable, notifyGuest, sendPushToOwner } from "./push.service";
 import { broadcastToVenue } from "../lib/websocket";
 import {
   isPawapayConfigured,
@@ -211,7 +212,7 @@ async function markTabPaid(payment: typeof momoPayments.$inferSelect) {
   if (!tab || tab.status === "closed") return;
 
   try {
-    await closeTab(payment.tabId);
+    await closeTab(payment.tabId, { paidByMomo: true });
   } catch (err: any) {
     // Lost a race with another settler — the tab is closed either way.
     if (!/already closed/i.test(err.message)) throw err;
@@ -232,6 +233,20 @@ async function markTabPaid(payment: typeof momoPayments.$inferSelect) {
     tableId: tab.tableId,
     timestamp: new Date().toISOString(),
   });
+
+  const label = bill?.tableLabel ?? "A table";
+  const amount = (n: number | null) => `${(n ?? 0).toLocaleString("en-US")} RWF`;
+  await notifyTable(
+    payment.venueId,
+    tab.tableId,
+    tab.staffId,
+    { title: `✅ ${label} paid ${amount(payment.amountRwf)}`, body: "Paid by Mobile Money. You can clear the table." },
+    {
+      title: `💰 ${label} paid ${amount(payment.amountRwf)}`,
+      body: payment.type === "demo" ? "Demo payment, no real money." : `${amount(payment.venuePayoutRwf)} is on its way to your Mobile Money.`,
+    },
+  );
+  await notifyGuest(payment.tabId, { title: "✅ Payment received", body: `Thank you! ${amount(payment.amountRwf)} paid. Tap to see your receipt.` }, `/receipt/${payment.tabId}`);
 }
 
 // Sends the venue its share exactly once. The payout id is claimed in the DB
@@ -269,6 +284,14 @@ async function disburseToVenue(depositId: string) {
     });
   } catch (err: any) {
     console.error("pawaPay payout failed:", err.message);
+    // Tell the owner on the first failure only: the reconciler retries every minute.
+    if (payment.disbursementStatus !== "failed") {
+      await sendPushToOwner(
+        payment.venueId,
+        "⚠️ A payout to your Mobile Money is delayed",
+        `${(payment.venuePayoutRwf ?? 0).toLocaleString("en-US")} RWF didn't go through yet. TabPro is retrying automatically.`,
+      ).catch(() => {});
+    }
     await db.update(momoPayments)
       .set({ disbursementReferenceId: null, disbursementStatus: "failed" })
       .where(eq(momoPayments.disbursementReferenceId, payoutId));

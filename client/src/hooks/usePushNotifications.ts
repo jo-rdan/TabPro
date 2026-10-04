@@ -83,7 +83,35 @@ export function usePushNotifications() {
     }
   };
 
-  return { isSupported, permission, subscribe, needsHomeScreen };
+  // Guests: alerts about their own bill only (no login, the tab id is the key).
+  const subscribeToTab = async (tabId: string): Promise<boolean> => {
+    if (!isSupported) return false;
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      const perm = await Notification.requestPermission();
+      setPermission(perm);
+      if (perm !== "granted") return false;
+      const keyRes = await api.get("/push/vapid-key");
+      const publicKey = keyRes.data?.data?.publicKey;
+      if (!publicKey) return false;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey) as unknown as ArrayBuffer,
+      });
+      const sub = subscription.toJSON();
+      await api.post("/push/subscribe-tab", {
+        tabId,
+        subscription: { endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh, auth: sub.keys?.auth } },
+      });
+      return true;
+    } catch (err) {
+      console.error("[Push] Guest subscription failed:", err);
+      return false;
+    }
+  };
+
+  return { isSupported, permission, subscribe, subscribeToTab, needsHomeScreen };
 }
 
 // Already allowed on this device? Quietly (re)register it on every visit: the

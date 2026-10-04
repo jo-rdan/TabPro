@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import GuestAlerts from "../../components/GuestAlerts";
 import { useParams } from "react-router-dom";
 import api from "../../lib/api";
 import {
@@ -1396,6 +1397,7 @@ export default function CustomerMenu() {
 
         {/* Menu content */}
         <div className="flex-1 px-4 pt-4 overflow-y-auto">
+          {tabId && placedOrders.length > 0 && tabStatus !== "closed" && <GuestAlerts tabId={tabId} />}
           {/* Search results */}
           {filteredItems && (
             <div className="mb-6">

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { saveSubscription } from '../services/push.service';
+import { saveSubscription, saveTabSubscription } from '../services/push.service';
 import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
 
@@ -44,4 +44,28 @@ export function handleGetVapidKey(_req: Request, res: Response) {
     data: { publicKey: process.env.VAPID_PUBLIC_KEY ?? null },
   };
   res.json(body);
+}
+
+// ── Guest: "tell me when my order is ready" (no login; the tab id is the key) ──
+const tabSubscribeSchema = z.object({
+  tabId: z.string().uuid(),
+  subscription: subscribeSchema.shape.subscription,
+});
+
+export async function handleSubscribeTab(req: Request, res: Response) {
+  const parsed = tabSubscribeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const body: ApiResponse = { success: false, error: parsed.error.errors[0].message };
+    res.status(400).json(body);
+    return;
+  }
+  const { tabId, subscription } = parsed.data;
+  try {
+    await saveTabSubscription(tabId, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth);
+    const body: ApiResponse = { success: true, data: null };
+    res.status(201).json(body);
+  } catch (err: any) {
+    const body: ApiResponse = { success: false, error: err.message };
+    res.status(400).json(body);
+  }
 }
