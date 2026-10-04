@@ -291,7 +291,7 @@ const awayBefore = ownerWs.events.filter((e) => e.type === 'customer_away').leng
 console.log('… waiting for the "stepped away" check (≤ 35s)');
 await sleep(35_000);
 const awayAlerts = ownerWs.events.filter((e) => e.type === 'customer_away').length - awayBefore;
-check('Quiet 10+ min → tab stays open, one alert', (await q1('select status from tabs where id=$1', [t4])).status === 'open' && awayAlerts === 1, `alerts=${awayAlerts}`);
+check('Quiet 5+ min → tab stays open, one alert', (await q1('select status from tabs where id=$1', [t4])).status === 'open' && awayAlerts === 1, `alerts=${awayAlerts}`);
 r = await call('POST', '/orders', { tabId: t4, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
 check('Customer can keep ordering after phone was locked', r.status === 201);
 await pg.query(`update tabs set status='abandoned' where id=$1`, [t4]);
@@ -380,6 +380,18 @@ pushHits.length = 0;
 console.log('… waiting for the "order waiting" check (≤ 65s)');
 for (let i = 0; i < 65 && !pushHits.includes('/owner'); i++) await sleep(1000);
 check('Order waiting 10+ min → waiter and owner reminded', pushHits.includes('/eric') && pushHits.includes('/owner'), pushHits.join(' '));
+// Customer closes the page: a reload comes back within seconds (no alert),
+// leaving for real alerts the waiter and owner within ~20s.
+pushHits.length = 0;
+await call('POST', `/tabs/${pushTab}/left`);
+await sleep(2000);
+await call('POST', `/tabs/${pushTab}/heartbeat`);
+console.log('… checking the "customer left" alerts (≈45s)');
+await sleep(21000);
+check('Customer reloads the page → no false alarm', !pushHits.includes('/owner'), pushHits.join(' '));
+await call('POST', `/tabs/${pushTab}/left`);
+await sleep(21500);
+check('Customer closes the page with a bill unpaid → waiter and owner told in seconds', pushHits.includes('/eric') && pushHits.includes('/owner'), pushHits.join(' '));
 pushHits.length = 0;
 await call('POST', `/tabs/${pushTab}/close`, null, ericTok);
 await sleep(800);

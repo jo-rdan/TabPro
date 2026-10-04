@@ -5,3 +5,10 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 export function apiFetch(path: string, init?: RequestInit) {
   return fetch(`${API_BASE}${path}`, init);
 }
+
+// Fire-and-forget request that still goes out while the page is closing.
+export function apiBeacon(path: string) {
+  const url = `${API_BASE}${path}`;
+  if (typeof navigator !== 'undefined' && navigator.sendBeacon?.(url)) return;
+  fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+}
