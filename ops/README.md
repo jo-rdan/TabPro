@@ -25,6 +25,9 @@ Payouts are instant, forever (never batch them).
 ## Rules
 1. **Fixes and agreed work**: branch → run `bash tests/e2e/ci.sh` on it → PR → merge only if
    all checks passed. (PRs you open don't trigger the `Tests` workflow; your own run is the check.)
+   If `gh pr merge` says "not mergeable" right after you push, GitHub is still computing:
+   wait ~20s and retry (up to 5 times). Ignore `Tests` runs marked `action_required` on
+   your PRs; never approve them yourself and never use admin merge.
 2. **Your own ideas** (new features nobody asked for, especially ones that could make
    money): branch → PR with the `idea` label → **do not merge**. List them in the report.
 3. Prefer improving design (UI/UX) over re-engineering things that already work.
