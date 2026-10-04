@@ -63,6 +63,8 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # The workflow's own token: no extra GitHub app to install.
           github_token: ${{ github.token }}
+          # Private repo: keep the bot's working notes in the run log for debugging.
+          show_full_output: true
           prompt: |
             You are the TabPro ops bot. Today's routine: ${{ env.ROUTINE }}.
             Read ops/README.md, ops/STATE.md and the newest entries of ops/LOG.md first,
