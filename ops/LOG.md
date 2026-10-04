@@ -2,6 +2,12 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-05 night · interactive
+- Did: manager accounts + no-smartphone waiters (PR #30); stickers ready for setup day (PR #31):
+  attendance unlocked (stale 'elite' gate), new clock-in stickers set up by scanning, friendly
+  message for unset-up table stickers, `stickers:create`. 16 blank table codes created in prod.
+- Left off: tips wait for pawaPay. Jordan: bank visit Mon, pawaPay email, print materials, Oct 6 outreach.
+
 ## 2026-10-04 evening · interactive
 - Did: notifications overhaul (PRs #21, #22): devices re-register on every visit; alerts go to the
   table's waiter + owner; guests can opt in ("Notify me"); new alerts for seated, paid, cash close,

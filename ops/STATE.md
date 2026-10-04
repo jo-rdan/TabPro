@@ -15,14 +15,16 @@ Keep this short and current. The bot and interactive sessions both update it.
 | Bichu Lounge | Not contacted | Intro via cousin, then 20-min pitch (script in Jordan's Sales folder) |
 
 ## Up next
-- [ ] One-page venue agreement (92/8, stop any time) (interactive)
-- [ ] Real food photos for Demo Lounge menu (bot-ok)
-- [ ] Printable sticker sheet: table stickers + 1 clock-in sticker per venue (interactive)
-- [ ] Tips by MoMo straight to the waiter (interactive, agreed feature)
-- [ ] Manager account + waiters without smartphones (interactive, agreed feature)
-- [ ] "Tonight's summary" on the owner dashboard (bot-ok): PR #19 open, e2e 93/93 pass on my run, merge blocked (see Needs Jordan)
-- [ ] "Book a demo" form replacing WhatsApp as the main website button (bot-ok)
+- [ ] Tips by MoMo straight to the waiter (interactive; build once pawaPay production is approved)
+- [ ] Real food photos for Demo Lounge menu (needs photos from Jordan or approved free images)
 - [ ] Error log in the database (bot-ok)
+- [ ] Design polish of the customer bill and payment screens (bot-ok, small safe changes only)
+
+## Done recently (2026-10-05)
+- Manager accounts + waiters without a smartphone (alerts go to manager, else owner).
+- "Book a demo" form + footer badge; no public contact details on the homepage.
+- Notifications overhaul; calm "phone closed" sign; bills left open + 04:00 summary.
+- Venue agreement, one-page pitch, pitch script, demo QR card, 16-table sticker sheet + clock-in sticker (Jordan's Sales folder).
 
 ## Needs Jordan
 - **Aug 2027:** renew tabpro.lol before 2027-09-29 (auto-renew is OFF; renewal ≈ $26.26 at Porkbun).
