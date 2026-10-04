@@ -20,12 +20,12 @@ Keep this short and current. The bot and interactive sessions both update it.
 - [ ] Printable sticker sheet: table stickers + 1 clock-in sticker per venue (interactive)
 - [ ] Tips by MoMo straight to the waiter (interactive, agreed feature)
 - [ ] Manager account + waiters without smartphones (interactive, agreed feature)
-- [ ] "Tonight's summary" on the owner dashboard (bot-ok): coded on branch `dashboard-tonights-summary`, needs PR + merge
+- [ ] "Tonight's summary" on the owner dashboard (bot-ok): PR #19 open, e2e 93/93 pass on my run, merge blocked (see Needs Jordan)
 - [ ] "Book a demo" form replacing WhatsApp as the main website button (bot-ok)
 - [ ] Error log in the database (bot-ok)
 
 ## Needs Jordan
-- Settings → Actions → General → tick "Allow GitHub Actions to create and approve pull requests", so the bot can open PRs. Then branch `dashboard-tonights-summary` can be merged.
+- PR #19 (Tonight's summary) can't be merged: its `Tests` run is waiting for approval. Open the PR → "Approve and run" (or Settings → Actions → General → fork/approval settings), then the bot merges it.
 - Bank document → pawaPay email (Mon 2026-10-05).
 - Buffer: an access token so posts can be scheduled automatically.
 
