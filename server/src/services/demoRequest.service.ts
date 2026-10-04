@@ -31,7 +31,6 @@ export async function createDemoRequest(input: { name: string; venueName: string
   ];
   const emailed = isEmailConfigured()
     ? await sendEmail({
-        to: process.env.ADMIN_EMAIL || 'jordankayinamura@gmail.com',
         subject: title,
         text: `New demo request from tabpro.lol\n\n${rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('\n')}`,
         html: `<div style="font-family:system-ui,sans-serif;font-size:15px;color:#11201a">

@@ -1,20 +1,21 @@
-// Email through Resend's HTTP API (free tier). Render's free plan blocks the
-// SMTP ports, so plain Gmail sending wouldn't work from the server.
-// Until a domain is verified in Resend, it can only send to the address the
-// Resend account was created with, from onboarding@resend.dev.
+// Email from the founder's own Gmail, through a small Google Apps Script web
+// app in his Google account (free, ~100 emails/day, no extra service).
+// Render's free plan blocks the SMTP ports, so this goes over HTTPS instead.
+// The script only sends when it receives the shared secret.
 export function isEmailConfigured() {
-  return !!process.env.RESEND_API_KEY;
+  return !!(process.env.EMAIL_SCRIPT_URL && process.env.EMAIL_SCRIPT_SECRET);
 }
 
-export async function sendEmail({ to, subject, text, html }: { to: string; subject: string; text: string; html?: string }) {
+export async function sendEmail({ subject, text, html }: { subject: string; text: string; html?: string }) {
   if (!isEmailConfigured()) return false;
-  const res = await fetch('https://api.resend.com/emails', {
+  const res = await fetch(process.env.EMAIL_SCRIPT_URL!, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: process.env.EMAIL_FROM || 'TabPro <onboarding@resend.dev>', to, subject, text, html }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret: process.env.EMAIL_SCRIPT_SECRET, subject, text, html }),
   });
-  if (!res.ok) {
-    console.error('[email] send failed', res.status, (await res.text()).slice(0, 300));
+  const reply = (await res.text()).trim();
+  if (!res.ok || reply !== 'ok') {
+    console.error('[email] send failed', res.status, reply.slice(0, 200));
     return false;
   }
   return true;
