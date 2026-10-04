@@ -359,7 +359,7 @@ pushHits.length = 0;
 r = await call('POST', '/tabs/open', { qrCode: ericTable.code, phone: phone() });
 const pushTab = r.json?.data?.tab?.id;
 await sleep(800);
-check('Guests seated → their waiter is told (owner is not)', pushHits.includes('/eric') && !pushHits.includes('/owner'), pushHits.join(' '));
+check('Guests seated → their waiter and the owner are told', pushHits.includes('/eric') && pushHits.includes('/owner'), pushHits.join(' '));
 await call('POST', '/push/subscribe-tab', { tabId: pushTab, subscription: device('guest') });
 pushHits.length = 0;
 r = await call('POST', '/orders', { tabId: pushTab, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
