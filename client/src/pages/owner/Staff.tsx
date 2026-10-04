@@ -15,6 +15,7 @@ import {
 import Layout from "../../components/Layout";
 import { useAuthStore } from "../../lib/auth";
 import api from "../../lib/api";
+import JoinRequests from "../../components/JoinRequests";
 import Toast from "../../components/Toast";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import type { WsEvent } from "@tabpro/shared";
@@ -70,12 +71,13 @@ export default function Staff() {
   const [expandedStaffId, setExpandedStaffId] = useState<string | null>(null);
   const [savingAssignment, setSavingAssignment] = useState<string | null>(null);
   const [resending, setResending] = useState<string | null>(null);
+  const [joinRefresh, setJoinRefresh] = useState(0);
 
   const fetchStaff = async () => {
     if (!venue) return;
     try {
       const res = await api.get(`/staff/${venue.id}`);
-      setStaffList(res.data.data);
+      setStaffList(res.data.data.filter((s: StaffRow & { pendingApproval?: boolean }) => !s.pendingApproval));
     } catch {
       setError("Failed to load staff.");
     } finally {
@@ -123,6 +125,11 @@ export default function Staff() {
           ),
         );
         setToast(`${name} accepted their invite`);
+      }
+      if (event.type === "staff_join_request") {
+        const { name } = event.payload as { name: string };
+        setJoinRefresh((n) => n + 1);
+        setToast(`${name} wants to join your team`);
       }
     },
   });
@@ -270,12 +277,15 @@ export default function Staff() {
         </button>
       </div>
 
+      {venue && <JoinRequests venueId={venue.id} refreshKey={joinRefresh} onChange={fetchStaff} />}
+
       {/* Auto-assign info banner */}
       <div className="flex items-start gap-2.5 bg-brand-50 dark:bg-brand-900/20 border border-brand-200/70 dark:border-brand-900/40 rounded-2xl px-4 py-3 mb-5">
         <Info size={14} className="text-brand-500 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-brand-700 dark:text-brand-300 leading-relaxed">
           Tables are automatically distributed evenly across your active waiters
-          whenever you add a table or a team member.
+          whenever you add a table or a team member. Waiters who aren't on the
+          list can scan your clock-in sticker and tap "Join the team" — you approve them here.
         </p>
       </div>
 

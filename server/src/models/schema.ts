@@ -87,6 +87,8 @@ export const staff = pgTable("staff", {
   role: staffRoleEnum("role").default("waiter").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   pin: text("pin"), // bcrypt hash, null until waiter sets it on first login
+  // Joined by scanning the clock-in sticker; inactive until the owner approves.
+  pendingApproval: boolean("pending_approval").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

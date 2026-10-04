@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { staff, staffInvites, staffPoints, ratings, tableAssignments } from '../models/schema';
+import { staff, staffInvites, staffPoints, ratings, tableAssignments, venues } from '../models/schema';
 import { eq, desc, and, inArray } from 'drizzle-orm';
 import { autoAssignTablesForVenue, autoAssignShiftsForVenue } from './autoAssign.service';
 import { randomBytes } from 'crypto';
@@ -75,6 +75,13 @@ export async function loginByPhone(phone: string, pin: string): Promise<{ token:
     }
   }
 
+  const pending = await db.query.staff.findFirst({
+    where: and(eq(staff.phone, normalizedPhone), eq(staff.pendingApproval, true)),
+  });
+  if (pending?.pin && (await bcrypt.compare(pin, pending.pin))) {
+    throw new Error('Your manager has not approved you yet. Ask them to tap "Approve" in TabPro.');
+  }
+
   recordFailedLogin(normalizedPhone);
   return null;
 }
@@ -126,7 +133,7 @@ export async function getMyPoints(staffId: string) {
 export async function toggleStaffActive(staffId: string, isActive: boolean) {
   const [updated] = await db
     .update(staff)
-    .set({ isActive })
+    .set({ isActive, pendingApproval: false })
     .where(eq(staff.id, staffId))
     .returning();
   if (!updated) throw new Error('Staff not found');
@@ -147,6 +154,15 @@ export async function createStaff(venueId: string, name: string, rawPhone: strin
   });
 
   let staffMember = existing;
+
+  // The owner adding someone who already asked to join counts as approval.
+  if (staffMember?.pendingApproval) {
+    [staffMember] = await db
+      .update(staff)
+      .set({ pendingApproval: false, isActive: true, name })
+      .where(eq(staff.id, staffMember.id))
+      .returning();
+  }
 
   if (!staffMember) {
     const [created] = await db
@@ -245,7 +261,7 @@ export async function getStaffForVenue(venueId: string) {
       ? Math.round((s.ratings.reduce((sum, r) => sum + r.waiterScore, 0) / ratingCount) * 10) / 10
       : null;
     const latestInvite = s.invites[0] ?? null;
-    const inviteStatus = !latestInvite ? 'none'
+    const inviteStatus = !latestInvite ? (s.pin ? 'active' : 'none')
       : latestInvite.acceptedAt ? 'active'
       : 'invited';
 
@@ -255,6 +271,7 @@ export async function getStaffForVenue(venueId: string) {
       phone: s.phone,
       role: s.role,
       isActive: s.isActive,
+      pendingApproval: s.pendingApproval,
       inviteStatus,
       inviteToken: latestInvite?.acceptedAt ? null : latestInvite?.token ?? null,
       totalPoints,
@@ -262,4 +279,76 @@ export async function getStaffForVenue(venueId: string) {
       avgRating,
     };
   });
+}
+
+
+// ─── Join requests (waiter scans the venue's clock-in sticker) ─────────────────
+// Waiters who missed setup day add themselves; nothing changes until the owner
+// approves, so a photo of the sticker can't put a stranger on the team.
+
+const MAX_PENDING_PER_VENUE = 20;
+
+export async function requestToJoin(stickerCode: string, name: string, rawPhone: string, pin: string) {
+  if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits');
+  const phone = normalizeStaffPhone(rawPhone);
+  if (!/^07\d{8}$/.test(phone)) throw new Error('Enter a Rwandan phone number, e.g. 0781234567');
+
+  const venue = await db.query.venues.findFirst({ where: eq(venues.clockInStickerCode, stickerCode.trim().toUpperCase()) });
+  if (!venue) throw new Error('This sticker isn\'t recognized.');
+
+  const existing = await db.query.staff.findFirst({
+    where: and(eq(staff.venueId, venue.id), eq(staff.phone, phone)),
+  });
+  if (existing && !existing.pendingApproval) {
+    throw new Error(existing.isActive
+      ? 'You are already on the team. Log in with your phone number and PIN.'
+      : 'Your account here was switched off. Ask your manager to switch it back on.');
+  }
+
+  const pinHash = await bcrypt.hash(pin, 10);
+  let member;
+  if (existing) {
+    [member] = await db.update(staff).set({ name: name.trim(), pin: pinHash }).where(eq(staff.id, existing.id)).returning();
+  } else {
+    const pending = await db.query.staff.findMany({
+      where: and(eq(staff.venueId, venue.id), eq(staff.pendingApproval, true)),
+    });
+    if (pending.length >= MAX_PENDING_PER_VENUE) {
+      throw new Error('Too many people are waiting for approval. Ask your manager to review them first.');
+    }
+    [member] = await db
+      .insert(staff)
+      .values({ venueId: venue.id, name: name.trim(), phone, role: 'waiter', pin: pinHash, isActive: false, pendingApproval: true })
+      .returning();
+  }
+
+  broadcastToVenue(venue.id, {
+    type: 'staff_join_request',
+    payload: { staffId: member.id, name: member.name },
+    venueId: venue.id,
+    timestamp: new Date().toISOString(),
+  });
+
+  return { name: member.name, venueName: venue.name };
+}
+
+export async function approveJoinRequest(staffId: string) {
+  const [member] = await db
+    .update(staff)
+    .set({ isActive: true, pendingApproval: false })
+    .where(and(eq(staff.id, staffId), eq(staff.pendingApproval, true)))
+    .returning();
+  if (!member) throw new Error('This request was already handled.');
+
+  await autoAssignTablesForVenue(member.venueId);
+  await autoAssignShiftsForVenue(member.venueId);
+  return member;
+}
+
+export async function declineJoinRequest(staffId: string) {
+  const [member] = await db
+    .delete(staff)
+    .where(and(eq(staff.id, staffId), eq(staff.pendingApproval, true)))
+    .returning();
+  if (!member) throw new Error('This request was already handled.');
 }

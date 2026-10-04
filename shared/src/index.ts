@@ -195,6 +195,7 @@ export type WsEventType =
   | "new_rating"
   | "customer_away"
   | "staff_invite_accepted"
+  | "staff_join_request"
   | "tab_paid"
   | "disbursement_failed";
 

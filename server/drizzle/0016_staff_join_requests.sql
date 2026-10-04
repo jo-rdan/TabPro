@@ -1,0 +1,1 @@
+ALTER TABLE "staff" ADD COLUMN "pending_approval" boolean DEFAULT false NOT NULL;
