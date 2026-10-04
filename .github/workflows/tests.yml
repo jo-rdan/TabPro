@@ -1,12 +1,19 @@
 name: Tests
 
-# Runs on every pull request and every push to main: builds both apps, then
-# plays a whole night at a venue (orders, payments, security) against a real
-# server and database. A red run means "don't merge".
+# Runs on every pull request, every push to main and every night: builds both
+# apps, then plays a whole night at a venue (orders, payments, security)
+# against a real server and database. A red run means "don't merge".
 on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: "0 3 * * *" # 05:00 in Kigali
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   e2e:
@@ -53,3 +60,11 @@ jobs:
       - name: Server log
         if: failure()
         run: cat server/server.log
+      - name: Open a watchdog issue if the nightly run fails
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create watchdog -c D93F0B -d "Opened by the watchdog" 2>/dev/null || true
+          gh issue create -t "🚨 Watchdog: nightly tests failed" -l watchdog \
+            -b "The nightly end-to-end tests failed on main. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
