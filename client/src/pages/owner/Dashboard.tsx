@@ -19,6 +19,12 @@ interface Stats {
   ratingCount: number;
 }
 
+interface Summary {
+  closedTabs: number;
+  totalOrders: number;
+  topItems: { name: string; quantity: number }[];
+}
+
 interface LiveOrder {
   orderId: string;
   tableLabel: string;
@@ -60,6 +66,7 @@ export default function Dashboard() {
   const venue = venues[0];
 
   const [stats, setStats] = useState<Stats | null>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [liveOrders, setLiveOrders] = useState<LiveOrder[]>([]);
   const [receiptTabId, setReceiptTabId] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -92,11 +99,29 @@ export default function Dashboard() {
   const fetchStats = useCallback(async () => {
     if (!venue) return;
     try {
-      const [statsRes, lbRes] = await Promise.all([
+      const [statsRes, lbRes, reportRes] = await Promise.all([
         api.get(`/dashboard/stats/${venue.id}`),
         api.get(`/ratings/leaderboard/${venue.id}`),
+        api.get(`/dashboard/report/${venue.id}`),
       ]);
       setStats(statsRes.data.data);
+      const report = reportRes.data.data;
+      const counts = new Map<string, number>();
+      for (const tab of report.activity) {
+        for (const order of tab.orders) {
+          for (const item of order.items) {
+            counts.set(item.name, (counts.get(item.name) ?? 0) + item.quantity);
+          }
+        }
+      }
+      setSummary({
+        closedTabs: report.closedTabs,
+        totalOrders: report.totalOrders,
+        topItems: [...counts.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([name, quantity]) => ({ name, quantity })),
+      });
       setLeaderboard(lbRes.data.data.slice(0, 5));
     } catch {
       // silent
@@ -426,6 +451,34 @@ export default function Dashboard() {
             </div>
           );
         })}
+      </div>
+
+      {/* Tonight's summary */}
+      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl mb-4">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Tonight's summary</h2>
+        </div>
+        {!summary || summary.totalOrders === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
+            {statsLoading ? '—' : 'No orders yet tonight'}
+          </p>
+        ) : (
+          <div className="px-5 py-4 space-y-3">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="font-bold text-gray-900 dark:text-white">{stats ? formatRwf(stats.revenueTonight) : '—'}</span> from{' '}
+              <span className="font-bold text-gray-900 dark:text-white">{summary.closedTabs}</span> paid {summary.closedTabs === 1 ? 'table' : 'tables'} ·{' '}
+              <span className="font-bold text-gray-900 dark:text-white">{summary.totalOrders}</span> {summary.totalOrders === 1 ? 'order' : 'orders'}
+            </p>
+            {summary.topItems.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Best sellers</p>
+                {summary.topItems.map((item) => (
+                  <p key={item.name} className="text-xs text-gray-600 dark:text-gray-400">{item.name} ×{item.quantity}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
