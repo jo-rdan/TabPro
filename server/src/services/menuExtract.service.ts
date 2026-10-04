@@ -43,8 +43,11 @@ async function generate(contents: any): Promise<string> {
       return response.text ?? '';
     } catch (err: any) {
       if (!isModelGone(err)) {
-        console.error('[menuExtract]', err?.message ?? err);
-        throw new Error('Could not read the menu right now. Try again, or add items by hand.');
+        const raw = String(err?.message ?? err);
+        console.error('[menuExtract]', model, raw);
+        // Google's short status (e.g. RESOURCE_EXHAUSTED) helps support without exposing anything.
+        const reason = raw.match(/"status":\s*"([A-Z_]+)"/)?.[1] ?? raw.match(/\b(4\d\d|5\d\d)\b/)?.[1] ?? 'unknown';
+        throw new Error(`Could not read the menu right now (${reason}). Try again, or add items by hand.`);
       }
     }
   }
