@@ -546,3 +546,15 @@ export const clockInSessions = pgTable("clock_in_sessions", {
 export const clockInSessionsRelations = relations(clockInSessions, ({ one }) => ({
   venue: one(venues, { fields: [clockInSessions.venueId], references: [venues.id] }),
 }));
+
+// ─── Demo requests from the website ─────────────────────────────────────────
+
+export const demoRequests = pgTable("demo_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  venueName: text("venue_name").notNull(),
+  phone: text("phone").notNull(),
+  area: text("area"),
+  bestTime: text("best_time"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

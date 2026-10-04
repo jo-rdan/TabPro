@@ -15,6 +15,8 @@ import { errorMiddleware } from './middleware/error.middleware';
 dotenv.config();
 
 const app = express();
+// Render sits in front of us: trust its X-Forwarded-For so req.ip is the visitor.
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 3001;
 
 // ─── Middleware ───────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import webpush from "web-push";
 import { db } from "../lib/db";
-import { pushSubscriptions, tableAssignments, tabs, qrStickers } from "../models/schema";
-import { and, eq, isNull, isNotNull } from "drizzle-orm";
+import { pushSubscriptions, tableAssignments, tabs, qrStickers, owners, venues } from "../models/schema";
+import { and, eq, inArray, isNull, isNotNull } from "drizzle-orm";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -162,4 +162,24 @@ export async function sendPushToOwner(
 ) {
   if (!pushEnabled()) return;
   await send(await ownerSubs(venueId), title, body, OWNER_URL, data);
+}
+
+// ─── TabPro's own team (the founder) ─────────────────────────────────────────
+// Website leads go to the owner account named by ADMIN_EMAIL, on every device
+// where that account turned on notifications.
+export async function notifyAdmin(title: string, body: string) {
+  if (!pushEnabled()) return;
+  const email = (process.env.ADMIN_EMAIL || "jordankayinamura@gmail.com").toLowerCase();
+  const owner = await db.query.owners.findFirst({ where: eq(owners.email, email) });
+  if (!owner) return;
+  const ownerVenues = await db.query.venues.findMany({ where: eq(venues.ownerId, owner.id), columns: { id: true } });
+  if (ownerVenues.length === 0) return;
+  const subs = await db.query.pushSubscriptions.findMany({
+    where: and(
+      inArray(pushSubscriptions.venueId, ownerVenues.map((v) => v.id)),
+      isNull(pushSubscriptions.staffId),
+      isNull(pushSubscriptions.tabId),
+    ),
+  });
+  await send(subs, title, body, OWNER_URL);
 }
