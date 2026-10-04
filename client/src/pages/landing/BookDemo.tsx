@@ -11,7 +11,7 @@ export function openBookDemo() {
 
 const TIMES = ["Morning", "Afternoon", "Evening"];
 
-export default function BookDemo({ whatsapp }: { whatsapp: string }) {
+export default function BookDemo() {
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -123,12 +123,7 @@ export default function BookDemo({ whatsapp }: { whatsapp: string }) {
               {busy ? "Sending…" : "Book my free demo"}
               {!busy && <ArrowRight size={17} className="transition group-hover:translate-x-1" />}
             </button>
-            <p className="mt-4 text-center text-[13px] text-white/40">
-              Prefer to chat?{" "}
-              <a href={whatsapp} target="_blank" rel="noreferrer" className="font-semibold text-white/70 underline decoration-white/30 underline-offset-4 hover:text-white">
-                WhatsApp us
-              </a>
-            </p>
+            <p className="mt-4 text-center text-[13px] text-white/40">No commitment · Setup and training are free</p>
           </form>
         )}
       </div>
