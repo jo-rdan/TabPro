@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  ArrowUpRight,
   Check,
   X,
   MessageCircle,
@@ -17,6 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Logo from "../components/Logo";
+import BookDemo, { openBookDemo } from "./landing/BookDemo";
 import {
   PhoneFrame,
   ScreenScan,
@@ -108,9 +108,9 @@ function Nav() {
           <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13px] font-semibold text-white/80 transition hover:text-white sm:block">
             {loggedIn ? "Dashboard" : "Log in"}
           </Link>
-          <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="rounded-full bg-white px-4 py-2 text-[13px] font-bold text-gray-900 transition hover:bg-emerald-100">
-            Get started
-          </a>
+          <button onClick={openBookDemo} className="rounded-full bg-white px-4 py-2 text-[13px] font-bold text-gray-900 transition hover:bg-emerald-100">
+            Book a demo
+          </button>
         </div>
       </nav>
     </header>
@@ -152,10 +152,10 @@ function Hero() {
           </Reveal>
           <Reveal delay={240}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="lp-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-emerald-400 px-7 py-4 text-[15px] font-bold text-emerald-950 shadow-[0_10px_40px_-8px_rgba(52,211,153,0.6)] transition hover:bg-emerald-300 sm:w-auto">
-                Bring TabPro to your venue
+              <button onClick={openBookDemo} className="lp-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-emerald-400 px-7 py-4 text-[15px] font-bold text-emerald-950 shadow-[0_10px_40px_-8px_rgba(52,211,153,0.6)] transition hover:bg-emerald-300 sm:w-auto">
+                Book a free demo
                 <ArrowRight size={17} className="transition group-hover:translate-x-1" />
-              </a>
+              </button>
               <a href="#tour" className="inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-[15px] font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/5 sm:w-auto">
                 Watch it work
               </a>
@@ -501,9 +501,9 @@ function Pricing() {
                   <div className="flex justify-between"><span>Monthly subscription</span><span className="font-bold">0 RWF</span></div>
                 </div>
               </div>
-              <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="group mt-10 inline-flex items-center justify-center gap-2 rounded-full bg-[#06140f] px-6 py-4 text-[15px] font-bold text-white transition hover:bg-black">
-                Start with TabPro <ArrowRight size={16} className="transition group-hover:translate-x-1" />
-              </a>
+              <button onClick={openBookDemo} className="group mt-10 inline-flex items-center justify-center gap-2 rounded-full bg-[#06140f] px-6 py-4 text-[15px] font-bold text-white transition hover:bg-black">
+                Book a free demo <ArrowRight size={16} className="transition group-hover:translate-x-1" />
+              </button>
             </div>
           </div>
         </Reveal>
@@ -526,7 +526,7 @@ const FAQS = [
   { q: "When do I receive my money?", a: "Your 92% is sent automatically to your venue's Mobile Money number as soon as the guest's payment is confirmed — usually within seconds." },
   { q: "What does it cost?", a: "Nothing to set up and no monthly fee. TabPro keeps 8% of bills paid through the app. If a guest pays another way, TabPro takes nothing." },
   { q: "Do I need special equipment?", a: "No hardware at all. Your waiters use their own phones, you use yours, and we provide the QR stickers for your tables." },
-  { q: "How do I get started?", a: "Message us on WhatsApp. We'll set up your menu, tables and waiters with you — usually in a single visit." },
+  { q: "How do I get started?", a: "Book a free demo on this page. We'll come to your venue and set up your menu, tables and waiters with you — usually in a single visit." },
 ];
 
 function Faq() {
@@ -587,11 +587,11 @@ function FinalCta() {
               Tell us about your venue. We'll set up your menu, tables and team with you — free.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="lp-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-emerald-400 px-8 py-4 text-[15px] font-bold text-emerald-950 transition hover:bg-emerald-300 sm:w-auto">
-                <MessageCircle size={17} /> Message us on WhatsApp
-              </a>
-              <a href={`mailto:${COMPANY.email}`} className="inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-[15px] font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/5 sm:w-auto">
-                Email us <ArrowUpRight size={16} />
+              <button onClick={openBookDemo} className="lp-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-emerald-400 px-8 py-4 text-[15px] font-bold text-emerald-950 transition hover:bg-emerald-300 sm:w-auto">
+                Book a free demo <ArrowRight size={17} className="transition group-hover:translate-x-1" />
+              </button>
+              <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-[15px] font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/5 sm:w-auto">
+                <MessageCircle size={16} /> WhatsApp us
               </a>
             </div>
           </div>
@@ -706,6 +706,7 @@ export default function Landing() {
         <FinalCta />
       </main>
       <Footer />
+      <BookDemo whatsapp={COMPANY.whatsapp} />
     </div>
   );
 }

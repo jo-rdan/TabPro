@@ -420,6 +420,17 @@ const strangerId = (await q1('select id from staff where phone=$1', [strangerPho
 r = await call('DELETE', `/staff/${strangerId}/join-request`, null, ownerTok);
 check('Owner declines a stranger → removed', r.status === 200 && !(await q1('select id from staff where id=$1', [strangerId])));
 
+// ── Website: "Book a demo" ─────────────────────────────────────────────────
+console.log('\n── Book a demo');
+r = await call('POST', '/demo-requests', { name: 'Aline', venueName: 'Bichu Lounge', phone: '0788 123 456', area: 'Kimihurura', bestTime: 'Afternoon' });
+const demoRow = await q1(`select * from demo_requests where venue_name='Bichu Lounge' order by created_at desc limit 1`);
+check('Venue owner books a demo from the website', r.status === 201 && demoRow?.phone === '0788 123 456', r.json?.error);
+r = await call('POST', '/demo-requests', { name: 'Bot', venueName: 'x', phone: 'call me' });
+check('Demo form refuses junk', r.status === 400, r.json?.error);
+for (let i = 0; i < 5; i++) await call('POST', '/demo-requests', { name: 'Spam', venueName: 'Spam bar', phone: '0788000000' });
+r = await call('POST', '/demo-requests', { name: 'Spam', venueName: 'Spam bar', phone: '0788000000' });
+check('Demo form blocks spam bursts', r.status === 429, `status ${r.status}`);
+
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');
