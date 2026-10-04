@@ -59,7 +59,7 @@ function announceTabOpened(venueId: string, tab: { id: string; tableId: string; 
 
 export async function openTab(qrCode: string, phone: string, name?: string) {
   const table = await getTableByQrCode(qrCode);
-  if (!table) throw new Error('QR code not found or not linked to a table');
+  if (!table) throw new Error("This table isn't set up in TabPro yet. Please ask a waiter.");
   if (!table.venue) throw new Error('Venue not found');
 
   const existingTab = await findUnsettledTab(table.id);

@@ -66,7 +66,6 @@ function HeatCell({ count, max, isDark }: { count: number; max: number; isDark: 
 export default function BusyHours() {
   const { venues, fetchMe } = useAuthStore();
   const venue = venues[0];
-  const isElite = venue?.plan === 'elite';
 
   const [data, setData] = useState<HeatmapData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,9 +83,7 @@ export default function BusyHours() {
       .then((r) => setData(r.data.data))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [venue?.id, isElite]);
-
-  // ── Elite guard removed ───────────────────────────────────────────────────────
+  }, [venue?.id]);
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading || !data) {
