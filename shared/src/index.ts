@@ -194,6 +194,7 @@ export type WsEventType =
   | "tab_closed"
   | "new_rating"
   | "customer_away"
+  | "customer_back"
   | "staff_invite_accepted"
   | "staff_join_request"
   | "tab_paid"

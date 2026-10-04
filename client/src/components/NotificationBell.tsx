@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, BellRing, Receipt, ShoppingBag, UserX, DoorClosed } from "lucide-react";
+import { Bell, BellRing, Receipt, ShoppingBag, PhoneOff, DoorClosed } from "lucide-react";
 
 export type NotificationKind =
   | "new_order"
@@ -20,7 +20,7 @@ const ICONS: Record<NotificationKind, typeof Bell> = {
   new_order: ShoppingBag,
   nudge: BellRing,
   bill_requested: Receipt,
-  customer_away: UserX,
+  customer_away: PhoneOff,
   tab_closed: DoorClosed,
 };
 
@@ -28,7 +28,7 @@ const ICON_COLORS: Record<NotificationKind, string> = {
   new_order: "text-brand-500 bg-brand-500/10",
   nudge: "text-amber-600 bg-amber-100 dark:bg-amber-900/40",
   bill_requested: "text-brand-500 bg-brand-500/10",
-  customer_away: "text-red-500 bg-red-100 dark:bg-red-900/30",
+  customer_away: "text-gray-500 bg-gray-100 dark:bg-gray-800",
   tab_closed: "text-gray-500 bg-gray-100 dark:bg-gray-800",
 };
 

@@ -153,6 +153,8 @@ export default function WaiterOrders() {
   const [nudges, setNudges] = useState<NudgeAlert[]>([]);
   const [billRequests, setBillRequests] = useState<BillRequest[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  // Tabs whose guest closed TabPro on their phone (cleared when they come back).
+  const [phoneClosed, setPhoneClosed] = useState<Set<string>>(new Set());
 
   const pushNotification = (
     kind: NotificationItem["kind"],
@@ -393,26 +395,20 @@ export default function WaiterOrders() {
         pushNotification("bill_requested", `${p.tableLabel} requested the bill`);
       }
 
+      // A closed page isn't a guest who left: a quiet sign, never an alarm.
       if (event.type === "customer_away") {
         const p = event.payload as any;
-        const id = `away-${p.tabId}-${Date.now()}`;
-        setNudges((prev) => [
-          ...prev,
-          { id, tableLabel: `${p.tableLabel} — customer may have stepped away`, tabId: p.tabId, timestamp: new Date().toISOString() },
-        ]);
-        // Auto-dismiss after 2 minutes
-        setTimeout(
-          () => setNudges((prev) => prev.filter((n) => n.id !== id)),
-          120_000,
-        );
-        pushNotification(
-          "customer_away",
-          `${p.tableLabel} — customer may have stepped away`,
-        );
+        setPhoneClosed((prev) => new Set(prev).add(p.tabId));
+        pushNotification("customer_away", `${p.tableLabel}: guest's phone closed · bill still open`);
+      }
+      if (event.type === "customer_back") {
+        const p = event.payload as any;
+        setPhoneClosed((prev) => { const next = new Set(prev); next.delete(p.tabId); return next; });
       }
 
       if (event.type === "tab_closed") {
         const p = event.payload as any;
+        setPhoneClosed((prev) => { const next = new Set(prev); next.delete(p.tabId); return next; });
         setBillRequests((prev) => prev.filter((b) => b.tabId !== p.tabId));
         setOrders((prev) => prev.filter((o) => o.tabId !== p.tabId));
         // Previously this cleared orders with zero visible trace of why —
@@ -1019,6 +1015,11 @@ export default function WaiterOrders() {
                     <span className="text-sm font-bold text-gray-900 dark:text-white">
                       {order.tableLabel}
                     </span>
+                    {phoneClosed.has(order.tabId) && (
+                      <span title="The guest closed TabPro on their phone. They may still be at the table." className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                        📵 Phone closed
+                      </span>
+                    )}
                     {order.source === "staff" && (
                       <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-full">
                         Staff-entered
