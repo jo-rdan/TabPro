@@ -28,8 +28,10 @@ Payouts are instant, forever (never batch them).
    If `gh pr merge` says "not mergeable" right after you push, GitHub is still computing:
    wait ~20s and retry (up to 5 times). Ignore `Tests` runs marked `action_required` on
    your PRs; never approve them yourself and never use admin merge.
-2. **Your own ideas** (new features nobody asked for, especially ones that could make
-   money): branch → PR with the `idea` label → **do not merge**. List them in the report.
+2. **No new features nobody asked for.** TabPro already has plenty. Your own ideas should be
+   **strategic**: how to win venues, grow guests, price, partner, market, cut costs, reduce
+   risk. Put them in the Monday issue (rule below), not in code. If an idea truly needs code,
+   open a PR with the `idea` label and **do not merge** it.
 3. Prefer improving design (UI/UX) over re-engineering things that already work.
 4. Never spend money, sign up for services, handle passwords or real payments, or
    message anyone in Jordan's name. Never touch secrets.
@@ -42,7 +44,9 @@ Payouts are instant, forever (never batch them).
 2. Check the live site yourself: https://tabpro-backend.onrender.com/health and https://tabpro.lol.
 3. Look at the last nightly `Tests` run. If it failed, fix it.
 4. If nothing is broken, take the top item from "Up next" in `ops/STATE.md` that is marked
-   `bot-ok`, and do it.
+   `bot-ok`, and do it. If none is left, polish the design of a screen owners or guests see
+   most (customer menu, bill, owner dashboard): small, safe visual improvements only.
+   If there's truly nothing worth doing, just log "nothing to do" and stop.
 5. Append a log entry and update `ops/STATE.md` (see formats below).
 6. Only if something broke, got fixed, or needs Jordan: open an issue titled
    `📋 Daily report YYYY-MM-DD` with at most 6 short lines.
@@ -53,7 +57,9 @@ Payouts are instant, forever (never batch them).
    - **What happened** last week (from `ops/LOG.md`), in 3–5 lines.
    - **Jordan's plan for the week**: who to talk to, in what order, what to say and what to bring.
      Base it on `ops/STATE.md` → "Sales pipeline".
-   - **Ideas waiting for review** (PRs labelled `idea`).
+   - **One or two strategic ideas** for the business (not features), each with: the idea,
+     why now, what it costs (Jordan has no budget), and the first step Jordan would take.
+   - **Ideas waiting for review** (PRs labelled `idea`), if any.
    - **Posts for the week** (until Buffer is connected): 3 short posts with captions.
 
 ## Log format (`ops/LOG.md`, newest at the top)
