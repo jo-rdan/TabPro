@@ -173,6 +173,8 @@ check('Socket without login or tab is refused', !!anonWs.closed, anonWs.closed);
 
 r = await call('GET', `/dashboard/stats/${venueId}`, null, ownerTok);
 check('Dashboard revenue = 6,800', r.json?.data?.revenueTonight === 6800, `revenueTonight=${r.json?.data?.revenueTonight}`);
+r = await call('GET', `/dashboard/tonight/${venueId}`, null, ownerTok);
+check("Tonight's money for the chart & coin jar = 6,800", r.json?.data?.total === 6800 && r.json?.data?.hourly?.at(-1)?.cumulative === 6800, `total=${r.json?.data?.total}`);
 for (const p of ['report', 'busy-hours', 'activity']) {
   r = await call('GET', `/dashboard/${p}/${venueId}`, null, ownerTok);
   check(`Owner ${p} works`, r.status === 200);
@@ -486,7 +488,7 @@ check('Demo form blocks spam bursts', r.status === 429, `status ${r.status}`);
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');
-for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff list', `/staff/${venueId}`], ['orders', `/orders/venue/${venueId}`], ['ratings', `/ratings/leaderboard/${venueId}`], ['shifts', `/shifts/${venueId}`]]) {
+for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff list', `/staff/${venueId}`], ['orders', `/orders/venue/${venueId}`], ['ratings', `/ratings/leaderboard/${venueId}`], ['shifts', `/shifts/${venueId}`], ["tonight's money", `/dashboard/tonight/${venueId}`]]) {
   r = await call('GET', path, null, rivalTok);
   check(`Another owner CANNOT read my ${name}`, r.status === 403, `status ${r.status}`);
 }
