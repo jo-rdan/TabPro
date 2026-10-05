@@ -11,6 +11,7 @@ import { initPassport } from './services/auth.service';
 import { initWebSocket } from './lib/websocket';
 import routes from './routes/index';
 import { errorMiddleware } from './middleware/error.middleware';
+import { logError } from './lib/errorLog';
 
 dotenv.config();
 
@@ -66,6 +67,7 @@ import { isPawapayConfigured, PAWAPAY_ENV } from './lib/pawapay';
 // push send, etc.) must never take every venue offline.
 process.on('unhandledRejection', (reason) => {
   console.error('[unhandledRejection]', reason);
+  void logError('background', reason);
 });
 
 const server = createServer(app);
