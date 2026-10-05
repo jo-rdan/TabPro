@@ -1,11 +1,12 @@
 import { db } from '../lib/db';
 import { tabs, orders, orderItems, tables, ratings, staff, staffPoints } from '../models/schema';
 import { eq, and, gte, sql, desc } from 'drizzle-orm';
+import { nightStart } from './tonight.service';
 
+// "Tonight" for a bar runs 06:00 to 06:00 Kigali time, so a 01:00 payment
+// still counts for the evening it belongs to.
 function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return nightStart();
 }
 
 export async function getDashboardStats(venueId: string) {

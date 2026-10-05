@@ -7,7 +7,7 @@ import { and, eq, gte, inArray } from 'drizzle-orm';
 const KIGALI_MS = 2 * 60 * 60_000;
 const DAY_MS = 24 * 60 * 60_000;
 
-function nightStart(now = new Date()) {
+export function nightStart(now = new Date()) {
   const local = new Date(now.getTime() + KIGALI_MS);
   const start = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), 6) - KIGALI_MS;
   return new Date(local.getUTCHours() < 6 ? start - DAY_MS : start);
