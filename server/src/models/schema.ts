@@ -561,3 +561,17 @@ export const demoRequests = pgTable("demo_requests", {
   bestTime: text("best_time"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// ─── Server error log ───────────────────────────────────────────────────────
+// Unexpected (5xx) errors and crashes in background jobs, so we can see what
+// went wrong without digging through Render's logs.
+
+export const errorLogs = pgTable("error_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  source: text("source").notNull(),
+  method: text("method"),
+  path: text("path"),
+  message: text("message").notNull(),
+  stack: text("stack"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

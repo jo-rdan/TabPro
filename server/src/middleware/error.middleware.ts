@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '@tabpro/shared';
+import { logError } from '../lib/errorLog';
 
 // Throw this when the caller needs a specific HTTP status (e.g. 403, 404).
 export class HttpError extends Error {
@@ -26,7 +27,10 @@ export function errorMiddleware(
 ) {
   const status = err instanceof HttpError ? err.status : isInternalError(err) ? 500 : 400;
 
-  if (status >= 500) console.error(`[ERROR] ${req.method} ${req.path}:`, err);
+  if (status >= 500) {
+    console.error(`[ERROR] ${req.method} ${req.path}:`, err);
+    void logError('request', err, req);
+  }
   else console.warn(`[${status}] ${req.method} ${req.path}: ${err.message}`);
 
   const body: ApiResponse = {

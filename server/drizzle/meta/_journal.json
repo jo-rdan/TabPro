@@ -148,6 +148,13 @@
       "when": 1791152624110,
       "tag": "0020_staff_smartphone",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791202490473,
+      "tag": "0021_error_logs",
+      "breakpoints": true
     }
   ]
 }
