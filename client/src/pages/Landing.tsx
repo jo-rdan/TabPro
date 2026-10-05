@@ -1,285 +1,745 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Minus } from "lucide-react";
-import Logo from "../components/Logo";
+import {
+  ArrowRight, ArrowUpRight, Check, Plus, Minus, Hourglass, HelpCircle, FileX, Moon,
+  Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet,
+} from "lucide-react";
 import AnimatedLogo from "../components/AnimatedLogo";
+import Wordmark from "../components/Wordmark";
 import BookDemo, { openBookDemo } from "./landing/BookDemo";
+import {
+  PhoneFrame, ScreenScan, ScreenMenu, ScreenCall, ScreenPay, WaiterCall, TonightCard,
+  MoneyWidget, PayoutWidget, HeatmapWidget, LeaderboardWidget, MenuPhotoWidget, AlertsWidget,
+  Hand, useInView,
+} from "./landing/screens";
 
 // Legal name only: contact goes through "Book a demo", not public numbers.
 const COMPANY = { legalName: "VNT250 Ltd" };
+const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
 
-// Coffee & imigongo, light and dark. Every colour on the page reads these.
-const STYLES = `
-.sk-site { --bg:#F4EDE3; --card:#FFFCF7; --ink:#2B201B; --body:#5C4D44; --muted:#7A6A5F; --line:#E3D6C6; --rust:#A64B31; --rust-ink:#9A4129; }
-.dark .sk-site { --bg:#1C1511; --card:#2B201B; --ink:#F4EDE3; --body:#D8CBBF; --muted:#A39282; --line:#463A32; --rust:#A64B31; --rust-ink:#DCA088; }
-.sk-site h1, .sk-site h2, .sk-site h3 { font-family: 'Bricolage Grotesque', Figtree, sans-serif; }
-@keyframes sk-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-@keyframes sk-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-.sk-rise { animation: sk-rise .8s cubic-bezier(.2,.7,.2,1) both; }
-.sk-float { animation: sk-float 6s ease-in-out infinite; }
-.sk-float-2 { animation: sk-float 7s ease-in-out 1s infinite; }
-@media (prefers-reduced-motion: reduce) { .sk-rise, .sk-float, .sk-float-2 { animation: none; } }
-`;
+// ─── Building blocks ─────────────────────────────────────────────────────────
 
-function Header() {
-  const loggedIn = !!localStorage.getItem("tabpro_token");
+function Reveal({ children, delay = 0, className = "" }: { children: ReactNode; delay?: number; className?: string }) {
+  const { ref, inView } = useInView<HTMLDivElement>(0.15);
+  return (
+    <div ref={ref} className={`sk-reveal ${inView ? "is-in" : ""} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
+
+function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.16em] ${dark ? "bg-white/[0.06] text-[#E9C77E] ring-1 ring-white/10" : "bg-[var(--card)] text-[var(--rust-ink)] ring-1 ring-[var(--line)]"}`}>
+      <Hand size={13} color={dark ? "#D9A441" : "#A64B31"} />
+      {children}
+    </span>
+  );
+}
+
+// The honey brush-stroke under a word.
+function Swoosh({ children }: { children: ReactNode }) {
+  return (
+    <span className="relative inline-block whitespace-nowrap">
+      {children}
+      <svg viewBox="0 0 300 24" preserveAspectRatio="none" className="sk-swoosh absolute -bottom-[0.12em] left-0 h-[0.32em] w-full" aria-hidden="true">
+        <path d="M4 16C60 6 140 4 296 12" fill="none" stroke="#D9A441" strokeWidth="8" strokeLinecap="round" pathLength={1} />
+      </svg>
+    </span>
+  );
+}
+
+function ImigongoBand() {
+  return (
+    <svg width="100%" height="22" aria-hidden="true" className="block">
+      <defs>
+        <pattern id="imi-band" width="30" height="22" patternUnits="userSpaceOnUse">
+          <path d="M0 22L15 0L30 22Z" fill="#A64B31" />
+          <path d="M8 22L15 11L22 22Z" fill="#2B201B" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="22" fill="url(#imi-band)" />
+    </svg>
+  );
+}
+
+// ─── Nav ─────────────────────────────────────────────────────────────────────
+
+function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const loggedIn = !!localStorage.getItem("tabpro_token");
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 16);
+    const on = () => setScrolled(window.scrollY > 24);
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className={`sticky top-0 z-40 bg-[var(--bg)] transition-shadow ${scrolled ? "shadow-[0_1px_0_var(--line)]" : ""}`}>
-      <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
-        <a href="/" className="flex items-center" aria-label="Skuzi home">
-          <AnimatedLogo size={30} on="light" className="dark:hidden" />
-          <AnimatedLogo size={30} on="dark" bg="#1C1511" className="hidden dark:inline-flex" />
+    <header className={`fixed inset-x-0 top-0 z-50 bg-[#1C1511] transition-all duration-300 ${scrolled ? "py-3 shadow-[0_1px_0_rgba(244,237,227,0.08)]" : "py-5"}`}>
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8">
+        <a href="/" aria-label="Skuzi home" className="flex items-center">
+          <AnimatedLogo size={28} on="dark" bg="#1C1511" />
         </a>
-        <nav className="hidden gap-7 text-[15px] font-semibold md:flex">
-          <a href="#how" className="hover:text-[var(--rust-ink)]">How it works</a>
-          <a href="#owners" className="hover:text-[var(--rust-ink)]">For owners</a>
-          <a href="#pricing" className="hover:text-[var(--rust-ink)]">Pricing</a>
-        </nav>
-        <div className="flex items-center gap-1 sm:gap-2.5">
-          <Link to={loggedIn ? "/dashboard" : "/login"} className="px-3 py-2.5 text-[15px] font-semibold hover:text-[var(--rust-ink)]">
+        <div className="hidden items-center gap-1 rounded-full bg-white/[0.04] p-1 ring-1 ring-white/10 md:flex">
+          {[["How it works", "#tour"], ["For owners", "#owners"], ["Pricing", "#pricing"], ["Questions", "#faq"]].map(([l, h]) => (
+            <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[#D8CBBF] transition hover:bg-white/10 hover:text-[#F4EDE3]">{l}</a>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[#D8CBBF] transition hover:text-[#F4EDE3] sm:block">
             {loggedIn ? "Dashboard" : "Log in"}
           </Link>
-          <button onClick={openBookDemo} className="rounded-full bg-[var(--ink)] px-4 py-2.5 text-[15px] font-bold text-[var(--bg)] transition hover:opacity-90 sm:px-5 sm:py-3">
+          <button onClick={openBookDemo} className="rounded-full bg-[#D9A441] px-4 py-2 text-[13.5px] font-extrabold text-[#2B201B] transition hover:bg-[#E2BC6E]">
             Book a demo
           </button>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }
 
-function HandTile({ size = 40 }: { size?: number }) {
-  return <Logo size={size} />;
+// ─── Hero: try it right here ─────────────────────────────────────────────────
+
+function Hero() {
+  const [called, setCalled] = useState(false);
+  const call = () => {
+    if (called) return;
+    setCalled(true);
+    setTimeout(() => setCalled(false), 5000);
+  };
+  return (
+    <section className="relative overflow-hidden bg-[#1C1511] pt-32 text-[#F4EDE3] sm:pt-40">
+      <div className="sk-glow pointer-events-none absolute left-1/2 top-[-12%] h-[900px] w-[1400px] -translate-x-1/2" />
+      <div className="sk-pattern pointer-events-none absolute inset-0" />
+      <div className="sk-grain pointer-events-none absolute inset-0" />
+
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <Reveal>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.05] py-1 pl-1 pr-3 text-[13px] text-[#D8CBBF] ring-1 ring-white/10">
+              <span className="relative flex h-5 items-center rounded-full bg-[#5E7A55] px-2 text-[11px] font-bold text-[#F4EDE3]">
+                <span className="sk-ping absolute left-1.5 h-2 w-2 rounded-full bg-[#A9BE9F]" />
+                <span className="relative ml-3">Kigali</span>
+              </span>
+              Now setting up bars & restaurants
+            </span>
+          </Reveal>
+          <Reveal delay={80}>
+            <h1 className="mt-7 font-display text-[46px] font-extrabold leading-[0.98] tracking-[-0.045em] text-balance sm:text-7xl lg:text-[92px]">
+              No more{" "}
+              <span className="inline-flex items-baseline">
+                waving
+                <span className="sk-wave ml-2 inline-block translate-y-[0.06em]"><Hand size={64} color="#D9A441" className="h-[0.8em] w-[0.8em]" /></span>
+              </span>
+              <br />
+              for the <Swoosh><span className="text-[#D9A441]">waiter.</span></Swoosh>
+            </h1>
+          </Reveal>
+          <Reveal delay={160}>
+            <p className="mx-auto mt-8 max-w-2xl text-[17px] leading-relaxed text-[#D8CBBF] sm:text-[19px]">
+              Your guests order, call their waiter and pay with Mobile Money from their own phone.
+              You see every table and every franc, even when you're not there.
+            </p>
+          </Reveal>
+          <Reveal delay={240}>
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button onClick={openBookDemo} className="sk-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[#D9A441] px-7 py-4 text-[16px] font-extrabold text-[#2B201B] shadow-[0_14px_40px_-10px_rgba(217,164,65,0.7)] transition hover:bg-[#E2BC6E] sm:w-auto">
+                Book a free demo
+                <ArrowRight size={18} className="transition group-hover:translate-x-1" />
+              </button>
+              <a href="#try" className="inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-[16px] font-bold text-[#F4EDE3] ring-1 ring-white/25 transition hover:bg-white/5 sm:w-auto">
+                Try it below <span aria-hidden>↓</span>
+              </a>
+            </div>
+            <p className="mt-6 text-[13px] text-[#A39282]">Free setup · No app to download · No machine to buy</p>
+          </Reveal>
+        </div>
+
+        {/* Live demo: tap Skuzi! on the guest phone and the waiter's card buzzes */}
+        <Reveal delay={320} className="relative mx-auto mt-16 max-w-5xl">
+          <div id="try" className="relative flex scroll-mt-28 items-end justify-center">
+            <div className="absolute left-0 top-24 hidden lg:block">
+              <p className="mb-3 ml-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#A39282]">You, at home</p>
+              <div className="sk-float-slow"><TonightCard /></div>
+            </div>
+            <div className="relative z-10">
+              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[#A39282]">Your guest, at table 4</p>
+              <PhoneFrame className="h-[560px] w-[292px]">
+                <ScreenMenu onCall={call} called={called} compact />
+              </PhoneFrame>
+            </div>
+            <div className="absolute right-0 top-28 hidden lg:block">
+              <p className="mb-3 ml-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#A39282]">Your waiter</p>
+              <div className={called ? "" : "sk-float"}><WaiterCall calling={called} /></div>
+            </div>
+          </div>
+          {/* On phones the waiter card pops up over the guest phone */}
+          <div className={`absolute inset-x-0 top-40 z-30 flex justify-center transition-all duration-500 lg:hidden ${called ? "opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`}>
+            <WaiterCall calling={called} />
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 -bottom-px z-20 h-12 bg-gradient-to-t from-[#1C1511] to-transparent" />
+        </Reveal>
+      </div>
+    </section>
+  );
 }
 
-// The guest's phone, the waiter's call and the owner's night, in one picture.
-function HeroPicture() {
+// ─── Honey marquee ───────────────────────────────────────────────────────────
+
+function Marquee() {
+  const items = ["Scan the sticker", "Order another round", "Skuzi! calls your waiter", "Pay with MoMo", "Pay with Airtel Money", "Owner paid in seconds", "Rate the night"];
+  const row = [...items, ...items];
   return (
-    <div className="relative mx-auto h-[500px] w-full max-w-[460px] sm:h-[560px]">
-      <div className="absolute inset-[30px_10px_0_40px] rounded-[48px] bg-[var(--rust)]" />
-      <div className="absolute left-1/2 top-0 h-[500px] w-[250px] -translate-x-[58%] rounded-[44px] bg-[#2B201B] p-3 shadow-[0_40px_80px_-30px_rgba(43,32,27,0.6)] sm:h-[560px] sm:w-[280px]">
-        <div className="flex h-full flex-col gap-3.5 rounded-[34px] bg-[#F4EDE3] px-[18px] py-[22px] text-[#2B201B]">
-          <div className="flex items-center justify-between">
-            <b className="font-display text-[20px]">Demo Lounge</b>
-            <span className="text-[12px] font-bold text-[#7A6A5F]">Table 4</span>
-          </div>
-          {[["Goat brochette", "3,500 RWF"], ["Primus 72cl", "1,500 RWF"], ["Fanta", "800 RWF"]].map(([n, p]) => (
-            <div key={n} className="flex items-center justify-between rounded-[18px] bg-[#FFFCF7] p-3.5">
-              <div><b className="text-[15px]">{n}</b><p className="mt-0.5 text-[13px] text-[#7A6A5F]">{p}</p></div>
-              <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#A64B31] font-extrabold text-[#F4EDE3]">+</span>
-            </div>
-          ))}
-          <div className="mt-1 flex flex-col gap-2.5">
-            <span className="rounded-2xl bg-[#D9A441] p-3.5 text-center text-[15px] font-extrabold">Skuzi! Call my waiter</span>
-            <span className="rounded-2xl bg-[#2B201B] p-3.5 text-center text-[15px] font-bold text-[#F4EDE3]">Pay 6,500 RWF with MoMo</span>
-          </div>
-        </div>
-      </div>
-      <div className="sk-float absolute right-0 top-[120px] flex w-[230px] items-center gap-3 rounded-[22px] bg-[#FFFCF7] p-4 text-[#2B201B] shadow-[0_24px_50px_-24px_rgba(43,32,27,0.45)]">
-        <HandTile />
-        <div><b className="text-[14px]">Skuzi! Table 4</b><p className="mt-0.5 text-[13px] text-[#5C4D44]">Eric, they're calling you</p></div>
-      </div>
-      <div className="sk-float-2 absolute -bottom-8 left-0 hidden w-[220px] sm:block rounded-[22px] bg-[#2B201B] p-4 text-[#F4EDE3] shadow-[0_24px_50px_-24px_rgba(0,0,0,0.5)] dark:ring-1 dark:ring-[#463A32]">
-        <p className="text-[12px] text-[#D8CBBF]">Tonight so far</p>
-        <b className="mt-1 block font-display text-[28px] tracking-[-0.02em]">248,500 <span className="text-[16px] text-[#D8CBBF]">RWF</span></b>
-        <p className="mt-1 text-[12px] font-bold text-[#D9A441]">12 tables · 41 orders</p>
+    <div className="relative overflow-hidden bg-[#D9A441] py-5 text-[#2B201B]">
+      <div className="sk-marquee flex w-max gap-10">
+        {row.map((t, i) => (
+          <span key={i} className="flex items-center gap-10 whitespace-nowrap font-display text-[19px] font-bold">
+            {t}
+            <Hand size={20} color="#A64B31" />
+          </span>
+        ))}
       </div>
     </div>
   );
 }
 
-function Hero() {
+// ─── Pain → fix, with a switch ───────────────────────────────────────────────
+
+const PAINS = [
+  { pain: { icon: Hourglass, title: "The second round never comes.", text: "Guests wave, whistle and wait. Many give up and stop ordering. That's money leaving your bar quietly." },
+    fix: { icon: Zap, title: "Another round in two taps.", text: "Guests order from their own phone the moment they're thirsty. No catching anyone's eye." } },
+  { pain: { icon: HelpCircle, title: "“Did table 6 pay?”", text: "Nobody is sure. Someone checks MoMo messages at the door while guests wait to leave." },
+    fix: { icon: BadgeCheck, title: "Paid means paid.", text: "Mobile Money payments are confirmed for you and the bill closes itself. No screenshots, no arguments." } },
+  { pain: { icon: FileX, title: "Orders get lost.", text: "A busy waiter, a scrap of paper, a forgotten brochette. The guest is upset and you lose the sale." },
+    fix: { icon: Send, title: "Every order reaches the right waiter.", text: "Straight to their phone with the table number. Nothing to write down, nothing to forget." } },
+  { pain: { icon: Moon, title: "You find out at closing.", text: "Or the next morning. You can't fix a slow night you couldn't see." },
+    fix: { icon: LineChart, title: "You watch the night as it happens.", text: "Money, tables and waiters on your phone, live, from the bar or from home." } },
+];
+
+function PainSwitch() {
+  const [fixed, setFixed] = useState(false);
+  const { ref, inView } = useInView<HTMLDivElement>(0.35);
+  // Flip once on its own, so nobody misses the "after".
+  useEffect(() => {
+    if (!inView) return;
+    const t = setTimeout(() => setFixed(true), 3200);
+    return () => clearTimeout(t);
+  }, [inView]);
   return (
-    <section className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-12 px-4 pb-20 pt-8 sm:px-6 sm:pt-10">
-      <div className="sk-rise min-w-0 flex-[1_1_520px]">
-        <p className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-[var(--line)] bg-[var(--card)] px-3.5 py-2 text-[14px] font-bold">
-          <span className="h-2 w-2 rounded-full bg-[#5E7A55]" />Now in Kigali bars and restaurants
-        </p>
-        <h1 className="mt-6 text-[52px] font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-[72px] lg:text-[84px]">
-          No more<br />waving for<br />the <span className="text-[var(--rust)] dark:text-[#DCA088]">waiter.</span>
-        </h1>
-        <p className="mt-6 max-w-[520px] text-[17px] leading-[1.55] text-[var(--body)] sm:text-[19px]">
-          Guests scan the table, order, call and pay with Mobile Money from their phone. You see every table, order and franc, live, even when you're out.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <button onClick={openBookDemo} className="rounded-full bg-[#A64B31] px-7 py-[18px] text-[17px] font-extrabold text-[#F4EDE3] transition hover:bg-[#933F28]">
-            Book a free demo
+    <section className="bg-[var(--bg)] py-24 sm:py-32">
+      <div ref={ref} className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <Eyebrow>Sound familiar?</Eyebrow>
+          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
+            Friday night. Full house. <span className="text-[var(--rust-ink)]">And then…</span>
+          </h2>
+        </Reveal>
+
+        <div className="mt-10 flex justify-center">
+          <button
+            onClick={() => setFixed((f) => !f)}
+            role="switch"
+            aria-checked={fixed}
+            className="relative grid grid-cols-2 rounded-full bg-[var(--card)] p-1.5 text-[15px] font-bold ring-1 ring-[var(--line)]"
+          >
+            <span className={`absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-full transition-transform duration-500 ${fixed ? "translate-x-full bg-[#5E7A55]" : "bg-[#2B201B] dark:bg-[#463A32]"}`} />
+            <span className={`relative z-10 px-5 py-2.5 transition-colors sm:px-6 ${fixed ? "text-[var(--muted)]" : "text-[#F4EDE3]"}`}>Without Skuzi</span>
+            <span className={`relative z-10 px-5 py-2.5 transition-colors sm:px-6 ${fixed ? "text-[#F4EDE3]" : "text-[var(--muted)]"}`}>With Skuzi</span>
           </button>
-          <a href="#how" className="rounded-full border-2 border-[var(--ink)] px-6 py-4 text-[17px] font-bold transition hover:bg-[var(--card)]">
-            See how it works
-          </a>
         </div>
-        <p className="mt-5 text-[14px] text-[var(--muted)]">Free setup · No app to download · No machine to buy</p>
-      </div>
-      <div className="sk-rise min-w-0 flex-[1_1_440px]" style={{ animationDelay: ".15s" }}>
-        <HeroPicture />
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {PAINS.map(({ pain, fix }, i) => {
+            const s = fixed ? fix : pain;
+            const Icon = s.icon;
+            return (
+              <Reveal key={i} delay={i * 80}>
+                <div className={`h-full rounded-[28px] p-7 transition-all duration-500 ${fixed ? "bg-[#2B201B] text-[#F4EDE3] shadow-[0_30px_60px_-30px_rgba(43,32,27,0.6)]" : "bg-[var(--card)] ring-1 ring-[var(--line)]"}`} style={{ transitionDelay: `${i * 70}ms` }}>
+                  <span className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-500 ${fixed ? "bg-[#D9A441] text-[#2B201B]" : "bg-[var(--bg)] text-[var(--muted)]"}`}>
+                    <Icon size={22} />
+                  </span>
+                  <h3 key={s.title} className="sk-fade mt-6 font-display text-[22px] font-bold leading-tight">{s.title}</h3>
+                  <p key={s.text} className={`sk-fade mt-2.5 text-[15px] leading-relaxed ${fixed ? "text-[#D8CBBF]" : "text-[var(--body)]"}`}>{s.text}</p>
+                </div>
+              </Reveal>
+            );
+          })}
+        </div>
+        <p className="mt-10 text-center text-[16px] font-semibold text-[var(--body)]">
+          Skuzi fixes all four, <span className="text-[var(--ink)]">without a single new machine.</span>
+        </p>
       </div>
     </section>
   );
 }
 
+// ─── How it works: a guided tour on a phone ─────────────────────────────────
+
+const HandIcon = ({ size = 21 }: { size?: number }) => <Hand size={size + 3} />;
+
 const STEPS = [
-  { n: "1", title: "Order", text: "The menu opens on the guest's phone. No app to download, no waiting to catch an eye.", chip: "bg-[#A64B31] text-[#F4EDE3]" },
-  { n: "2", title: "Skuzi!", text: "One tap calls their waiter. Only that waiter's phone buzzes, so the floor stays calm.", chip: "bg-[#D9A441] text-[#2B201B]" },
-  { n: "3", title: "Pay", text: "MoMo or Airtel Money from the table. Your share lands on your phone seconds later.", chip: "bg-[#F4EDE3] text-[#2B201B]" },
+  { icon: QrCode, title: "Scan", text: "Every table gets a Skuzi sticker. Guests point their phone camera at it and your menu opens. No app, no account.", screen: ScreenScan },
+  { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Each order goes straight to their waiter's phone.", screen: () => <ScreenMenu /> },
+  { icon: HandIcon, title: "Skuzi!", text: "Need a glass, more ice, the bill? One tap and only their waiter's phone buzzes. The room stays calm.", screen: ScreenCall },
+  { icon: Wallet, title: "Pay", text: "The bill is on their phone, item by item. They approve with their MoMo or Airtel Money PIN, and that's it.", screen: ScreenPay },
 ];
 
-function How() {
+function Tour() {
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const { ref, inView } = useInView<HTMLDivElement>(0.3);
+  useEffect(() => {
+    if (!inView || paused) return;
+    const t = setTimeout(() => setActive((a) => (a + 1) % STEPS.length), 4400);
+    return () => clearTimeout(t);
+  }, [active, inView, paused]);
+  const Screen = STEPS[active].screen;
   return (
-    <section id="how" className="scroll-mt-20 bg-[#2B201B] text-[#F4EDE3] dark:border-y dark:border-[#463A32]">
-      <div className="mx-auto max-w-[1240px] px-4 py-20 sm:px-6">
-        <h2 className="text-[38px] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-[52px]">One scan. Three things, done.</h2>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {STEPS.map((s) => (
-            <div key={s.n} className="rounded-[28px] bg-[#3A2D26] p-[30px]">
-              <span className={`inline-flex h-11 w-11 items-center justify-center rounded-[14px] text-[20px] font-extrabold ${s.chip}`}>{s.n}</span>
-              <h3 className="mb-2 mt-[18px] text-[26px] font-bold">{s.title}</h3>
-              <p className="leading-[1.55] text-[#D8CBBF]">{s.text}</p>
-            </div>
-          ))}
+    <section id="tour" className="relative scroll-mt-16 overflow-hidden bg-[#1C1511] py-24 text-[#F4EDE3] sm:py-32">
+      <div className="sk-glow-sm pointer-events-none absolute -right-40 top-20 h-[600px] w-[600px] opacity-70" />
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
+          <Eyebrow dark>How it works</Eyebrow>
+          <h2 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
+            One scan. Four taps. <span className="text-[#D9A441]">One happy table.</span>
+          </h2>
+        </Reveal>
+      </div>
+      <div ref={ref} className="relative mx-auto mt-12 grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-[1fr_auto] lg:gap-16">
+        <div className="space-y-3">
+          {STEPS.map(({ icon: Icon, title, text }, i) => {
+            const on = i === active;
+            return (
+              <button
+                key={title}
+                onClick={() => { setActive(i); setPaused(true); }}
+                className={`group relative w-full overflow-hidden rounded-3xl p-6 text-left transition-all duration-300 ${on ? "bg-white/[0.06] ring-1 ring-white/10" : "hover:bg-white/[0.03]"}`}
+              >
+                <div className="flex items-start gap-5">
+                  <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition ${on ? "bg-[#D9A441] text-[#2B201B]" : "bg-white/[0.06] text-[#A39282]"}`}>
+                    <Icon size={21} />
+                  </span>
+                  <div>
+                    <p className={`font-display text-[21px] font-bold tracking-tight ${on ? "text-[#F4EDE3]" : "text-[#A39282]"}`}>
+                      <span className="mr-2 text-[13px] font-bold text-[#D9A441]">0{i + 1}</span>{title}
+                    </p>
+                    <div className={`grid transition-all duration-500 ${on ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                      <p className="overflow-hidden text-[15.5px] leading-relaxed text-[#D8CBBF]">{text}</p>
+                    </div>
+                  </div>
+                </div>
+                {on && !paused && inView && <span key={active} className="sk-progress absolute bottom-0 left-0 h-[3px] bg-[#D9A441]" />}
+              </button>
+            );
+          })}
+        </div>
+        <div className="relative order-first mx-auto lg:order-none">
+          <div className="sk-glow-sm pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 opacity-60" />
+          <PhoneFrame className="relative h-[560px] w-[280px] sm:h-[620px] sm:w-[300px]">
+            <div key={active} className="sk-screen h-full"><Screen /></div>
+          </PhoneFrame>
         </div>
       </div>
     </section>
+  );
+}
+
+// ─── What one more round is worth ────────────────────────────────────────────
+
+function Slider({ label, value, min, max, step, onChange, format }: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; format: (v: number) => string }) {
+  const pct = ((value - min) / (max - min)) * 100;
+  return (
+    <label className="block">
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-[15px] font-semibold text-[#5C4D44]">{label}</span>
+        <span className="font-display text-[19px] font-bold tabular-nums">{format(value)}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="sk-range mt-3 w-full"
+        style={{ background: `linear-gradient(90deg, #2B201B ${pct}%, rgba(43,32,27,0.15) ${pct}%)` }}
+      />
+    </label>
+  );
+}
+
+function OneMoreRound() {
+  const [tables, setTables] = useState(15);
+  const [round, setRound] = useState(4000);
+  const [nights, setNights] = useState(20);
+  const extra = tables * round * nights;
+  return (
+    <section className="relative overflow-hidden bg-[#D9A441] py-24 text-[#2B201B] sm:py-28">
+      <div className="sk-pattern-dark pointer-events-none absolute inset-0 opacity-[0.07]" />
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2">
+        <Reveal>
+          <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[#7D3421]">Do the maths</p>
+          <h2 className="mt-4 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] sm:text-6xl">
+            What's one more round worth?
+          </h2>
+          <p className="mt-5 max-w-lg text-[18px] leading-relaxed text-[#4A360C]">
+            When guests can't get a waiter's attention, they simply stop ordering. Move the sliders to see what just one extra round per table could mean for you.
+          </p>
+        </Reveal>
+        <Reveal delay={120}>
+          <div className="rounded-[32px] bg-[#FFFCF7] p-7 shadow-[0_40px_80px_-40px_rgba(74,54,12,0.6)] sm:p-9">
+            <div className="space-y-7">
+              <Slider label="Tables with guests on a normal night" value={tables} min={3} max={60} step={1} onChange={setTables} format={(v) => `${v}`} />
+              <Slider label="Price of one round" value={round} min={1000} max={20000} step={500} onChange={setRound} format={(v) => `${fmt(v)} RWF`} />
+              <Slider label="Nights open each month" value={nights} min={4} max={30} step={1} onChange={setNights} format={(v) => `${v}`} />
+            </div>
+            <div className="mt-8 rounded-[24px] bg-[#2B201B] p-6 text-[#F4EDE3]">
+              <p className="text-[14px] text-[#D8CBBF]">One more round per table, every night, adds up to</p>
+              <p className="mt-1 font-display text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[52px]">
+                {fmt(extra)} <span className="text-[18px] text-[#D9A441]">RWF a month</span>
+              </p>
+            </div>
+            <p className="mt-4 text-[12.5px] text-[#7A6A5F]">An example to help you think, not a promise of sales.</p>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── For owners ──────────────────────────────────────────────────────────────
+
+function Card({ children, className = "", dark = false }: { children: ReactNode; className?: string; dark?: boolean }) {
+  return (
+    <div className={`group relative h-full overflow-hidden rounded-[28px] p-7 transition duration-500 hover:-translate-y-1 ${dark ? "bg-[#2B201B] text-[#F4EDE3] ring-1 ring-white/10" : "bg-[var(--card)] ring-1 ring-[var(--line)] hover:shadow-[0_30px_60px_-30px_rgba(43,32,27,0.35)]"} ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function CardTitle({ title, text, dark = false }: { title: string; text: string; dark?: boolean }) {
+  return (
+    <div className="mt-6">
+      <h3 className="font-display text-[21px] font-bold tracking-tight">{title}</h3>
+      <p className={`mt-1.5 text-[15px] leading-relaxed ${dark ? "text-[#D8CBBF]" : "text-[var(--body)]"}`}>{text}</p>
+    </div>
   );
 }
 
 function Owners() {
+  const { ref, inView } = useInView<HTMLDivElement>(0.2);
   return (
-    <section id="owners" className="mx-auto flex max-w-[1240px] scroll-mt-20 flex-wrap items-center gap-12 px-4 py-20 sm:px-6 sm:py-[90px]">
-      <div className="min-w-0 flex-[1_1_460px]">
-        <p className="text-[14px] font-extrabold uppercase tracking-[0.14em] text-[var(--rust-ink)]">For owners</p>
-        <h2 className="mt-3 text-[42px] font-extrabold leading-none tracking-[-0.035em] sm:text-[56px]">Your whole venue in your pocket.</h2>
-        <p className="mt-5 max-w-[520px] text-[18px] leading-[1.6] text-[var(--body)]">
-          Every table, order and payment as it happens. Who's serving well, which tables wait too long, what sells. From the bar or from home.
-        </p>
-      </div>
-      <div className="grid min-w-0 flex-[1_1_460px] grid-cols-2 gap-4">
-        <div className="rounded-3xl border-[1.5px] border-[var(--line)] bg-[var(--card)] p-[22px]">
-          <p className="text-[13px] text-[var(--muted)]">Revenue tonight</p>
-          <b className="mt-1.5 block font-display text-[32px]">248,500</b>
-          <p className="mt-0.5 text-[13px] font-bold text-[#5E7A55] dark:text-[#A9BE9F]">RWF · 92% paid to you</p>
-        </div>
-        <div className="rounded-3xl border-[1.5px] border-[var(--line)] bg-[var(--card)] p-[22px]">
-          <p className="text-[13px] text-[var(--muted)]">Tables open</p>
-          <b className="mt-1.5 block font-display text-[32px]">12</b>
-          <p className="mt-0.5 text-[13px] text-[var(--body)]">2 calling right now</p>
-        </div>
-        <div className="col-span-2 flex items-center justify-between gap-4 rounded-3xl bg-[#A64B31] p-[22px] text-[#F4EDE3]">
+    <section id="owners" className="scroll-mt-16 bg-[var(--bg)] py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal className="grid gap-6 lg:grid-cols-2 lg:items-end">
           <div>
-            <b className="font-display text-[20px] sm:text-[22px]">Skuzi! Table 7 is calling</b>
-            <p className="mt-1 text-[14px]">Grace's table · just now</p>
+            <Eyebrow>For owners</Eyebrow>
+            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
+              Your whole bar, <span className="text-[var(--rust-ink)]">in your pocket.</span>
+            </h2>
           </div>
-          <span className="whitespace-nowrap rounded-full bg-[#2B201B] px-4 py-2.5 text-[14px] font-bold">Live</span>
+          <p className="max-w-lg text-[18px] leading-relaxed text-[var(--body)] lg:justify-self-end">
+            Stop guessing. See what's happening on the floor as it happens: the money, the tables, your team and your guests. From behind the bar or across town.
+          </p>
+        </Reveal>
+
+        <div ref={ref} className="mt-14 grid gap-5 md:grid-cols-6">
+          <Reveal className="md:col-span-4">
+            <Card><MoneyWidget active={inView} /><CardTitle title="Tonight's money, live" text="Every paid bill adds to the line. Know how the night is going before closing time, not after." /></Card>
+          </Reveal>
+          <Reveal delay={80} className="md:col-span-2">
+            <Card dark><PayoutWidget /><CardTitle dark title="Paid in seconds" text="The moment a guest pays, your 92% goes straight to your Mobile Money." /></Card>
+          </Reveal>
+          <Reveal className="md:col-span-2">
+            <Card><AlertsWidget /><CardTitle title="You hear about everything" text="Guests seated, waiters called, bills paid. Nothing happens without you knowing." /></Card>
+          </Reveal>
+          <Reveal delay={80} className="md:col-span-2">
+            <Card><HeatmapWidget /><CardTitle title="Know your busy hours" text="See which nights and hours are packed, and put the right number of waiters on." /></Card>
+          </Reveal>
+          <Reveal delay={160} className="md:col-span-2">
+            <Card><LeaderboardWidget /><CardTitle title="Great service gets noticed" text="Guests rate their waiter. The best ones rise to the top, and you know who to reward." /></Card>
+          </Reveal>
+          <Reveal className="md:col-span-3">
+            <Card><MenuPhotoWidget /><CardTitle title="Your menu from one photo" text="Take a picture of your paper menu. Skuzi types it in for you. Change a price any time." /></Card>
+          </Reveal>
+          <Reveal delay={80} className="md:col-span-3">
+            <Card>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  ["Waiters without a smartphone?", "No problem. A manager covers their tables."],
+                  ["Shifts & clock-in", "Staff clock in by scanning your venue's sticker."],
+                  ["New staff in a minute", "They join from a WhatsApp link."],
+                  ["Any phone works", "Guests, waiters and you. No downloads."],
+                ].map(([t, d]) => (
+                  <div key={t} className="rounded-2xl bg-[var(--bg)] p-4">
+                    <p className="flex items-start gap-1.5 text-[14px] font-extrabold leading-snug"><Check size={15} strokeWidth={3} className="mt-0.5 flex-shrink-0 text-[#5E7A55]" />{t}</p>
+                    <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--body)]">{d}</p>
+                  </div>
+                ))}
+              </div>
+              <CardTitle title="Made for how Kigali bars really work" text="Shared tables, busy weekends, cash and MoMo side by side. Skuzi fits in, it doesn't fight you." />
+            </Card>
+          </Reveal>
         </div>
       </div>
     </section>
   );
 }
+
+// ─── Pricing ─────────────────────────────────────────────────────────────────
 
 function Pricing() {
+  const [bill, setBill] = useState(10000);
+  const pct = ((bill - 2000) / 58000) * 100;
   return (
-    <section id="pricing" className="mx-auto max-w-[1240px] scroll-mt-20 px-4 pb-20 sm:px-6 sm:pb-[90px]">
-      <div className="flex flex-wrap items-center justify-between gap-8 rounded-[32px] bg-[#D9A441] p-8 text-[#2B201B] sm:rounded-[40px] sm:p-14">
-        <div className="flex-[1_1_420px]">
-          <h2 className="text-[38px] font-extrabold leading-none tracking-[-0.03em] sm:text-[52px]">You only pay when you get paid.</h2>
-          <p className="mt-4 text-[18px] leading-[1.55]">
-            8% of bills paid through Skuzi by Mobile Money. Cash is free. No monthly fee, no machine, free setup and training.
+    <section id="pricing" className="relative scroll-mt-16 overflow-hidden bg-[#1C1511] py-24 text-[#F4EDE3] sm:py-32">
+      <div className="sk-glow pointer-events-none absolute left-1/2 top-0 h-[600px] w-[1000px] -translate-x-1/2 opacity-50" />
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <Eyebrow dark>Pricing</Eyebrow>
+          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
+            You only pay <Swoosh><span className="text-[#D9A441]">when you get paid.</span></Swoosh>
+          </h2>
+          <p className="mx-auto mt-7 max-w-xl text-[18px] leading-relaxed text-[#D8CBBF]">
+            No setup fee. No monthly fee. No machine. Skuzi keeps 8% of bills paid by Mobile Money through Skuzi. Cash? That's free.
           </p>
-        </div>
-        <button onClick={openBookDemo} className="rounded-full bg-[#2B201B] px-8 py-5 text-[18px] font-extrabold text-[#F4EDE3] transition hover:bg-black">
-          Book a free demo
-        </button>
+        </Reveal>
+
+        <Reveal delay={100} className="mx-auto mt-14 max-w-4xl">
+          <div className="rounded-[32px] bg-white/[0.04] p-7 ring-1 ring-white/10 sm:p-10">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <p className="text-[15px] font-semibold text-[#D8CBBF]">A guest pays a bill of</p>
+              <p className="font-display text-[28px] font-bold tabular-nums">{fmt(bill)} RWF</p>
+            </div>
+            <input
+              type="range" min={2000} max={60000} step={500} value={bill}
+              onChange={(e) => setBill(Number(e.target.value))}
+              className="sk-range sk-range-dark mt-4 w-full"
+              aria-label="Bill amount"
+              style={{ background: `linear-gradient(90deg, #D9A441 ${pct}%, rgba(244,237,227,0.15) ${pct}%)` }}
+            />
+            <div className="mt-8 flex h-16 overflow-hidden rounded-2xl">
+              <div className="flex flex-[92] items-center justify-between gap-2 bg-[#5E7A55] px-5">
+                <span className="text-[14px] font-bold">You get, in seconds</span>
+                <span className="font-display text-[20px] font-bold tabular-nums">{fmt(bill * 0.92)}</span>
+              </div>
+              <div className="flex min-w-[64px] flex-[8] items-center justify-center bg-[#A64B31] px-1 text-center">
+                <span className="text-[11px] font-bold leading-tight">Skuzi<br />{fmt(bill * 0.08)}</span>
+              </div>
+            </div>
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {["Skuzi stickers for every table", "Unlimited tables & waiters", "Free setup and training at your bar"].map((t) => (
+                <p key={t} className="flex items-center gap-2 text-[14.5px] text-[#D8CBBF]"><Check size={16} strokeWidth={3} className="flex-shrink-0 text-[#D9A441]" />{t}</p>
+              ))}
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
 }
 
+// ─── Questions ───────────────────────────────────────────────────────────────
+
 const FAQS = [
-  { q: "Do guests need to install an app?", a: "No. They scan the QR code on the table with their phone camera and Skuzi opens in the browser. It works on any smartphone." },
-  { q: "Which payment methods are supported?", a: "MTN MoMo and Airtel Money. The guest approves the payment on their own phone with their PIN. Skuzi never sees their PIN." },
-  { q: "When do I receive my money?", a: "Your 92% is sent automatically to your venue's Mobile Money number as soon as the guest's payment is confirmed, usually within seconds." },
-  { q: "What does it cost?", a: "Nothing to set up and no monthly fee. Skuzi keeps 8% of bills paid through the app. If a guest pays another way, Skuzi takes nothing." },
-  { q: "Do I need special equipment?", a: "No machine at all. Your waiters use their own phones, you use yours, and we provide the QR stickers for your tables." },
-  { q: "How do I get started?", a: "Book a free demo on this page. We come to your venue and set up your menu, tables and waiters with you, usually in a single visit." },
+  { q: "Do my guests need to download an app?", a: "No. They scan the sticker on the table with their phone camera and your menu opens. It works on any smartphone." },
+  { q: "How do guests pay?", a: "With MTN MoMo or Airtel Money, from their own phone. They approve with their PIN. Skuzi never sees their PIN. Cash still works as usual." },
+  { q: "When do I get my money?", a: "Right away. As soon as the guest's payment is confirmed, your 92% is sent to your venue's Mobile Money number, usually within seconds." },
+  { q: "What does it cost?", a: "Nothing to set up and no monthly fee. Skuzi keeps 8% of bills paid by Mobile Money through Skuzi. If a guest pays cash, Skuzi takes nothing." },
+  { q: "Do I need to buy any equipment?", a: "No. Your waiters use their own phones, you use yours, and we bring the stickers for your tables." },
+  { q: "What if some of my waiters don't have a smartphone?", a: "That's fine. Add them anyway: a manager's phone gets their table calls, so no guest is left waiting." },
+  { q: "How do I get started?", a: "Book a free demo. We come to your bar, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
 ];
 
 function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="mx-auto grid max-w-[1240px] scroll-mt-20 gap-10 px-4 pb-20 sm:px-6 sm:pb-[90px] lg:grid-cols-[0.8fr_1.2fr]">
-      <div>
-        <h2 className="text-[38px] font-extrabold leading-none tracking-[-0.03em] sm:text-[48px]">Questions, answered.</h2>
-        <p className="mt-4 max-w-sm text-[16px] leading-relaxed text-[var(--body)]">
-          Something else on your mind?{" "}
-          <button onClick={openBookDemo} className="font-bold text-[var(--rust-ink)] underline underline-offset-4">Ask us during a free demo</button>.
-        </p>
-      </div>
-      <div className="divide-y-[1.5px] divide-[var(--line)] border-y-[1.5px] border-[var(--line)]">
-        {FAQS.map((f, i) => {
-          const on = open === i;
-          return (
-            <div key={f.q}>
-              <button onClick={() => setOpen(on ? null : i)} className="flex w-full items-center justify-between gap-6 py-5 text-left">
-                <span className="text-[17px] font-bold">{f.q}</span>
-                <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition ${on ? "bg-[var(--ink)] text-[var(--bg)]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--line)]"}`}>
-                  {on ? <Minus size={15} /> : <Plus size={15} />}
-                </span>
-              </button>
-              <div className={`grid transition-all duration-500 ${on ? "grid-rows-[1fr] pb-5 opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
-                <p className="overflow-hidden pr-12 text-[15.5px] leading-relaxed text-[var(--body)]">{f.a}</p>
-              </div>
-            </div>
-          );
-        })}
+    <section id="faq" className="scroll-mt-16 bg-[var(--bg)] py-24 sm:py-32">
+      <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <Reveal>
+          <Eyebrow>Questions</Eyebrow>
+          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] sm:text-5xl">
+            Good questions. <span className="text-[var(--rust-ink)]">Straight answers.</span>
+          </h2>
+          <p className="mt-5 max-w-sm text-[16px] leading-relaxed text-[var(--body)]">
+            Something else on your mind?{" "}
+            <button onClick={openBookDemo} className="font-bold text-[var(--rust-ink)] underline decoration-[#D9A441] decoration-2 underline-offset-4">Ask us during a free demo</button>.
+          </p>
+        </Reveal>
+        <Reveal delay={100}>
+          <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {FAQS.map((f, i) => {
+              const on = open === i;
+              return (
+                <div key={f.q}>
+                  <button onClick={() => setOpen(on ? null : i)} className="flex w-full items-center justify-between gap-6 py-6 text-left">
+                    <span className="text-[17px] font-bold">{f.q}</span>
+                    <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition ${on ? "bg-[#A64B31] text-[#F4EDE3]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--line)]"}`}>
+                      {on ? <Minus size={15} /> : <Plus size={15} />}
+                    </span>
+                  </button>
+                  <div className={`grid transition-all duration-500 ${on ? "grid-rows-[1fr] pb-6 opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                    <p className="overflow-hidden pr-12 text-[16px] leading-relaxed text-[var(--body)]">{f.a}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Reveal>
       </div>
     </section>
   );
 }
 
-// Imigongo band: the rust and espresso triangles of Rwandan cow-dung art.
-function Imigongo() {
+// ─── Final call ──────────────────────────────────────────────────────────────
+
+function FinalCta() {
   return (
-    <svg width="100%" height="26" aria-hidden="true" className="block">
-      <defs>
-        <pattern id="imi-web" width="34" height="26" patternUnits="userSpaceOnUse">
-          <path d="M0 26L17 0L34 26Z" fill="#A64B31" />
-          <path d="M9 26L17 13L25 26Z" fill="#2B201B" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="26" fill="url(#imi-web)" />
-    </svg>
+    <section className="bg-[var(--bg)] px-5 pb-24 sm:px-8">
+      <Reveal>
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[40px] bg-[#A64B31] px-6 py-20 text-center text-[#F4EDE3] sm:py-28">
+          <div className="sk-pattern-dark pointer-events-none absolute inset-0 opacity-[0.12]" />
+          <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 rounded-full bg-[#D9A441]/30 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-16 h-96 w-96 rounded-full bg-[#2B201B]/40 blur-3xl" />
+          <div className="relative">
+            <span className="sk-wave inline-block"><Hand size={56} color="#F4EDE3" /></span>
+            <h2 className="mx-auto mt-6 max-w-3xl font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.04em] text-balance sm:text-7xl">
+              Make this Friday the easy one.
+            </h2>
+            <p className="mx-auto mt-6 max-w-lg text-[18px] leading-relaxed text-[#F5E1D7]">
+              Tell us about your bar. We'll come over and set up your menu, tables and team with you, free.
+            </p>
+            <div className="mt-10 flex justify-center">
+              <button onClick={openBookDemo} className="sk-shine group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#2B201B] px-8 py-4 text-[16px] font-extrabold text-[#F4EDE3] transition hover:bg-black">
+                Book a free demo <ArrowRight size={18} className="transition group-hover:translate-x-1" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+    </section>
   );
 }
 
-// Legal footer: required for payment-partner compliance.
+// ─── Footer (legal: required for payment-partner compliance) ─────────────────
+
 function Footer() {
   return (
-    <footer className="bg-[#2B201B] text-[#D8CBBF]">
-      <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-6 px-4 py-12 sm:px-6">
-        <span className="font-display text-[38px] font-extrabold leading-none tracking-[-0.045em] text-[#F4EDE3]">skuzi</span>
-        <span className="text-[14px]">Skuzi is a product of {COMPANY.legalName}, a company registered in Rwanda.</span>
+    <footer className="bg-[#1C1511] text-[#F4EDE3]">
+      <ImigongoBand />
+      <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 border-b border-white/[0.06] px-5 py-16 sm:px-8 md:flex-row md:items-center">
+        <div>
+          <p className="flex items-center gap-2 text-[13px] font-semibold text-[#A9BE9F]">
+            <span className="relative flex h-2 w-2">
+              <span className="sk-ping absolute inline-flex h-full w-full rounded-full bg-[#86A27B] opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#86A27B]" />
+            </span>
+            Now setting up venues in Kigali
+          </p>
+          <h2 className="mt-4 font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
+            Ready when <span className="text-[#D9A441]">you are.</span>
+          </h2>
+        </div>
+        <button onClick={openBookDemo} aria-label="Book a demo" className="group relative h-36 w-36 flex-shrink-0 rounded-full sm:h-40 sm:w-40">
+          <svg viewBox="0 0 200 200" className="sk-spin absolute inset-0 h-full w-full" aria-hidden="true">
+            <defs><path id="sk-ring" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
+            {/* textLength = the ring's circumference (2π·78), so the words close the loop exactly */}
+            <text fill="rgba(244,237,227,0.75)" fontSize="15" fontWeight="700">
+              <textPath href="#sk-ring" textLength="488" lengthAdjust="spacing">BOOK A DEMO · FREE SETUP · BOOK A DEMO · FREE SETUP ·</textPath>
+            </text>
+          </svg>
+          <span className="absolute inset-[30%] flex items-center justify-center rounded-full bg-[#D9A441] text-[#2B201B] shadow-[0_10px_40px_-6px_rgba(217,164,65,0.7)] transition duration-300 group-hover:scale-110">
+            <ArrowUpRight size={26} strokeWidth={2.5} className="transition duration-300 group-hover:rotate-45" />
+          </span>
+        </button>
       </div>
-      <div className="border-t border-[#3A2D26]">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-4 px-4 py-6 text-[14px] sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <nav className="flex flex-wrap gap-x-6 gap-y-2">
-            <a className="hover:text-[#D9A441]" href="/terms.html">Terms & Conditions</a>
-            <a className="hover:text-[#D9A441]" href="/privacy.html">Privacy Policy</a>
-            <Link className="hover:text-[#D9A441]" to="/login">Owner login</Link>
-            <Link className="hover:text-[#D9A441]" to="/waiter">Waiter login</Link>
-          </nav>
-          <span className="text-[13px] text-[#A39282]">© {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</span>
+
+      <div className="mx-auto grid max-w-7xl gap-12 px-5 py-14 sm:px-8 md:grid-cols-[2fr_1fr]">
+        <div>
+          <Wordmark size={30} on="dark" />
+          <p className="mt-5 max-w-sm text-[14px] leading-relaxed text-[#A39282]">
+            Skuzi is a product of <span className="font-semibold text-[#D8CBBF]">{COMPANY.legalName}</span>, a company registered in Rwanda.
+          </p>
+        </div>
+        <div>
+          <p className="text-[13px] font-bold uppercase tracking-[0.15em] text-[#A39282]">Legal & access</p>
+          <ul className="mt-5 space-y-3 text-[14px] text-[#D8CBBF]">
+            <li><a className="hover:text-[#D9A441]" href="/terms.html">Terms & Conditions</a></li>
+            <li><a className="hover:text-[#D9A441]" href="/privacy.html">Privacy Policy</a></li>
+            <li><Link className="hover:text-[#D9A441]" to="/login">Owner login</Link></li>
+            <li><Link className="hover:text-[#D9A441]" to="/waiter">Waiter login</Link></li>
+          </ul>
+        </div>
+      </div>
+      <div className="border-t border-white/[0.06]">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-[12.5px] text-[#7A6A5F] sm:flex-row sm:justify-between sm:px-8">
+          <span>© {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</span>
+          <span>Made in Kigali.</span>
         </div>
       </div>
     </footer>
   );
 }
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
+// Coffee & imigongo, with light sections that follow the visitor's theme.
+const STYLES = `
+.sk-site { --bg:#F4EDE3; --card:#FFFCF7; --ink:#2B201B; --body:#5C4D44; --muted:#7A6A5F; --line:#E3D6C6; --rust-ink:#9A4129; }
+.dark .sk-site { --bg:#211915; --card:#2B201B; --ink:#F4EDE3; --body:#D8CBBF; --muted:#A39282; --line:#463A32; --rust-ink:#DCA088; }
+.sk-reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
+.sk-reveal.is-in { opacity: 1; transform: none; }
+.sk-glow { background: radial-gradient(closest-side, rgba(166,75,49,.55), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(217,164,65,.28), transparent 70%); filter: blur(40px); }
+.sk-glow-sm { background: radial-gradient(closest-side, rgba(217,164,65,.30), transparent 70%); filter: blur(30px); }
+/* Imigongo: soft diamonds, like the cow-dung art of eastern Rwanda */
+.sk-pattern { opacity: .07; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M28 4L52 28L28 52L4 28Z' fill='none' stroke='%23F4EDE3' stroke-width='2'/%3E%3Cpath d='M28 16L40 28L28 40L16 28Z' fill='%23F4EDE3'/%3E%3C/svg%3E"); mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); }
+.sk-pattern-dark { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M28 4L52 28L28 52L4 28Z' fill='none' stroke='%232B201B' stroke-width='2'/%3E%3Cpath d='M28 16L40 28L28 40L16 28Z' fill='%232B201B'/%3E%3C/svg%3E"); }
+.sk-grain { opacity: .07; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+@keyframes sk-float { 0%,100% { transform: translateY(0) rotate(3deg) } 50% { transform: translateY(-12px) rotate(3deg) } }
+@keyframes sk-float-slow { 0%,100% { transform: translateY(0) rotate(-4deg) } 50% { transform: translateY(-10px) rotate(-4deg) } }
+.sk-float { animation: sk-float 7s ease-in-out infinite; }
+.sk-float-slow { animation: sk-float-slow 8s ease-in-out infinite; }
+@keyframes sk-wave { 0%,60%,100% { transform: rotate(0) } 10%,30% { transform: rotate(-14deg) } 20%,40% { transform: rotate(12deg) } }
+.sk-wave { transform-origin: 60% 90%; animation: sk-wave 2.6s ease-in-out infinite; }
+@keyframes sk-buzz { 0%,100% { transform: translateX(0) rotate(0) } 15% { transform: translateX(-5px) rotate(-2deg) } 30% { transform: translateX(5px) rotate(2deg) } 45% { transform: translateX(-4px) rotate(-1deg) } 60% { transform: translateX(3px) rotate(1deg) } 75% { transform: translateX(0) } }
+.sk-buzz { animation: sk-buzz .7s ease-in-out 3; }
+@keyframes sk-tapme { 0%,100% { transform: scale(1) } 50% { transform: scale(1.12) } }
+.sk-tapme { animation: sk-tapme 1.2s ease-in-out infinite; }
+@keyframes sk-swoosh { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
+.sk-swoosh path { stroke-dasharray: 1; animation: sk-swoosh 1.1s .9s cubic-bezier(.3,.7,.2,1) both; }
+@keyframes sk-marquee { to { transform: translateX(-50%) } }
+.sk-marquee { animation: sk-marquee 40s linear infinite; }
+@keyframes sk-scan { 0%,100% { top: 12px } 50% { top: calc(100% - 14px) } }
+.sk-scanline { animation: sk-scan 2.4s ease-in-out infinite; }
+@keyframes sk-toast { from { opacity: 0; transform: translateY(-8px) scale(.98) } to { opacity: 1; transform: none } }
+.sk-toast { animation: sk-toast .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes sk-pop { 0% { opacity: 0; transform: scale(.6) } 70% { transform: scale(1.06) } 100% { opacity: 1; transform: scale(1) } }
+.sk-pop { animation: sk-pop .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes sk-fade { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.sk-fade { animation: sk-fade .45s ease-out both; }
+@keyframes sk-screen { from { opacity: 0; transform: translateX(18px) } to { opacity: 1; transform: none } }
+.sk-screen { animation: sk-screen .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes sk-progress { from { width: 0 } to { width: 100% } }
+.sk-progress { animation: sk-progress 4.4s linear both; }
+@keyframes sk-draw { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
+.sk-draw { stroke-dasharray: 1; animation: sk-draw 1.8s ease-out both; }
+@keyframes sk-bar { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+.sk-bar { transform-origin: left center; animation: sk-bar 1.3s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes sk-cell { 0%,100% { filter: none } 50% { filter: brightness(1.15) } }
+.sk-cell-now { animation: sk-cell 2.2s ease-in-out infinite; box-shadow: 0 0 0 2px #2B201B; }
+.sk-shine::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.45) 50%, transparent 65%); transform: translateX(-120%); animation: sk-shine 4.5s ease-in-out infinite; }
+@keyframes sk-shine { 0%, 60% { transform: translateX(-120%) } 100% { transform: translateX(120%) } }
+.sk-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; outline: none; }
+.sk-range::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #A64B31; border: 4px solid #FFFCF7; box-shadow: 0 4px 12px rgba(43,32,27,.35); cursor: pointer; }
+.sk-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #A64B31; border: 4px solid #FFFCF7; cursor: pointer; }
+.sk-range-dark::-webkit-slider-thumb { background: #D9A441; border-color: #2B201B; }
+@keyframes sk-spin { to { transform: rotate(360deg) } }
+.sk-spin { animation: sk-spin 18s linear infinite; transform-origin: 50% 50%; }
+button:hover > .sk-spin { animation-duration: 6s; }
+@keyframes sk-ping { 75%, 100% { transform: scale(2.4); opacity: 0 } }
+.sk-ping { animation: sk-ping 1.8s cubic-bezier(0,0,.2,1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .sk-reveal { opacity: 1; transform: none; transition: none; }
+  .sk-float, .sk-float-slow, .sk-wave, .sk-buzz, .sk-tapme, .sk-marquee, .sk-scanline, .sk-shine::after, .sk-progress, .sk-spin, .sk-ping, .sk-cell-now { animation: none; }
+  .sk-swoosh path, .sk-draw { animation: none; stroke-dasharray: none; }
+}
+`;
 
 export default function Landing() {
   useEffect(() => {
@@ -290,15 +750,18 @@ export default function Landing() {
   return (
     <div className="sk-site min-h-screen overflow-x-hidden bg-[var(--bg)] font-sans text-[var(--ink)] antialiased selection:bg-[#D9A441] selection:text-[#2B201B]">
       <style>{STYLES}</style>
-      <Header />
+      <Nav />
       <main>
         <Hero />
-        <How />
+        <Marquee />
+        <PainSwitch />
+        <Tour />
+        <OneMoreRound />
         <Owners />
         <Pricing />
         <Faq />
+        <FinalCta />
       </main>
-      <Imigongo />
       <Footer />
       <BookDemo />
     </div>
