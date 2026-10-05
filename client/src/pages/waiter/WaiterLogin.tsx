@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../../components/Logo";
+import AnimatedLogo from "../../components/AnimatedLogo";
 import { apiFetch } from "../../lib/apiFetch";
 
 const STORAGE_KEY = "tabpro_staff_session";
@@ -97,7 +97,8 @@ export default function WaiterLogin() {
     <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <Logo />
+          <AnimatedLogo size={44} on="light" bg="#F8F3EC" className="dark:hidden" />
+          <AnimatedLogo size={44} on="dark" bg="#1C1511" className="hidden dark:inline-flex" />
         </div>
 
         <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">

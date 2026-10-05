@@ -225,7 +225,7 @@ export default function Receipt() {
         {/* ─── Payment section ─────────────────────────────────────── */}
 
         {/* IDLE — show pay button */}
-        {paymentState !== "idle" && (
+        {paymentState === "idle" && (
           <div className="mx-6 mb-6 space-y-3">
             <button
               onClick={() => setPaymentState("entering_phone")}
@@ -271,7 +271,7 @@ export default function Receipt() {
 
         {/* WAITING — polling */}
         {paymentState === "waiting" && (
-          <div className="mx-6 mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-5 text-center">
+          <div className="mx-6 mb-6 bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl p-5 text-center">
             <Loader2
               size={28}
               className="text-brand-500 animate-spin mx-auto mb-3"

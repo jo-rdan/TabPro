@@ -233,7 +233,7 @@ function StatusBadge({ status }: { status: PlacedOrder["status"] }) {
     ],
     preparing: [
       "🍳 Preparing",
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
     ],
     delivered: [
       "✓ Delivered",
@@ -1122,7 +1122,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "waiting" && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl px-5 py-6 text-center">
+            <div className="bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-6 text-center">
               <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-sm font-black text-gray-800 dark:text-white mb-1">
                 Waiting for your approval

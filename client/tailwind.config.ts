@@ -45,6 +45,19 @@ export default {
           800: '#33482D',
           900: '#263722',
         },
+        // Warnings and waiting = honey, never a bright yellow.
+        amber: {
+          50:  '#FBF3E2',
+          100: '#F5E6C4',
+          200: '#EBD3A0',
+          300: '#E2BC6E',
+          400: '#DCAD55',
+          500: '#D9A441',
+          600: '#B8862F',
+          700: '#8F6620',
+          800: '#6B4E12',
+          900: '#4A360C',
+        },
         white: '#FFFCF7',
       },
       // Skuzi brand: coffee & imigongo. Use these for new screens; the old

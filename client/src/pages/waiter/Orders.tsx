@@ -1052,7 +1052,7 @@ export default function WaiterOrders() {
                       </span>
                     )}
                     {order.source === "staff" && (
-                      <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-[#F5E6C4] text-[#7A5A16] dark:bg-[#D9A441]/15 dark:text-[#E9C77E] px-2 py-0.5 rounded-full">
                         Staff-entered
                       </span>
                     )}

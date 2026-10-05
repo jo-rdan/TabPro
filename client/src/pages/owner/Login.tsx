@@ -1,4 +1,4 @@
-import Logo from "../../components/Logo";
+import AnimatedLogo from "../../components/AnimatedLogo";
 import GoogleIcon from "../../components/GoogleIcon";
 
 export default function Login() {
@@ -7,17 +7,17 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Card */}
       <div className="relative w-full max-w-sm">
         {/* Logo + wordmark */}
         <div className="flex flex-col items-center mb-8">
-          <Logo size={56} className="mb-4 drop-shadow-sm" />
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Skuzi
+          <h1 className="mb-2">
+            <AnimatedLogo size={48} on="light" bg="#F8F3EC" className="dark:hidden" />
+            <AnimatedLogo size={48} on="dark" bg="#1C1511" className="hidden dark:inline-flex" />
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Smart ordering for bars & restaurants
+            No more waving for the waiter.
           </p>
         </div>
 

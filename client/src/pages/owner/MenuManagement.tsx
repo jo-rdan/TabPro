@@ -229,7 +229,7 @@ export default function MenuManagement() {
             {extracting ? (
               <Loader size={15} className="animate-spin" />
             ) : (
-              <Sparkles size={15} className="text-purple-500" />
+              <Sparkles size={15} className="text-skuzi-honey" />
             )}
             {extracting ? "Extracting..." : "Upload menu"}
           </button>

@@ -160,7 +160,7 @@ export default function Ratings() {
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: 'Food', score: data.totals.food, color: 'text-orange-500' },
-              { label: 'Service', score: data.totals.waiter, color: 'text-blue-500' },
+              { label: 'Service', score: data.totals.waiter, color: 'text-skuzi-honey' },
               { label: 'Overall', score: data.totals.overall, color: 'text-brand-500' },
             ].map(({ label, score, color }) => (
               <div key={label} className="bg-white dark:bg-[#2B201B] border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
@@ -174,7 +174,7 @@ export default function Ratings() {
           {/* Score bars */}
           <div className="bg-white dark:bg-[#2B201B] border border-gray-100 dark:border-gray-800 rounded-2xl p-5 space-y-4">
             <ScoreBar label="Food quality" score={data.totals.food} color="bg-orange-400" />
-            <ScoreBar label="Waiter service" score={data.totals.waiter} color="bg-blue-400" />
+            <ScoreBar label="Waiter service" score={data.totals.waiter} color="bg-skuzi-honey" />
             <ScoreBar label="Overall experience" score={data.totals.overall} color="bg-brand-500" />
           </div>
 
@@ -229,7 +229,7 @@ export default function Ratings() {
               </div>
               <div className="space-y-3">
                 <ScoreBar label="Food" score={w.food} color="bg-orange-400" />
-                <ScoreBar label="Service" score={w.waiter} color="bg-blue-400" />
+                <ScoreBar label="Service" score={w.waiter} color="bg-skuzi-honey" />
                 <ScoreBar label="Overall" score={w.overall} color="bg-brand-500" />
               </div>
             </div>
