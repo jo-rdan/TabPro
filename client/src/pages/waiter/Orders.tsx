@@ -5,7 +5,6 @@ import {
   Clock,
   ChefHat,
   AlertCircle,
-  Bell,
   Receipt,
   X,
   BellRing,
@@ -24,6 +23,7 @@ import { usePushNotifications, useKeepPushSubscribed } from "../../hooks/usePush
 import NotificationNotice from "../../components/NotificationNotice";
 import { WsEvent } from "@tabpro/shared";
 import VenueLogo from "../../components/VenueLogo";
+import { WavingHand } from "../../components/Logo";
 import NotificationBell, {
   NotificationItem,
 } from "../../components/NotificationBell";
@@ -106,19 +106,20 @@ function timeAgo(dateStr: string) {
     Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000),
   );
   if (diff < 60) return `${diff}s ago`;
-  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 const STATUS_CONFIG = {
   pending: {
     label: "New",
-    color:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    color: "bg-[#D9A441] text-[#2B201B]",
     icon: Clock,
   },
   preparing: {
     label: "Preparing",
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    color: "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900",
     icon: ChefHat,
   },
   delivered: {
@@ -211,6 +212,13 @@ export default function WaiterOrders() {
     localStorage.getItem("tabpro_staff_token") ||
     "";
   const [myPoints, setMyPoints] = useState<MyPoints | null>(null);
+  const firstName = (() => {
+    try {
+      return (JSON.parse(localStorage.getItem("tabpro_staff_session") || "{}").name || "").split(" ")[0];
+    } catch {
+      return "";
+    }
+  })();
   const [pointsLoading, setPointsLoading] = useState(false);
   const [pointsError, setPointsError] = useState("");
 
@@ -638,6 +646,11 @@ export default function WaiterOrders() {
     }
   }, [staffToken]);
 
+  // Points show in the header on every tab.
+  useEffect(() => {
+    fetchMyPoints();
+  }, [fetchMyPoints]);
+
   useEffect(() => {
     if (activeTab === "points") fetchMyPoints();
     if (activeTab === "tables") fetchMyTables();
@@ -834,21 +847,18 @@ export default function WaiterOrders() {
       </aside>
 
       {/* Header — full on mobile (no sidebar); trimmed to just live controls on desktop, since the sidebar already shows venue branding + sign out */}
-      <div className="bg-white dark:bg-[#2B201B] border-b border-gray-200 dark:border-gray-800 px-4 py-4 sticky top-0 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-3 md:hidden">
-          <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
-          <div>
-            <h1 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              {venueName || "Orders"}
+      <div className="bg-gray-50/95 dark:bg-gray-950/95 backdrop-blur px-4 pt-5 pb-3 sticky top-0 z-10 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 md:hidden min-w-0">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{venueName || "Skuzi"} · on shift</p>
+            <h1 className="font-display text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 leading-tight">
+              {firstName ? `Hi ${firstName}` : "Orders"}
               {isManager && (
                 <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
                   Manager
                 </span>
               )}
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Live · updates automatically
-            </p>
           </div>
         </div>
         <h2 className="hidden md:block font-bold text-gray-900 dark:text-white capitalize">
@@ -859,9 +869,9 @@ export default function WaiterOrders() {
               : "My Points"}
         </h2>
         <div className="flex items-center gap-2">
-          {activeOrders.length > 0 && (
-            <span className="bg-brand-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-              {activeOrders.length}
+          {myPoints && (
+            <span className="bg-[#D9A441] text-[#2B201B] text-xs font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap">
+              {myPoints.totalPoints} pts
             </span>
           )}
           <NotificationBell
@@ -950,35 +960,23 @@ export default function WaiterOrders() {
       )}
       {activeTab === "orders" && (
         <div className="px-4 pt-4 max-w-lg mx-auto space-y-3 pb-28 md:pb-6">
-          {/* Nudge alerts */}
+          {/* A guest is calling: the big rust card */}
           {nudges.map((nudge) => (
-            <div
-              key={nudge.id}
-              className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-2xl px-4 py-3 flex items-center justify-between"
-            >
+            <div key={nudge.id} className="bg-brand-500 text-white rounded-[26px] p-5 flex flex-col gap-3 shadow-lg shadow-brand-500/20">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                  <Bell
-                    size={16}
-                    className="text-amber-600 dark:text-amber-400"
-                  />
-                </div>
+                <svg width="40" height="40" viewBox="8 4 90 92" aria-hidden="true">
+                  <WavingHand color="currentColor" strokeWidth={8} />
+                </svg>
                 <div>
-                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                    {nudge.tableLabel} needs you
-                  </p>
-                  <p className="text-xs text-amber-600 dark:text-amber-500">
-                    {timeAgo(nudge.timestamp)}
-                  </p>
+                  <p className="font-display text-[26px] font-bold leading-none">Skuzi! {nudge.tableLabel}</p>
+                  <p className="text-sm font-semibold mt-1 text-white/85">is calling you · {timeAgo(nudge.timestamp)}</p>
                 </div>
               </div>
               <button
-                onClick={() =>
-                  setNudges((prev) => prev.filter((n) => n.id !== nudge.id))
-                }
-                className="text-amber-500 hover:text-amber-700"
+                onClick={() => setNudges((prev) => prev.filter((n) => n.id !== nudge.id))}
+                className="h-12 rounded-2xl bg-gray-900 text-white text-base font-extrabold active:scale-[0.98] transition-all"
               >
-                <X size={16} />
+                On my way
               </button>
             </div>
           ))}
@@ -987,7 +985,7 @@ export default function WaiterOrders() {
           {billRequests.map((bill) => (
             <div
               key={bill.tabId}
-              className="bg-white dark:bg-[#2B201B] border-2 border-brand-500 rounded-2xl px-4 py-3"
+              className="bg-white dark:bg-gray-800 rounded-[22px] px-4 py-4 ring-1 ring-green-500/30"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -995,8 +993,8 @@ export default function WaiterOrders() {
                     <Receipt size={16} className="text-brand-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {bill.tableLabel} wants to pay
+                    <p className="text-[17px] font-bold text-gray-900 dark:text-white">
+                      {bill.tableLabel} <span className="ml-1 align-middle text-[11px] font-extrabold bg-green-500 text-white px-2 py-0.5 rounded-full">Wants to pay</span>
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {timeAgo(bill.timestamp)}
@@ -1006,9 +1004,9 @@ export default function WaiterOrders() {
                 <button
                   onClick={() => handleCloseTab(bill.tabId)}
                   disabled={closingTabId === bill.tabId}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-medium disabled:opacity-50 transition-colors"
+                  className="text-sm px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold disabled:opacity-50 transition-colors"
                 >
-                  {closingTabId === bill.tabId ? "..." : "Close tab"}
+                  {closingTabId === bill.tabId ? "..." : "Close bill"}
                 </button>
               </div>
             </div>
@@ -1036,11 +1034,11 @@ export default function WaiterOrders() {
             return (
               <div
                 key={order.orderId}
-                className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4"
+                className="bg-white dark:bg-gray-800 rounded-[22px] p-4 ring-1 ring-gray-200/70 dark:ring-0"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    <span className="text-[17px] font-bold text-gray-900 dark:text-white">
                       {order.tableLabel}
                     </span>
                     {isManager && coveredTables.has(order.tableLabel) && (
@@ -1060,7 +1058,7 @@ export default function WaiterOrders() {
                     )}
                   </div>
                   <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${cfg.color}`}
+                    className={`text-xs font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1 ${cfg.color}`}
                   >
                     <Icon size={11} />
                     {cfg.label}
@@ -1090,7 +1088,7 @@ export default function WaiterOrders() {
                       <button
                         onClick={() => updateStatus(order.orderId, "preparing")}
                         disabled={isUpdating}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium disabled:opacity-50 transition-colors"
+                        className="text-sm px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-extrabold disabled:opacity-50 transition-colors"
                       >
                         {isUpdating ? "..." : "Start preparing"}
                       </button>
@@ -1099,9 +1097,9 @@ export default function WaiterOrders() {
                       <button
                         onClick={() => updateStatus(order.orderId, "delivered")}
                         disabled={isUpdating}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-medium disabled:opacity-50 transition-colors"
+                        className="text-sm px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold disabled:opacity-50 transition-colors"
                       >
-                        {isUpdating ? "..." : "Mark delivered ✓"}
+                        {isUpdating ? "..." : "Served ✓"}
                       </button>
                     )}
                   </div>
@@ -1351,28 +1349,27 @@ export default function WaiterOrders() {
         </div>
       )}
       {/* ── Bottom tab bar (mobile only — desktop uses the sidebar) ────────── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#2B201B] border-t border-gray-200 dark:border-gray-800 flex">
-        <button
-          onClick={() => setActiveTab("orders")}
-          className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${activeTab === "orders" ? "text-brand-500" : "text-gray-400 dark:text-gray-600"}`}
-        >
-          <Receipt size={20} />
-          <span className="text-[10px] font-bold">Orders</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("tables")}
-          className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${activeTab === "tables" ? "text-brand-500" : "text-gray-400 dark:text-gray-600"}`}
-        >
-          <MapPin size={20} />
-          <span className="text-[10px] font-bold">{isManager ? "Floor" : "My Tables"}</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("points")}
-          className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${activeTab === "points" ? "text-brand-500" : "text-gray-400 dark:text-gray-600"}`}
-        >
-          <Trophy size={20} />
-          <span className="text-[10px] font-bold">My Points</span>
-        </button>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-2 bg-gray-50 dark:bg-gray-950">
+        <div className="grid grid-cols-3 gap-1.5 bg-white dark:bg-gray-800 rounded-[22px] p-1.5 ring-1 ring-gray-200/70 dark:ring-0">
+          {(
+            [
+              { key: "orders", label: "Orders", icon: Receipt },
+              { key: "tables", label: isManager ? "Floor" : "My tables", icon: MapPin },
+              { key: "points", label: "Points", icon: Trophy },
+            ] as const
+          ).map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex flex-col items-center justify-center gap-0.5 py-2.5 rounded-2xl text-xs font-bold transition-colors ${
+                activeTab === key ? "bg-brand-500 text-white" : "text-gray-500 dark:text-gray-400"
+              }`}
+            >
+              <Icon size={18} />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       {/* ── Manual order bottom sheet ─────────────────────────────────────── */}
       {manualOpen && (
