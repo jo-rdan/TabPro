@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import api from "../../lib/api";
 import {
   ShoppingBag,
-  Bell,
   Receipt,
   CheckCircle,
   Loader,
@@ -1613,16 +1612,16 @@ export default function CustomerMenu() {
             <button
               onClick={handleNudge}
               disabled={nudgeLoading || justNudged}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all ${justNudged ? "bg-amber-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"}`}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#D9A441] text-[#2B201B] disabled:opacity-80 transition-all"
             >
-              <Bell size={13} /> {justNudged ? "Sent!" : "Nudge"}
+              <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
             </button>
             <button
               onClick={handleRequestBill}
               disabled={billLoading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
             >
-              <Receipt size={13} /> {billLoading ? "..." : "Pay bill"}
+              <Receipt size={13} /> {billLoading ? "..." : "My bill"}
             </button>
           </div>
         )}
