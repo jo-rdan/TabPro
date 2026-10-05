@@ -18,8 +18,24 @@ export default {
           900: '#064e35',
         },
       },
+      // Skuzi brand: coffee & imigongo. Use these for new screens; the old
+      // `brand` green stays until every screen has moved over.
+      skuzi: {
+        espresso: '#2B201B',
+        bark: '#3A2D26',
+        rust: '#A64B31',
+        'rust-deep': '#9A4129',
+        honey: '#D9A441',
+        milk: '#F4EDE3',
+        cream: '#FFFCF7',
+        line: '#E3D6C6',
+        muted: '#7A6A5F',
+        body: '#5C4D44',
+        sage: '#5E7A55',
+      },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Figtree', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['"Bricolage Grotesque"', 'Figtree', 'sans-serif'],
       },
     },
   },
