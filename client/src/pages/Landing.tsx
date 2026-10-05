@@ -94,7 +94,7 @@ function Nav() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8">
         <a href="/" className="flex items-center gap-2.5">
           <Logo size={32} />
-          <span className="text-[17px] font-extrabold tracking-tight text-white">TabPro</span>
+          <span className="text-[17px] font-extrabold tracking-tight text-white">Skuzi</span>
         </a>
         <div className="hidden items-center gap-1 rounded-full bg-white/[0.04] p-1 ring-1 ring-white/10 md:flex">
           {[["Product", "#tour"], ["For owners", "#owners"], ["Pricing", "#pricing"], ["FAQ", "#faq"]].map(([l, h]) => (
@@ -228,7 +228,7 @@ function BeforeAfter() {
     <section className="bg-[#f6f5f0] py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal className="mx-auto max-w-3xl text-center">
-          <Eyebrow>Why TabPro</Eyebrow>
+          <Eyebrow>Why Skuzi</Eyebrow>
           <h2 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-[-0.035em] text-balance text-gray-950 sm:text-6xl">
             Friday night, <Serif>two ways.</Serif>
           </h2>
@@ -236,7 +236,7 @@ function BeforeAfter() {
         <div className="mt-16 grid gap-5 lg:grid-cols-2">
           <Reveal>
             <div className="h-full rounded-[2rem] bg-white p-8 ring-1 ring-black/[0.06] sm:p-10">
-              <p className="text-[13px] font-bold uppercase tracking-[0.15em] text-gray-400">Without TabPro</p>
+              <p className="text-[13px] font-bold uppercase tracking-[0.15em] text-gray-400">Without Skuzi</p>
               <ul className="mt-7 space-y-5">
                 {without.map((t) => (
                   <li key={t} className="flex gap-4 text-[16px] leading-snug text-gray-500">
@@ -250,7 +250,7 @@ function BeforeAfter() {
           <Reveal delay={120}>
             <div className="relative h-full overflow-hidden rounded-[2rem] bg-[#06140f] p-8 sm:p-10">
               <div className="lp-aurora-sm pointer-events-none absolute -right-24 -top-24 h-80 w-80" />
-              <p className="relative text-[13px] font-bold uppercase tracking-[0.15em] text-emerald-300">With TabPro</p>
+              <p className="relative text-[13px] font-bold uppercase tracking-[0.15em] text-emerald-300">With Skuzi</p>
               <ul className="relative mt-7 space-y-5">
                 {withTp.map((t) => (
                   <li key={t} className="flex gap-4 text-[16px] font-medium leading-snug text-white">
@@ -270,7 +270,7 @@ function BeforeAfter() {
 // ─── Product tour ─────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { icon: QrCode, title: "Scan", text: "Every table gets a TabPro sticker. Guests scan it with their camera and the menu opens instantly — no app, no account.", screen: ScreenScan },
+  { icon: QrCode, title: "Scan", text: "Every table gets a Skuzi sticker. Guests scan it with their camera and the menu opens instantly — no app, no account.", screen: ScreenScan },
   { icon: UtensilsCrossed, title: "Order", text: "They browse your menu and order round after round. Each order goes straight to the waiter serving that table.", screen: ScreenMenu },
   { icon: Hand, title: "Call", text: "Need something? One tap calls the waiter. Guests see their orders go from preparing to delivered.", screen: ScreenCall },
   { icon: Wallet, title: "Pay", text: "The bill is itemised on their phone. They approve with their MoMo PIN — the tab closes and the venue is paid automatically.", screen: ScreenPay },
@@ -405,7 +405,7 @@ function Owners() {
           <Reveal delay={160} className="md:col-span-2">
             <Card className="h-full">
               <MenuPhotoWidget />
-              <CardTitle title="Menu from a photo" text="Snap your paper menu — TabPro builds the digital one." />
+              <CardTitle title="Menu from a photo" text="Snap your paper menu — Skuzi builds the digital one." />
             </Card>
           </Reveal>
         </div>
@@ -471,7 +471,7 @@ function Pricing() {
             <Serif>We earn when you do.</Serif>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-balance text-[17px] leading-relaxed text-white/55">
-            No setup fee. No monthly fee. No hardware. TabPro keeps 8% of bills paid through the app — the other 92% goes
+            No setup fee. No monthly fee. No hardware. Skuzi keeps 8% of bills paid through the app — the other 92% goes
             straight to your Mobile Money.
           </p>
         </Reveal>
@@ -494,7 +494,7 @@ function Pricing() {
                 </p>
                 <div className="mt-8 space-y-3 border-t border-emerald-950/15 pt-6 text-[15px]">
                   <div className="flex justify-between"><span>Paid by guests in-app</span><span className="font-bold tabular-nums">{fmt(volume)} RWF</span></div>
-                  <div className="flex justify-between"><span>TabPro fee (8%)</span><span className="font-bold tabular-nums">{fmt(volume * 0.08)} RWF</span></div>
+                  <div className="flex justify-between"><span>Skuzi fee (8%)</span><span className="font-bold tabular-nums">{fmt(volume * 0.08)} RWF</span></div>
                   <div className="flex justify-between"><span>Monthly subscription</span><span className="font-bold">0 RWF</span></div>
                 </div>
               </div>
@@ -518,10 +518,10 @@ function Pricing() {
 // ─── FAQ ──────────────────────────────────────────────────────────────────────
 
 const FAQS = [
-  { q: "Do guests need to install an app?", a: "No. They scan the QR code on the table with their phone camera and TabPro opens in the browser. It works on any smartphone." },
-  { q: "Which payment methods are supported?", a: "MTN MoMo and Airtel Money. The guest approves the payment on their own phone with their PIN — TabPro never sees their PIN." },
+  { q: "Do guests need to install an app?", a: "No. They scan the QR code on the table with their phone camera and Skuzi opens in the browser. It works on any smartphone." },
+  { q: "Which payment methods are supported?", a: "MTN MoMo and Airtel Money. The guest approves the payment on their own phone with their PIN — Skuzi never sees their PIN." },
   { q: "When do I receive my money?", a: "Your 92% is sent automatically to your venue's Mobile Money number as soon as the guest's payment is confirmed — usually within seconds." },
-  { q: "What does it cost?", a: "Nothing to set up and no monthly fee. TabPro keeps 8% of bills paid through the app. If a guest pays another way, TabPro takes nothing." },
+  { q: "What does it cost?", a: "Nothing to set up and no monthly fee. Skuzi keeps 8% of bills paid through the app. If a guest pays another way, Skuzi takes nothing." },
   { q: "Do I need special equipment?", a: "No hardware at all. Your waiters use their own phones, you use yours, and we provide the QR stickers for your tables." },
   { q: "How do I get started?", a: "Book a free demo on this page. We'll come to your venue and set up your menu, tables and waiters with you — usually in a single visit." },
 ];
@@ -639,10 +639,10 @@ function Footer() {
         <div>
           <div className="flex items-center gap-2.5">
             <Logo size={30} />
-            <span className="text-[17px] font-extrabold tracking-tight">TabPro</span>
+            <span className="text-[17px] font-extrabold tracking-tight">Skuzi</span>
           </div>
           <p className="mt-5 max-w-sm text-[14px] leading-relaxed text-white/50">
-            TabPro is a product of <span className="font-semibold text-white/80">{COMPANY.legalName}</span>, a company
+            Skuzi is a product of <span className="font-semibold text-white/80">{COMPANY.legalName}</span>, a company
             registered in Rwanda.
           </p>
         </div>
@@ -659,7 +659,7 @@ function Footer() {
       <div className="border-t border-white/[0.06]">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-[12.5px] text-white/35 sm:flex-row sm:justify-between sm:px-8">
           <span>© {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</span>
-          <span>TabPro is operated by {COMPANY.legalName}.</span>
+          <span>Skuzi is operated by {COMPANY.legalName}.</span>
         </div>
       </div>
     </footer>

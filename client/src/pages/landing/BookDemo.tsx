@@ -75,7 +75,7 @@ export default function BookDemo() {
             </div>
             <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white">Thanks, {form.name.split(" ")[0]}!</h2>
             <p className="mx-auto mt-2 max-w-xs text-[15px] leading-relaxed text-white/60">
-              We'll call you within a day to show TabPro at {form.venueName}. Setup is free.
+              We'll call you within a day to show Skuzi at {form.venueName}. Setup is free.
             </p>
             <button onClick={() => setOpen(false)} className="mt-7 rounded-full bg-white/10 px-6 py-3 text-[14px] font-semibold text-white transition hover:bg-white/15">
               Done
@@ -85,7 +85,7 @@ export default function BookDemo() {
           <form onSubmit={submit} className="relative">
             <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-emerald-300">Free demo · 20 minutes</p>
             <h2 id="book-demo-title" className="mt-2 text-[28px] font-extrabold leading-tight tracking-tight text-white">
-              See TabPro at your venue
+              See Skuzi at your venue
             </h2>
             <p className="mt-2 text-[14.5px] text-white/55">We come to you, show it on your own phone, and set everything up for free.</p>
 

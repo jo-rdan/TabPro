@@ -43,7 +43,7 @@ async function main() {
   }
 
   if (conf.signatureConfiguration?.signedRequestsOnly) {
-    bad('account requires signed requests — TabPro sends unsigned requests; turn off "signed requests only" in the pawaPay dashboard');
+    bad('account requires signed requests — Skuzi sends unsigned requests; turn off "signed requests only" in the pawaPay dashboard');
   }
 
   console.log('\nRwanda providers');
@@ -112,12 +112,12 @@ async function liveTest() {
     return;
   }
   const depositId = uuidv4();
-  await initiateDeposit({ id: depositId, phoneNumber: SANDBOX_OK, provider: 'MTN_MOMO_RWA', amountRwf: 100, customerMessage: 'TabPro setup test' });
+  await initiateDeposit({ id: depositId, phoneNumber: SANDBOX_OK, provider: 'MTN_MOMO_RWA', amountRwf: 100, customerMessage: 'Skuzi setup test' });
   const d = await waitFor(() => getDeposit(depositId));
   d.status === 'successful' ? ok(`100 RWF deposit completed (${depositId})`) : bad(`deposit ended ${d.rawStatus} ${d.failureCode ?? ''}`);
 
   const payoutId = uuidv4();
-  await initiatePayout({ id: payoutId, phoneNumber: SANDBOX_OK, provider: 'MTN_MOMO_RWA', amountRwf: 100, customerMessage: 'TabPro setup test' });
+  await initiatePayout({ id: payoutId, phoneNumber: SANDBOX_OK, provider: 'MTN_MOMO_RWA', amountRwf: 100, customerMessage: 'Skuzi setup test' });
   const p = await waitFor(() => getPayout(payoutId));
   p.status === 'successful' ? ok(`100 RWF payout completed (${payoutId})`) : bad(`payout ended ${p.rawStatus} ${p.failureCode ?? ''}`);
 }

@@ -59,7 +59,7 @@ function announceTabOpened(venueId: string, tab: { id: string; tableId: string; 
 
 export async function openTab(qrCode: string, phone: string, name?: string) {
   const table = await getTableByQrCode(qrCode);
-  if (!table) throw new Error("This table isn't set up in TabPro yet. Please ask a waiter.");
+  if (!table) throw new Error("This table isn't set up in Skuzi yet. Please ask a waiter.");
   if (!table.venue) throw new Error('Venue not found');
 
   const existingTab = await findUnsettledTab(table.id);
@@ -341,7 +341,7 @@ export async function closeTab(tabId: string, { paidByMomo = false }: { paidByMo
     await sendPushToOwner(
       tab.table.venueId,
       `🧾 ${tab.table.label} closed${total ? ` · ${total.toLocaleString('en-US')} RWF` : ''}`,
-      'Closed by staff (paid in cash or outside TabPro)',
+      'Closed by staff (paid in cash or outside Skuzi)',
     );
   }
 

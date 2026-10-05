@@ -90,19 +90,19 @@ export default function ActivityLog() {
       {/* Summary */}
       {!loading && activity.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center">
+          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center">
             <p className="text-lg font-bold text-gray-900 dark:text-white">
               {formatRwf(totalRevenue)}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">Revenue</p>
           </div>
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center">
+          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center">
             <p className="text-lg font-bold text-gray-900 dark:text-white">
               {totalOrders}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">Total orders</p>
           </div>
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center">
+          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center">
             <p className="text-lg font-bold text-gray-900 dark:text-white">
               {totalOrders > 0
                 ? Math.round((customerOrders / totalOrders) * 100)
@@ -126,10 +126,10 @@ export default function ActivityLog() {
         {activity.map((tab) => (
           <div
             key={tab.tabId}
-            className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
+            className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
           >
             {/* Tab header */}
-            <div className="px-5 py-3 bg-gray-50 dark:bg-[#0D1117] flex items-center justify-between">
+            <div className="px-5 py-3 bg-gray-50 dark:bg-[#1C1511] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">
                   {tab.tableLabel}

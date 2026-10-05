@@ -52,13 +52,13 @@ export default function Layout({ children }: LayoutProps) {
   const isMoreActive = MORE_NAV.some((item) => isActive(item.href));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-gray-100">
       {/* ── Side nav (desktop md+) ─────────────────────────────────────────── */}
       <aside
         className="
         hidden md:flex flex-col
         fixed top-0 left-0 h-full w-60
-        bg-white dark:bg-[#161B22]
+        bg-white dark:bg-[#2B201B]
         border-r border-gray-200 dark:border-gray-800
         z-20
       "
@@ -68,7 +68,7 @@ export default function Layout({ children }: LayoutProps) {
           <Logo size={34} />
           <div>
             <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
-              TabPro
+              Skuzi
             </p>
             {venue && (
               <p className="text-xs text-gray-400 truncate max-w-[110px]">
@@ -135,7 +135,7 @@ export default function Layout({ children }: LayoutProps) {
       <header
         className="
         md:hidden fixed top-0 left-0 right-0 z-20
-        bg-white dark:bg-[#161B22]
+        bg-white dark:bg-[#2B201B]
         border-b border-gray-200 dark:border-gray-800
         h-14 px-4 flex items-center justify-between
       "
@@ -143,7 +143,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="flex items-center gap-2.5">
           <Logo size={30} />
           <span className="text-sm font-bold text-gray-900 dark:text-white">
-            TabPro
+            Skuzi
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -178,7 +178,7 @@ export default function Layout({ children }: LayoutProps) {
       <nav
         className="
         md:hidden fixed bottom-0 left-0 right-0 z-20
-        bg-white dark:bg-[#161B22]
+        bg-white dark:bg-[#2B201B]
         border-t border-gray-200 dark:border-gray-800
         h-16 flex items-stretch
       "
@@ -233,7 +233,7 @@ export default function Layout({ children }: LayoutProps) {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#161B22] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-4 max-h-[75vh] overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#2B201B] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-4 max-h-[75vh] overflow-y-auto">
             {/* Drag handle */}
             <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-4" />
 

@@ -70,7 +70,7 @@ export const venues = pgTable("venues", {
   clockInPin: text("clock_in_pin"),
   clockInStickerCode: text("clock_in_sticker_code").unique(),
   momoPhone: text("momo_phone"), // venue's Pawapay payout number
-  // Demo venues show TabPro to prospects: payments are simulated, never real.
+  // Demo venues show Skuzi to prospects: payments are simulated, never real.
   isDemo: boolean("is_demo").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

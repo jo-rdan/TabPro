@@ -348,7 +348,7 @@ export default function Dashboard() {
             <p className={`text-xs font-medium ${pushError ? 'text-red-700 dark:text-red-300' : 'text-brand-700 dark:text-brand-300'}`}>
               {pushError
                 ? "Couldn't enable notifications — check your connection and try again"
-                : 'Turn on notifications to hear about orders, waiter calls and payments, even when TabPro is closed'}
+                : 'Turn on notifications to hear about orders, waiter calls and payments, even when Skuzi is closed'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -382,9 +382,9 @@ export default function Dashboard() {
                 alert.type === 'bill'
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200/70 dark:border-green-700/40'
                   : alert.type === 'seated'
-                  ? 'bg-white dark:bg-[#161B22] border-gray-200 dark:border-gray-800'
+                  ? 'bg-white dark:bg-[#2B201B] border-gray-200 dark:border-gray-800'
                   : alert.type === 'away'
-                  ? 'bg-white dark:bg-[#161B22] border-gray-200 dark:border-gray-800'
+                  ? 'bg-white dark:bg-[#2B201B] border-gray-200 dark:border-gray-800'
                   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200/70 dark:border-amber-700/40'
               }`}
             >
@@ -450,7 +450,7 @@ export default function Dashboard() {
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+            <div key={card.label} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
               <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center mb-3`}>
                 <Icon size={16} className={card.color} />
               </div>
@@ -465,7 +465,7 @@ export default function Dashboard() {
       </div>
 
       {/* Tonight's summary */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl mb-4">
+      <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl mb-4">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Tonight's summary</h2>
         </div>
@@ -495,7 +495,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
         {/* Live orders */}
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Live orders</h2>
             <div className="flex items-center gap-1.5 text-xs text-green-500">
@@ -532,7 +532,7 @@ export default function Dashboard() {
         </div>
 
         {/* Staff leaderboard */}
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Staff leaderboard</h2>
             <Link to="/staff" className="text-xs text-brand-500 flex items-center gap-0.5 hover:underline">
@@ -566,7 +566,7 @@ export default function Dashboard() {
         {/* Tables */}
         <Link
           to="/tables"
-          className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
+          className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-900 dark:text-white">Tables</span>
@@ -578,7 +578,7 @@ export default function Dashboard() {
         {/* Staff */}
         <Link
           to="/staff"
-          className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
+          className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-900 dark:text-white">Staff</span>
@@ -588,7 +588,7 @@ export default function Dashboard() {
         </Link>
 
         {/* Payment History — coming soon, no redirect */}
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 opacity-70 cursor-default">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 opacity-70 cursor-default">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-900 dark:text-white">Payments</span>
             <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-full">Soon</span>

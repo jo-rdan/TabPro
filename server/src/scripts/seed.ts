@@ -16,7 +16,7 @@ dotenv.config();
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 async function seed() {
-  console.log("🌱 Seeding TabPro test data...\n");
+  console.log("🌱 Seeding Skuzi test data...\n");
 
   // ── Find the first owner in the database ──────────────────────────────────
   const allOwners = await db.select().from(owners).limit(2);

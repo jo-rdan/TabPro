@@ -35,7 +35,7 @@ type Outcome = "pending" | "successful" | "failed";
 // Shown on the customer's statement: 4–22 letters, digits or spaces.
 function statementText(venueName: string): string {
   const clean = venueName.replace(/[^A-Za-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
-  return clean.length >= 4 ? clean.slice(0, 22).trim() : "TabPro payment";
+  return clean.length >= 4 ? clean.slice(0, 22).trim() : "Skuzi payment";
 }
 
 // momoStatus holds pawaPay's raw status, plus the failure code when failed
@@ -279,7 +279,7 @@ async function disburseToVenue(depositId: string) {
       phoneNumber: recipient.phoneNumber,
       provider: recipient.provider,
       amountRwf: payment.venuePayoutRwf,
-      customerMessage: "TabPro payout",
+      customerMessage: "Skuzi payout",
       metadata: { depositId, venueId: venue.id },
     });
   } catch (err: any) {
@@ -289,7 +289,7 @@ async function disburseToVenue(depositId: string) {
       await sendPushToOwner(
         payment.venueId,
         "⚠️ A payout to your Mobile Money is delayed",
-        `${(payment.venuePayoutRwf ?? 0).toLocaleString("en-US")} RWF didn't go through yet. TabPro is retrying automatically.`,
+        `${(payment.venuePayoutRwf ?? 0).toLocaleString("en-US")} RWF didn't go through yet. Skuzi is retrying automatically.`,
       ).catch(() => {});
     }
     await db.update(momoPayments)

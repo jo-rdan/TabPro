@@ -12,7 +12,7 @@ export default function NotificationNotice({ className = "" }: { className?: str
   let message = "";
   if (needsHomeScreen) {
     message =
-      'On iPhone, alerts only work from the Home Screen: tap Share, then "Add to Home Screen", and open TabPro from there.';
+      'On iPhone, alerts only work from the Home Screen: tap Share, then "Add to Home Screen", and open Skuzi from there.';
   } else if (permission === "denied") {
     message =
       "Notifications are blocked on this device, so you won't hear about new orders. Allow them for tabpro.lol in your browser settings.";

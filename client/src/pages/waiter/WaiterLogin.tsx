@@ -94,13 +94,13 @@ export default function WaiterLogin() {
   }, [pinDigits]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
           <Logo />
         </div>
 
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
             Waiter sign in
           </h1>
@@ -116,7 +116,7 @@ export default function WaiterLogin() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="e.g. 0781234567"
-            className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-6"
+            className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-6"
           />
 
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">

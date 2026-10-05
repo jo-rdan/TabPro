@@ -2,7 +2,7 @@ self.addEventListener('push', function (event) {
   if (!event.data) return;
 
   const data = event.data.json();
-  const title = data.title || 'TabPro';
+  const title = data.title || 'Skuzi';
   const options = {
     body: data.body || '',
     icon: '/favicon.svg',

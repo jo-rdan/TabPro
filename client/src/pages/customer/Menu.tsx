@@ -711,7 +711,7 @@ export default function CustomerMenu() {
   // ─── IDENTIFY ─────────────────────────────────────────────────────────────
   if (step === "identify") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4 py-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 py-10">
         <div className="text-center mb-8">
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
             <Logo size={44} />
@@ -723,7 +723,7 @@ export default function CustomerMenu() {
             Enter your details to start ordering
           </p>
         </div>
-        <div className="w-full max-w-sm bg-white dark:bg-[#161B22] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-7">
+        <div className="w-full max-w-sm bg-white dark:bg-[#2B201B] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-7">
           <div className="mb-4">
             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
               Phone number *
@@ -735,7 +735,7 @@ export default function CustomerMenu() {
               onKeyDown={(e) => e.key === "Enter" && handleIdentify()}
               placeholder="07XX XXX XXX"
               autoFocus
-              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#0D1117] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           <div className="mb-6">
@@ -748,7 +748,7 @@ export default function CustomerMenu() {
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleIdentify()}
               placeholder="e.g. Alice"
-              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#0D1117] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           {error && <p className="text-sm text-red-500 mb-4 -mt-2">{error}</p>}
@@ -786,8 +786,8 @@ export default function CustomerMenu() {
   // ─── BILL ─────────────────────────────────────────────────────────────────
   if (step === "bill") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117]">
-        <div className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511]">
+        <div className="bg-white dark:bg-[#2B201B] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
             <div>
@@ -832,7 +832,7 @@ export default function CustomerMenu() {
                     textTransform: "uppercase",
                   }}
                 >
-                  — TabPro Receipt —
+                  — Skuzi Receipt —
                 </p>
                 <p
                   style={{
@@ -977,7 +977,7 @@ export default function CustomerMenu() {
                   <strong style={{ color: "#374151" }}>
                     payment confirmation
                   </strong>{" "}
-                  from TabPro, not a fiscal invoice. Your venue must issue you
+                  from Skuzi, not a fiscal invoice. Your venue must issue you
                   an official{" "}
                   <strong style={{ color: "#374151" }}>EBM receipt</strong> as
                   required by RRA law. Please collect it at the counter.
@@ -1001,7 +1001,7 @@ export default function CustomerMenu() {
                   {tabId?.replace(/-/g, "").slice(0, 16).toUpperCase()}
                 </p>
                 <p style={{ fontSize: 9, color: "#d1d5db", marginTop: 4 }}>
-                  Powered by TabPro
+                  Powered by Skuzi
                 </p>
               </div>
             </div>
@@ -1045,7 +1045,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "idle" && !acceptsMobileMoney && (
-            <div className="bg-gray-50 dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
+            <div className="bg-gray-50 dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
               <p className="text-sm font-bold text-gray-800 dark:text-white">Please pay your waiter</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 In-app Mobile Money isn't available at this venue yet.
@@ -1054,7 +1054,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "entering_phone" && (
-            <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               {/* Header */}
               <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
                 <p className="text-sm font-black text-gray-900 dark:text-white">
@@ -1080,7 +1080,7 @@ export default function CustomerMenu() {
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
                   MTN MoMo or Airtel Money number
                 </p>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
                   <svg
                     width="16"
                     height="16"
@@ -1231,7 +1231,7 @@ export default function CustomerMenu() {
   // ─── RATING ───────────────────────────────────────────────────────────────
   if (step === "rating") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
             <div className="text-6xl mb-4">🌟</div>
@@ -1242,7 +1242,7 @@ export default function CustomerMenu() {
               {venueName} · {tableLabel}
             </p>
           </div>
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
+          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
             <StarRow
               label="🍽 Food"
               value={foodScore}
@@ -1264,7 +1264,7 @@ export default function CustomerMenu() {
             onChange={(e) => setRatingComment(e.target.value)}
             placeholder="Leave a comment..."
             rows={3}
-            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
+            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
           />
           {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
           <button
@@ -1288,7 +1288,7 @@ export default function CustomerMenu() {
   // ─── CLOSED ───────────────────────────────────────────────────────────────
   if (step === "closed") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
           <CheckCircle size={44} className="text-white" />
         </div>
@@ -1316,14 +1316,14 @@ export default function CustomerMenu() {
 
   return (
     // Desktop: side-by-side. Mobile: stacked
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col md:flex-row">
       {/* ── LEFT: Menu column ──────────────────────────────────────────────── */}
       <div
         className="flex-1 flex flex-col min-w-0"
         style={{ paddingBottom: cartCount > 0 ? 80 : 0 }}
       >
         {/* Sticky header */}
-        <div className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm">
+        <div className="bg-white dark:bg-[#2B201B] border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm">
           <div className="px-4 pt-4 pb-3">
             {/* Venue info row */}
             <div className="flex items-start justify-between mb-3">
@@ -1508,7 +1508,7 @@ export default function CustomerMenu() {
 
         {/* Mobile cart bar */}
         {cartCount > 0 && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-2 bg-gradient-to-t from-gray-50 dark:from-[#0D1117] via-gray-50/90 dark:via-[#0D1117]/90 to-transparent z-20">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-2 bg-gradient-to-t from-gray-50 dark:from-[#1C1511] via-gray-50/90 dark:via-[#1C1511]/90 to-transparent z-20">
             <button
               onClick={() => setCartOpen(!cartOpen)}
               className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl active:scale-98 transition-all"
@@ -1529,7 +1529,7 @@ export default function CustomerMenu() {
       </div>
 
       {/* ── RIGHT: Order summary sidebar (desktop only) ─────────────────────── */}
-      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#161B22] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
+      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#2B201B] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
         <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-base font-black text-gray-900 dark:text-white">
             Order Summary
@@ -1682,7 +1682,7 @@ export default function CustomerMenu() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setCartOpen(false)}
           />
-          <div className="relative bg-white dark:bg-[#161B22] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-[#2B201B] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-black text-gray-900 dark:text-white">
                 Your order

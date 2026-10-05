@@ -7,14 +7,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0D1117] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Card */}
       <div className="relative w-full max-w-sm">
         {/* Logo + wordmark */}
         <div className="flex flex-col items-center mb-8">
           <Logo size={56} className="mb-4 drop-shadow-sm" />
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            TabPro
+            Skuzi
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Smart ordering for bars & restaurants
@@ -24,7 +24,7 @@ export default function Login() {
         {/* Login card */}
         <div
           className="
-          bg-white dark:bg-[#161B22]
+          bg-white dark:bg-[#2B201B]
           border border-gray-200 dark:border-gray-800
           rounded-2xl shadow-sm
           p-8
@@ -41,16 +41,16 @@ export default function Login() {
             onClick={handleGoogleLogin}
             className="
               w-full flex items-center justify-center gap-3
-              bg-white dark:bg-[#21262D]
+              bg-white dark:bg-[#3A2D26]
               border border-gray-200 dark:border-gray-700
-              hover:bg-gray-50 dark:hover:bg-[#30363D]
+              hover:bg-gray-50 dark:hover:bg-[#463A32]
               text-gray-800 dark:text-gray-200
               text-sm font-medium
               rounded-xl px-4 py-3
               transition-colors duration-150
               shadow-sm
               focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
-              dark:focus:ring-offset-[#161B22]
+              dark:focus:ring-offset-[#2B201B]
             "
           >
             <GoogleIcon size={18} />
@@ -69,7 +69,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">
-          © {new Date().getFullYear()} TabPro ·{" "}
+          © {new Date().getFullYear()} Skuzi ·{" "}
           <a
             href={`${import.meta.env.VITE_APP_URL}/privacy.html`}
             target="_blank"

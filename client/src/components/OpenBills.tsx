@@ -27,7 +27,7 @@ export default function OpenBills({ venueId }: { venueId: string }) {
   const sum = bills.reduce((s, b) => s + b.total, 0);
 
   return (
-    <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl mb-5 overflow-hidden">
+    <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl mb-5 overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
@@ -35,7 +35,7 @@ export default function OpenBills({ venueId }: { venueId: string }) {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Bills left open</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Not paid in TabPro and untouched for hours</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Not paid in Skuzi and untouched for hours</p>
           </div>
         </div>
         <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">

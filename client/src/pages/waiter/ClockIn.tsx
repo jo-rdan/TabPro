@@ -322,13 +322,13 @@ export default function ClockIn() {
   const selectedShift = shifts.find((s) => s.id === selectedShiftId);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
           <Logo />
         </div>
 
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
 
           {screen === "resolving" && (
             <div className="text-center py-6">
@@ -379,7 +379,7 @@ export default function ClockIn() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. 0781234567"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-6"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-6"
               />
 
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">
@@ -416,7 +416,7 @@ export default function ClockIn() {
               </button>
 
               <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800 text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">New here and not on TabPro yet?</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">New here and not on Skuzi yet?</p>
                 <button
                   onClick={() => { setError(""); setScreen("join"); }}
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700"
@@ -443,7 +443,7 @@ export default function ClockIn() {
                 onChange={(e) => setJoinName(e.target.value)}
                 placeholder="e.g. Eric"
                 autoComplete="name"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
               />
 
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Phone number</label>
@@ -452,7 +452,7 @@ export default function ClockIn() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. 0781234567"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
               />
 
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
@@ -465,7 +465,7 @@ export default function ClockIn() {
                 value={joinPin}
                 onChange={(e) => { if (/^\d{0,4}$/.test(e.target.value)) setJoinPin(e.target.value); }}
                 placeholder="••••"
-                className="w-full px-4 py-2.5 text-center tracking-[0.6em] text-lg font-bold border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+                className="w-full px-4 py-2.5 text-center tracking-[0.6em] text-lg font-bold border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
               />
 
               {error && <p className="text-xs text-red-500 mb-3 text-center">{error}</p>}
@@ -491,7 +491,7 @@ export default function ClockIn() {
               <CheckCircle size={32} className="text-green-500 mx-auto mb-3" />
               <h1 className="text-base font-bold text-gray-900 dark:text-white mb-1">Request sent!</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Ask your manager to approve you in TabPro{joinedVenue ? ` for ${joinedVenue}` : ""}.
+                Ask your manager to approve you in Skuzi{joinedVenue ? ` for ${joinedVenue}` : ""}.
                 Then scan this sticker again and log in with your phone number and PIN.
               </p>
             </div>

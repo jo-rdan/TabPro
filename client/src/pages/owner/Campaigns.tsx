@@ -83,7 +83,7 @@ export default function Campaigns() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Campaigns</h1>
         </div>
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
           <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Lock size={20} className="text-purple-500" />
           </div>
@@ -110,7 +110,7 @@ export default function Campaigns() {
       </div>
 
       {/* Audience stat */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-5 flex items-center gap-4">
+      <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-5 flex items-center gap-4">
         <div className="w-10 h-10 bg-brand-50 dark:bg-brand-900/20 rounded-xl flex items-center justify-center">
           <Users size={18} className="text-brand-500" />
         </div>
@@ -123,7 +123,7 @@ export default function Campaigns() {
       </div>
 
       {/* Compose */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-5">
+      <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-5">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
           <MessageSquare size={15} /> New campaign
         </h2>
@@ -132,7 +132,7 @@ export default function Campaigns() {
           onChange={(e) => setMessage(e.target.value.slice(0, maxChars))}
           placeholder="e.g. Happy Friday! Come enjoy 10% off all drinks tonight at Chez Willy 🎉"
           rows={3}
-          className="w-full px-4 py-3 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+          className="w-full px-4 py-3 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
         />
         <div className="flex items-center justify-between mt-2">
           <span className={`text-xs ${message.length > maxChars * 0.9 ? 'text-amber-500' : 'text-gray-400'}`}>
@@ -158,7 +158,7 @@ export default function Campaigns() {
 
       <div className="space-y-3">
         {campaigns.map((c) => (
-          <div key={c.id} className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+          <div key={c.id} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm text-gray-800 dark:text-gray-200 flex-1">{c.message}</p>
               <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full flex-shrink-0 ${

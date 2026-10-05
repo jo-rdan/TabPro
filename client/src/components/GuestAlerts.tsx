@@ -8,7 +8,7 @@ const write = (k: string, v: string) => { try { localStorage.setItem(k, v); } ca
 
 // After a guest's first order: "Put your phone away, we'll tell you when it's
 // ready." Pops up at the bottom so it can't be missed. If this phone already
-// allows TabPro notifications, it signs up silently. Hidden where it can't
+// allows Skuzi notifications, it signs up silently. Hidden where it can't
 // work (iPhone browser tab, notifications blocked).
 export default function GuestAlerts({ tabId }: { tabId: string }) {
   const { isSupported, permission, subscribeToTab } = usePushNotifications();
@@ -40,7 +40,7 @@ export default function GuestAlerts({ tabId }: { tabId: string }) {
 
   return (
     <div className="fixed inset-x-0 bottom-[8.5rem] md:bottom-6 z-30 px-4 flex justify-center pointer-events-none">
-      <div className="pointer-events-auto w-full max-w-md flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl bg-white dark:bg-[#161B22] border-gray-200 dark:border-gray-800">
+      <div className="pointer-events-auto w-full max-w-md flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl bg-white dark:bg-[#2B201B] border-gray-200 dark:border-gray-800">
         <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center flex-shrink-0">
           {state === "on" ? <Check size={18} className="text-brand-500" /> : <BellRing size={18} className="text-brand-500" />}
         </div>

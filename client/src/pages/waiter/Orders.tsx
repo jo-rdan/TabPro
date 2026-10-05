@@ -153,7 +153,7 @@ export default function WaiterOrders() {
   const [nudges, setNudges] = useState<NudgeAlert[]>([]);
   const [billRequests, setBillRequests] = useState<BillRequest[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  // Tabs whose guest closed TabPro on their phone (cleared when they come back).
+  // Tabs whose guest closed Skuzi on their phone (cleared when they come back).
   const [phoneClosed, setPhoneClosed] = useState<Set<string>>(new Set());
 
   const pushNotification = (
@@ -716,7 +716,7 @@ export default function WaiterOrders() {
 
   if (!venueId) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex items-center justify-center px-4">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
           <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -733,7 +733,7 @@ export default function WaiterOrders() {
   // ── PIN lock screen ────────────────────────────────────────────────────────
   if (staffToken && !pinUnlocked) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-xs text-center">
           <div className="text-4xl mb-4">🔐</div>
           <h1 className="text-xl font-black text-gray-900 dark:text-white mb-1">
@@ -780,9 +780,9 @@ export default function WaiterOrders() {
   const deliveredOrders = orders.filter((o) => o.status === "delivered");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] md:ml-60">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] md:ml-60">
       {/* ── Side nav (desktop md+) — mirrors the owner dashboard's sidebar ──── */}
-      <aside className="hidden md:flex flex-col fixed top-0 left-0 h-full w-60 bg-white dark:bg-[#161B22] border-r border-gray-200 dark:border-gray-800 z-20">
+      <aside className="hidden md:flex flex-col fixed top-0 left-0 h-full w-60 bg-white dark:bg-[#2B201B] border-r border-gray-200 dark:border-gray-800 z-20">
         <div className="px-5 py-5 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
           <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={34} />
           <div className="min-w-0">
@@ -834,7 +834,7 @@ export default function WaiterOrders() {
       </aside>
 
       {/* Header — full on mobile (no sidebar); trimmed to just live controls on desktop, since the sidebar already shows venue branding + sign out */}
-      <div className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 px-4 py-4 sticky top-0 z-10 flex items-center justify-between">
+      <div className="bg-white dark:bg-[#2B201B] border-b border-gray-200 dark:border-gray-800 px-4 py-4 sticky top-0 z-10 flex items-center justify-between">
         <div className="flex items-center gap-3 md:hidden">
           <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
           <div>
@@ -987,7 +987,7 @@ export default function WaiterOrders() {
           {billRequests.map((bill) => (
             <div
               key={bill.tabId}
-              className="bg-white dark:bg-[#161B22] border-2 border-brand-500 rounded-2xl px-4 py-3"
+              className="bg-white dark:bg-[#2B201B] border-2 border-brand-500 rounded-2xl px-4 py-3"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1036,7 +1036,7 @@ export default function WaiterOrders() {
             return (
               <div
                 key={order.orderId}
-                className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4"
+                className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -1049,7 +1049,7 @@ export default function WaiterOrders() {
                       </span>
                     )}
                     {phoneClosed.has(order.tabId) && (
-                      <span title="The guest closed TabPro on their phone. They may still be at the table." className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                      <span title="The guest closed Skuzi on their phone. They may still be at the table." className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                         📵 Phone closed
                       </span>
                     )}
@@ -1120,7 +1120,7 @@ export default function WaiterOrders() {
                 {deliveredOrders.map((order) => (
                   <div
                     key={order.orderId}
-                    className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 flex items-center justify-between"
+                    className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 flex items-center justify-between"
                   >
                     <span className="text-xs text-gray-500">
                       {order.tableLabel} —{" "}
@@ -1202,7 +1202,7 @@ export default function WaiterOrders() {
                 {myTables.map((table) => (
                   <div
                     key={table.tableId}
-                    className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2"
+                    className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2"
                   >
                     <div className="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center">
                       <MapPin size={18} className="text-brand-500" />
@@ -1278,7 +1278,7 @@ export default function WaiterOrders() {
 
               {/* Stats row */}
               <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="bg-white dark:bg-[#161B22] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
+                <div className="bg-white dark:bg-[#2B201B] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <Star size={14} className="text-amber-400 fill-amber-400" />
                     <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
@@ -1294,7 +1294,7 @@ export default function WaiterOrders() {
                     {myPoints.ratingCount} reviews
                   </p>
                 </div>
-                <div className="bg-white dark:bg-[#161B22] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
+                <div className="bg-white dark:bg-[#2B201B] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp size={14} className="text-green-500" />
                     <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
@@ -1323,7 +1323,7 @@ export default function WaiterOrders() {
                   {myPoints.history.map((entry) => (
                     <div
                       key={entry.id}
-                      className="bg-white dark:bg-[#161B22] border border-gray-100 dark:border-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between"
+                      className="bg-white dark:bg-[#2B201B] border border-gray-100 dark:border-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between"
                     >
                       <div className="flex-1 min-w-0 mr-3">
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
@@ -1351,7 +1351,7 @@ export default function WaiterOrders() {
         </div>
       )}
       {/* ── Bottom tab bar (mobile only — desktop uses the sidebar) ────────── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#161B22] border-t border-gray-200 dark:border-gray-800 flex">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#2B201B] border-t border-gray-200 dark:border-gray-800 flex">
         <button
           onClick={() => setActiveTab("orders")}
           className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${activeTab === "orders" ? "text-brand-500" : "text-gray-400 dark:text-gray-600"}`}
@@ -1381,7 +1381,7 @@ export default function WaiterOrders() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setManualOpen(false)}
           />
-          <div className="relative bg-white dark:bg-[#161B22] rounded-t-3xl flex flex-col max-h-[90vh]">
+          <div className="relative bg-white dark:bg-[#2B201B] rounded-t-3xl flex flex-col max-h-[90vh]">
             {/* Sheet header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
               <div>

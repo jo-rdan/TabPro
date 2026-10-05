@@ -25,7 +25,7 @@ export default function QrScannerModal({ onScanned, onClose }: Props) {
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 220, height: 220 } },
           (decodedText) => {
-            // Extract just the code part if it's a full TabPro URL
+            // Extract just the code part if it's a full Skuzi URL
             const match = decodedText.match(/\/t\/([^/?#]+)/);
             const code = match ? match[1] : decodedText;
             onScanned(code);
@@ -55,7 +55,7 @@ export default function QrScannerModal({ onScanned, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-sm shadow-xl">
+      <div className="relative bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-sm shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold text-gray-900 dark:text-white">Scan QR sticker</h3>
@@ -79,7 +79,7 @@ export default function QrScannerModal({ onScanned, onClose }: Props) {
 
         {started && !error && (
           <p className="text-xs text-center text-gray-400 mt-3">
-            Point the camera at a TabPro QR sticker
+            Point the camera at a Skuzi QR sticker
           </p>
         )}
       </div>
