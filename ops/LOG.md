@@ -2,6 +2,12 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-05 12:20 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; last nightly Tests green; no open PRs (PR #19 is gone).
+- Did: error log in the database (PR #32): unexpected server errors and background crashes are saved to
+  new `error_logs` table (migration 0021). My own `tests/e2e/ci.sh` run: 126/126 pass; merged.
+- Left off: next is the bill/payment screen design polish. Check that the prod deploy applied migration 0021.
+
 ## 2026-10-05 night · interactive
 - Did: manager accounts + no-smartphone waiters (PR #30); stickers ready for setup day (PR #31):
   attendance unlocked (stale 'elite' gate), new clock-in stickers set up by scanning, friendly
