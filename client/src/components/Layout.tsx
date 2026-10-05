@@ -15,12 +15,14 @@ import {
   Menu as MenuIcon,
   X,
 } from "lucide-react";
-import Logo from "./Logo";
+import Wordmark from "./Wordmark";
 import { useAuthStore } from "../lib/auth";
 import { useThemeStore } from "../lib/theme";
 
 interface LayoutProps {
   children: React.ReactNode;
+  /** Use more of the screen (the dashboard fits everything on one screen). */
+  wide?: boolean;
 }
 
 const NAV_ITEMS = [
@@ -41,7 +43,7 @@ const NAV_ITEMS = [
 const PINNED_NAV = NAV_ITEMS.slice(0, 3);
 const MORE_NAV = NAV_ITEMS.slice(3);
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, wide = false }: LayoutProps) {
   const location = useLocation();
   const { owner, venues, logout } = useAuthStore();
   const { theme, toggle } = useThemeStore();
@@ -64,18 +66,14 @@ export default function Layout({ children }: LayoutProps) {
       "
       >
         {/* Logo */}
-        <div className="px-5 py-5 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
-          <Logo size={34} />
-          <div>
-            <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
-              Skuzi
+        <div className="px-5 pt-6 pb-5">
+          <Wordmark size={24} on="light" className="dark:hidden" />
+          <Wordmark size={24} on="dark" className="hidden dark:inline-flex" />
+          {venue && (
+            <p className="mt-1 pl-8 text-xs text-gray-500 dark:text-gray-400 truncate max-w-[180px]">
+              {venue.name}
             </p>
-            {venue && (
-              <p className="text-xs text-gray-400 truncate max-w-[110px]">
-                {venue.name}
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Nav items */}
@@ -88,7 +86,7 @@ export default function Layout({ children }: LayoutProps) {
                 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
                 ${
                   isActive(href)
-                    ? "bg-brand-500 text-white"
+                    ? "bg-gray-900 text-gray-50 font-bold dark:bg-brand-500 dark:text-white"
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                 }
               `}
@@ -141,10 +139,8 @@ export default function Layout({ children }: LayoutProps) {
       "
       >
         <div className="flex items-center gap-2.5">
-          <Logo size={30} />
-          <span className="text-sm font-bold text-gray-900 dark:text-white">
-            Skuzi
-          </span>
+          <Wordmark size={21} on="light" className="dark:hidden" />
+          <Wordmark size={21} on="dark" className="hidden dark:inline-flex" />
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -171,7 +167,7 @@ export default function Layout({ children }: LayoutProps) {
         min-h-screen
       "
       >
-        <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">{children}</div>
+        <div className={`${wide ? "max-w-7xl md:px-8" : "max-w-5xl"} mx-auto px-4 py-6 md:py-7`}>{children}</div>
       </main>
 
       {/* ── Bottom nav (mobile) ────────────────────────────────────────────── */}

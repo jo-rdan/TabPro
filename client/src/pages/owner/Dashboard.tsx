@@ -1,5 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';import { TrendingUp, Users, Clock, Star, ChevronRight, ArrowUpRight, BellRing, CreditCard, X, PhoneOff } from 'lucide-react';
+import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { TrendingUp, Users, Clock, Star, ChevronLeft, ChevronRight, BellRing, CreditCard, X, PhoneOff } from 'lucide-react';
+import MoneyTonight from '../../components/dashboard/MoneyTonight';
+import CoinJar from '../../components/dashboard/CoinJar';
 import OpenBills from '../../components/OpenBills';
 import Layout from '../../components/Layout';
 import ReceiptModal from '../../components/ReceiptModal';
@@ -53,6 +56,53 @@ interface LeaderboardEntry {
   ratingCount: number;
 }
 
+interface Tonight {
+  total: number;
+  hourly: { hour: string; cumulative: number }[];
+  lastSameNight: number;
+  lastSameNightSoFar: number;
+  bestNight: number;
+  nightsWithData: number;
+}
+
+interface BusyHours {
+  cells: { count: number }[][];
+  maxCount: number;
+  hours: number[];
+  days: string[];
+}
+
+const SLIDES = ["Tonight's summary", 'Busy hours', 'Staff leaderboard'];
+const SLIDE_HOURS = [17, 18, 19, 20, 21, 22, 23, 0, 1];
+const HEAT = [
+  'bg-gray-100 dark:bg-gray-800',
+  'bg-[#E6CFA9] dark:bg-[#6B5233]',
+  'bg-skuzi-honey',
+  'bg-[#B8703F]',
+  'bg-brand-500',
+];
+const BAR_COLOURS = ['bg-gray-900 dark:bg-gray-100', 'bg-brand-500', 'bg-skuzi-honey'];
+const slideClass =
+  'snap-start flex-[0_0_88%] sm:flex-[0_0_82%] min-w-0 bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-[22px] px-5 py-4 flex flex-col gap-3 min-h-[232px]';
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function shortRwf(n: number) {
+  return n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`;
+}
+
+// Kigali time (UTC+2), with the bar's night starting at 06:00: Mon=0 … Sun=6.
+function kigaliClock() {
+  const local = new Date(Date.now() + 2 * 3600_000);
+  const night = new Date(local.getTime() - 6 * 3600_000);
+  const js = night.getUTCDay();
+  return {
+    day: js === 0 ? 6 : js - 1,
+    hour: local.getUTCHours(),
+    weekday: WEEKDAYS[night.getUTCDay()],
+    label: `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][local.getUTCDay()]} ${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`,
+  };
+}
+
 function formatRwf(n: number) {
   return `${n.toLocaleString()} RWF`;
 }
@@ -60,7 +110,9 @@ function formatRwf(n: number) {
 function timeAgo(d: string) {
   const diff = Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 1000));
   if (diff < 60) return `${diff}s ago`;
-  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 export default function Dashboard() {
@@ -76,6 +128,32 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState<DashboardAlert[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [joinRefresh, setJoinRefresh] = useState(0);
+  const [tonight, setTonight] = useState<Tonight | null>(null);
+  const [busy, setBusy] = useState<BusyHours | null>(null);
+  const [slide, setSlide] = useState(0);
+  const [kigaliNow, setKigaliNow] = useState(kigaliClock);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const id = setInterval(() => setKigaliNow(kigaliClock()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const goToSlide = (i: number) => {
+    const t = trackRef.current;
+    const child = t?.children[i] as HTMLElement | undefined;
+    if (t && child) t.scrollTo({ left: child.offsetLeft - t.offsetLeft, behavior: 'smooth' });
+  };
+  const onTrackScroll = () => {
+    const t = trackRef.current;
+    if (!t) return;
+    let best = 0, dist = Infinity;
+    Array.from(t.children).forEach((c, i) => {
+      const d = Math.abs((c as HTMLElement).offsetLeft - t.offsetLeft - t.scrollLeft);
+      if (d < dist) { dist = d; best = i; }
+    });
+    if (best !== slide) setSlide(best);
+  };
 
   // Push notifications — no staffId means the server correctly files this
   // subscription under the owner, not a staff member.
@@ -102,12 +180,16 @@ export default function Dashboard() {
   const fetchStats = useCallback(async () => {
     if (!venue) return;
     try {
-      const [statsRes, lbRes, reportRes] = await Promise.all([
+      const [statsRes, lbRes, reportRes, tonightRes, busyRes] = await Promise.all([
         api.get(`/dashboard/stats/${venue.id}`),
         api.get(`/ratings/leaderboard/${venue.id}`),
         api.get(`/dashboard/report/${venue.id}`),
+        api.get(`/dashboard/tonight/${venue.id}`),
+        api.get(`/dashboard/busy-hours/${venue.id}`),
       ]);
       setStats(statsRes.data.data);
+      setTonight(tonightRes.data.data);
+      setBusy(busyRes.data.data);
       const report = reportRes.data.data;
       const counts = new Map<string, number>();
       for (const tab of report.activity) {
@@ -274,39 +356,59 @@ export default function Dashboard() {
   const statCards = [
     {
       label: 'Revenue tonight',
-      value: stats ? formatRwf(stats.revenueTonight) : '—',
+      value: tonight ? tonight.total.toLocaleString() : stats ? stats.revenueTonight.toLocaleString() : '—',
+      unit: stats ? 'RWF' : undefined,
       icon: TrendingUp,
       color: 'text-brand-500',
-      bg: 'bg-brand-50 dark:bg-brand-900/20',
     },
     {
       label: 'Active tables',
       value: stats?.activeTables ?? '—',
       icon: Users,
-      color: 'text-blue-500',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
+      color: 'text-gray-500 dark:text-gray-400',
     },
     {
       label: 'Pending orders',
       value: stats?.pendingOrders ?? '—',
       icon: Clock,
-      color: 'text-amber-500',
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      color: 'text-skuzi-honey',
     },
     {
       label: 'Avg rating today',
       value: stats?.avgRatingToday ? `${stats.avgRatingToday} ★` : '—',
       sub: stats?.ratingCount ? `${stats.ratingCount} ratings` : undefined,
       icon: Star,
-      color: 'text-purple-500',
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
+      color: 'text-skuzi-honey',
     },
-  ];
+  ] as { label: string; value: string | number; unit?: string; sub?: string; icon: typeof Star; color: string }[];
+
+  // The jar's ring: the best night once there's history, else last week.
+  const jarBenchmark = tonight && tonight.bestNight > 0
+    ? { value: tonight.bestNight, label: `Best: ${shortRwf(tonight.bestNight)}`, name: 'your best night' }
+    : { value: 0, label: '', name: '' };
+  const comparison = tonight && tonight.lastSameNightSoFar > 0
+    ? (() => {
+        const pct = Math.round(((tonight.total - tonight.lastSameNightSoFar) / tonight.lastSameNightSoFar) * 100);
+        return { up: pct >= 0, text: `${pct >= 0 ? '+' : ''}${pct}% vs last ${kigaliNow.weekday} at this time` };
+      })()
+    : tonight && tonight.total > 0
+    ? { up: true, text: `${formatRwf(tonight.total)} so far` }
+    : null;
+  const busiestHour = (() => {
+    if (!tonight || tonight.hourly.length === 0) return null;
+    let best = -1, label: string | null = null;
+    tonight.hourly.forEach((h, i) => {
+      const added = h.cumulative - (tonight.hourly[i - 1]?.cumulative ?? 0);
+      if (added > best && added > 0) { best = added; label = h.hour; }
+    });
+    return label;
+  })();
+  const visibleOrders = [...new Map(liveOrders.map((o) => [o.orderId, o])).values()].filter((o) => o.status !== 'delivered');
 
   return (
-    <Layout>
+    <Layout wide>
       {toast && <Toast message={toast} duration={6000} onDismiss={() => setToast(null)} />}
-      <div className="mb-8 flex items-center gap-5 pb-6 border-b border-gray-100 dark:border-gray-800/60">
+      <div className="mb-5 flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-800">
         <LogoUploader
           venueName={venue?.name ?? ''}
           currentLogoUrl={venue?.logoUrl}
@@ -318,10 +420,10 @@ export default function Dashboard() {
           }}
         />
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-wide uppercase">
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 tracking-[0.14em] uppercase">
             {owner ? `Welcome back, ${owner.name.split(' ')[0]}` : 'Dashboard'}
           </p>
-          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight leading-none">
             {venue?.name ?? 'Your venue'}
           </h1>
           {venue?.isDemo && (
@@ -330,6 +432,10 @@ export default function Dashboard() {
             </span>
           )}
         </div>
+        <span className="ml-auto hidden sm:inline-flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+          <span className="w-2 h-2 rounded-full bg-green-500" />
+          Live · {kigaliNow.label}
+        </span>
       </div>
 
       <NotificationNotice />
@@ -446,156 +552,240 @@ export default function Dashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
-              <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center mb-3`}>
-                <Icon size={16} className={card.color} />
+            <div key={card.label} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
+                <Icon size={15} className={card.color} />
               </div>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                 {statsLoading ? <span className="text-gray-300 dark:text-gray-600">—</span> : card.value}
+                {!statsLoading && card.unit && <span className="ml-1 text-sm font-semibold text-gray-500 dark:text-gray-400">{card.unit}</span>}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{card.label}</p>
               {card.sub && <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>}
             </div>
           );
         })}
       </div>
 
-      {/* Tonight's summary */}
-      <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl mb-4">
-        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Tonight's summary</h2>
-        </div>
-        {!summary || summary.totalOrders === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
-            {statsLoading ? '—' : 'No orders yet tonight'}
-          </p>
-        ) : (
-          <div className="px-5 py-4 space-y-3">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              <span className="font-bold text-gray-900 dark:text-white">{stats ? formatRwf(stats.revenueTonight) : '—'}</span> from{' '}
-              <span className="font-bold text-gray-900 dark:text-white">{summary.closedTabs}</span> paid {summary.closedTabs === 1 ? 'table' : 'tables'} ·{' '}
-              <span className="font-bold text-gray-900 dark:text-white">{summary.totalOrders}</span> {summary.totalOrders === 1 ? 'order' : 'orders'}
-            </p>
-            {summary.topItems.length > 0 && (
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Best sellers</p>
-                {summary.topItems.map((item) => (
-                  <p key={item.name} className="text-xs text-gray-600 dark:text-gray-400">{item.name} ×{item.quantity}</p>
-                ))}
-              </div>
+      {/* Money tonight + coin jar */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
+        <div className="lg:col-span-3 bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-[22px] px-5 pt-4 pb-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Money tonight</h2>
+            {comparison && (
+              <span className={`text-xs font-bold ${comparison.up ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                {comparison.text}
+              </span>
             )}
           </div>
-        )}
+          {tonight && tonight.total > 0 ? (
+            <MoneyTonight hourly={tonight.hourly} />
+          ) : (
+            <div className="h-[180px] flex flex-col items-center justify-center text-center">
+              <TrendingUp size={22} className="text-gray-300 dark:text-gray-600 mb-2" />
+              <p className="text-sm text-gray-400 dark:text-gray-500">No paid bills yet tonight.<br />The line starts with the first payment.</p>
+            </div>
+          )}
+        </div>
+        <div className="lg:col-span-2 bg-gray-900 dark:bg-gray-950 dark:border dark:border-gray-800 text-gray-50 rounded-[22px] px-5 pt-4 pb-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-bold text-gray-50">Tonight's jar</h2>
+            <span className="text-xs text-gray-300">
+              {jarBenchmark.value > 0 ? `${Math.min(999, Math.round(((tonight?.total ?? 0) / jarBenchmark.value) * 100))}% of ${jarBenchmark.name}` : 'Your first night'}
+            </span>
+          </div>
+          <CoinJar total={tonight?.total ?? 0} benchmark={jarBenchmark.value} benchmarkLabel={jarBenchmark.label} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* Live orders + swipe cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4">
 
-        {/* Live orders */}
-        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl">
-          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Live orders</h2>
-            <div className="flex items-center gap-1.5 text-xs text-green-500">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-[22px] flex flex-col min-h-0">
+          <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Live orders</h2>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-green-500 dark:text-green-400">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
               Live
             </div>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-72 overflow-y-auto">
-            {liveOrders.length === 0 && (
-              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No orders yet tonight</p>
+          <div className="px-5 pb-3 divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto">
+            {visibleOrders.length === 0 && (
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No orders waiting</p>
             )}
-            {[...new Map(liveOrders.map((o) => [o.orderId, o])).values()]
-              .filter((o) => o.status !== 'delivered')
-              .map((order) => (
-              <div key={order.orderId} className="px-5 py-3 flex items-center justify-between">
-                <div>
+            {visibleOrders.map((order) => (
+              <div key={order.orderId} className="py-2.5 flex items-start justify-between gap-3">
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{order.tableLabel}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{order.tableLabel}</span>
                     {order.source === 'staff' && (
-                      <span className="text-xs bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded-full">Staff</span>
+                      <span className="text-[10px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 px-1.5 py-0.5 rounded-full">Waiter</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {order.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
+                    {order.items.map((i) => `${i.name} ×${i.quantity}`).join(' · ')}
                   </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{formatRwf(order.total)} · {timeAgo(order.placedAt)}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{formatRwf(order.total)}</p>
-                  <p className="text-xs text-gray-400">{timeAgo(order.placedAt)}</p>
-                </div>
+                <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  order.status === 'pending'
+                    ? 'bg-skuzi-honey text-gray-900'
+                    : 'bg-gray-900 text-gray-50 dark:bg-gray-100 dark:text-gray-900'
+                }`}>
+                  {order.status === 'pending' ? 'New' : 'Preparing'}
+                </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Staff leaderboard */}
-        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl">
-          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Staff leaderboard</h2>
-            <Link to="/staff" className="text-xs text-brand-500 flex items-center gap-0.5 hover:underline">
-              All staff <ChevronRight size={12} />
-            </Link>
+        <div className="min-w-0 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1.5">
+              {SLIDES.map((label, i) => (
+                <button
+                  key={label}
+                  onClick={() => goToSlide(i)}
+                  aria-label={`Show ${label}`}
+                  className={`h-2 rounded-full transition-all ${i === slide ? 'w-6 bg-gray-900 dark:bg-gray-100' : 'w-2 bg-gray-300 dark:bg-gray-700'}`}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => goToSlide(Math.max(0, slide - 1))}
+                aria-label="Previous card"
+                className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2B201B] text-gray-900 dark:text-white flex items-center justify-center disabled:opacity-40"
+                disabled={slide === 0}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => goToSlide(Math.min(SLIDES.length - 1, slide + 1))}
+                aria-label="Next card"
+                className="w-9 h-9 rounded-full bg-gray-900 text-gray-50 dark:bg-gray-100 dark:text-gray-900 flex items-center justify-center disabled:opacity-40"
+                disabled={slide === SLIDES.length - 1}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {leaderboard.length === 0 && (
-              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No staff added yet</p>
-            )}
-            {leaderboard.map((entry, i) => (
-              <div key={entry.staffId} className="px-5 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-gray-400 w-4">{i + 1}</span>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{entry.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {entry.ratingCount > 0 ? `${entry.avgRating} ★ · ${entry.ratingCount} ratings` : 'No ratings yet'}
-                    </p>
+
+          <div
+            ref={trackRef}
+            onScroll={onTrackScroll}
+            className="no-scrollbar flex gap-3.5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1"
+          >
+            {/* Tonight's summary */}
+            <div className={slideClass}>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Tonight's summary</h2>
+              {!summary || summary.totalOrders === 0 ? (
+                <p className="text-sm text-gray-400 dark:text-gray-500 py-6">{statsLoading ? '—' : 'No orders yet tonight'}</p>
+              ) : (
+                <>
+                  <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                    <b className="text-gray-900 dark:text-white">{tonight ? formatRwf(tonight.total) : stats ? formatRwf(stats.revenueTonight) : '—'}</b> from{' '}
+                    <b className="text-gray-900 dark:text-white">{summary.closedTabs}</b> paid {summary.closedTabs === 1 ? 'table' : 'tables'} ·{' '}
+                    <b className="text-gray-900 dark:text-white">{summary.totalOrders}</b> {summary.totalOrders === 1 ? 'order' : 'orders'}.
+                    {busiestHour && <> Busiest hour so far: <b className="text-gray-900 dark:text-white">{busiestHour}</b>.</>}
+                  </p>
+                  {summary.topItems.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Best sellers</p>
+                      {summary.topItems.map((item, i) => (
+                        <div key={item.name} className="flex items-center gap-2.5">
+                          <span className="w-28 truncate text-sm text-gray-900 dark:text-white">{item.name}</span>
+                          <span className="flex-1 h-3 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                            <span
+                              className={`bar-grow block h-full rounded-full ${BAR_COLOURS[i]}`}
+                              style={{ width: `${(item.quantity / summary.topItems[0].quantity) * 100}%`, animationDelay: `${i * 0.15}s` }}
+                            />
+                          </span>
+                          <b className="w-8 text-right text-sm text-gray-900 dark:text-white">{item.quantity}</b>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Busy hours */}
+            <div className={slideClass}>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Busy hours</h2>
+                <Link to="/busy-hours" className="text-xs font-bold text-brand-500 dark:text-brand-300 hover:underline">Last 4 weeks · darker = busier</Link>
+              </div>
+              {busy ? (
+                <div className="overflow-x-auto no-scrollbar">
+                  <div className="grid gap-1.5 min-w-[380px]" style={{ gridTemplateColumns: `34px repeat(${SLIDE_HOURS.length}, minmax(0, 1fr))` }}>
+                    <span />
+                    {SLIDE_HOURS.map((h) => (
+                      <span key={h} className="text-[11px] text-center text-gray-500 dark:text-gray-400">{String(h).padStart(2, '0')}h</span>
+                    ))}
+                    {busy.days.map((day, di) => (
+                      <Fragment key={day}>
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400 self-center">{day}</span>
+                        {SLIDE_HOURS.map((h) => {
+                          const hi = busy.hours.indexOf(h);
+                          const count = hi >= 0 ? busy.cells[di][hi].count : 0;
+                          const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / busy.maxCount) * 4));
+                          const isNow = di === kigaliNow.day && h === kigaliNow.hour;
+                          return (
+                            <span
+                              key={h}
+                              title={`${day} ${h}h · ${count} ${count === 1 ? 'order' : 'orders'}`}
+                              className={`h-4 rounded-md ${HEAT[level]} ${isNow ? 'cell-now' : ''}`}
+                            />
+                          );
+                        })}
+                      </Fragment>
+                    ))}
                   </div>
                 </div>
-                <span className="text-sm font-bold text-brand-500">{entry.totalPoints} pts</span>
+              ) : (
+                <p className="text-sm text-gray-400 dark:text-gray-500 py-6">—</p>
+              )}
+            </div>
+
+            {/* Staff leaderboard */}
+            <div className={slideClass}>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Staff leaderboard</h2>
+                <Link to="/staff" className="text-xs font-bold text-brand-500 dark:text-brand-300 flex items-center gap-0.5 hover:underline">
+                  All staff <ChevronRight size={12} />
+                </Link>
               </div>
-            ))}
+              {leaderboard.length === 0 && (
+                <p className="text-sm text-gray-400 dark:text-gray-500 py-6">No staff added yet</p>
+              )}
+              {leaderboard.map((entry, i) => (
+                <div key={entry.staffId} className="flex items-center gap-3">
+                  <b className={`w-4 text-sm ${i === 0 ? 'text-skuzi-honey' : 'text-gray-400'}`}>{i + 1}</b>
+                  <div className="w-24 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{entry.name}</p>
+                    <p className="text-[11px] text-gray-400 truncate">
+                      {entry.ratingCount > 0 ? `${entry.avgRating} ★ · ${entry.ratingCount}` : 'No ratings yet'}
+                    </p>
+                  </div>
+                  <span className="flex-1 h-2.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                    <span
+                      className={`bar-grow block h-full rounded-full ${i === 0 ? 'bg-brand-500' : 'bg-gray-900 dark:bg-gray-300'}`}
+                      style={{ width: `${Math.max(4, (entry.totalPoints / Math.max(1, leaderboard[0].totalPoints)) * 100)}%`, animationDelay: `${i * 0.15}s` }}
+                    />
+                  </span>
+                  <b className="w-14 text-right text-sm text-gray-900 dark:text-white">{entry.totalPoints} pts</b>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Quick links */}
-      <div className="grid grid-cols-3 gap-3 mt-4">
-        {/* Tables */}
-        <Link
-          to="/tables"
-          className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">Tables</span>
-            <ArrowUpRight size={14} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">QR codes & management</p>
-        </Link>
-
-        {/* Staff */}
-        <Link
-          to="/staff"
-          className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:border-brand-500 dark:hover:border-brand-500 transition-colors group"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">Staff</span>
-            <ArrowUpRight size={14} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Invite & track points</p>
-        </Link>
-
-        {/* Payment History — coming soon, no redirect */}
-        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 opacity-70 cursor-default">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">Payments</span>
-            <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-full">Soon</span>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Payment history</p>
-        </div>
-      </div>
       {receiptTabId && (
         <ReceiptModal tabId={receiptTabId} onClose={() => setReceiptTabId(null)} />
       )}
