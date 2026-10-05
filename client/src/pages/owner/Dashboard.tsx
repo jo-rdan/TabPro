@@ -440,6 +440,8 @@ export default function Dashboard() {
         </span>
       </div>
 
+      {/* Notices and to-do cards sit side by side on computers */}
+      <div className="grid gap-4 mb-4 items-start lg:grid-cols-2 empty:hidden [&>*]:!mb-0 lg:[&>*:only-child]:col-span-2">
       <NotificationNotice />
 
       {/* ── Push notification opt-in ────────────────────────────────────── */}
@@ -479,6 +481,7 @@ export default function Dashboard() {
       {venue && <JoinRequests venueId={venue.id} refreshKey={joinRefresh} />}
 
       {venue && <OpenBills venueId={venue.id} />}
+      </div>
 
       {/* ── Live alerts: guests seated, nudges & bill requests ──────────── */}
       {alerts.length > 0 && (

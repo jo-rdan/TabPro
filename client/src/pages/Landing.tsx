@@ -184,25 +184,6 @@ function Hero() {
   );
 }
 
-// ─── Honey marquee ───────────────────────────────────────────────────────────
-
-function Marquee() {
-  const items = ["Scan the sticker", "Order another round", "Skuzi! calls your waiter", "Pay with MoMo", "Pay with Airtel Money", "Owner paid in seconds", "Rate the night"];
-  const row = [...items, ...items];
-  return (
-    <div className="relative overflow-hidden bg-[#D9A441] py-5 text-[#2B201B]">
-      <div className="sk-marquee flex w-max gap-10">
-        {row.map((t, i) => (
-          <span key={i} className="flex items-center gap-10 whitespace-nowrap font-display text-[19px] font-bold">
-            {t}
-            <Hand size={20} color="#A64B31" />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── Pain → fix, with a switch ───────────────────────────────────────────────
 
 const PAINS = [
@@ -295,13 +276,13 @@ function Tour() {
   }, [active, inView, paused]);
   const Screen = STEPS[active].screen;
   return (
-    <section id="tour" className="relative scroll-mt-16 overflow-hidden bg-[#1C1511] py-24 text-[#F4EDE3] sm:py-32">
-      <div className="sk-glow-sm pointer-events-none absolute -right-40 top-20 h-[600px] w-[600px] opacity-70" />
+    <section id="tour" className="relative scroll-mt-16 overflow-hidden bg-[var(--bg)] py-24 sm:py-32">
+      <div className="sk-glow-sm pointer-events-none absolute -right-40 top-20 h-[600px] w-[600px] opacity-60" />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
-          <Eyebrow dark>How it works</Eyebrow>
+          <Eyebrow>How it works</Eyebrow>
           <h2 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-            One scan. Four taps. <span className="text-[#D9A441]">One happy table.</span>
+            One scan. Four taps. <span className="text-[var(--rust-ink)]">One happy table.</span>
           </h2>
         </Reveal>
       </div>
@@ -313,18 +294,18 @@ function Tour() {
               <button
                 key={title}
                 onClick={() => { setActive(i); setPaused(true); }}
-                className={`group relative w-full overflow-hidden rounded-3xl p-6 text-left transition-all duration-300 ${on ? "bg-white/[0.06] ring-1 ring-white/10" : "hover:bg-white/[0.03]"}`}
+                className={`group relative w-full overflow-hidden rounded-3xl p-6 text-left transition-all duration-300 ${on ? "bg-[var(--card)] shadow-[0_24px_50px_-30px_rgba(43,32,27,0.45)] ring-1 ring-[var(--line)]" : "hover:bg-[var(--card)]"}`}
               >
                 <div className="flex items-start gap-5">
-                  <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition ${on ? "bg-[#D9A441] text-[#2B201B]" : "bg-white/[0.06] text-[#A39282]"}`}>
+                  <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition ${on ? "bg-[#D9A441] text-[#2B201B]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--line)]"}`}>
                     <Icon size={21} />
                   </span>
                   <div>
-                    <p className={`font-display text-[21px] font-bold tracking-tight ${on ? "text-[#F4EDE3]" : "text-[#A39282]"}`}>
-                      <span className="mr-2 text-[13px] font-bold text-[#D9A441]">0{i + 1}</span>{title}
+                    <p className={`font-display text-[21px] font-bold tracking-tight ${on ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}>
+                      <span className="mr-2 text-[13px] font-bold text-[var(--rust-ink)]">0{i + 1}</span>{title}
                     </p>
                     <div className={`grid transition-all duration-500 ${on ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
-                      <p className="overflow-hidden text-[15.5px] leading-relaxed text-[#D8CBBF]">{text}</p>
+                      <p className="overflow-hidden text-[15.5px] leading-relaxed text-[var(--body)]">{text}</p>
                     </div>
                   </div>
                 </div>
@@ -351,14 +332,14 @@ function Slider({ label, value, min, max, step, onChange, format }: { label: str
   return (
     <label className="block">
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-[15px] font-semibold text-[#5C4D44]">{label}</span>
+        <span className="text-[15px] font-semibold text-[var(--body)]">{label}</span>
         <span className="font-display text-[19px] font-bold tabular-nums">{format(value)}</span>
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="sk-range mt-3 w-full"
-        style={{ background: `linear-gradient(90deg, #2B201B ${pct}%, rgba(43,32,27,0.15) ${pct}%)` }}
+        style={{ background: `linear-gradient(90deg, #A64B31 ${pct}%, var(--line) ${pct}%)` }}
       />
     </label>
   );
@@ -370,32 +351,32 @@ function OneMoreRound() {
   const [nights, setNights] = useState(20);
   const extra = tables * round * nights;
   return (
-    <section className="relative overflow-hidden bg-[#D9A441] py-24 text-[#2B201B] sm:py-28">
-      <div className="sk-pattern-dark pointer-events-none absolute inset-0 opacity-[0.07]" />
+    <section className="relative overflow-hidden bg-[var(--paper)] py-24 sm:py-28">
+      <div className="pointer-events-none absolute -left-32 top-10 h-96 w-96 rounded-full bg-[#D9A441]/20 blur-3xl" />
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2">
         <Reveal>
-          <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[#7D3421]">Do the maths</p>
+          <Eyebrow>Do the maths</Eyebrow>
           <h2 className="mt-4 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] sm:text-6xl">
             What's one more round worth?
           </h2>
-          <p className="mt-5 max-w-lg text-[18px] leading-relaxed text-[#4A360C]">
+          <p className="mt-5 max-w-lg text-[18px] leading-relaxed text-[var(--body)]">
             When guests can't get a waiter's attention, they simply stop ordering. Move the sliders to see what just one extra round per table could mean for you.
           </p>
         </Reveal>
         <Reveal delay={120}>
-          <div className="rounded-[32px] bg-[#FFFCF7] p-7 shadow-[0_40px_80px_-40px_rgba(74,54,12,0.6)] sm:p-9">
+          <div className="rounded-[32px] bg-[var(--card)] p-7 shadow-[0_40px_80px_-40px_rgba(43,32,27,0.45)] ring-1 ring-[var(--line)] sm:p-9">
             <div className="space-y-7">
               <Slider label="Tables with guests on a normal night" value={tables} min={3} max={60} step={1} onChange={setTables} format={(v) => `${v}`} />
               <Slider label="Price of one round" value={round} min={1000} max={20000} step={500} onChange={setRound} format={(v) => `${fmt(v)} RWF`} />
               <Slider label="Nights open each month" value={nights} min={4} max={30} step={1} onChange={setNights} format={(v) => `${v}`} />
             </div>
-            <div className="mt-8 rounded-[24px] bg-[#2B201B] p-6 text-[#F4EDE3]">
+            <div className="mt-8 rounded-[24px] bg-[#2B201B] p-6 text-[#F4EDE3] dark:bg-[#1C1511]">
               <p className="text-[14px] text-[#D8CBBF]">One more round per table, every night, adds up to</p>
               <p className="mt-1 font-display text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[52px]">
                 {fmt(extra)} <span className="text-[18px] text-[#D9A441]">RWF a month</span>
               </p>
             </div>
-            <p className="mt-4 text-[12.5px] text-[#7A6A5F]">An example to help you think, not a promise of sales.</p>
+            <p className="mt-4 text-[12.5px] text-[var(--muted)]">An example to help you think, not a promise of sales.</p>
           </div>
         </Reveal>
       </div>
@@ -425,7 +406,7 @@ function CardTitle({ title, text, dark = false }: { title: string; text: string;
 function Owners() {
   const { ref, inView } = useInView<HTMLDivElement>(0.2);
   return (
-    <section id="owners" className="scroll-mt-16 bg-[var(--bg)] py-24 sm:py-32">
+    <section id="owners" className="scroll-mt-16 bg-[var(--paper)] py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal className="grid gap-6 lg:grid-cols-2 lg:items-end">
           <div>
@@ -488,21 +469,21 @@ function Pricing() {
   const [bill, setBill] = useState(10000);
   const pct = ((bill - 2000) / 58000) * 100;
   return (
-    <section id="pricing" className="relative scroll-mt-16 overflow-hidden bg-[#1C1511] py-24 text-[#F4EDE3] sm:py-32">
-      <div className="sk-glow pointer-events-none absolute left-1/2 top-0 h-[600px] w-[1000px] -translate-x-1/2 opacity-50" />
+    <section id="pricing" className="relative scroll-mt-16 overflow-hidden bg-[var(--bg)] py-24 sm:py-32">
+      <div className="sk-glow-sm pointer-events-none absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 opacity-50" />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal className="mx-auto max-w-3xl text-center">
-          <Eyebrow dark>Pricing</Eyebrow>
+          <Eyebrow>Pricing</Eyebrow>
           <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-            You only pay <Swoosh><span className="text-[#D9A441]">when you get paid.</span></Swoosh>
+            You only pay <Swoosh><span className="text-[var(--rust-ink)]">when you get paid.</span></Swoosh>
           </h2>
-          <p className="mx-auto mt-7 max-w-xl text-[18px] leading-relaxed text-[#D8CBBF]">
+          <p className="mx-auto mt-7 max-w-xl text-[18px] leading-relaxed text-[var(--body)]">
             No setup fee. No monthly fee. No machine. Skuzi keeps 8% of bills paid by Mobile Money through Skuzi. Cash? That's free.
           </p>
         </Reveal>
 
         <Reveal delay={100} className="mx-auto mt-14 max-w-4xl">
-          <div className="rounded-[32px] bg-white/[0.04] p-7 ring-1 ring-white/10 sm:p-10">
+          <div className="rounded-[32px] bg-[#2B201B] p-7 text-[#F4EDE3] shadow-[0_40px_80px_-40px_rgba(43,32,27,0.7)] ring-1 ring-white/5 sm:p-10">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <p className="text-[15px] font-semibold text-[#D8CBBF]">A guest pays a bill of</p>
               <p className="font-display text-[28px] font-bold tabular-nums">{fmt(bill)} RWF</p>
@@ -550,7 +531,7 @@ const FAQS = [
 function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="scroll-mt-16 bg-[var(--bg)] py-24 sm:py-32">
+    <section id="faq" className="scroll-mt-16 bg-[var(--paper)] py-24 sm:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
         <Reveal>
           <Eyebrow>Questions</Eyebrow>
@@ -591,7 +572,7 @@ function Faq() {
 
 function FinalCta() {
   return (
-    <section className="bg-[var(--bg)] px-5 pb-24 sm:px-8">
+    <section className="bg-[var(--paper)] px-5 pb-24 sm:px-8">
       <Reveal>
         <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[40px] bg-[#A64B31] px-6 py-20 text-center text-[#F4EDE3] sm:py-28">
           <div className="sk-pattern-dark pointer-events-none absolute inset-0 opacity-[0.12]" />
@@ -681,8 +662,8 @@ function Footer() {
 
 // Coffee & imigongo, with light sections that follow the visitor's theme.
 const STYLES = `
-.sk-site { --bg:#F4EDE3; --card:#FFFCF7; --ink:#2B201B; --body:#5C4D44; --muted:#7A6A5F; --line:#E3D6C6; --rust-ink:#9A4129; }
-.dark .sk-site { --bg:#211915; --card:#2B201B; --ink:#F4EDE3; --body:#D8CBBF; --muted:#A39282; --line:#463A32; --rust-ink:#DCA088; }
+.sk-site { --bg:#F4EDE3; --paper:#FFFFFF; --card:#FFFCF7; --ink:#2B201B; --body:#5C4D44; --muted:#7A6A5F; --line:#E3D6C6; --rust-ink:#9A4129; }
+.dark .sk-site { --bg:#211915; --paper:#1C1511; --card:#2B201B; --ink:#F4EDE3; --body:#D8CBBF; --muted:#A39282; --line:#463A32; --rust-ink:#DCA088; }
 .sk-reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
 .sk-reveal.is-in { opacity: 1; transform: none; }
 .sk-glow { background: radial-gradient(closest-side, rgba(166,75,49,.55), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(217,164,65,.28), transparent 70%); filter: blur(40px); }
@@ -703,8 +684,6 @@ const STYLES = `
 .sk-tapme { animation: sk-tapme 1.2s ease-in-out infinite; }
 @keyframes sk-swoosh { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
 .sk-swoosh path { stroke-dasharray: 1; animation: sk-swoosh 1.1s .9s cubic-bezier(.3,.7,.2,1) both; }
-@keyframes sk-marquee { to { transform: translateX(-50%) } }
-.sk-marquee { animation: sk-marquee 40s linear infinite; }
 @keyframes sk-scan { 0%,100% { top: 12px } 50% { top: calc(100% - 14px) } }
 .sk-scanline { animation: sk-scan 2.4s ease-in-out infinite; }
 @keyframes sk-toast { from { opacity: 0; transform: translateY(-8px) scale(.98) } to { opacity: 1; transform: none } }
@@ -736,7 +715,7 @@ button:hover > .sk-spin { animation-duration: 6s; }
 .sk-ping { animation: sk-ping 1.8s cubic-bezier(0,0,.2,1) infinite; }
 @media (prefers-reduced-motion: reduce) {
   .sk-reveal { opacity: 1; transform: none; transition: none; }
-  .sk-float, .sk-float-slow, .sk-wave, .sk-buzz, .sk-tapme, .sk-marquee, .sk-scanline, .sk-shine::after, .sk-progress, .sk-spin, .sk-ping, .sk-cell-now { animation: none; }
+  .sk-float, .sk-float-slow, .sk-wave, .sk-buzz, .sk-tapme, .sk-scanline, .sk-shine::after, .sk-progress, .sk-spin, .sk-ping, .sk-cell-now { animation: none; }
   .sk-swoosh path, .sk-draw { animation: none; stroke-dasharray: none; }
 }
 `;
@@ -753,10 +732,9 @@ export default function Landing() {
       <Nav />
       <main>
         <Hero />
-        <Marquee />
         <PainSwitch />
-        <Tour />
         <OneMoreRound />
+        <Tour />
         <Owners />
         <Pricing />
         <Faq />

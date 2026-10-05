@@ -85,40 +85,67 @@ export default function CoinJar({ total, benchmark, benchmarkLabel, dark }: Coin
   );
 }
 
-// Phones and the first moment on computers: the same jar, drawn flat.
+// Phones (and the first moment on computers): the same jar as an animated
+// drawing. Coins drop in one by one and settle, the jar sways a little and the
+// ring glows, so it feels alive without loading 3D.
 function FlatJar({ coins, ringLabel, nowLabel, dark }: { coins: number; ringLabel: string | null; nowLabel: string; dark: boolean }) {
-  const glass = dark ? '#F4EDE3' : '#7A6A5F';
-  const top = 30, bottom = 180, height = bottom - top;
-  const ringY = bottom - (RING_COINS / MAX_COINS) * height;
-  const fillY = bottom - (coins / MAX_COINS) * height;
+  const glass = dark ? '#F4EDE3' : '#5C4D44';
+  const cx = 160, w = 104, top = 34, bottom = 166;
+  const left = cx - w / 2, right = cx + w / 2;
+  const layerH = (bottom - top - 8) / (MAX_COINS / PER_LAYER);
   const layers = Math.ceil(coins / PER_LAYER);
+  const ringY = bottom - 6 - (RING_COINS / PER_LAYER) * layerH;
+  const topY = layers ? bottom - 6 - (layers - 1) * layerH : bottom;
+  const coinList: { x: number; y: number; i: number }[] = [];
+  for (let l = 0; l < layers; l++) {
+    const inLayer = l < layers - 1 ? 3 : Math.max(1, Math.round(((coins - l * PER_LAYER) / PER_LAYER) * 3));
+    for (let k = 0; k < inLayer; k++) {
+      coinList.push({ x: cx - 27 + k * 27 + (l % 2 ? 7 : -4), y: bottom - 6 - l * layerH, i: coinList.length });
+    }
+  }
+  const uid = dark ? 'd' : 'l';
   return (
-    <svg viewBox="0 0 320 200" className="w-full h-full" role="img" aria-label={`Coin jar${nowLabel ? `: ${nowLabel} RWF tonight` : ''}`}>
+    <svg viewBox="0 0 320 180" className="w-full h-full overflow-visible" role="img" aria-label={`Coin jar${nowLabel ? `: ${nowLabel} RWF tonight` : ''}`}>
       <defs>
-        <clipPath id="jar-inside"><rect x="112" y={top} width="96" height={height} rx="14" /></clipPath>
+        <clipPath id={`jar-in-${uid}`}><path d={`M${left + 4} -200 H${right - 4} V${bottom - 14} Q${right - 4} ${bottom - 2} ${right - 16} ${bottom - 2} H${left + 16} Q${left + 4} ${bottom - 2} ${left + 4} ${bottom - 14} Z`} /></clipPath>
+        <linearGradient id={`jar-glass-${uid}`} x1="0" x2="1">
+          <stop offset="0" stopColor={glass} stopOpacity="0.16" />
+          <stop offset="0.25" stopColor={glass} stopOpacity="0.04" />
+          <stop offset="0.8" stopColor={glass} stopOpacity="0.06" />
+          <stop offset="1" stopColor={glass} stopOpacity="0.2" />
+        </linearGradient>
+        <radialGradient id={`jar-glow-${uid}`}>
+          <stop offset="0" stopColor="#D9A441" stopOpacity={dark ? 0.35 : 0.25} />
+          <stop offset="1" stopColor="#D9A441" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <g clipPath="url(#jar-inside)">
-        {Array.from({ length: layers }, (_, i) => {
-          const y = bottom - 6 - i * (height / (MAX_COINS / PER_LAYER));
-          return (
-            <g key={i}>
-              {[0, 1, 2].map((k) => (
-                <ellipse key={k} cx={130 + k * 30 + (i % 2) * 8} cy={y} rx="16" ry="5.5" fill="#D9A441" stroke="#B8862F" strokeWidth="1.5" />
-              ))}
+      <ellipse cx={cx} cy={bottom - 4} rx="90" ry="22" fill={`url(#jar-glow-${uid})`} />
+      <g className="jar-sway">
+        {/* back of the glass */}
+        <path d={`M${left} ${top} V${bottom - 14} Q${left} ${bottom} ${left + 14} ${bottom} H${right - 14} Q${right} ${bottom} ${right} ${bottom - 14} V${top}`} fill={`url(#jar-glass-${uid})`} />
+        <g clipPath={`url(#jar-in-${uid})`}>
+          {coinList.map((c) => (
+            <g key={c.i} className="jar-coin" style={{ animationDelay: `${Math.min(c.i, 40) * 55}ms` }}>
+              <ellipse cx={c.x} cy={c.y + 2.5} rx="15" ry="5.5" fill="#9C6F22" />
+              <ellipse cx={c.x} cy={c.y} rx="15" ry="5.5" fill="#E0AD4C" />
+              <ellipse cx={c.x - 2} cy={c.y - 0.8} rx="9" ry="2.8" fill="#F2CC7A" opacity="0.7" />
             </g>
-          );
-        })}
+          ))}
+        </g>
+        {/* front of the glass: outline, shine, rim */}
+        <path d={`M${left} ${top} V${bottom - 14} Q${left} ${bottom} ${left + 14} ${bottom} H${right - 14} Q${right} ${bottom} ${right} ${bottom - 14} V${top}`} fill="none" stroke={glass} strokeOpacity="0.45" strokeWidth="2.5" />
+        <path d={`M${left + 10} ${top + 14} V${bottom - 22}`} stroke="#FFFFFF" strokeOpacity={dark ? 0.18 : 0.6} strokeWidth="5" strokeLinecap="round" />
+        <ellipse cx={cx} cy={top} rx={w / 2 + 4} ry="7" fill="none" stroke={glass} strokeOpacity="0.55" strokeWidth="3" />
+        {ringLabel && (
+          <ellipse className="jar-ring" cx={cx} cy={ringY} rx={w / 2 + 6} ry="8" fill="none" stroke="#C9603F" strokeWidth="3.5" />
+        )}
+        {coins > 0 && <circle className="jar-glint" cx={coinList[coinList.length - 1].x + 6} cy={topY - 4} r="2.5" fill="#FFF6DD" />}
       </g>
-      <rect x="112" y={top} width="96" height={height} rx="14" fill={glass} fillOpacity="0.08" stroke={glass} strokeOpacity="0.5" strokeWidth="2" />
-      <rect x="106" y={top - 8} width="108" height="10" rx="5" fill={glass} fillOpacity="0.35" />
       {ringLabel && (
-        <>
-          <line x1="104" x2="216" y1={ringY} y2={ringY} stroke="#D06B4A" strokeWidth="3" strokeLinecap="round" />
-          <text x="224" y={ringY + 5} fill={dark ? "#E08A6A" : "#A64B31"} fontSize="14" fontWeight="700" fontFamily="Figtree, sans-serif">{ringLabel}</text>
-        </>
+        <text x={right + 16} y={ringY + 5} fill={dark ? '#E08A6A' : '#9A4129'} fontSize="14" fontWeight="700" fontFamily="Figtree, sans-serif">{ringLabel}</text>
       )}
       {nowLabel && (
-        <text x="100" y={Math.max(fillY, top + 14) + 5} textAnchor="end" fill={dark ? "#D9A441" : "#8F6620"} fontSize="16" fontWeight="700" fontFamily="Figtree, sans-serif">{nowLabel}</text>
+        <text className="jar-now" x={left - 14} y={Math.max(topY, top + 14) + 4} textAnchor="end" fill={dark ? '#D9A441' : '#8F6620'} fontSize="16" fontWeight="800" fontFamily="Figtree, sans-serif">{nowLabel}</text>
       )}
     </svg>
   );
