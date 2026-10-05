@@ -10,6 +10,8 @@ interface CoinJarProps {
   benchmark: number;
   /** e.g. "Best: 318k" or "Last Fri: 210k". */
   benchmarkLabel: string;
+  /** Follow the app's light/dark theme. */
+  dark: boolean;
 }
 
 const MAX_COINS = 84;
@@ -34,11 +36,13 @@ function wantsThree() {
   }
 }
 
-export default function CoinJar({ total, benchmark, benchmarkLabel }: CoinJarProps) {
+export default function CoinJar({ total, benchmark, benchmarkLabel, dark }: CoinJarProps) {
   const [use3d] = useState(wantsThree);
   const [ready, setReady] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{ update: (coins: number, ringLabel: string | null, now: string) => void; dispose: () => void } | null>(null);
+  const sceneRef = useRef<{ update: (coins: number, ringLabel: string | null, now: string) => void; setDark: (dark: boolean) => void; dispose: () => void } | null>(null);
+  const darkRef = useRef(dark);
+  darkRef.current = dark;
 
   const coins = coinCount(total, benchmark);
   const ringLabel = benchmark > 0 ? benchmarkLabel : null;
@@ -49,7 +53,7 @@ export default function CoinJar({ total, benchmark, benchmarkLabel }: CoinJarPro
     let cancelled = false;
     import('./coinJarScene').then(({ createCoinJarScene }) => {
       if (cancelled || !canvasRef.current) return;
-      sceneRef.current = createCoinJarScene(canvasRef.current);
+      sceneRef.current = createCoinJarScene(canvasRef.current, darkRef.current);
       setReady(true);
     }).catch(() => { /* flat jar stays */ });
     return () => {
@@ -63,6 +67,10 @@ export default function CoinJar({ total, benchmark, benchmarkLabel }: CoinJarPro
     sceneRef.current?.update(coins, ringLabel, nowLabel);
   }, [coins, ringLabel, nowLabel, ready]);
 
+  useEffect(() => {
+    sceneRef.current?.setDark(dark);
+  }, [dark, ready]);
+
   return (
     <div className="relative h-[180px]">
       {use3d && (
@@ -72,13 +80,14 @@ export default function CoinJar({ total, benchmark, benchmarkLabel }: CoinJarPro
           aria-label={`A glass jar with ${total.toLocaleString()} RWF in coins${ringLabel ? `; the ring marks ${ringLabel}` : ''}`}
         />
       )}
-      {(!use3d || !ready) && <FlatJar coins={coins} ringLabel={ringLabel} nowLabel={nowLabel} />}
+      {(!use3d || !ready) && <FlatJar coins={coins} ringLabel={ringLabel} nowLabel={nowLabel} dark={dark} />}
     </div>
   );
 }
 
 // Phones and the first moment on computers: the same jar, drawn flat.
-function FlatJar({ coins, ringLabel, nowLabel }: { coins: number; ringLabel: string | null; nowLabel: string }) {
+function FlatJar({ coins, ringLabel, nowLabel, dark }: { coins: number; ringLabel: string | null; nowLabel: string; dark: boolean }) {
+  const glass = dark ? '#F4EDE3' : '#7A6A5F';
   const top = 30, bottom = 180, height = bottom - top;
   const ringY = bottom - (RING_COINS / MAX_COINS) * height;
   const fillY = bottom - (coins / MAX_COINS) * height;
@@ -100,16 +109,16 @@ function FlatJar({ coins, ringLabel, nowLabel }: { coins: number; ringLabel: str
           );
         })}
       </g>
-      <rect x="112" y={top} width="96" height={height} rx="14" fill="#F4EDE3" fillOpacity="0.08" stroke="#F4EDE3" strokeOpacity="0.45" strokeWidth="2" />
-      <rect x="106" y={top - 8} width="108" height="10" rx="5" fill="#F4EDE3" fillOpacity="0.35" />
+      <rect x="112" y={top} width="96" height={height} rx="14" fill={glass} fillOpacity="0.08" stroke={glass} strokeOpacity="0.5" strokeWidth="2" />
+      <rect x="106" y={top - 8} width="108" height="10" rx="5" fill={glass} fillOpacity="0.35" />
       {ringLabel && (
         <>
           <line x1="104" x2="216" y1={ringY} y2={ringY} stroke="#D06B4A" strokeWidth="3" strokeLinecap="round" />
-          <text x="224" y={ringY + 5} fill="#E08A6A" fontSize="14" fontWeight="700" fontFamily="Figtree, sans-serif">{ringLabel}</text>
+          <text x="224" y={ringY + 5} fill={dark ? "#E08A6A" : "#A64B31"} fontSize="14" fontWeight="700" fontFamily="Figtree, sans-serif">{ringLabel}</text>
         </>
       )}
       {nowLabel && (
-        <text x="100" y={Math.max(fillY, top + 14) + 5} textAnchor="end" fill="#D9A441" fontSize="16" fontWeight="700" fontFamily="Figtree, sans-serif">{nowLabel}</text>
+        <text x="100" y={Math.max(fillY, top + 14) + 5} textAnchor="end" fill={dark ? "#D9A441" : "#8F6620"} fontSize="16" fontWeight="700" fontFamily="Figtree, sans-serif">{nowLabel}</text>
       )}
     </svg>
   );

@@ -9,6 +9,7 @@ import ReceiptModal from '../../components/ReceiptModal';
 import JoinRequests from '../../components/JoinRequests';
 import LogoUploader from '../../components/LogoUploader';
 import { useAuthStore } from '../../lib/auth';
+import { useThemeStore } from '../../lib/theme';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { WsEvent } from '@tabpro/shared';
 import Toast from '../../components/Toast';
@@ -117,6 +118,7 @@ function timeAgo(d: string) {
 
 export default function Dashboard() {
   const { owner, venues, fetchMe, token } = useAuthStore();
+  const isDark = useThemeStore((s) => s.theme === 'dark');
   const venue = venues[0];
 
   const [stats, setStats] = useState<Stats | null>(null);
@@ -591,14 +593,14 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        <div className="lg:col-span-2 bg-gray-900 dark:bg-gray-950 dark:border dark:border-gray-800 text-gray-50 rounded-[22px] px-5 pt-4 pb-3">
+        <div className="lg:col-span-2 bg-white border border-gray-200 dark:bg-gray-950 dark:border-gray-800 rounded-[22px] px-5 pt-4 pb-3">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-lg font-bold text-gray-50">Tonight's jar</h2>
-            <span className="text-xs text-gray-300">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-50">Tonight's jar</h2>
+            <span className="text-xs text-gray-500 dark:text-gray-300">
               {jarBenchmark.value > 0 ? `${Math.min(999, Math.round(((tonight?.total ?? 0) / jarBenchmark.value) * 100))}% of ${jarBenchmark.name}` : 'Your first night'}
             </span>
           </div>
-          <CoinJar total={tonight?.total ?? 0} benchmark={jarBenchmark.value} benchmarkLabel={jarBenchmark.label} />
+          <CoinJar total={tonight?.total ?? 0} benchmark={jarBenchmark.value} benchmarkLabel={jarBenchmark.label} dark={isDark} />
         </div>
       </div>
 

@@ -19,17 +19,26 @@ function label(text: string, color: string, size: number) {
   g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(text, 192, 48);
   const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace; // keep the brand colours true, not washed out
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
   sprite.scale.set(size * 4, size, 1);
   return sprite;
 }
 
-export function createCoinJarScene(canvas: HTMLCanvasElement) {
+// Light theme: darker glass on a cream card. Dark theme: milky glass on espresso.
+const THEMES = {
+  light: { glass: 0x7a6a5f, glassOpacity: 0.14, rim: 0x7a6a5f, rimOpacity: 0.6, base: 0xe3d6c6, ground: 0xe3d6c6, ringLabel: '#9A4129', nowLabel: '#6B4E12' },
+  dark: { glass: 0xf4ede3, glassOpacity: 0.16, rim: 0xf4ede3, rimOpacity: 0.5, base: 0x3a2d26, ground: 0x2b201b, ringLabel: '#E08A6A', nowLabel: '#D9A441' },
+};
+
+export function createCoinJarScene(canvas: HTMLCanvasElement, initialDark: boolean) {
+  let theme = THEMES[initialDark ? 'dark' : 'light'];
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
-  scene.add(new THREE.HemisphereLight(0xfff4e6, 0x2b201b, 0.62));
+  const hemi = new THREE.HemisphereLight(0xfff4e6, theme.ground, 0.62);
+  scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff1e0, 0.55);
   sun.position.set(5, 10, 7);
   scene.add(sun);
@@ -44,14 +53,14 @@ export function createCoinJarScene(canvas: HTMLCanvasElement) {
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
 
-  const glass = new THREE.Mesh(
-    new THREE.CylinderGeometry(R, R, H, 48, 1, true),
-    new THREE.MeshStandardMaterial({ color: 0xf4ede3, transparent: true, opacity: 0.16, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }),
-  );
+  const glassMat = new THREE.MeshStandardMaterial({ color: theme.glass, transparent: true, opacity: theme.glassOpacity, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false });
+  const glass = new THREE.Mesh(new THREE.CylinderGeometry(R, R, H, 48, 1, true), glassMat);
   glass.position.y = H / 2; scene.add(glass);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.06, 12, 64), new THREE.MeshStandardMaterial({ color: 0xf4ede3, transparent: true, opacity: 0.5 }));
+  const rimMat = new THREE.MeshStandardMaterial({ color: theme.rim, transparent: true, opacity: theme.rimOpacity });
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.06, 12, 64), rimMat);
   rim.rotation.x = Math.PI / 2; rim.position.y = H; scene.add(rim);
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.1, R + 0.1, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0x3a2d26 }));
+  const baseMat = new THREE.MeshStandardMaterial({ color: theme.base });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.1, R + 0.1, 0.12, 48), baseMat);
   base.position.y = -0.06; scene.add(base);
 
   const ring = new THREE.Mesh(
@@ -62,6 +71,7 @@ export function createCoinJarScene(canvas: HTMLCanvasElement) {
   let ringTag: THREE.Sprite | null = null;
   let nowTag: THREE.Sprite | null = null;
   let nowText = '';
+  let ringText: string | null = null;
 
   const coinGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.11, 28);
   const coinMat = new THREE.MeshStandardMaterial({ color: 0xe0ad4c, metalness: 0.2, roughness: 0.45, emissive: 0x5a3a08, emissiveIntensity: 0.35 });
@@ -113,6 +123,15 @@ export function createCoinJarScene(canvas: HTMLCanvasElement) {
     tag.material.dispose();
   };
 
+  const redrawLabels = () => {
+    dropTag(ringTag);
+    ringTag = ringText ? label(ringText, theme.ringLabel, 0.75) : null;
+    if (ringTag) scene.add(ringTag);
+    dropTag(nowTag);
+    nowTag = nowText ? label(nowText, theme.nowLabel, 0.85) : null;
+    if (nowTag) scene.add(nowTag);
+  };
+
   return {
     update(count: number, ringLabel: string | null, nowLabel: string) {
       const t = (performance.now() - t0) / 1000;
@@ -123,18 +142,17 @@ export function createCoinJarScene(canvas: HTMLCanvasElement) {
       }
       shown = count;
       ring.visible = !!ringLabel;
-      dropTag(ringTag);
-      ringTag = null;
-      if (ringLabel) {
-        ringTag = label(ringLabel, "#E08A6A", 0.75);
-        scene.add(ringTag);
-      }
-      if (nowLabel !== nowText) {
-        dropTag(nowTag);
-        nowTag = nowLabel ? label(nowLabel, "#D9A441", 0.85) : null;
-        if (nowTag) scene.add(nowTag);
-        nowText = nowLabel;
-      }
+      ringText = ringLabel;
+      nowText = nowLabel;
+      redrawLabels();
+    },
+    setDark(dark: boolean) {
+      theme = THEMES[dark ? 'dark' : 'light'];
+      glassMat.color.setHex(theme.glass); glassMat.opacity = theme.glassOpacity;
+      rimMat.color.setHex(theme.rim); rimMat.opacity = theme.rimOpacity;
+      baseMat.color.setHex(theme.base);
+      hemi.groundColor.setHex(theme.ground);
+      redrawLabels();
     },
     dispose() {
       cancelAnimationFrame(frame);
