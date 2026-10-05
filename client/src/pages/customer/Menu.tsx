@@ -14,7 +14,7 @@ import {
   Minus,
   Search,
 } from "lucide-react";
-import Logo from "../../components/Logo";
+import Logo, { WavingHand } from "../../components/Logo";
 import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { WsEvent } from "@tabpro/shared";
@@ -125,7 +125,7 @@ function getCatEmoji(cat: string) {
   return "🍽";
 }
 
-// ─── Menu item card with Foodish photo ───────────────────────────────────────
+// ─── Menu item card: photo on the left, name + price, add on the right ──────
 function MenuCard({
   item,
   qty,
@@ -151,101 +151,76 @@ function MenuCard({
 
   return (
     <div
-      className={`group flex flex-col bg-white dark:bg-[#1C2128] rounded-2xl overflow-hidden transition-all duration-200 ${
-        qty > 0
-          ? "ring-2 ring-brand-400 shadow-lg shadow-brand-500/10"
-          : "ring-1 ring-gray-200 dark:ring-gray-800 hover:ring-gray-300 dark:hover:ring-gray-700 hover:shadow-md"
+      className={`flex items-center gap-3.5 p-3 rounded-[22px] bg-white dark:bg-[#2B201B] transition-all ${
+        qty > 0 ? "ring-2 ring-brand-400/70" : "ring-1 ring-gray-200/70 dark:ring-gray-800"
       } ${!item.isAvailable ? "opacity-60" : ""}`}
     >
-      {/* Photo area */}
-      <div
-        className="relative overflow-hidden bg-gray-100 dark:bg-gray-800"
-        style={{ paddingBottom: "65%" }}
-      >
-        <div className="absolute inset-0">
-          {/* Emoji fallback always rendered behind */}
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700">
-            <span className="text-5xl opacity-40 select-none">{emoji}</span>
-          </div>
-          {/* Food photo */}
-          {imgUrl && (
-            <img
-              src={imgUrl}
-              alt={item.name}
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgUrl("")}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-            />
-          )}
-          {/* Gradient overlay at bottom for text readability */}
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/30 to-transparent" />
+      <div className="relative w-[74px] h-[74px] rounded-2xl overflow-hidden flex-shrink-0 bg-[#EFD9C9] dark:bg-gray-800">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-3xl opacity-50 select-none">{emoji}</span>
         </div>
-
-        {/* Qty badge */}
-        {qty > 0 && (
-          <div className="absolute top-2.5 left-2.5 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg z-10">
-            <span className="text-xs font-black text-brand-600">{qty}</span>
-          </div>
+        {imgUrl && (
+          <img
+            src={imgUrl}
+            alt={item.name}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgUrl("")}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+          />
         )}
-
-        {/* Unavailable overlay */}
         {!item.isAvailable && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-            <span className="text-xs font-bold text-white bg-black/70 px-3 py-1.5 rounded-full">
-              Unavailable
-            </span>
+          <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-white">Sold out</span>
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="p-3 flex flex-col flex-1">
-        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug line-clamp-1">
-          {item.name}
-        </p>
+      <div className="flex-1 min-w-0">
+        <p className="text-[15px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-1">{item.name}</p>
         {item.description && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-relaxed line-clamp-2">
-            {item.description}
-          </p>
+          <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug line-clamp-2">{item.description}</p>
         )}
-        <div className="flex items-center justify-between mt-auto pt-2.5">
-          <span className="text-sm font-black text-brand-500">
-            {fmt(item.priceRwf)}
-          </span>
-          {item.isAvailable &&
-            (qty === 0 ? (
-              <button
-                onClick={onAdd}
-                className="w-8 h-8 rounded-xl bg-brand-500 hover:bg-brand-600 flex items-center justify-center text-white shadow-md shadow-brand-500/30 active:scale-90 transition-all"
-              >
-                <Plus size={16} strokeWidth={3} />
-              </button>
-            ) : (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={onRemove}
-                  className="w-7 h-7 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center active:scale-90 transition-all"
-                >
-                  <Minus
-                    size={12}
-                    strokeWidth={3}
-                    className="text-gray-600 dark:text-gray-300"
-                  />
-                </button>
-                <span className="text-sm font-black text-gray-900 dark:text-white w-5 text-center">
-                  {qty}
-                </span>
-                <button
-                  onClick={onAdd}
-                  className="w-7 h-7 rounded-xl bg-brand-500 flex items-center justify-center text-white active:scale-90 transition-all"
-                >
-                  <Plus size={12} strokeWidth={3} />
-                </button>
-              </div>
-            ))}
-        </div>
+        <p className="text-[15px] font-bold text-brand-600 dark:text-brand-300 mt-1.5">{fmt(item.priceRwf)}</p>
       </div>
+
+      {item.isAvailable &&
+        (qty === 0 ? (
+          <button
+            onClick={onAdd}
+            aria-label={`Add ${item.name}`}
+            className="w-11 h-11 rounded-full bg-brand-500 hover:bg-brand-600 flex items-center justify-center text-white flex-shrink-0 active:scale-90 transition-all"
+          >
+            <Plus size={20} strokeWidth={3} />
+          </button>
+        ) : (
+          <div className="flex items-center gap-1 bg-gray-900 dark:bg-gray-50 text-white dark:text-gray-900 rounded-full p-1 flex-shrink-0">
+            <button
+              onClick={onRemove}
+              aria-label={`Remove one ${item.name}`}
+              className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-all hover:bg-white/10 dark:hover:bg-black/10"
+            >
+              <Minus size={15} strokeWidth={3} />
+            </button>
+            <span className="text-sm font-black w-5 text-center">{qty}</span>
+            <button
+              onClick={onAdd}
+              aria-label={`Add one more ${item.name}`}
+              className="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center active:scale-90 transition-all"
+            >
+              <Plus size={15} strokeWidth={3} />
+            </button>
+          </div>
+        ))}
     </div>
+  );
+}
+
+// The Skuzi hand, small, for the "call your waiter" button.
+function WaveIcon() {
+  return (
+    <svg width="22" height="22" viewBox="8 4 90 92" aria-hidden="true">
+      <WavingHand color="currentColor" strokeWidth={8} />
+    </svg>
   );
 }
 
@@ -319,6 +294,7 @@ export default function CustomerMenu() {
   const [venueName, setVenueName] = useState("");
   const [venueLogoUrl, setVenueLogoUrl] = useState<string | null>(null);
   const [tableLabel, setTableLabel] = useState("");
+  const [waiterName, setWaiterName] = useState<string | null>(null);
   const [isGroupTab, setIsGroupTab] = useState(false);
   const [menuGrouped, setMenuGrouped] = useState<
     Record<string, MenuItemData[]>
@@ -368,6 +344,7 @@ export default function CustomerMenu() {
     setAcceptsMobileMoney(s.acceptsMobileMoney !== false);
     setIsDemo(!!s.isDemo);
     setTableLabel(s.tableLabel);
+    setWaiterName(s.waiterName ?? null);
     setPhone(s.phone);
     const mg = s.menuGrouped as Record<string, MenuItemData[]>;
     setMenuGrouped(mg);
@@ -443,7 +420,8 @@ export default function CustomerMenu() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
-      const { tab, venue, table, menuGrouped: mg, isExisting } = data.data;
+      const { tab, venue, table, menuGrouped: mg, isExisting, waiter } = data.data;
+      setWaiterName(waiter?.name ?? null);
       setTabId(tab.id);
       setTabStatus(tab.status);
       setVenueId(venue.id);
@@ -466,6 +444,7 @@ export default function CustomerMenu() {
           acceptsMobileMoney: venue.acceptsMobileMoney !== false,
           isDemo: !!venue.isDemo,
           tableLabel: table.label,
+          waiterName: waiter?.name ?? null,
           phone: phone.trim(),
           menuGrouped: mg,
         }),
@@ -713,7 +692,7 @@ export default function CustomerMenu() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 py-10">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
+          <div className="w-20 h-20 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
             <Logo size={44} />
           </div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-white">
@@ -755,7 +734,7 @@ export default function CustomerMenu() {
           <button
             onClick={handleIdentify}
             disabled={loading}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30"
+            className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30"
           >
             {loading ? "Opening tab..." : "Open my tab →"}
           </button>
@@ -1270,7 +1249,7 @@ export default function CustomerMenu() {
           <button
             onClick={() => handleSubmitRating(false)}
             disabled={ratingLoading}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-brand-500/30 active:scale-95 transition-all"
+            className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-brand-500/30 active:scale-95 transition-all"
           >
             {ratingLoading ? "Submitting..." : "Submit rating"}
           </button>
@@ -1289,7 +1268,7 @@ export default function CustomerMenu() {
   if (step === "closed") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
+        <div className="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
           <CheckCircle size={44} className="text-white" />
         </div>
         <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
@@ -1320,84 +1299,75 @@ export default function CustomerMenu() {
       {/* ── LEFT: Menu column ──────────────────────────────────────────────── */}
       <div
         className="flex-1 flex flex-col min-w-0"
-        style={{ paddingBottom: cartCount > 0 ? 80 : 0 }}
+        style={{ paddingBottom: (cartCount > 0 ? 84 : 0) + (placedOrders.length > 0 ? 68 : 0) }}
       >
-        {/* Sticky header */}
-        <div className="bg-white dark:bg-[#2B201B] border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm">
-          <div className="px-4 pt-4 pb-3">
-            {/* Venue info row */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <VenueLogo
-                  logoUrl={venueLogoUrl}
-                  venueName={venueName}
-                  size={36}
-                />
-                <div>
-                  <h1 className="font-black text-gray-900 dark:text-white text-xl leading-tight">
-                    {venueName}
-                  </h1>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-400">{tableLabel}</span>
-                    {isDemo && <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">Demo · no real money</span>}
-                    {isGroupTab && (
-                      <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full font-bold">
-                        <Users size={10} /> Group tab
-                      </span>
-                    )}
-                  </div>
+        {/* Header: espresso band with the venue, the table, the waiter and the categories */}
+        <div className="sticky top-0 z-10 bg-[#2B201B] dark:bg-[#2B201B] text-[#F4EDE3] rounded-b-[28px] shadow-lg shadow-black/10">
+          <div className="px-5 pt-5 pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={44} />
+                <div className="min-w-0">
+                  <h1 className="font-display font-bold text-[22px] leading-tight truncate">{venueName}</h1>
+                  <p className="text-[13px] text-[#D8CBBF] truncate">
+                    {tableLabel}
+                    {waiterName ? ` · ${waiterName} is your waiter` : ""}
+                  </p>
                 </div>
               </div>
-              {/* Desktop nudge/bill — mobile shows in bottom area */}
               {placedOrders.length > 0 && (
-                <div className="hidden md:flex gap-2">
+                <div className="hidden md:flex gap-2 flex-shrink-0">
                   <button
                     onClick={handleNudge}
                     disabled={nudgeLoading || justNudged}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${justNudged ? "bg-amber-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"}`}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-[#D9A441] text-[#2B201B] disabled:opacity-70 transition-all"
                   >
-                    <Bell size={12} /> {justNudged ? "Sent!" : "Nudge waiter"}
+                    <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
                   </button>
                   <button
                     onClick={handleRequestBill}
                     disabled={billLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold border-2 border-[#F4EDE3]/80 text-[#F4EDE3] disabled:opacity-50 transition-all"
                   >
-                    <Receipt size={12} /> {billLoading ? "..." : "Pay bill"}
+                    <Receipt size={14} /> {billLoading ? "..." : "My bill"}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Search bar */}
-            <div className="relative mb-3">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
+            {(isDemo || isGroupTab) && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {isDemo && <span className="inline-flex items-center rounded-full bg-[#D9A441] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#2B201B]">Demo · no real money</span>}
+                {isGroupTab && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/10 px-2.5 py-1 rounded-full">
+                    <Users size={11} /> Group tab
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="relative mt-4">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#D8CBBF]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search menu..."
-                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 border-0 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                placeholder="Search the menu"
+                aria-label="Search the menu"
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-2xl bg-white/10 border-0 text-[#F4EDE3] placeholder-[#D8CBBF]/70 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
               />
             </div>
 
-            {/* Category chips */}
             {!searchQuery && (
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-0">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide mt-3 -mx-1 px-1">
                 {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => scrollToCategory(cat)}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 whitespace-nowrap ${
-                      activeCategory === cat
-                        ? "bg-brand-500 text-white shadow-md shadow-brand-500/30"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all active:scale-95 ${
+                      activeCategory === cat ? "bg-brand-500 text-white font-extrabold" : "bg-white/10 text-[#F4EDE3] font-semibold"
                     }`}
                   >
-                    <span>{getCatEmoji(cat)}</span>
                     {cat}
                   </button>
                 ))}
@@ -1407,7 +1377,7 @@ export default function CustomerMenu() {
         </div>
 
         {/* Menu content */}
-        <div className="flex-1 px-4 pt-4 overflow-y-auto">
+        <div className="flex-1 px-4 pt-5 overflow-y-auto">
           {/* Search results */}
           {filteredItems && (
             <div className="mb-6">
@@ -1421,7 +1391,7 @@ export default function CustomerMenu() {
                   <p className="text-sm text-gray-400 mt-3">No items found</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {filteredItems.map((item) => (
                     <MenuCard
                       key={item.id}
@@ -1446,18 +1416,11 @@ export default function CustomerMenu() {
                 }}
                 className="mb-8"
               >
-                <div className="flex items-center gap-2.5 mb-4">
-                  <span className="text-2xl">{getCatEmoji(cat)}</span>
-                  <div>
-                    <h2 className="text-base font-black text-gray-900 dark:text-white">
-                      {cat}
-                    </h2>
-                    <p className="text-xs text-gray-400">
-                      {menuGrouped[cat].length} items
-                    </p>
-                  </div>
+                <div className="flex items-baseline justify-between mb-3 px-1">
+                  <h2 className="font-display text-2xl font-bold text-gray-900 dark:text-white">{cat}</h2>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{menuGrouped[cat].length} items</span>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {menuGrouped[cat].map((item) => (
                     <MenuCard
                       key={item.id}
@@ -1484,46 +1447,36 @@ export default function CustomerMenu() {
           <div className="h-4 md:h-8" />
         </div>
 
-        {/* Mobile nudge/bill bar — only when orders exist */}
-        {placedOrders.length > 0 && (
-          <div className="md:hidden fixed bottom-16 left-0 right-0 px-4 z-20 pointer-events-none">
-            <div className="flex gap-2 justify-end pointer-events-auto">
-              <button
-                onClick={handleNudge}
-                disabled={nudgeLoading || justNudged}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-xl transition-all ${justNudged ? "bg-amber-500 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
-              >
-                <Bell size={13} /> {justNudged ? "Sent!" : "Nudge"}
-              </button>
-              <button
-                onClick={handleRequestBill}
-                disabled={billLoading}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xl disabled:opacity-50"
-              >
-                <Receipt size={13} /> {billLoading ? "..." : "Pay bill"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile cart bar */}
-        {cartCount > 0 && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-2 bg-gradient-to-t from-gray-50 dark:from-[#1C1511] via-gray-50/90 dark:via-[#1C1511]/90 to-transparent z-20">
-            <button
-              onClick={() => setCartOpen(!cartOpen)}
-              className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl active:scale-98 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <ShoppingBag size={20} />
-                  <span className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-brand-500 rounded-full text-[10px] font-black text-white flex items-center justify-center border-2 border-gray-900 dark:border-white">
-                    {cartCount}
-                  </span>
-                </div>
-                <span className="text-sm font-black">View order</span>
+        {/* Mobile bottom: call the waiter, see the bill, send the order */}
+        {(placedOrders.length > 0 || cartCount > 0) && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(43,32,27,0.25)] flex flex-col gap-2.5">
+            {placedOrders.length > 0 && (
+              <div className="flex gap-2.5">
+                <button
+                  onClick={handleNudge}
+                  disabled={nudgeLoading || justNudged}
+                  className="flex-1 h-[54px] rounded-[18px] bg-[#D9A441] text-[#2B201B] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
+                >
+                  <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
+                </button>
+                <button
+                  onClick={handleRequestBill}
+                  disabled={billLoading}
+                  className="flex-1 h-[54px] rounded-[18px] border-2 border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-50/80 dark:bg-transparent text-base font-bold disabled:opacity-50 active:scale-[0.98] transition-all"
+                >
+                  {billLoading ? "..." : "My bill"}
+                </button>
               </div>
-              <span className="text-sm font-black">{fmt(cartTotal)}</span>
-            </button>
+            )}
+            {cartCount > 0 && (
+              <button
+                onClick={() => setCartOpen(!cartOpen)}
+                className="h-[60px] rounded-[20px] bg-brand-500 text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-brand-500/25 active:scale-[0.98] transition-all"
+              >
+                <span className="flex items-center gap-2"><ShoppingBag size={18} /> Send order · {cartCount} {cartCount === 1 ? "item" : "items"}</span>
+                <span>{fmt(cartTotal)}</span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1641,7 +1594,7 @@ export default function CustomerMenu() {
             <button
               onClick={handlePlaceOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-500/30"
             >
               {orderLoading ? (
                 <>
@@ -1744,7 +1697,7 @@ export default function CustomerMenu() {
             <button
               onClick={handlePlaceOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-brand-500/30"
             >
               {orderLoading ? (
                 <>
