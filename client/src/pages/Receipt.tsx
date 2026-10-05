@@ -225,7 +225,7 @@ export default function Receipt() {
         {/* ─── Payment section ─────────────────────────────────────── */}
 
         {/* IDLE — show pay button */}
-        {paymentState !== "idle" && (
+        {paymentState === "idle" && (
           <div className="mx-6 mb-6 space-y-3">
             <button
               onClick={() => setPaymentState("entering_phone")}
