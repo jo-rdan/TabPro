@@ -3,6 +3,7 @@
 Keep this short and current. The bot and interactive sessions both update it.
 
 ## Now
+- **Rebrand in progress: TabPro → Skuzi** (decided 2026-10-05, mockups approved: https://claude.ai/artifact/VzVgGeyoc3b4bVaYpmPRV1). Until it ships, the bot must NOT change UI, colours, copy or branding, and must skip the "design polish" step. Bug fixes only. Waiting on Jordan's new domain.
 - Launch outreach starts **2026-10-06**: Jordan contacts his cousin (Kigali food content
   creator) for warm intros, then pitches the first venue, **Bichu Lounge**.
 - pawaPay production is **not approved yet**: Jordan sends the bank document on Mon 2026-10-05.
@@ -17,7 +18,7 @@ Keep this short and current. The bot and interactive sessions both update it.
 ## Up next
 - [ ] Tips by MoMo straight to the waiter (interactive; build once pawaPay production is approved)
 - [ ] Real food photos for Demo Lounge menu (needs photos from Jordan or approved free images)
-- [ ] Design polish of the customer bill and payment screens (bot-ok, small safe changes only)
+- [ ] Design polish of the customer bill and payment screens (on hold until the Skuzi rebrand ships)
 
 ## Done recently (2026-10-05)
 - Error log in the database (`error_logs` table, PR #32).
