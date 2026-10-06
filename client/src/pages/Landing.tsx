@@ -358,12 +358,12 @@ function OneMoreRound() {
       <div className="pointer-events-none absolute -left-32 top-10 h-96 w-96 rounded-full bg-[#D9A441]/20 blur-3xl" />
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2">
         <Reveal>
-          <Eyebrow>Do the maths</Eyebrow>
+          <Eyebrow>The hidden cost</Eyebrow>
           <h2 className="mt-4 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] sm:text-6xl">
-            What's one more round worth?
+            How much are you losing to <span className="text-[var(--rust-ink)]">slow service?</span>
           </h2>
           <p className="mt-5 max-w-lg text-[18px] leading-relaxed text-[var(--body)]">
-            When guests can't get a waiter's attention, they simply stop ordering. Move the sliders to see what just one extra round per table could mean for you.
+            Every time a guest gives up waving and stops ordering, that round is gone for good. It never shows up in your till, so you never see it. Move the sliders and see what slips away.
           </p>
         </Reveal>
         <Reveal delay={120}>
@@ -374,12 +374,20 @@ function OneMoreRound() {
               <Slider label="Nights open each month" value={nights} min={4} max={30} step={1} onChange={setNights} format={(v) => `${v}`} />
             </div>
             <div className="mt-8 rounded-[24px] bg-[#2B201B] p-6 text-[#F4EDE3] dark:bg-[#1C1511]">
-              <p className="text-[14px] text-[#D8CBBF]">One more round per table, every night, adds up to</p>
-              <p className="mt-1 font-display text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[52px]">
-                {fmt(extra)} <span className="text-[18px] text-[#D9A441]">RWF a month</span>
+              <p className="text-[14px] text-[#D8CBBF]">If each table misses just <b className="text-[#F4EDE3]">one round</b> a night, you lose</p>
+              <p className="mt-1 font-display text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#E08A6A] sm:text-[52px]">
+                −{fmt(extra)} <span className="text-[18px] text-[#D8CBBF]">RWF a month</span>
+              </p>
+              <p className="mt-3 border-t border-white/10 pt-3 text-[14px] text-[#D8CBBF]">
+                That's <b className="text-[#F4EDE3] tabular-nums">{fmt(extra * 12)} RWF</b> a year your guests wanted to spend.
               </p>
             </div>
-            <p className="mt-4 text-[12.5px] text-[var(--muted)]">An example to help you think, not a promise of sales.</p>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[12.5px] text-[var(--muted)]">An example to help you think, not exact figures.</p>
+              <button onClick={openBookDemo} className="inline-flex items-center gap-1.5 text-[14px] font-extrabold text-[var(--rust-ink)] hover:underline underline-offset-4">
+                Stop losing rounds <ArrowRight size={15} />
+              </button>
+            </div>
           </div>
         </Reveal>
       </div>
