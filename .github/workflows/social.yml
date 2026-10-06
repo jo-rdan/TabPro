@@ -1,0 +1,31 @@
+# Posting robot: sends the next 3 days of Skuzi's posts (social/queue.json) to Buffer,
+# which publishes them on Instagram. Runs every morning, and whenever the plan changes.
+name: Social posts
+on:
+  schedule:
+    - cron: "0 5 * * *"   # every day at 05:00 UTC (07:00 Kigali)
+  push:
+    branches: [main]
+    paths: ["social/queue.json", "client/public/social/**"]
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency: { group: social, cancel-in-progress: false }
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Queue posts in Buffer
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: node social/post.mjs
+      - name: Remember what was sent
+        if: always()
+        run: |
+          git config user.name "skuzi-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add social/sent.json
+          git diff --cached --quiet || (git commit -m "Social: queued posts in Buffer [skip ci]" && git pull --rebase -q && git push)
