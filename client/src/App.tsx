@@ -31,6 +31,7 @@ import CustomerMenu from "./pages/customer/Menu";
 // Shared
 import Receipt from "./pages/Receipt";
 import Landing from "./pages/Landing";
+import Waitlist from "./pages/Waitlist";
 
 export default function App() {
   const { init } = useThemeStore();
@@ -160,6 +161,7 @@ export default function App() {
         <Route path="/terms.html" element={null} />
 
         {/* Public homepage + catch-all */}
+        <Route path="/waitlist" element={<Waitlist />} />
         <Route path="/" element={<Landing />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

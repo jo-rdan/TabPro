@@ -559,6 +559,9 @@ export const demoRequests = pgTable("demo_requests", {
   phone: text("phone").notNull(),
   area: text("area"),
   bestTime: text("best_time"),
+  // 'demo' = asked for a demo; 'waitlist' = owner joined the launch waitlist
+  source: text("source").default("demo").notNull(),
+  venueType: text("venue_type"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
