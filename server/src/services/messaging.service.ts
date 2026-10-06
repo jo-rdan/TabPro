@@ -4,7 +4,7 @@
  * Required env vars for SMS (optional — invite still works without them):
  *   AT_USERNAME   your Africa's Talking username
  *   AT_API_KEY    your Africa's Talking API key
- *   AT_SENDER_ID  (optional) shortcode or alphanumeric sender e.g. TabPro
+ *   AT_SENDER_ID  (optional) shortcode or alphanumeric sender e.g. Skuzi
  */
 
 const AT_SMS_URL = 'https://api.africastalking.com/version1/messaging';
@@ -33,7 +33,7 @@ export async function sendInviteSms(
 
   const to = formatRwandaPhone(phone);
   const message =
-    `Hi ${staffName}! You've been invited to TabPro. ` +
+    `Hi ${staffName}! You've been invited to Skuzi. ` +
     `Tap this link to set up your waiter account: ${inviteUrl}`;
 
   const params = new URLSearchParams({
@@ -72,7 +72,7 @@ export async function sendInviteSms(
 export function buildWhatsAppLink(phone: string, staffName: string, inviteUrl: string): string {
   const to = formatRwandaPhone(phone).replace('+', '');
   const text = encodeURIComponent(
-    `Hi ${staffName}! You've been invited to TabPro. ` +
+    `Hi ${staffName}! You've been invited to Skuzi. ` +
     `Tap this link to set up your waiter account: ${inviteUrl}`
   );
   return `https://wa.me/${to}?text=${text}`;

@@ -1,11 +1,12 @@
 import { db } from '../lib/db';
-import { tabs, orders, orderItems, tables, ratings, staff, staffPoints } from '../models/schema';
-import { eq, and, gte, sql, desc } from 'drizzle-orm';
+import { tabs, orders, orderItems, tables, ratings, staff, staffPoints, momoPayments } from '../models/schema';
+import { eq, and, gte, lt, sql, desc, inArray } from 'drizzle-orm';
+import { nightStart, nightStartOf } from './tonight.service';
 
+// "Tonight" for a bar runs 06:00 to 06:00 Kigali time, so a 01:00 payment
+// still counts for the evening it belongs to.
 function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return nightStart();
 }
 
 export async function getDashboardStats(venueId: string) {
@@ -63,14 +64,18 @@ export async function getDashboardStats(venueId: string) {
   return { revenueTonight, activeTables, pendingOrders, avgRatingToday, ratingCount: todayRatings.length };
 }
 
-export async function getActivityLog(venueId: string, limit = 100) {
+// One night of bills (tonight by default, or any past night as "YYYY-MM-DD"),
+// each with how it was paid and whether the owner's payout arrived.
+export async function getActivityLog(venueId: string, limit = 100, night?: string) {
   const venueTables = await db.query.tables.findMany({
     where: eq(tables.venueId, venueId),
   });
   const tableIds = venueTables.map((t) => t.id);
+  const start = night ? nightStartOf(night) : startOfToday();
+  const end = new Date(start.getTime() + 24 * 60 * 60_000);
 
   const allTabs = await db.query.tabs.findMany({
-    where: gte(tabs.openedAt, startOfToday()),
+    where: and(gte(tabs.openedAt, start), lt(tabs.openedAt, end)),
     with: {
       table: true,
       orders: {
@@ -81,9 +86,32 @@ export async function getActivityLog(venueId: string, limit = 100) {
     orderBy: [desc(tabs.openedAt)],
   });
 
-  return allTabs
-    .filter((t) => tableIds.includes(t.tableId))
+  const venueTabs = allTabs.filter((t) => tableIds.includes(t.tableId));
+  const payments = venueTabs.length
+    ? await db.query.momoPayments.findMany({
+        // 'demo' = the pitch venue's simulated payments, shown exactly like real ones
+        where: and(inArray(momoPayments.tabId, venueTabs.map((t) => t.id)), inArray(momoPayments.type, ['tab', 'demo']), eq(momoPayments.status, 'successful')),
+      })
+    : [];
+  const paymentByTab = new Map(payments.map((p) => [p.tabId, p]));
+
+  return venueTabs
     .map((tab) => ({
+      payment: (() => {
+        const p = paymentByTab.get(tab.id);
+        if (p) {
+          const demo = p.type === 'demo';
+          return {
+            method: 'momo' as const,
+            amountRwf: p.amountRwf,
+            payoutRwf: demo ? p.amountRwf - Math.round(p.amountRwf * 0.08) : p.venuePayoutRwf,
+            // 'successful' = on the owner's MoMo; 'failed' is retried automatically
+            payoutStatus: (demo ? 'successful' : p.disbursementStatus ?? 'pending') as 'pending' | 'successful' | 'failed',
+            paidAt: p.resolvedAt ?? p.createdAt,
+          };
+        }
+        return tab.status === 'closed' ? { method: 'other' as const } : null;
+      })(),
       tabId: tab.id,
       tableLabel: tab.table.label,
       tabStatus: tab.status,

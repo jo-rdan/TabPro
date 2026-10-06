@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues } from '../models/schema';
+import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff } from '../models/schema';
 import { eq, and, like, inArray } from 'drizzle-orm';
 import { getTableByQrCode } from './qr.service';
 import { findOrCreateCustomer } from './customer.service';
@@ -37,6 +37,13 @@ async function findUnsettledTab(tableId: string) {
   return tab;
 }
 
+// The guest sees their waiter's first name ("Eric is your waiter"), nothing else.
+async function waiterFor(staffId: string | null) {
+  if (!staffId) return null;
+  const member = await db.query.staff.findFirst({ where: eq(staff.id, staffId) });
+  return member ? { name: member.name.split(' ')[0] } : null;
+}
+
 // Tells the venue's screens that guests just sat down and opened a tab.
 function announceTabOpened(venueId: string, tab: { id: string; tableId: string; staffId: string | null }, tableLabel: string) {
   broadcastToVenue(venueId, {
@@ -59,7 +66,7 @@ function announceTabOpened(venueId: string, tab: { id: string; tableId: string; 
 
 export async function openTab(qrCode: string, phone: string, name?: string) {
   const table = await getTableByQrCode(qrCode);
-  if (!table) throw new Error("This table isn't set up in TabPro yet. Please ask a waiter.");
+  if (!table) throw new Error("This table isn't set up in Skuzi yet. Please ask a waiter.");
   if (!table.venue) throw new Error('Venue not found');
 
   const existingTab = await findUnsettledTab(table.id);
@@ -73,6 +80,7 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
       isExisting: true,
       venue: publicVenue(table.venue),
       table: { id: table.id, label: table.label },
+      waiter: await waiterFor(existingTab.staffId),
       customer,
       menuGrouped: grouped,
     };
@@ -103,6 +111,7 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
     isExisting: false,
     venue: publicVenue(table.venue),
     table: { id: table.id, label: table.label },
+    waiter: await waiterFor(tab.staffId),
     customer,
     menuGrouped: grouped,
   };
@@ -120,7 +129,7 @@ export async function openTabByTableId(tableId: string, phone?: string) {
   // Re-use existing unsettled tab if there is one
   const existingTab = await findUnsettledTab(tableId);
   if (existingTab) {
-    return { tab: existingTab, isExisting: true, venue: publicVenue(table.venue), table: { id: table.id, label: table.label } };
+    return { tab: existingTab, isExisting: true, venue: publicVenue(table.venue), table: { id: table.id, label: table.label }, waiter: await waiterFor(existingTab.staffId) };
   }
 
   // Walk-in: use provided phone or a placeholder
@@ -149,7 +158,7 @@ export async function openTabByTableId(tableId: string, phone?: string) {
   // Track return visit for campaign analytics (fire-and-forget)
   trackReturnVisit(table.venue.id, customer.id).catch(() => {});
 
-  return { tab, isExisting: false, venue: publicVenue(table.venue), table: { id: table.id, label: table.label } };
+  return { tab, isExisting: false, venue: publicVenue(table.venue), table: { id: table.id, label: table.label }, waiter: await waiterFor(tab.staffId) };
 }
 
 export async function getTab(tabId: string) {
@@ -341,7 +350,7 @@ export async function closeTab(tabId: string, { paidByMomo = false }: { paidByMo
     await sendPushToOwner(
       tab.table.venueId,
       `🧾 ${tab.table.label} closed${total ? ` · ${total.toLocaleString('en-US')} RWF` : ''}`,
-      'Closed by staff (paid in cash or outside TabPro)',
+      'Closed by staff (paid in cash or outside Skuzi)',
     );
   }
 

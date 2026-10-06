@@ -190,7 +190,7 @@ export async function sendPushToOwner(
   await send(await ownerSubs(venueId), title, body, OWNER_URL, data);
 }
 
-// ─── TabPro's own team (the founder) ─────────────────────────────────────────
+// ─── Skuzi's own team (the founder) ─────────────────────────────────────────
 // Website leads go to the owner account named by ADMIN_EMAIL, on every device
 // where that account turned on notifications.
 export async function notifyAdmin(title: string, body: string) {

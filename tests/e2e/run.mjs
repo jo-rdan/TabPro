@@ -75,11 +75,21 @@ async function newOwner(name) {
 // ── 1. Setup ─────────────────────────────────────────────────────────────────
 console.log('\n── Setup');
 const ownerTok = await newOwner('Owner');
-let r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali' }, ownerTok);
+let r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', acceptTerms: true }, ownerTok);
 check('Venue without payout number is refused', r.status === 400, r.json?.error);
-r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000' }, ownerTok);
+r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: false }, ownerTok);
+check('Venue with "I agree" unticked is refused', r.status === 400 && /terms/i.test(r.json?.error ?? ''), r.json?.error);
+{ // The old TabPro site doesn't send acceptTerms: the venue is made, no agreement recorded
+  const oldSiteTok = await newOwner('Old site owner');
+  const o = await call('POST', '/venues', { name: 'Old Site Bar', momoPhone: '0788 000 001' }, oldSiteTok);
+  check('Old site can still create a venue (terms asked later, in the app)', o.status === 201 && !o.json?.data?.termsVersion, `termsVersion ${o.json?.data?.termsVersion}`);
+}
+r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: true }, ownerTok);
 check('Owner creates venue', r.status === 201, `payout number stored as ${r.json?.data?.momoPhone}`);
 const venueId = r.json?.data?.id;
+check('Agreeing to the terms is recorded (version, time, name)', r.json?.data?.termsVersion === 1 && !!r.json?.data?.termsAcceptedAt && r.json?.data?.termsAcceptedBy === 'Owner', `v${r.json?.data?.termsVersion} by ${r.json?.data?.termsAcceptedBy}`);
+r = await call('GET', '/auth/me', null, ownerTok);
+check('App knows which terms version is current', r.json?.data?.currentTermsVersion === 1 && r.json?.data?.name === 'Owner', `v${r.json?.data?.currentTermsVersion}`);
 
 const codes = [rnd() + rnd(), rnd() + rnd(), rnd() + rnd()];
 for (const [i, c] of codes.entries()) {
@@ -173,6 +183,8 @@ check('Socket without login or tab is refused', !!anonWs.closed, anonWs.closed);
 
 r = await call('GET', `/dashboard/stats/${venueId}`, null, ownerTok);
 check('Dashboard revenue = 6,800', r.json?.data?.revenueTonight === 6800, `revenueTonight=${r.json?.data?.revenueTonight}`);
+r = await call('GET', `/dashboard/tonight/${venueId}`, null, ownerTok);
+check("Tonight's money for the chart & coin jar = 6,800", r.json?.data?.total === 6800 && r.json?.data?.hourly?.at(-1)?.cumulative === 6800, `total=${r.json?.data?.total}`);
 for (const p of ['report', 'busy-hours', 'activity']) {
   r = await call('GET', `/dashboard/${p}/${venueId}`, null, ownerTok);
   check(`Owner ${p} works`, r.status === 200);
@@ -234,6 +246,20 @@ for (let i = 0; i < 26 && !retried; i++) {
   if (po) retried = { po, s: p.s };
 }
 check('Failed payout retried automatically', retried?.po?.amount === '3680' && retried.s === 'pending', retried ? `${retried.po.amount} RWF` : 'no retry');
+
+// History: MoMo bills show their payout; any past night can be opened.
+r = await call('GET', `/dashboard/activity/${venueId}`, null, ownerTok);
+const momoBills = (r.json?.data ?? []).filter((t) => t.payment?.method === 'momo');
+check('History shows MoMo bills with their payout', momoBills.length >= 1 && momoBills.every((t) => ['pending', 'successful', 'failed'].includes(t.payment.payoutStatus) && t.payment.amountRwf > 0), `${momoBills.length} MoMo bills`);
+r = await call('GET', `/dashboard/activity/${venueId}?night=2026-01-01`, null, ownerTok);
+check('History opens a past night', r.status === 200 && Array.isArray(r.json?.data) && r.json.data.length === 0, `status ${r.status}`);
+r = await call('GET', `/dashboard/activity/${venueId}?night=yesterday`, null, ownerTok);
+check('History refuses a badly written date', r.status === 400, `status ${r.status}`);
+const thisMonth = new Date(Date.now() + 2 * 3600e3 - 6 * 3600e3).toISOString().slice(0, 7);
+r = await call('GET', `/dashboard/nights/${venueId}?month=${thisMonth}`, null, ownerTok);
+check('Calendar shows this month\'s nights with their sales', r.status === 200 && (r.json?.data?.nights ?? []).some((n) => n.total > 0 && n.bills > 0), `${r.json?.data?.nights?.length} nights`);
+r = await call('GET', `/dashboard/nights/${venueId}?month=2026-13`, null, ownerTok);
+check('Calendar refuses a month that doesn\'t exist', r.status === 400, `status ${r.status}`);
 
 r = await call('POST', '/tabs/open', { qrCode: codes[2], phone: '0788121212' });
 const t6 = r.json?.data?.tab?.id;
@@ -487,13 +513,21 @@ for (let i = 0; i < 5; i++) await call('POST', '/demo-requests', { name: 'Spam',
 r = await call('POST', '/demo-requests', { name: 'Spam', venueName: 'Spam bar', phone: '0788000000' });
 check('Demo form blocks spam bursts', r.status === 429, `status ${r.status}`);
 
+// Owners who joined before agree once in the app; old versions are refused.
+r = await call('POST', `/venues/${venueId}/terms`, { version: 0 }, ownerTok);
+check('Agreeing to an old version of the terms is refused', r.status === 400, `status ${r.status}`);
+r = await call('POST', `/venues/${venueId}/terms`, { version: 1 }, ownerTok);
+check('Owner can agree to the current terms in the app', r.status === 200 && r.json?.data?.termsVersion === 1, `status ${r.status}`);
+
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');
-for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff list', `/staff/${venueId}`], ['orders', `/orders/venue/${venueId}`], ['ratings', `/ratings/leaderboard/${venueId}`], ['shifts', `/shifts/${venueId}`]]) {
+for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff list', `/staff/${venueId}`], ['orders', `/orders/venue/${venueId}`], ['ratings', `/ratings/leaderboard/${venueId}`], ['shifts', `/shifts/${venueId}`], ["tonight's money", `/dashboard/tonight/${venueId}`], ['history calendar', `/dashboard/nights/${venueId}?month=2026-10`]]) {
   r = await call('GET', path, null, rivalTok);
   check(`Another owner CANNOT read my ${name}`, r.status === 403, `status ${r.status}`);
 }
+r = await call('POST', `/venues/${venueId}/terms`, { version: 1 }, rivalTok);
+check('Another owner CANNOT agree to terms for my venue', r.status === 403, `status ${r.status}`);
 r = await call('POST', '/menu', { venueId, items: [{ name: 'Free beer', category: 'Drinks', priceRwf: 1 }] }, rivalTok);
 check('Another owner CANNOT edit my menu', r.status === 403);
 r = await call('PATCH', `/menu/items/${item('Primus').id}`, { priceRwf: 1 }, rivalTok);
@@ -511,7 +545,7 @@ for (let i = 0; i < 5; i++) await call('POST', '/staff/login', { phone: waiterPh
 r = await call('POST', '/staff/login', { phone: waiterPhone, pin: '1234' });
 check('PIN guessing locked out after 5 tries', r.status === 400 && /Too many/.test(r.json?.error ?? ''), r.json?.error);
 const owner2Tok = await newOwner('Owner 2');
-r = await call('POST', '/venues', { name: 'Other Bar', momoPhone: '0789000000' }, owner2Tok);
+r = await call('POST', '/venues', { name: 'Other Bar', momoPhone: '0789000000', acceptTerms: true }, owner2Tok);
 const venue2 = r.json?.data?.id;
 r = await call('POST', '/staff', { venueId: venue2, name: 'Alice', phone: waiterPhone }, owner2Tok);
 check('Same waiter can join a second venue', r.status === 201 && r.json?.data?.staff?.venueId === venue2);
