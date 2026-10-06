@@ -32,9 +32,9 @@ export async function createDemoRequest(input: { name: string; venueName: string
   const emailed = isEmailConfigured()
     ? await sendEmail({
         subject: title,
-        text: `New demo request from tabpro.lol\n\n${rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('\n')}`,
+        text: `New demo request from the Skuzi website\n\n${rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('\n')}`,
         html: `<div style="font-family:system-ui,sans-serif;font-size:15px;color:#11201a">
-  <p style="margin:0 0 12px"><b>New demo request</b> from tabpro.lol</p>
+  <p style="margin:0 0 12px"><b>New demo request</b> from the Skuzi website</p>
   <table style="border-collapse:collapse">${rows
     .filter(([, v]) => v)
     .map(([k, v]) => `<tr><td style="padding:4px 16px 4px 0;color:#5b6b64">${k}</td><td style="padding:4px 0"><b>${esc(v!)}</b></td></tr>`)
