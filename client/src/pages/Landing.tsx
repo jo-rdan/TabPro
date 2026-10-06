@@ -198,35 +198,38 @@ const PAINS = [
 ];
 
 function PainSwitch() {
+  // Opens on the problems and stays there: owners need time to recognise their
+  // own Friday night. "With Skuzi" glows until they tap it.
   const [fixed, setFixed] = useState(false);
-  const { ref, inView } = useInView<HTMLDivElement>(0.35);
-  // Flip once on its own, so nobody misses the "after".
-  useEffect(() => {
-    if (!inView) return;
-    const t = setTimeout(() => setFixed(true), 3200);
-    return () => clearTimeout(t);
-  }, [inView]);
+  const [tried, setTried] = useState(false);
+  const { ref } = useInView<HTMLDivElement>(0.35);
   return (
     <section className="bg-[var(--bg)] py-24 sm:py-32">
       <div ref={ref} className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal className="mx-auto max-w-3xl text-center">
           <Eyebrow>Sound familiar?</Eyebrow>
           <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-            Friday night. Full house. <span className="text-[var(--rust-ink)]">And then…</span>
+            Friday night, full house, <span className="text-[var(--rust-ink)]">and then…</span>
           </h2>
         </Reveal>
 
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex flex-col items-center gap-2">
           <button
-            onClick={() => setFixed((f) => !f)}
+            onClick={() => { setFixed((f) => !f); setTried(true); }}
             role="switch"
             aria-checked={fixed}
             className="relative grid grid-cols-2 rounded-full bg-[var(--card)] p-1.5 text-[15px] font-bold ring-1 ring-[var(--line)]"
           >
             <span className={`absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-full transition-transform duration-500 ${fixed ? "translate-x-full bg-[#5E7A55]" : "bg-[#2B201B] dark:bg-[#463A32]"}`} />
             <span className={`relative z-10 px-5 py-2.5 transition-colors sm:px-6 ${fixed ? "text-[var(--muted)]" : "text-[#F4EDE3]"}`}>Without Skuzi</span>
-            <span className={`relative z-10 px-5 py-2.5 transition-colors sm:px-6 ${fixed ? "text-[#F4EDE3]" : "text-[var(--muted)]"}`}>With Skuzi</span>
+            <span className={`relative z-10 px-5 py-2.5 transition-colors sm:px-6 ${fixed ? "text-[#F4EDE3]" : "text-[#5E7A55] dark:text-[#A9BE9F]"}`}>
+              {!tried && <span className="sk-nudge absolute inset-0 rounded-full bg-[#5E7A55]/20 ring-2 ring-[#5E7A55]/40" aria-hidden />}
+              <span className="relative">With Skuzi</span>
+            </span>
           </button>
+          <p className={`text-[13px] font-semibold text-[var(--muted)] transition-opacity duration-300 ${tried ? "opacity-0" : "opacity-100"}`} aria-hidden={tried}>
+            Tap <b className="text-[#5E7A55] dark:text-[#A9BE9F]">With Skuzi</b> to fix it ↑
+          </p>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -711,11 +714,13 @@ const STYLES = `
 @keyframes sk-spin { to { transform: rotate(360deg) } }
 .sk-spin { animation: sk-spin 18s linear infinite; transform-origin: 50% 50%; }
 button:hover > .sk-spin { animation-duration: 6s; }
+@keyframes sk-nudge { 0%,100% { opacity: .2; transform: scale(.94) } 50% { opacity: 1; transform: scale(1.04) } }
+.sk-nudge { animation: sk-nudge 1.8s ease-in-out infinite; }
 @keyframes sk-ping { 75%, 100% { transform: scale(2.4); opacity: 0 } }
 .sk-ping { animation: sk-ping 1.8s cubic-bezier(0,0,.2,1) infinite; }
 @media (prefers-reduced-motion: reduce) {
   .sk-reveal { opacity: 1; transform: none; transition: none; }
-  .sk-float, .sk-float-slow, .sk-wave, .sk-buzz, .sk-tapme, .sk-scanline, .sk-shine::after, .sk-progress, .sk-spin, .sk-ping, .sk-cell-now { animation: none; }
+  .sk-float, .sk-float-slow, .sk-wave, .sk-buzz, .sk-tapme, .sk-scanline, .sk-shine::after, .sk-progress, .sk-spin, .sk-ping, .sk-nudge, .sk-cell-now { animation: none; }
   .sk-swoosh path, .sk-draw { animation: none; stroke-dasharray: none; }
 }
 `;
