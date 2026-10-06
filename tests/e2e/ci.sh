@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 yarn -s build
 (cd server && npx drizzle-kit migrate >/dev/null)
-(cd server && PORT=3099 CLIENT_URL=http://localhost:5199 \
+(cd server && PORT=3099 CLIENT_URL=http://localhost:5199 EXTRA_CLIENT_ORIGINS=http://localhost:5198 \
   PAWAPAY_API_TOKEN=fake-test-token PAWAPAY_BASE_URL=http://localhost:3098 \
   NODE_TLS_REJECT_UNAUTHORIZED=0 VAPID_PUBLIC_KEY=BN1WjYdFaRJGeLI_bwwEqPGyyki_umEOR7ys5wA1dilR_50BUGE5NU6yTjCXRHaBs1m0GNPJ0UjDzoKozLWKGyc VAPID_PRIVATE_KEY=U654T5SlyDptUP8iTr6udaHtzRwYPQOPX1oSUzBl7Tk \
   exec node dist/app.js > /tmp/tabpro-ci-server.log 2>&1) &

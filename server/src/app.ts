@@ -12,6 +12,7 @@ import { initWebSocket } from './lib/websocket';
 import routes from './routes/index';
 import { errorMiddleware } from './middleware/error.middleware';
 import { logError } from './lib/errorLog';
+import { allowedOrigins } from './lib/origins';
 
 dotenv.config();
 
@@ -22,16 +23,8 @@ const PORT = process.env.PORT || 3001;
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
-// CLIENT_URL is the site's main address (used in links we generate).
-// EXTRA_CLIENT_ORIGINS lists other addresses serving the same site, comma
-// separated — e.g. the onrender.com address and www. while moving domains.
-const allowedOrigins = [process.env.CLIENT_URL || 'http://localhost:5173',
-  ...(process.env.EXTRA_CLIENT_ORIGINS || '').split(',')]
-  .map((o) => o.trim().replace(/\/$/, ''))
-  .filter(Boolean);
-
 app.use(cors({
-  origin: allowedOrigins,
+  origin: allowedOrigins(),
   credentials: true,
 }));
 
