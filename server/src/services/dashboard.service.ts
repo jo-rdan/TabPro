@@ -89,7 +89,8 @@ export async function getActivityLog(venueId: string, limit = 100, night?: strin
   const venueTabs = allTabs.filter((t) => tableIds.includes(t.tableId));
   const payments = venueTabs.length
     ? await db.query.momoPayments.findMany({
-        where: and(inArray(momoPayments.tabId, venueTabs.map((t) => t.id)), eq(momoPayments.type, 'tab'), eq(momoPayments.status, 'successful')),
+        // 'demo' = the pitch venue's simulated payments, shown exactly like real ones
+        where: and(inArray(momoPayments.tabId, venueTabs.map((t) => t.id)), inArray(momoPayments.type, ['tab', 'demo']), eq(momoPayments.status, 'successful')),
       })
     : [];
   const paymentByTab = new Map(payments.map((p) => [p.tabId, p]));
@@ -99,12 +100,13 @@ export async function getActivityLog(venueId: string, limit = 100, night?: strin
       payment: (() => {
         const p = paymentByTab.get(tab.id);
         if (p) {
+          const demo = p.type === 'demo';
           return {
             method: 'momo' as const,
             amountRwf: p.amountRwf,
-            payoutRwf: p.venuePayoutRwf,
+            payoutRwf: demo ? p.amountRwf - Math.round(p.amountRwf * 0.08) : p.venuePayoutRwf,
             // 'successful' = on the owner's MoMo; 'failed' is retried automatically
-            payoutStatus: (p.disbursementStatus ?? 'pending') as 'pending' | 'successful' | 'failed',
+            payoutStatus: (demo ? 'successful' : p.disbursementStatus ?? 'pending') as 'pending' | 'successful' | 'failed',
             paidAt: p.resolvedAt ?? p.createdAt,
           };
         }
