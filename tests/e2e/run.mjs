@@ -77,8 +77,13 @@ console.log('\n── Setup');
 const ownerTok = await newOwner('Owner');
 let r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', acceptTerms: true }, ownerTok);
 check('Venue without payout number is refused', r.status === 400, r.json?.error);
-r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000' }, ownerTok);
-check('Venue without "I agree" to the terms is refused', r.status === 400 && /terms/i.test(r.json?.error ?? ''), r.json?.error);
+r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: false }, ownerTok);
+check('Venue with "I agree" unticked is refused', r.status === 400 && /terms/i.test(r.json?.error ?? ''), r.json?.error);
+{ // The old TabPro site doesn't send acceptTerms: the venue is made, no agreement recorded
+  const oldSiteTok = await newOwner('Old site owner');
+  const o = await call('POST', '/venues', { name: 'Old Site Bar', momoPhone: '0788 000 001' }, oldSiteTok);
+  check('Old site can still create a venue (terms asked later, in the app)', o.status === 201 && !o.json?.data?.termsVersion, `termsVersion ${o.json?.data?.termsVersion}`);
+}
 r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: true }, ownerTok);
 check('Owner creates venue', r.status === 201, `payout number stored as ${r.json?.data?.momoPhone}`);
 const venueId = r.json?.data?.id;
