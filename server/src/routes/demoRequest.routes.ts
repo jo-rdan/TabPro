@@ -11,6 +11,8 @@ const schema = z.object({
   phone: z.string().trim().regex(/^[+\d][\d\s-]{7,18}$/, 'Please enter a phone number we can call'),
   area: z.string().trim().max(80).optional(),
   bestTime: z.string().trim().max(40).optional(),
+  source: z.enum(['demo', 'waitlist']).optional(),
+  venueType: z.string().trim().max(40).optional(),
 });
 
 // Public form on the website. A small per-address limit keeps bots from spamming.
@@ -34,8 +36,8 @@ router.post('/', async (req: Request, res: Response) => {
     return;
   }
   recent.set(key, [...hits, now]);
-  await createDemoRequest(parsed.data);
-  const body: ApiResponse = { success: true, data: null };
+  const { position } = await createDemoRequest(parsed.data);
+  const body: ApiResponse = { success: true, data: parsed.data.source === 'waitlist' ? { position } : null };
   res.status(201).json(body);
 });
 
