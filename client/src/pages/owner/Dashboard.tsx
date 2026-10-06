@@ -546,10 +546,13 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-        {statCards.map((card) => {
+        {statCards.map((card, i) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
+            <Fragment key={card.label}>
+            {/* Bills left open comes right after the money */}
+            {i === 1 && venue && <OpenBills venueId={venue.id} />}
+            <div className={`bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5 ${i === statCards.length - 1 ? 'col-span-2 lg:col-span-1' : ''}`}>
               <div className="flex items-center justify-between">
                 <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
                 <Icon size={15} className={card.color} />
@@ -560,9 +563,9 @@ export default function Dashboard() {
               </p>
               {card.sub && <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>}
             </div>
+            </Fragment>
           );
         })}
-        {venue && <OpenBills venueId={venue.id} className="col-span-2 lg:col-span-1" />}
       </div>
 
       {/* Money tonight + coin jar */}

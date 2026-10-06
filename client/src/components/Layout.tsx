@@ -118,11 +118,11 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         {/* The venue: big logo and name when open, just the logo when collapsed */}
         {venue && (
           collapsed ? (
-            <div className="flex justify-center pb-2" title={venue.name}>
+            <div className="flex justify-center pb-6" title={venue.name}>
               <LogoUploader venueName={venue.name} currentLogoUrl={venue.logoUrl} onUploaded={saveLogo} size={44} hideButton />
             </div>
           ) : (
-            <div className="mx-3 rounded-2xl bg-gray-50 dark:bg-[#231A16] border border-gray-100 dark:border-gray-800 px-4 pt-4 pb-3 flex flex-col items-center text-center">
+            <div className="mx-3 px-4 pt-2 pb-8 flex flex-col items-center text-center">
               <LogoUploader venueName={venue.name} currentLogoUrl={venue.logoUrl} onUploaded={saveLogo} size={76} />
               <p className="mt-1 font-display text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white break-words max-w-full">
                 {venue.name}
