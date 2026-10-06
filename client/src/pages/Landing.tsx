@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useRef, useState, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, ArrowUpRight, Check, Plus, Minus, Hourglass, HelpCircle, FileX, Moon,
@@ -187,73 +187,136 @@ function Hero() {
 // ─── Pain → fix, with a switch ───────────────────────────────────────────────
 
 const PAINS = [
-  { pain: { icon: Hourglass, title: "The second round never comes.", text: "Guests wave, whistle and wait. Many give up and stop ordering. That's money leaving your bar quietly." },
+  { pain: { icon: Hourglass, title: "The second round never comes.", text: "Guests wave, whistle and wait. Many give up and stop ordering. That's money quietly walking out the door." },
     fix: { icon: Zap, title: "Another round in two taps.", text: "Guests order from their own phone the moment they're thirsty. No catching anyone's eye." } },
   { pain: { icon: HelpCircle, title: "“Did table 6 pay?”", text: "Nobody is sure. Someone checks MoMo messages at the door while guests wait to leave." },
     fix: { icon: BadgeCheck, title: "Paid means paid.", text: "Mobile Money payments are confirmed for you and the bill closes itself. No screenshots, no arguments." } },
   { pain: { icon: FileX, title: "Orders get lost.", text: "A busy waiter, a scrap of paper, a forgotten brochette. The guest is upset and you lose the sale." },
     fix: { icon: Send, title: "Every order reaches the right waiter.", text: "Straight to their phone with the table number. Nothing to write down, nothing to forget." } },
   { pain: { icon: Moon, title: "You find out at closing.", text: "Or the next morning. You can't fix a slow night you couldn't see." },
-    fix: { icon: LineChart, title: "You watch the night as it happens.", text: "Money, tables and waiters on your phone, live, from the bar or from home." } },
+    fix: { icon: LineChart, title: "You watch the night as it happens.", text: "Money, tables and waiters on your phone, live, wherever you are." } },
 ];
 
+// Scroll tells the story: visitors land on the problems, then the Skuzi hand
+// sweeps across and each card flips over to its fix. On computers the section
+// stays pinned while you scroll; on phones each card flips as you reach it.
 function PainSwitch() {
-  // Opens on the problems and stays there: owners need time to recognise their
-  // own Friday night. "With Skuzi" glows until they tap it.
-  const [fixed, setFixed] = useState(false);
-  const [tried, setTried] = useState(false);
-  const { ref } = useInView<HTMLDivElement>(0.35);
-  return (
-    <section className="bg-[var(--bg)] py-24 sm:py-32">
-      <div ref={ref} className="mx-auto max-w-7xl px-5 sm:px-8">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <Eyebrow>Sound familiar?</Eyebrow>
-          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-            Friday night, full house, <span className="text-[var(--rust-ink)]">and then…</span>
-          </h2>
-        </Reveal>
+  const sectionRef = useRef<HTMLElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [progress, setProgress] = useState(0); // 0..1 through the pinned stretch (computers)
+  const [flipped, setFlipped] = useState<boolean[]>([false, false, false, false]);
+  const [wide, setWide] = useState(false);
 
-        <div className="mt-10 flex flex-col items-center gap-2">
-          <button
-            onClick={() => { setFixed((f) => !f); setTried(true); }}
-            role="switch"
-            aria-checked={fixed}
-            className="relative grid grid-cols-2 rounded-full bg-[var(--card)] p-1.5 text-[15px] font-bold ring-1 ring-[var(--line)]"
-          >
-            <span className={`absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-full transition-transform duration-500 ${fixed ? "translate-x-full bg-[#5E7A55]" : "bg-[#2B201B] dark:bg-[#463A32]"}`} />
-            <span className={`relative z-10 px-5 py-2.5 transition-colors sm:px-6 ${fixed ? "text-[var(--muted)]" : "text-[#F4EDE3]"}`}>Without Skuzi</span>
-            <span className={`relative z-10 px-5 py-2.5 transition-colors sm:px-6 ${fixed ? "text-[#F4EDE3]" : "text-[#5E7A55] dark:text-[#A9BE9F]"}`}>
-              {!tried && <span className="sk-nudge absolute inset-0 rounded-full bg-[#5E7A55]/20 ring-2 ring-[#5E7A55]/40" aria-hidden />}
-              <span className="relative">With Skuzi</span>
-            </span>
-          </button>
-          <p className={`text-[13px] font-semibold text-[var(--muted)] transition-opacity duration-300 ${tried ? "opacity-0" : "opacity-100"}`} aria-hidden={tried}>
-            Tap <b className="text-[#5E7A55] dark:text-[#A9BE9F]">With Skuzi</b> to fix it ↑
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onMq = () => setWide(mq.matches);
+    onMq();
+    mq.addEventListener("change", onMq);
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const el = sectionRef.current;
+      if (!el) return;
+      if (mq.matches) {
+        const r = el.getBoundingClientRect();
+        const span = r.height - window.innerHeight;
+        const p = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 1;
+        setProgress(p);
+        setFlipped(FLIP_AT.map((at) => p >= at));
+      } else {
+        // Phones: a card flips once it has risen past 45% of the screen.
+        setFlipped(cardRefs.current.map((c) => !!c && c.getBoundingClientRect().top < window.innerHeight * 0.45));
+      }
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(measure); };
+    measure();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      mq.removeEventListener("change", onMq);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const done = flipped.filter(Boolean).length;
+  const all = done === PAINS.length;
+  // The hand travels from just left of the first card to past the last one.
+  const handX = Math.min(1.06, Math.max(-0.06, (progress - 0.1) / 0.72));
+  const handVisible = wide && progress > 0.06 && progress < 0.9;
+
+  return (
+    <section ref={sectionRef} className="relative bg-[var(--bg)] lg:h-[260vh]">
+      <div className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-center">
+        <div className="mx-auto w-full max-w-7xl px-5 py-24 sm:px-8 lg:py-0 lg:pt-16">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Sound familiar?</Eyebrow>
+            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
+              Friday night, full house,{" "}
+              <span className="relative inline-grid">
+                <span className={`col-start-1 row-start-1 text-[var(--rust-ink)] transition-all duration-500 ${all ? "-translate-y-3 opacity-0" : "opacity-100"}`}>and then…</span>
+                <span className={`col-start-1 row-start-1 text-[#5E7A55] transition-all duration-500 dark:text-[#A9BE9F] ${all ? "opacity-100" : "translate-y-3 opacity-0"}`} aria-hidden={!all}>and Skuzi.</span>
+              </span>
+            </h2>
+          </Reveal>
+
+          {/* Without → With: fills with green as the cards flip */}
+          <div className="mt-8 flex flex-col items-center gap-2" aria-hidden="true">
+            <div className="relative grid w-[300px] grid-cols-2 overflow-hidden rounded-full bg-[var(--card)] p-1.5 text-[14px] font-bold ring-1 ring-[var(--line)]">
+              <span className="absolute inset-y-1.5 left-1.5 rounded-full bg-[#5E7A55] transition-[width] duration-500 ease-out" style={{ width: `calc((100% - 12px) * ${done / PAINS.length})` }} />
+              <span className={`relative z-10 py-2 text-center transition-colors ${done >= 2 ? "text-[#F4EDE3]" : "text-[var(--ink)]"}`}>Without Skuzi</span>
+              <span className={`relative z-10 py-2 text-center transition-colors ${all ? "text-[#F4EDE3]" : "text-[var(--muted)]"}`}>With Skuzi</span>
+            </div>
+            <p className={`text-[13px] font-semibold text-[var(--muted)] transition-opacity duration-500 ${done ? "opacity-0" : "opacity-100"}`}>
+              Keep scrolling <span className="sk-bob inline-block">↓</span>
+            </p>
+          </div>
+
+          <div className="relative mt-8">
+            {/* The Skuzi hand sweeping across the cards (computers) */}
+            <div
+              className="pointer-events-none absolute -top-12 z-20 hidden -translate-x-1/2 transition-opacity duration-300 lg:block"
+              style={{ left: `${handX * 100}%`, opacity: handVisible ? 1 : 0 }}
+              aria-hidden="true"
+            >
+              <span className="sk-wave inline-block drop-shadow-[0_10px_20px_rgba(217,164,65,0.45)]"><Hand size={56} color="#D9A441" /></span>
+            </div>
+            <div className="pointer-events-none absolute -top-2 left-0 z-10 hidden h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#D9A441] to-[#D9A441] lg:block" style={{ width: `${Math.max(0, handX) * 100}%`, opacity: handVisible || all ? 0.8 : 0, transition: "opacity .3s" }} />
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {PAINS.map(({ pain, fix }, i) => (
+                <div key={i} ref={(el) => (cardRefs.current[i] = el)} className="sk-flip-scene">
+                  <div className={`sk-flip-card ${flipped[i] ? "is-flipped" : ""}`}>
+                    <FaceCard side={pain} />
+                    <FaceCard side={fix} fixed />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className={`mt-8 text-center text-[16px] font-semibold text-[var(--body)] transition-opacity duration-500 ${all ? "opacity-100" : "opacity-0"}`}>
+            Skuzi fixes all four, <span className="text-[var(--ink)]">without a single new machine.</span>
           </p>
         </div>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {PAINS.map(({ pain, fix }, i) => {
-            const s = fixed ? fix : pain;
-            const Icon = s.icon;
-            return (
-              <Reveal key={i} delay={i * 80}>
-                <div className={`h-full rounded-[28px] p-7 transition-all duration-500 ${fixed ? "bg-[#2B201B] text-[#F4EDE3] shadow-[0_30px_60px_-30px_rgba(43,32,27,0.6)]" : "bg-[var(--card)] ring-1 ring-[var(--line)]"}`} style={{ transitionDelay: `${i * 70}ms` }}>
-                  <span className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-500 ${fixed ? "bg-[#D9A441] text-[#2B201B]" : "bg-[var(--bg)] text-[var(--muted)]"}`}>
-                    <Icon size={22} />
-                  </span>
-                  <h3 key={s.title} className="sk-fade mt-6 font-display text-[22px] font-bold leading-tight">{s.title}</h3>
-                  <p key={s.text} className={`sk-fade mt-2.5 text-[15px] leading-relaxed ${fixed ? "text-[#D8CBBF]" : "text-[var(--body)]"}`}>{s.text}</p>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
-        <p className="mt-10 text-center text-[16px] font-semibold text-[var(--body)]">
-          Skuzi fixes all four, <span className="text-[var(--ink)]">without a single new machine.</span>
-        </p>
       </div>
     </section>
+  );
+}
+
+const FLIP_AT = [0.22, 0.38, 0.54, 0.7];
+
+function FaceCard({ side, fixed = false }: { side: { icon: typeof Zap; title: string; text: string }; fixed?: boolean }) {
+  const Icon = side.icon;
+  return (
+    <div className={`sk-face h-full rounded-[28px] p-7 ${fixed ? "sk-face-back bg-[#2B201B] text-[#F4EDE3] shadow-[0_30px_60px_-30px_rgba(43,32,27,0.6)]" : "bg-[var(--card)] ring-1 ring-[var(--line)]"}`}>
+      <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${fixed ? "bg-[#D9A441] text-[#2B201B]" : "bg-[var(--bg)] text-[var(--muted)]"}`}>
+        <Icon size={22} />
+      </span>
+      <p className={`mt-5 text-[11px] font-extrabold uppercase tracking-[0.16em] ${fixed ? "text-[#A9BE9F]" : "text-[var(--rust-ink)]"}`}>{fixed ? "With Skuzi" : "Without Skuzi"}</p>
+      <h3 className="mt-1.5 font-display text-[22px] font-bold leading-tight">{side.title}</h3>
+      <p className={`mt-2.5 text-[15px] leading-relaxed ${fixed ? "text-[#D8CBBF]" : "text-[var(--body)]"}`}>{side.text}</p>
+    </div>
   );
 }
 
@@ -423,11 +486,11 @@ function Owners() {
           <div>
             <Eyebrow>For owners</Eyebrow>
             <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-              Your whole bar, <span className="text-[var(--rust-ink)]">in your pocket.</span>
+              Every table, every franc, <span className="text-[var(--rust-ink)]">in your pocket.</span>
             </h2>
           </div>
           <p className="max-w-lg text-[18px] leading-relaxed text-[var(--body)] lg:justify-self-end">
-            Stop guessing. See what's happening on the floor as it happens: the money, the tables, your team and your guests. From behind the bar or across town.
+            Stop guessing. See what's happening on the floor as it happens: the money, the tables, your team and your guests. From behind the counter or across town.
           </p>
         </Reveal>
 
@@ -465,7 +528,7 @@ function Owners() {
                   </div>
                 ))}
               </div>
-              <CardTitle title="Made for how Kigali bars really work" text="Shared tables, busy weekends, cash and MoMo side by side. Skuzi fits in, it doesn't fight you." />
+              <CardTitle title="Made for how Kigali bars and restaurants really work" text="Shared tables, busy weekends, cash and MoMo side by side. Skuzi fits in, it doesn't fight you." />
             </Card>
           </Reveal>
         </div>
@@ -516,7 +579,7 @@ function Pricing() {
               </div>
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {["Skuzi stickers for every table", "Unlimited tables & waiters", "Free setup and training at your bar"].map((t) => (
+              {["Skuzi stickers for every table", "Unlimited tables & waiters", "Free setup and training, on site"].map((t) => (
                 <p key={t} className="flex items-center gap-2 text-[14.5px] text-[#D8CBBF]"><Check size={16} strokeWidth={3} className="flex-shrink-0 text-[#D9A441]" />{t}</p>
               ))}
             </div>
@@ -536,7 +599,7 @@ const FAQS = [
   { q: "What does it cost?", a: "Nothing to set up and no monthly fee. Skuzi keeps 8% of bills paid by Mobile Money through Skuzi. If a guest pays cash, Skuzi takes nothing." },
   { q: "Do I need to buy any equipment?", a: "No. Your waiters use their own phones, you use yours, and we bring the stickers for your tables." },
   { q: "What if some of my waiters don't have a smartphone?", a: "That's fine. Add them anyway: a manager's phone gets their table calls, so no guest is left waiting." },
-  { q: "How do I get started?", a: "Book a free demo. We come to your bar, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
+  { q: "How do I get started?", a: "Book a free demo. We come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
 ];
 
 function Faq() {
@@ -595,7 +658,7 @@ function FinalCta() {
               Make this Friday the easy one.
             </h2>
             <p className="mx-auto mt-6 max-w-lg text-[18px] leading-relaxed text-[#F5E1D7]">
-              Tell us about your bar. We'll come over and set up your menu, tables and team with you, free.
+              Tell us about your place. We'll come over and set up your menu, tables and team with you, free.
             </p>
             <div className="mt-10 flex justify-center">
               <button onClick={openBookDemo} className="sk-shine group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#2B201B] px-8 py-4 text-[16px] font-extrabold text-[#F4EDE3] transition hover:bg-black">
@@ -724,11 +787,20 @@ const STYLES = `
 button:hover > .sk-spin { animation-duration: 6s; }
 @keyframes sk-nudge { 0%,100% { opacity: .2; transform: scale(.94) } 50% { opacity: 1; transform: scale(1.04) } }
 .sk-nudge { animation: sk-nudge 1.8s ease-in-out infinite; }
+/* Flip cards: the problem on the front, the fix on the back */
+.sk-flip-scene { perspective: 1200px; height: 100%; }
+.sk-flip-card { display: grid; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.3,.7,.2,1); }
+.sk-flip-card.is-flipped { transform: rotateY(180deg); }
+.sk-face { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.sk-face-back { transform: rotateY(180deg); }
+@keyframes sk-bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(4px) } }
+.sk-bob { animation: sk-bob 1.4s ease-in-out infinite; }
 @keyframes sk-ping { 75%, 100% { transform: scale(2.4); opacity: 0 } }
 .sk-ping { animation: sk-ping 1.8s cubic-bezier(0,0,.2,1) infinite; }
 @media (prefers-reduced-motion: reduce) {
   .sk-reveal { opacity: 1; transform: none; transition: none; }
-  .sk-float, .sk-float-slow, .sk-wave, .sk-buzz, .sk-tapme, .sk-scanline, .sk-shine::after, .sk-progress, .sk-spin, .sk-ping, .sk-nudge, .sk-cell-now { animation: none; }
+  .sk-float, .sk-float-slow, .sk-wave, .sk-buzz, .sk-tapme, .sk-scanline, .sk-shine::after, .sk-progress, .sk-spin, .sk-ping, .sk-nudge, .sk-bob, .sk-cell-now { animation: none; }
+  .sk-flip-card { transition: none; }
   .sk-swoosh path, .sk-draw { animation: none; stroke-dasharray: none; }
 }
 `;
@@ -740,7 +812,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="sk-site min-h-screen overflow-x-hidden bg-[var(--bg)] font-sans text-[var(--ink)] antialiased selection:bg-[#D9A441] selection:text-[#2B201B]">
+    <div className="sk-site min-h-screen [overflow-x:clip] bg-[var(--bg)] font-sans text-[var(--ink)] antialiased selection:bg-[#D9A441] selection:text-[#2B201B]">
       <style>{STYLES}</style>
       <Nav />
       <main>

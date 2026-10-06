@@ -61,7 +61,7 @@ function VenueHeader({ waiter = "Eric" }: { waiter?: string }) {
   return (
     <div className="rounded-b-[22px] bg-[#2B201B] px-4 pb-4 pt-9 text-[#F4EDE3]">
       <div className="flex items-center justify-between">
-        <p className="font-display text-[16px] font-bold leading-tight">Your Bar</p>
+        <p className="font-display text-[16px] font-bold leading-tight">Your Place</p>
         <span className="rounded-full bg-[#D9A441] px-2 py-0.5 text-[9px] font-extrabold text-[#2B201B]">Table 4</span>
       </div>
       <p className="mt-0.5 text-[10.5px] text-[#D8CBBF]">{waiter} is your waiter</p>
