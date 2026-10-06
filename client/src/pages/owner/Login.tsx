@@ -3,7 +3,7 @@ import GoogleIcon from "../../components/GoogleIcon";
 
 export default function Login() {
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || "/api"}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_API_URL || "/api"}/auth/google?from=${encodeURIComponent(window.location.origin)}`;
   };
 
   return (
