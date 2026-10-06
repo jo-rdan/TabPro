@@ -5,6 +5,7 @@ import {
   Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet,
 } from "lucide-react";
 import AnimatedLogo from "../components/AnimatedLogo";
+import ThemeSwitch, { ThemeCycleButton } from "../components/ThemeSwitch";
 import Wordmark from "../components/Wordmark";
 import BookDemo, { openBookDemo } from "./landing/BookDemo";
 import {
@@ -75,21 +76,24 @@ function Nav() {
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 bg-[#1C1511] transition-all duration-300 ${scrolled ? "py-3 shadow-[0_1px_0_rgba(244,237,227,0.08)]" : "py-5"}`}>
+    <header className={`fixed inset-x-0 top-0 z-50 bg-[var(--hero-bg)] transition-all duration-300 ${scrolled ? "py-3 shadow-[0_1px_0_var(--hero-ring)]" : "py-5"}`}>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8">
         <a href="/" aria-label="Skuzi home" className="flex items-center">
-          <AnimatedLogo size={28} on="dark" bg="#1C1511" />
+          <AnimatedLogo size={28} on="light" bg="#FFFCF7" className="dark:hidden" />
+          <AnimatedLogo size={28} on="dark" bg="#1C1511" className="hidden dark:inline-flex" />
         </a>
-        <div className="hidden items-center gap-1 rounded-full bg-white/[0.04] p-1 ring-1 ring-white/10 md:flex">
+        <div className="hidden items-center gap-1 rounded-full bg-[var(--hero-chip)] p-1 ring-1 ring-[var(--hero-ring)] md:flex">
           {[["How it works", "#tour"], ["For owners", "#owners"], ["Pricing", "#pricing"], ["Questions", "#faq"]].map(([l, h]) => (
-            <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[#D8CBBF] transition hover:bg-white/10 hover:text-[#F4EDE3]">{l}</a>
+            <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[var(--hero-body)] transition hover:bg-[var(--hero-chip)] hover:text-[var(--hero-ink)]">{l}</a>
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[#D8CBBF] transition hover:text-[#F4EDE3] sm:block">
+          <span className="hidden xl:block"><ThemeSwitch /></span>
+          <ThemeCycleButton className="xl:hidden" />
+          <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--hero-body)] transition hover:text-[var(--hero-ink)] sm:block">
             {loggedIn ? "Dashboard" : "Log in"}
           </Link>
-          <button onClick={openBookDemo} className="rounded-full bg-[#D9A441] px-4 py-2 text-[13.5px] font-extrabold text-[#2B201B] transition hover:bg-[#E2BC6E]">
+          <button onClick={openBookDemo} className="rounded-full bg-[var(--cta-bg)] px-4 py-2 text-[13.5px] font-extrabold text-[var(--cta-ink)] transition hover:bg-[var(--cta-hover)]">
             Book a demo
           </button>
         </div>
@@ -108,15 +112,16 @@ function Hero() {
     setTimeout(() => setCalled(false), 5000);
   };
   return (
-    <section className="relative overflow-hidden bg-[#1C1511] pt-32 text-[#F4EDE3] sm:pt-40">
-      <div className="sk-glow pointer-events-none absolute left-1/2 top-[-12%] h-[900px] w-[1400px] -translate-x-1/2" />
-      <div className="sk-pattern pointer-events-none absolute inset-0" />
+    <section className="relative overflow-hidden bg-[var(--hero-bg)] pt-32 text-[var(--hero-ink)] sm:pt-40">
+      <div className="sk-glow pointer-events-none absolute left-1/2 top-[-12%] h-[900px] w-[1400px] -translate-x-1/2" style={{ opacity: "var(--hero-glow)" }} />
+      <div className="sk-pattern pointer-events-none absolute inset-0 hidden dark:block" />
+      <div className="sk-pattern-dark sk-pattern-mask pointer-events-none absolute inset-0 opacity-[0.05] dark:hidden" />
       <div className="sk-grain pointer-events-none absolute inset-0" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.05] py-1 pl-1 pr-3 text-[13px] text-[#D8CBBF] ring-1 ring-white/10">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--hero-chip)] py-1 pl-1 pr-3 text-[13px] text-[var(--hero-body)] ring-1 ring-[var(--hero-ring)]">
               <span className="relative flex h-5 items-center rounded-full bg-[#5E7A55] px-2 text-[11px] font-bold text-[#F4EDE3]">
                 <span className="sk-ping absolute left-1.5 h-2 w-2 rounded-full bg-[#A9BE9F]" />
                 <span className="relative ml-3">Kigali</span>
@@ -129,29 +134,29 @@ function Hero() {
               No more{" "}
               <span className="inline-flex items-baseline">
                 waving
-                <span className="sk-wave ml-2 inline-block translate-y-[0.06em]"><Hand size={64} color="#D9A441" className="h-[0.8em] w-[0.8em]" /></span>
+                <span className="sk-wave ml-2 inline-block translate-y-[0.06em] text-[#D9A441]"><Hand size={64} color="currentColor" className="h-[0.8em] w-[0.8em]" /></span>
               </span>
               <br />
-              for the <Swoosh><span className="text-[#D9A441]">waiter.</span></Swoosh>
+              for the <Swoosh><span className="text-[var(--hero-accent)]">waiter.</span></Swoosh>
             </h1>
           </Reveal>
           <Reveal delay={160}>
-            <p className="mx-auto mt-8 max-w-2xl text-[17px] leading-relaxed text-[#D8CBBF] sm:text-[19px]">
+            <p className="mx-auto mt-8 max-w-2xl text-[17px] leading-relaxed text-[var(--hero-body)] sm:text-[19px]">
               Your guests order, call their waiter and pay with Mobile Money from their own phone.
               You see every table and every franc, even when you're not there.
             </p>
           </Reveal>
           <Reveal delay={240}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button onClick={openBookDemo} className="sk-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[#D9A441] px-7 py-4 text-[16px] font-extrabold text-[#2B201B] shadow-[0_14px_40px_-10px_rgba(217,164,65,0.7)] transition hover:bg-[#E2BC6E] sm:w-auto">
+              <button onClick={openBookDemo} className="sk-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[var(--cta-bg)] px-7 py-4 text-[16px] font-extrabold text-[var(--cta-ink)] shadow-[0_14px_40px_-10px_var(--cta-glow)] transition hover:bg-[var(--cta-hover)] sm:w-auto">
                 Book a free demo
                 <ArrowRight size={18} className="transition group-hover:translate-x-1" />
               </button>
-              <a href="#try" className="inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-[16px] font-bold text-[#F4EDE3] ring-1 ring-white/25 transition hover:bg-white/5 sm:w-auto">
+              <a href="#try" className="inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-[16px] font-bold text-[var(--hero-ink)] ring-1 ring-[var(--hero-ring)] transition hover:bg-[var(--hero-chip)] sm:w-auto">
                 Try it below <span aria-hidden>↓</span>
               </a>
             </div>
-            <p className="mt-6 text-[13px] text-[#A39282]">Free setup · No app to download · No machine to buy</p>
+            <p className="mt-6 text-[13px] text-[var(--hero-muted)]">Free setup · No app to download · No machine to buy</p>
           </Reveal>
         </div>
 
@@ -159,17 +164,17 @@ function Hero() {
         <Reveal delay={320} className="relative mx-auto mt-16 max-w-5xl">
           <div id="try" className="relative flex scroll-mt-28 items-end justify-center">
             <div className="absolute left-0 top-24 hidden lg:block">
-              <p className="mb-3 ml-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#A39282]">You, at home</p>
+              <p className="mb-3 ml-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--hero-muted)]">You, at home</p>
               <div className="sk-float-slow"><TonightCard /></div>
             </div>
             <div className="relative z-10">
-              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[#A39282]">Your guest, at table 4</p>
+              <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--hero-muted)]">Your guest, at table 4</p>
               <PhoneFrame className="h-[560px] w-[292px]">
                 <ScreenMenu onCall={call} called={called} compact />
               </PhoneFrame>
             </div>
             <div className="absolute right-0 top-28 hidden lg:block">
-              <p className="mb-3 ml-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#A39282]">Your waiter</p>
+              <p className="mb-3 ml-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--hero-muted)]">Your waiter</p>
               <div className={called ? "" : "sk-float"}><WaiterCall calling={called} /></div>
             </div>
           </div>
@@ -177,7 +182,7 @@ function Hero() {
           <div className={`absolute inset-x-0 top-40 z-30 flex justify-center transition-all duration-500 lg:hidden ${called ? "opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`}>
             <WaiterCall calling={called} />
           </div>
-          <div className="pointer-events-none absolute inset-x-0 -bottom-px z-20 h-12 bg-gradient-to-t from-[#1C1511] to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 -bottom-px z-20 h-12 bg-gradient-to-t from-[var(--hero-bg)] to-transparent" />
         </Reveal>
       </div>
     </section>
@@ -736,14 +741,15 @@ function Footer() {
 
 // Coffee & imigongo, with light sections that follow the visitor's theme.
 const STYLES = `
-.sk-site { --bg:#F4EDE3; --paper:#FFFFFF; --card:#FFFCF7; --ink:#2B201B; --body:#5C4D44; --muted:#7A6A5F; --line:#E3D6C6; --rust-ink:#9A4129; }
-.dark .sk-site { --bg:#211915; --paper:#1C1511; --card:#2B201B; --ink:#F4EDE3; --body:#D8CBBF; --muted:#A39282; --line:#463A32; --rust-ink:#DCA088; }
+.sk-site { --hero-bg:#FFFCF7; --hero-ink:#2B201B; --hero-body:#5C4D44; --hero-muted:#7A6A5F; --hero-accent:#A64B31; --hero-chip:rgba(43,32,27,.04); --hero-ring:rgba(43,32,27,.12); --hero-glow:.4; --cta-bg:#A64B31; --cta-ink:#F4EDE3; --cta-hover:#933F28; --cta-glow:rgba(166,75,49,.45); --bg:#F4EDE3; --paper:#FFFFFF; --card:#FFFCF7; --ink:#2B201B; --body:#5C4D44; --muted:#7A6A5F; --line:#E3D6C6; --rust-ink:#9A4129; }
+.dark .sk-site { --hero-bg:#1C1511; --hero-ink:#F4EDE3; --hero-body:#D8CBBF; --hero-muted:#A39282; --hero-accent:#D9A441; --hero-chip:rgba(255,255,255,.05); --hero-ring:rgba(255,255,255,.10); --hero-glow:1; --cta-bg:#D9A441; --cta-ink:#2B201B; --cta-hover:#E2BC6E; --cta-glow:rgba(217,164,65,.7); --bg:#211915; --paper:#1C1511; --card:#2B201B; --ink:#F4EDE3; --body:#D8CBBF; --muted:#A39282; --line:#463A32; --rust-ink:#DCA088; }
 .sk-reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
 .sk-reveal.is-in { opacity: 1; transform: none; }
 .sk-glow { background: radial-gradient(closest-side, rgba(166,75,49,.55), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(217,164,65,.28), transparent 70%); filter: blur(40px); }
 .sk-glow-sm { background: radial-gradient(closest-side, rgba(217,164,65,.30), transparent 70%); filter: blur(30px); }
 /* Imigongo: soft diamonds, like the cow-dung art of eastern Rwanda */
 .sk-pattern { opacity: .07; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M28 4L52 28L28 52L4 28Z' fill='none' stroke='%23F4EDE3' stroke-width='2'/%3E%3Cpath d='M28 16L40 28L28 40L16 28Z' fill='%23F4EDE3'/%3E%3C/svg%3E"); mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); }
+.sk-pattern-mask { mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); }
 .sk-pattern-dark { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M28 4L52 28L28 52L4 28Z' fill='none' stroke='%232B201B' stroke-width='2'/%3E%3Cpath d='M28 16L40 28L28 40L16 28Z' fill='%232B201B'/%3E%3C/svg%3E"); }
 .sk-grain { opacity: .07; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 @keyframes sk-float { 0%,100% { transform: translateY(0) rotate(3deg) } 50% { transform: translateY(-12px) rotate(3deg) } }
