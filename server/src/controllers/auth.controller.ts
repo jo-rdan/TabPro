@@ -5,9 +5,11 @@ import { ApiResponse } from "@tabpro/shared";
 import { owners, venues } from "../models/schema";
 import { VENUE_TERMS_VERSION } from "../lib/venueTerms";
 import { eq } from "drizzle-orm";
+import { siteFor } from "../lib/origins";
 
 // Called after Google OAuth success
 export async function googleCallback(req: Request, res: Response) {
+  const site = siteFor(typeof req.query.state === "string" ? req.query.state : null);
   try {
     const owner = req.user as { id: string; email: string; name: string };
     const token = signJwt(owner.id, owner.email);
@@ -22,11 +24,11 @@ export async function googleCallback(req: Request, res: Response) {
     console.log("redirecting to:", redirect);
 
     res.redirect(
-      `${process.env.CLIENT_URL}/auth/callback?token=${token}&redirect=${redirect}`,
+      `${site}/auth/callback?token=${token}&redirect=${redirect}`,
     );
   } catch (err) {
     console.error("googleCallback error:", err);
-    res.redirect(`${process.env.CLIENT_URL}/auth/error`);
+    res.redirect(`${site}/auth/error`);
   }
 }
 
