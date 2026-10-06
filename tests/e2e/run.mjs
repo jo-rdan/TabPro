@@ -245,6 +245,11 @@ r = await call('GET', `/dashboard/activity/${venueId}?night=2026-01-01`, null, o
 check('History opens a past night', r.status === 200 && Array.isArray(r.json?.data) && r.json.data.length === 0, `status ${r.status}`);
 r = await call('GET', `/dashboard/activity/${venueId}?night=yesterday`, null, ownerTok);
 check('History refuses a badly written date', r.status === 400, `status ${r.status}`);
+const thisMonth = new Date(Date.now() + 2 * 3600e3 - 6 * 3600e3).toISOString().slice(0, 7);
+r = await call('GET', `/dashboard/nights/${venueId}?month=${thisMonth}`, null, ownerTok);
+check('Calendar shows this month\'s nights with their sales', r.status === 200 && (r.json?.data?.nights ?? []).some((n) => n.total > 0 && n.bills > 0), `${r.json?.data?.nights?.length} nights`);
+r = await call('GET', `/dashboard/nights/${venueId}?month=2026-13`, null, ownerTok);
+check('Calendar refuses a month that doesn\'t exist', r.status === 400, `status ${r.status}`);
 
 r = await call('POST', '/tabs/open', { qrCode: codes[2], phone: '0788121212' });
 const t6 = r.json?.data?.tab?.id;
@@ -497,7 +502,7 @@ check('Demo form blocks spam bursts', r.status === 429, `status ${r.status}`);
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');
-for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff list', `/staff/${venueId}`], ['orders', `/orders/venue/${venueId}`], ['ratings', `/ratings/leaderboard/${venueId}`], ['shifts', `/shifts/${venueId}`], ["tonight's money", `/dashboard/tonight/${venueId}`]]) {
+for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff list', `/staff/${venueId}`], ['orders', `/orders/venue/${venueId}`], ['ratings', `/ratings/leaderboard/${venueId}`], ['shifts', `/shifts/${venueId}`], ["tonight's money", `/dashboard/tonight/${venueId}`], ['history calendar', `/dashboard/nights/${venueId}?month=2026-10`]]) {
   r = await call('GET', path, null, rivalTok);
   check(`Another owner CANNOT read my ${name}`, r.status === 403, `status ${r.status}`);
 }

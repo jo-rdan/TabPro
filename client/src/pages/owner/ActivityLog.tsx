@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { Users, User, Clock, Receipt, CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Loader2, RotateCw, Smartphone, Banknote } from "lucide-react";
+import NightPicker, { HistoryFilters, NO_FILTERS } from "../../components/history/NightPicker";
+import { nightKey, nightLabel, addDays } from "../../lib/nights";
+import { Users, User, Clock, Receipt, CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Loader2, RotateCw, Smartphone, Banknote, X } from "lucide-react";
 import Layout from "../../components/Layout";
 import { useAuthStore } from "../../lib/auth";
 import api from "../../lib/api";
@@ -28,22 +30,6 @@ interface TabEntry {
   orders: OrderEntry[];
   tabTotal: number;
   payment: Payment;
-}
-
-const DAY = 24 * 3600_000;
-const KIGALI = 2 * 3600_000;
-
-// The bar's night runs 06:00 → 06:00 Kigali time; key it by the evening's date.
-function nightKey(offsetDays = 0) {
-  const local = new Date(Date.now() + KIGALI - (new Date(Date.now() + KIGALI).getUTCHours() < 6 ? DAY : 0) - offsetDays * DAY);
-  return local.toISOString().slice(0, 10);
-}
-
-function nightLabel(key: string) {
-  if (key === nightKey(0)) return "Tonight";
-  if (key === nightKey(1)) return "Last night";
-  const d = new Date(`${key}T12:00:00Z`);
-  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 }
 
 const formatRwf = (n: number) => `${n.toLocaleString()} RWF`;
@@ -78,11 +64,24 @@ export default function ActivityLog() {
   }, [venue, night, today]);
 
   const shift = (days: number) => {
-    const d = new Date(`${night}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + days);
-    const key = d.toISOString().slice(0, 10);
+    const key = addDays(night, days);
     if (key <= today) setNight(key);
   };
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [filters, setFilters] = useState<HistoryFilters>(NO_FILTERS);
+  const filtered = activity.filter((t) => {
+    if (filters.pay === "momo" && t.payment?.method !== "momo") return false;
+    if (filters.pay === "other" && !(t.tabStatus === "closed" && t.payment?.method !== "momo")) return false;
+    if (filters.pay === "open" && t.tabStatus === "closed") return false;
+    if (filters.payoutsOnTheWay && !(t.payment?.method === "momo" && t.payment.payoutStatus !== "successful")) return false;
+    return true;
+  });
+  const filterLabels = [
+    filters.pay === "momo" && "MoMo only",
+    filters.pay === "other" && "Cash or other only",
+    filters.pay === "open" && "Still open only",
+    filters.payoutsOnTheWay && "Payouts on the way",
+  ].filter(Boolean) as string[];
 
   const paid = activity.filter((t) => t.tabStatus === "closed");
   const total = paid.reduce((s, t) => s + t.tabTotal, 0);
@@ -132,17 +131,15 @@ export default function ActivityLog() {
         <button onClick={() => shift(1)} disabled={night === today} aria-label="Night after" className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2B201B] text-gray-600 dark:text-gray-300 flex items-center justify-center hover:text-gray-900 dark:hover:text-white disabled:opacity-40">
           <ChevronRight size={16} />
         </button>
-        <label className="relative flex-shrink-0 w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center cursor-pointer" title="Pick a date">
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="relative flex-shrink-0 w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center hover:bg-brand-600"
+          title="Calendar and filters"
+          aria-label="Open calendar and filters"
+        >
           <CalendarDays size={16} />
-          <input
-            type="date"
-            max={today}
-            value={night}
-            onChange={(e) => e.target.value && e.target.value <= today && setNight(e.target.value)}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            aria-label="Pick a night"
-          />
-        </label>
+          {filterLabels.length > 0 && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#D9A441] ring-2 ring-gray-50 dark:ring-[#1C1511]" />}
+        </button>
       </div>
 
       {/* The night in numbers */}
@@ -181,9 +178,21 @@ export default function ActivityLog() {
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
+      {/* Active filters */}
+      {filterLabels.length > 0 && !loading && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {filterLabels.map((l) => (
+            <span key={l} className="inline-flex items-center gap-1 rounded-full bg-brand-50 dark:bg-brand-900/20 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-brand-300">{l}</span>
+          ))}
+          <button onClick={() => setFilters(NO_FILTERS)} className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-900 dark:hover:text-white">
+            <X size={12} /> Clear · showing {filtered.length} of {activity.length}
+          </button>
+        </div>
+      )}
+
       {!loading && (
         <div className="space-y-4">
-          {activity.map((tab) => (
+          {filtered.map((tab) => (
             <div key={tab.tabId} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               {/* Bill header */}
               <div className="px-5 py-3 bg-gray-50 dark:bg-[#1C1511] flex flex-wrap items-center justify-between gap-2">
@@ -237,12 +246,21 @@ export default function ActivityLog() {
             </div>
           ))}
 
-          {activity.length === 0 && !error && (
+          {filtered.length === 0 && !error && (
             <div className="text-center py-16 text-sm text-gray-400 dark:text-gray-500">
-              {night === today ? "No bills yet tonight." : "No bills that night."}
+              {activity.length > 0 ? "No bills match these filters." : night === today ? "No bills yet tonight." : "No bills that night."}
             </div>
           )}
         </div>
+      )}
+      {pickerOpen && venue && (
+        <NightPicker
+          venueId={venue.id}
+          night={night}
+          filters={filters}
+          onClose={() => setPickerOpen(false)}
+          onApply={(n, f) => { setNight(n); setFilters(f); setPickerOpen(false); }}
+        />
       )}
       {receiptTabId && <ReceiptModal tabId={receiptTabId} onClose={() => setReceiptTabId(null)} />}
     </Layout>

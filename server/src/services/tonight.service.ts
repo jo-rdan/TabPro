@@ -1,6 +1,6 @@
 import { db } from '../lib/db';
 import { tabs, tables } from '../models/schema';
-import { and, eq, gte, inArray } from 'drizzle-orm';
+import { and, eq, gte, lt, inArray } from 'drizzle-orm';
 
 // Kigali has no daylight saving: UTC+2 all year. A bar's "night" runs from
 // 06:00 to 06:00 local time, so a 01:30 payment counts for the evening before.
@@ -71,5 +71,35 @@ export async function getTonight(venueId: string) {
     lastSameNightSoFar: lastWeekSoFar,
     bestNight: past.reduce((m, [, v]) => Math.max(m, v), 0),
     nightsWithData: past.length,
+  };
+}
+
+// Sales for every night of a month ("YYYY-MM"), for the History calendar:
+// each night is coloured by how much it made. Bills count for the night they
+// were opened (06:00 → 06:00 Kigali), the same way History lists them.
+export async function getNightTotals(venueId: string, month: string) {
+  const [y, m] = month.split('-').map(Number);
+  const first = `${y}-${String(m).padStart(2, '0')}-01`;
+  const next = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+  const from = nightStartOf(first);
+  const to = nightStartOf(next);
+  const venueTables = await db.query.tables.findMany({ where: eq(tables.venueId, venueId), columns: { id: true } });
+  if (venueTables.length === 0) return { month, nights: [] as { night: string; total: number; bills: number }[] };
+
+  const closed = await db.query.tabs.findMany({
+    where: and(eq(tabs.status, 'closed'), gte(tabs.openedAt, from), lt(tabs.openedAt, to), inArray(tabs.tableId, venueTables.map((t) => t.id))),
+    with: { orders: { with: { items: true } } },
+  });
+  const byNight = new Map<string, { total: number; bills: number }>();
+  for (const t of closed) {
+    const key = new Date(t.openedAt.getTime() + KIGALI_MS - 6 * 60 * 60_000).toISOString().slice(0, 10);
+    const cur = byNight.get(key) ?? { total: 0, bills: 0 };
+    cur.total += tabTotal(t);
+    cur.bills += 1;
+    byNight.set(key, cur);
+  }
+  return {
+    month,
+    nights: [...byNight.entries()].map(([night, v]) => ({ night, ...v })).sort((a, b) => a.night.localeCompare(b.night)),
   };
 }
