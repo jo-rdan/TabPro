@@ -80,11 +80,12 @@ for (const post of due) {
   for (const ch of channels) {
     const key = `${post.id}:${ch.service}`;
     const hash = [...post.caption].reduce((h, c) => (h * 31 + c.codePointAt(0)) >>> 0, 7).toString(36);
-    // Caption changed since it was queued: replace it in Buffer.
-    if (sent[key] && sent[key].h !== hash && Date.parse(sent[key].at) > now + 10 * 60000) {
+    // Caption or time changed since it was queued: replace it in Buffer.
+    const changed = sent[key] && (sent[key].h !== hash || sent[key].at !== post.at);
+    if (changed && Date.parse(sent[key].at) > now + 10 * 60000) {
       try {
         const d = await gql(`mutation($input: DeletePostInput!) { deletePost(input: $input) { ... on DeletePostSuccess { id } ... on VoidMutationError { message } } }`, { input: { id: sent[key].bufferId } });
-        if (d.deletePost?.id) { delete sent[key]; console.log(`↻ ${key}: caption updated, re-queueing`); }
+        if (d.deletePost?.id) { delete sent[key]; console.log(`↻ ${key}: caption or time changed, re-queueing`); }
       } catch (e) { console.error(`✗ ${key}: couldn't replace (${e.message})`); }
     }
     if (sent[key]) continue;
