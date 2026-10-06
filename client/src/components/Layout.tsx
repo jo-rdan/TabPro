@@ -18,6 +18,9 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { WavingHand } from "./Logo";
+import VenueLogo from "./VenueLogo";
+import LogoUploader from "./LogoUploader";
+import api from "../lib/api";
 import Wordmark from "./Wordmark";
 import { useAuthStore } from "../lib/auth";
 import { useThemeStore } from "../lib/theme";
@@ -48,7 +51,14 @@ const MORE_NAV = NAV_ITEMS.slice(3);
 
 export default function Layout({ children, wide = false }: LayoutProps) {
   const location = useLocation();
-  const { owner, logout } = useAuthStore();
+  const { owner, venues, logout, fetchMe } = useAuthStore();
+  const venue = venues[0];
+  const [venueSheet, setVenueSheet] = useState(false);
+  const saveLogo = async (url: string) => {
+    if (!venue) return;
+    await api.patch(`/venues/${venue.id}/logo`, { logoUrl: url });
+    await fetchMe();
+  };
   const { theme, toggle } = useThemeStore();
 
   const isActive = (href: string) => location.pathname === href;
@@ -104,6 +114,27 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         >
           {collapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
+
+        {/* The venue: big logo and name when open, just the logo when collapsed */}
+        {venue && (
+          collapsed ? (
+            <div className="flex justify-center pb-2" title={venue.name}>
+              <LogoUploader venueName={venue.name} currentLogoUrl={venue.logoUrl} onUploaded={saveLogo} size={44} hideButton />
+            </div>
+          ) : (
+            <div className="mx-3 rounded-2xl bg-gray-50 dark:bg-[#231A16] border border-gray-100 dark:border-gray-800 px-4 pt-4 pb-3 flex flex-col items-center text-center">
+              <LogoUploader venueName={venue.name} currentLogoUrl={venue.logoUrl} onUploaded={saveLogo} size={76} />
+              <p className="mt-1 font-display text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white break-words max-w-full">
+                {venue.name}
+              </p>
+              {venue.isDemo && (
+                <span className="mt-2 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                  Demo · payments simulated
+                </span>
+              )}
+            </div>
+          )
+        )}
 
         {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
@@ -173,10 +204,26 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         h-14 px-4 flex items-center justify-between
       "
       >
-        <div className="flex items-center gap-2.5">
-          <Wordmark size={21} on="light" className="dark:hidden" />
-          <Wordmark size={21} on="dark" className="hidden dark:inline-flex" />
-        </div>
+        {venue ? (
+          // Venue badge: your logo wearing a little Skuzi hand sticker. Tap it for the venue card.
+          <button onClick={() => setVenueSheet(true)} className="flex items-center gap-2.5 min-w-0 text-left" aria-label={`${venue.name}: venue card`}>
+            <span className="relative flex-shrink-0">
+              <VenueLogo logoUrl={venue.logoUrl} venueName={venue.name} size={36} />
+              <span className="absolute -bottom-1.5 -right-1.5 w-[22px] h-[22px] rounded-full bg-brand-500 ring-2 ring-white dark:ring-[#2B201B] flex items-center justify-center">
+                <svg width="15" height="15" viewBox="8 4 90 92" className="nav-wave" aria-hidden="true"><WavingHand color="#F4EDE3" strokeWidth={8} /></svg>
+              </span>
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-[15px] font-bold leading-tight text-gray-900 dark:text-white truncate">{venue.name}</span>
+              <span className="block text-[10.5px] italic font-semibold text-gray-500 dark:text-gray-400 truncate">Skuzi me, another round!</span>
+            </span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2.5">
+            <Wordmark size={21} on="light" className="dark:hidden" />
+            <Wordmark size={21} on="dark" className="hidden dark:inline-flex" />
+          </div>
+        )}
         <div className="flex items-center gap-1">
           <button
             onClick={toggle}
@@ -257,6 +304,33 @@ export default function Layout({ children, wide = false }: LayoutProps) {
           )}
         </button>
       </nav>
+
+      {/* ── Venue card (mobile) ───────────────────────────────────────────── */}
+      {venueSheet && venue && (
+        <div className="md:hidden fixed inset-0 z-30">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setVenueSheet(false)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#2B201B] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-5">
+            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-3" />
+            <button onClick={() => setVenueSheet(false)} aria-label="Close" className="absolute right-4 top-4 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg">
+              <X size={16} />
+            </button>
+            <div className="flex flex-col items-center text-center pt-2">
+              <LogoUploader venueName={venue.name} currentLogoUrl={venue.logoUrl} onUploaded={saveLogo} size={96} />
+              <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{venue.name}</p>
+              {venue.isDemo && (
+                <span className="mt-2 rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+                  Demo venue · payments are simulated
+                </span>
+              )}
+            </div>
+            <div className="mt-6 flex items-center justify-between rounded-2xl bg-gray-50 dark:bg-[#231A16] px-4 py-3">
+              <Wordmark size={18} on="light" className="nav-wave dark:hidden" />
+              <Wordmark size={18} on="dark" className="nav-wave hidden dark:inline-flex" />
+              <span className="text-xs italic font-semibold text-gray-500 dark:text-gray-400">Skuzi me, another round!</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── More sheet (mobile) ────────────────────────────────────────────── */}
       {moreOpen && (

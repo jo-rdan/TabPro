@@ -7,7 +7,6 @@ import OpenBills from '../../components/OpenBills';
 import Layout from '../../components/Layout';
 import ReceiptModal from '../../components/ReceiptModal';
 import JoinRequests from '../../components/JoinRequests';
-import LogoUploader from '../../components/LogoUploader';
 import { useAuthStore } from '../../lib/auth';
 import { useThemeStore } from '../../lib/theme';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -410,31 +409,21 @@ export default function Dashboard() {
   return (
     <Layout wide>
       {toast && <Toast message={toast} duration={6000} onDismiss={() => setToast(null)} />}
-      <div className="mb-5 flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-        <LogoUploader
-          venueName={venue?.name ?? ''}
-          currentLogoUrl={venue?.logoUrl}
-          onUploaded={async (url) => {
-            if (venue?.id) {
-              await api.patch(`/venues/${venue.id}/logo`, { logoUrl: url });
-              await fetchMe();
-            }
-          }}
-        />
+      <div className="mb-5 flex items-end gap-4 pb-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex flex-col gap-1">
           <p className="text-xs font-bold text-gray-500 dark:text-gray-400 tracking-[0.14em] uppercase">
-            {owner ? `Welcome back, ${owner.name.split(' ')[0]}` : 'Dashboard'}
+            Tonight at a glance
           </p>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight leading-none">
-            {venue?.name ?? 'Your venue'}
+            {owner ? `Welcome back, ${owner.name.split(' ')[0]}` : 'Welcome back'}
           </h1>
           {venue?.isDemo && (
-            <span className="mt-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+            <span className="md:hidden mt-2 self-start inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
               Demo venue · payments are simulated
             </span>
           )}
         </div>
-        <span className="ml-auto hidden sm:inline-flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+        <span className="ml-auto hidden sm:inline-flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300 pb-1">
           <span className="w-2 h-2 rounded-full bg-green-500" />
           Live · {kigaliNow.label}
         </span>
