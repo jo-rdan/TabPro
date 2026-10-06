@@ -13,6 +13,12 @@ export function nightStart(now = new Date()) {
   return new Date(local.getUTCHours() < 6 ? start - DAY_MS : start);
 }
 
+/** Start of a given night, from its Kigali date ("2026-10-04" = that evening, 06:00 on). */
+export function nightStartOf(date: string) {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 6) - KIGALI_MS);
+}
+
 const kigaliHour = (d: Date) => new Date(d.getTime() + KIGALI_MS).getUTCHours();
 const tabTotal = (t: { orders: { items: { unitPriceRwf: number; quantity: number }[] }[] }) =>
   t.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.unitPriceRwf * i.quantity, 0), 0);

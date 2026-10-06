@@ -17,6 +17,7 @@ import { useAuthStore } from "../../lib/auth";
 import api from "../../lib/api";
 import JoinRequests from "../../components/JoinRequests";
 import Toast from "../../components/Toast";
+import ClockInSetup from "../../components/ClockInSetup";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import type { WsEvent } from "@tabpro/shared";
 
@@ -320,7 +321,7 @@ export default function Staff() {
         <p className="text-xs text-brand-700 dark:text-brand-300 leading-relaxed">
           Tables are automatically distributed evenly across your active waiters
           whenever you add a table or a team member. Waiters who aren't on the
-          list can scan your clock-in sticker and tap "Join the team" — you approve them here.
+          list can scan your staff sticker (below) and tap "Join the team". You approve them here.
         </p>
       </div>
 
@@ -666,6 +667,13 @@ export default function Staff() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* How new waiters join and clock in (moved here from Shifts) */}
+      {venue && (
+        <div className="mt-8">
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Joining &amp; clock-in</h2>
+          <ClockInSetup venueId={venue.id} onToast={setToast} />
         </div>
       )}
     </Layout>

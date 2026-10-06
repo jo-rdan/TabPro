@@ -12,7 +12,12 @@ export async function handleGetStats(req: Request, res: Response) {
 }
 
 export async function handleGetActivityLog(req: Request, res: Response) {
-  const activity = await getActivityLog(req.params.venueId);
+  const night = typeof req.query.night === 'string' ? req.query.night : undefined;
+  if (night && !/^\d{4}-\d{2}-\d{2}$/.test(night)) {
+    res.status(400).json({ success: false, error: 'night must look like 2026-10-04' });
+    return;
+  }
+  const activity = await getActivityLog(req.params.venueId, 100, night);
   const body: ApiResponse = { success: true, data: activity };
   res.json(body);
 }

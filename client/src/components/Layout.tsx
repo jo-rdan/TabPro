@@ -5,11 +5,8 @@ import {
   QrCode,
   UtensilsCrossed,
   Users,
-  ScrollText,
-  Star,
+  History,
   LogOut,
-  BarChart2,
-  Clock,
   Menu as MenuIcon,
   X,
   ChevronsLeft,
@@ -35,11 +32,10 @@ const NAV_ITEMS = [
   { label: "Tables", href: "/tables", icon: QrCode },
   { label: "Menu", href: "/menu", icon: UtensilsCrossed },
   { label: "Staff", href: "/staff", icon: Users },
-  { label: "Activity", href: "/activity", icon: ScrollText },
-  { label: "Ratings", href: "/ratings", icon: Star },
-  // { label: "Campaigns", href: "/campaigns", icon: Megaphone },
-  { label: "Busy Hours", href: "/busy-hours", icon: BarChart2 },
-  { label: "Shifts", href: "/shifts", icon: Clock },
+  { label: "History", href: "/history", icon: History },
+  // Hidden for launch to keep Skuzi simple to pitch and learn; the pages
+  // still exist and can come back as paid extras: /ratings, /busy-hours,
+  // /shifts (the staff sticker and venue PIN moved to Staff).
 ];
 
 // Bottom nav shows the 3 most-used items pinned, then a "More" button

@@ -81,13 +81,13 @@ export default function ClaimSticker() {
             <CheckCircle size={40} className="text-green-500 mx-auto mb-4" />
             <h1 className="text-base font-bold text-gray-900 dark:text-white mb-2">Sticker claimed!</h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
-              Peel it off and stick it at your venue entrance. It never changes again.
+              Stick it where your staff come in. New waiters scan it to join your team. It never changes again.
             </p>
             <button
-              onClick={() => navigate('/shifts')}
+              onClick={() => navigate('/staff')}
               className="w-full bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
             >
-              Go to Shifts
+              Go to Staff
             </button>
           </div>
         )}

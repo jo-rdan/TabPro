@@ -100,13 +100,14 @@ export default function App() {
           }
         />
         <Route
-          path="/activity"
+          path="/history"
           element={
             <ProtectedRoute>
               <ActivityLog />
             </ProtectedRoute>
           }
         />
+        <Route path="/activity" element={<Navigate to="/history" replace />} />
         <Route
           path="/subscription"
           element={

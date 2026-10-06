@@ -715,7 +715,7 @@ export default function Dashboard() {
             <div className={slideClass}>
               <div className="flex items-baseline justify-between">
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Busy hours</h2>
-                <Link to="/busy-hours" className="text-xs font-bold text-brand-500 dark:text-brand-300 hover:underline">Last 4 weeks · darker = busier</Link>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Last 4 weeks · darker = busier</span>
               </div>
               {busy ? (
                 <div className="overflow-x-auto no-scrollbar">

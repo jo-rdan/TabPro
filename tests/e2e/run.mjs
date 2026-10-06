@@ -237,6 +237,15 @@ for (let i = 0; i < 26 && !retried; i++) {
 }
 check('Failed payout retried automatically', retried?.po?.amount === '3680' && retried.s === 'pending', retried ? `${retried.po.amount} RWF` : 'no retry');
 
+// History: MoMo bills show their payout; any past night can be opened.
+r = await call('GET', `/dashboard/activity/${venueId}`, null, ownerTok);
+const momoBills = (r.json?.data ?? []).filter((t) => t.payment?.method === 'momo');
+check('History shows MoMo bills with their payout', momoBills.length >= 1 && momoBills.every((t) => ['pending', 'successful', 'failed'].includes(t.payment.payoutStatus) && t.payment.amountRwf > 0), `${momoBills.length} MoMo bills`);
+r = await call('GET', `/dashboard/activity/${venueId}?night=2026-01-01`, null, ownerTok);
+check('History opens a past night', r.status === 200 && Array.isArray(r.json?.data) && r.json.data.length === 0, `status ${r.status}`);
+r = await call('GET', `/dashboard/activity/${venueId}?night=yesterday`, null, ownerTok);
+check('History refuses a badly written date', r.status === 400, `status ${r.status}`);
+
 r = await call('POST', '/tabs/open', { qrCode: codes[2], phone: '0788121212' });
 const t6 = r.json?.data?.tab?.id;
 await call('POST', '/orders', { tabId: t6, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
