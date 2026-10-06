@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { handleCreateVenue, handleGetVenues, handleUpdateLogo, handleUpdateMomoPhone, handleGetVenuePublic } from '../controllers/venue.controller';
+import { handleCreateVenue, handleGetVenues, handleUpdateLogo, handleUpdateMomoPhone, handleGetVenuePublic, handleAcceptTerms } from '../controllers/venue.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 import { ownsVenue, venueFromParam } from '../middleware/venueAccess.middleware';
 
@@ -13,5 +13,6 @@ router.post('/', handleCreateVenue);
 router.get('/', handleGetVenues);
 router.patch('/:venueId/logo', ownsVenue(venueFromParam()), handleUpdateLogo);
 router.patch('/:venueId/momo-phone', ownsVenue(venueFromParam()), handleUpdateMomoPhone);
+router.post('/:venueId/terms', ownsVenue(venueFromParam()), handleAcceptTerms);
 
 export default router;

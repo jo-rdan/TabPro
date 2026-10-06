@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
+import TermsPrompt from "./TermsPrompt";
 import VenueLogo from "./VenueLogo";
 import LogoUploader from "./LogoUploader";
 import api from "../lib/api";
@@ -243,6 +244,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       `}
       >
         <div className={`${wide ? "max-w-7xl md:px-8" : "max-w-5xl"} mx-auto px-4 py-6 md:py-7`}>{children}</div>
+        <TermsPrompt />
       </main>
 
       {/* ── Bottom nav (mobile) ────────────────────────────────────────────── */}

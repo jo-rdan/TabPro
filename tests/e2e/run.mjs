@@ -75,11 +75,16 @@ async function newOwner(name) {
 // ── 1. Setup ─────────────────────────────────────────────────────────────────
 console.log('\n── Setup');
 const ownerTok = await newOwner('Owner');
-let r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali' }, ownerTok);
+let r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', acceptTerms: true }, ownerTok);
 check('Venue without payout number is refused', r.status === 400, r.json?.error);
 r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000' }, ownerTok);
+check('Venue without "I agree" to the terms is refused', r.status === 400 && /terms/i.test(r.json?.error ?? ''), r.json?.error);
+r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: true }, ownerTok);
 check('Owner creates venue', r.status === 201, `payout number stored as ${r.json?.data?.momoPhone}`);
 const venueId = r.json?.data?.id;
+check('Agreeing to the terms is recorded (version, time, name)', r.json?.data?.termsVersion === 1 && !!r.json?.data?.termsAcceptedAt && r.json?.data?.termsAcceptedBy === 'Owner', `v${r.json?.data?.termsVersion} by ${r.json?.data?.termsAcceptedBy}`);
+r = await call('GET', '/auth/me', null, ownerTok);
+check('App knows which terms version is current', r.json?.data?.currentTermsVersion === 1 && r.json?.data?.name === 'Owner', `v${r.json?.data?.currentTermsVersion}`);
 
 const codes = [rnd() + rnd(), rnd() + rnd(), rnd() + rnd()];
 for (const [i, c] of codes.entries()) {
@@ -499,6 +504,12 @@ for (let i = 0; i < 5; i++) await call('POST', '/demo-requests', { name: 'Spam',
 r = await call('POST', '/demo-requests', { name: 'Spam', venueName: 'Spam bar', phone: '0788000000' });
 check('Demo form blocks spam bursts', r.status === 429, `status ${r.status}`);
 
+// Owners who joined before agree once in the app; old versions are refused.
+r = await call('POST', `/venues/${venueId}/terms`, { version: 0 }, ownerTok);
+check('Agreeing to an old version of the terms is refused', r.status === 400, `status ${r.status}`);
+r = await call('POST', `/venues/${venueId}/terms`, { version: 1 }, ownerTok);
+check('Owner can agree to the current terms in the app', r.status === 200 && r.json?.data?.termsVersion === 1, `status ${r.status}`);
+
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');
@@ -506,6 +517,8 @@ for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff 
   r = await call('GET', path, null, rivalTok);
   check(`Another owner CANNOT read my ${name}`, r.status === 403, `status ${r.status}`);
 }
+r = await call('POST', `/venues/${venueId}/terms`, { version: 1 }, rivalTok);
+check('Another owner CANNOT agree to terms for my venue', r.status === 403, `status ${r.status}`);
 r = await call('POST', '/menu', { venueId, items: [{ name: 'Free beer', category: 'Drinks', priceRwf: 1 }] }, rivalTok);
 check('Another owner CANNOT edit my menu', r.status === 403);
 r = await call('PATCH', `/menu/items/${item('Primus').id}`, { priceRwf: 1 }, rivalTok);
@@ -523,7 +536,7 @@ for (let i = 0; i < 5; i++) await call('POST', '/staff/login', { phone: waiterPh
 r = await call('POST', '/staff/login', { phone: waiterPhone, pin: '1234' });
 check('PIN guessing locked out after 5 tries', r.status === 400 && /Too many/.test(r.json?.error ?? ''), r.json?.error);
 const owner2Tok = await newOwner('Owner 2');
-r = await call('POST', '/venues', { name: 'Other Bar', momoPhone: '0789000000' }, owner2Tok);
+r = await call('POST', '/venues', { name: 'Other Bar', momoPhone: '0789000000', acceptTerms: true }, owner2Tok);
 const venue2 = r.json?.data?.id;
 r = await call('POST', '/staff', { venueId: venue2, name: 'Alice', phone: waiterPhone }, owner2Tok);
 check('Same waiter can join a second venue', r.status === 201 && r.json?.data?.staff?.venueId === venue2);

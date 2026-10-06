@@ -39,6 +39,10 @@ export interface Venue {
   logoUrl?: string | null;
   momoPhone?: string | null;
   isDemo?: boolean;
+  /** Venue terms the owner agreed to in the app, and when/by whom. */
+  termsVersion?: number | null;
+  termsAcceptedAt?: string | null;
+  termsAcceptedBy?: string | null;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────

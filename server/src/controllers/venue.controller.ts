@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { createVenue, getVenuesByOwner, updateVenueLogo, updateVenueMomoPhone } from '../services/venue.service';
+import { createVenue, getVenuesByOwner, updateVenueLogo, updateVenueMomoPhone, acceptVenueTerms } from '../services/venue.service';
+import { VENUE_TERMS_VERSION } from '../lib/venueTerms';
 import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
 
@@ -14,6 +15,7 @@ const createVenueSchema = z.object({
   name: z.string().min(1, 'Venue name is required').max(100),
   location: z.string().max(200).optional(),
   momoPhone: momoPhoneSchema,
+  acceptTerms: z.literal(true, { errorMap: () => ({ message: 'Please agree to the Skuzi venue terms' }) }),
 });
 
 export async function handleCreateVenue(req: Request, res: Response) {
@@ -24,8 +26,9 @@ export async function handleCreateVenue(req: Request, res: Response) {
     return;
   }
 
-  const venue = await createVenue(req.owner!.ownerId, parsed.data.name, parsed.data.location, parsed.data.momoPhone);
-  const body: ApiResponse = { success: true, data: venue };
+  const created = await createVenue(req.owner!.ownerId, parsed.data.name, parsed.data.location, parsed.data.momoPhone);
+  const venue = await acceptVenueTerms(created.id, req.owner!.ownerId, VENUE_TERMS_VERSION);
+  const body: ApiResponse = { success: true, data: { ...created, ...venue } };
   res.status(201).json(body);
 }
 
@@ -84,4 +87,17 @@ export async function handleGetVenuePublic(req: Request, res: Response) {
     const body: ApiResponse = { success: false, error: 'Server error.' };
     res.status(500).json(body);
   }
+}
+
+// POST /venues/:venueId/terms — the owner agrees to the current venue terms.
+export async function handleAcceptTerms(req: Request, res: Response) {
+  const parsed = z.object({ version: z.number().int() }).safeParse(req.body);
+  if (!parsed.success || parsed.data.version !== VENUE_TERMS_VERSION) {
+    const body: ApiResponse = { success: false, error: 'Please reload the page to see the latest terms' };
+    res.status(400).json(body);
+    return;
+  }
+  const venue = await acceptVenueTerms(req.params.venueId, req.owner!.ownerId, VENUE_TERMS_VERSION);
+  const body: ApiResponse = { success: true, data: venue };
+  res.json(body);
 }

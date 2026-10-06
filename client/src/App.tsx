@@ -31,6 +31,7 @@ import CustomerMenu from "./pages/customer/Menu";
 // Shared
 import Receipt from "./pages/Receipt";
 import Landing from "./pages/Landing";
+import VenueTerms from "./pages/VenueTerms";
 
 export default function App() {
   const { init } = useThemeStore();
@@ -157,6 +158,7 @@ export default function App() {
           }
         />
 
+        <Route path="/venue-terms" element={<VenueTerms />} />
         <Route path="/privacy.html" element={null} />
         <Route path="/terms.html" element={null} />
 

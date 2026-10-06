@@ -6,6 +6,8 @@ interface AuthState {
   token: string | null;
   owner: Owner | null;
   venues: Venue[];
+  /** Venue terms version owners must have agreed to (from the server). */
+  currentTermsVersion: number | null;
   isLoading: boolean;
   setToken: (token: string) => void;
   fetchMe: () => Promise<void>;
@@ -16,6 +18,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem('tabpro_token'),
   owner: null,
   venues: [],
+  currentTermsVersion: null,
   isLoading: false,
 
   setToken: (token: string) => {
@@ -27,8 +30,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const res = await api.get('/auth/me');
-      const { owner, venues } = res.data.data;
-      set({ owner, venues });
+      // The response is the owner, with their venues inside it.
+      const { venues, currentTermsVersion, ...owner } = res.data.data;
+      set({ owner, venues: venues ?? [], currentTermsVersion: currentTermsVersion ?? null });
     } catch {
       set({ token: null, owner: null, venues: [] });
       localStorage.removeItem('tabpro_token');
