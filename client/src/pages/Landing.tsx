@@ -132,11 +132,11 @@ function Hero() {
           <Reveal delay={80}>
             <h1 className="mt-7 font-display text-[46px] font-extrabold leading-[0.98] tracking-[-0.045em] text-balance sm:text-7xl lg:text-[92px]">
               <span className="inline-flex items-baseline">
-                Your waiter,
+                Less waiting.
                 <span className="sk-wave ml-2 inline-block translate-y-[0.06em] text-[#D9A441]"><Hand size={64} color="currentColor" className="h-[0.8em] w-[0.8em]" /></span>
               </span>
               <br />
-              <Swoosh><span className="text-[var(--hero-accent)]">one tap away.</span></Swoosh>
+              <Swoosh><span className="text-[var(--hero-accent)]">More fun.</span></Swoosh>
             </h1>
           </Reveal>
           <Reveal delay={160}>
