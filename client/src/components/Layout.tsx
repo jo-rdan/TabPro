@@ -14,7 +14,10 @@ import {
   Clock,
   Menu as MenuIcon,
   X,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
+import { WavingHand } from "./Logo";
 import Wordmark from "./Wordmark";
 import { useAuthStore } from "../lib/auth";
 import { useThemeStore } from "../lib/theme";
@@ -45,36 +48,62 @@ const MORE_NAV = NAV_ITEMS.slice(3);
 
 export default function Layout({ children, wide = false }: LayoutProps) {
   const location = useLocation();
-  const { owner, venues, logout } = useAuthStore();
+  const { owner, logout } = useAuthStore();
   const { theme, toggle } = useThemeStore();
-  const venue = venues[0];
 
   const isActive = (href: string) => location.pathname === href;
   const [moreOpen, setMoreOpen] = useState(false);
+  // Desktop sidebar can shrink to icons; remembered on this device only.
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("skuzi_nav_collapsed") === "1"; } catch { return false; }
+  });
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      try { localStorage.setItem("skuzi_nav_collapsed", c ? "0" : "1"); } catch { /* private mode */ }
+      return !c;
+    });
+  };
   const isMoreActive = MORE_NAV.some((item) => isActive(item.href));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-gray-100">
       {/* ── Side nav (desktop md+) ─────────────────────────────────────────── */}
       <aside
-        className="
+        className={`
         hidden md:flex flex-col
-        fixed top-0 left-0 h-full w-60
+        fixed top-0 left-0 h-full
         bg-white dark:bg-[#2B201B]
         border-r border-gray-200 dark:border-gray-800
-        z-20
-      "
+        z-20 transition-[width] duration-300
+        ${collapsed ? "w-[76px]" : "w-60"}
+      `}
       >
-        {/* Logo */}
-        <div className="px-5 pt-6 pb-5">
-          <Wordmark size={24} on="light" className="dark:hidden" />
-          <Wordmark size={24} on="dark" className="hidden dark:inline-flex" />
-          {venue && (
-            <p className="mt-1 pl-8 text-xs text-gray-500 dark:text-gray-400 truncate max-w-[180px]">
-              {venue.name}
-            </p>
+        {/* Logo: the hand waves once a minute, open or collapsed */}
+        <div className={`pt-6 pb-5 ${collapsed ? "px-0 flex justify-center" : "px-5"}`}>
+          {collapsed ? (
+            <svg width="34" height="34" viewBox="8 4 90 92" className="nav-wave" role="img" aria-label="Skuzi">
+              <WavingHand color={theme === "dark" ? "#D9A441" : "#A64B31"} strokeWidth={6.5} />
+            </svg>
+          ) : (
+            <>
+              <Wordmark size={24} on="light" className="nav-wave dark:hidden" />
+              <Wordmark size={24} on="dark" className="nav-wave hidden dark:inline-flex" />
+              <p className="mt-1.5 pl-8 text-[12px] font-semibold italic text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                Skuzi me, another round!
+              </p>
+            </>
           )}
         </div>
+
+        {/* Collapse / expand */}
+        <button
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+          title={collapsed ? "Expand menu" : "Collapse menu"}
+          className="absolute -right-3.5 top-8 z-30 w-7 h-7 rounded-full bg-white dark:bg-[#3A2D26] border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white shadow-sm flex items-center justify-center"
+        >
+          {collapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
+        </button>
 
         {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
@@ -82,8 +111,10 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             <Link
               key={href}
               to={href}
+              title={collapsed ? label : undefined}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+                flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+                ${collapsed ? "justify-center px-0" : "px-3"}
                 ${
                   isActive(href)
                     ? "bg-gray-900 text-gray-50 font-bold dark:bg-brand-500 dark:text-white"
@@ -91,8 +122,8 @@ export default function Layout({ children, wide = false }: LayoutProps) {
                 }
               `}
             >
-              <Icon size={17} />
-              <span className="flex-1">{label}</span>
+              <Icon size={17} className="flex-shrink-0" />
+              {!collapsed && <span className="flex-1 whitespace-nowrap">{label}</span>}
             </Link>
           ))}
         </nav>
@@ -100,31 +131,35 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         {/* Bottom actions */}
         <div className="px-3 py-4 border-t border-gray-100 dark:border-gray-800 space-y-1">
           {/* Owner info */}
-          <div className="flex items-center gap-3 px-3 py-2 mb-1">
+          <div className={`flex items-center gap-3 py-2 mb-1 ${collapsed ? "justify-center" : "px-3"}`} title={collapsed ? owner?.name : undefined}>
             <div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {owner?.name?.[0]?.toUpperCase() ?? "?"}
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-              {owner?.name}
-            </p>
+            {!collapsed && (
+              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                {owner?.name}
+              </p>
+            )}
           </div>
 
           {/* Theme toggle */}
           <button
             onClick={toggle}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+            title={collapsed ? (theme === "dark" ? "Light mode" : "Dark mode") : undefined}
+            className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors ${collapsed ? "justify-center" : "px-3"}`}
           >
             {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            {theme === "dark" ? "Light mode" : "Dark mode"}
+            {!collapsed && (theme === "dark" ? "Light mode" : "Dark mode")}
           </button>
 
           {/* Logout */}
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+            title={collapsed ? "Sign out" : undefined}
+            className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors ${collapsed ? "justify-center" : "px-3"}`}
           >
             <LogOut size={17} />
-            Sign out
+            {!collapsed && "Sign out"}
           </button>
         </div>
       </aside>
@@ -160,12 +195,13 @@ export default function Layout({ children, wide = false }: LayoutProps) {
 
       {/* ── Main content ───────────────────────────────────────────────────── */}
       <main
-        className="
-        md:ml-60
+        className={`
+        ${collapsed ? "md:ml-[76px]" : "md:ml-60"}
+        transition-[margin] duration-300
         pt-14 md:pt-0
         pb-20 md:pb-0
         min-h-screen
-      "
+      `}
       >
         <div className={`${wide ? "max-w-7xl md:px-8" : "max-w-5xl"} mx-auto px-4 py-6 md:py-7`}>{children}</div>
       </main>

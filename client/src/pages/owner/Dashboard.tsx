@@ -480,7 +480,6 @@ export default function Dashboard() {
 
       {venue && <JoinRequests venueId={venue.id} refreshKey={joinRefresh} />}
 
-      {venue && <OpenBills venueId={venue.id} />}
       </div>
 
       {/* ── Live alerts: guests seated, nudges & bill requests ──────────── */}
@@ -557,7 +556,7 @@ export default function Dashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
@@ -574,6 +573,7 @@ export default function Dashboard() {
             </div>
           );
         })}
+        {venue && <OpenBills venueId={venue.id} className="col-span-2 lg:col-span-1" />}
       </div>
 
       {/* Money tonight + coin jar */}

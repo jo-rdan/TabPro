@@ -84,3 +84,15 @@
 @media (prefers-reduced-motion: reduce) {
   .jar-coin, .jar-sway, .jar-ring, .jar-glint, .jar-now { animation: none; }
 }
+
+/* Sidebar logo: the hand waves once a minute (about 2 seconds), then rests. */
+@keyframes nav-wave {
+  0%, 3.6%, 100% { transform: rotate(0); }
+  0.6% { transform: rotate(-16deg); }
+  1.2% { transform: rotate(12deg); }
+  1.8% { transform: rotate(-16deg); }
+  2.4% { transform: rotate(12deg); }
+  3% { transform: rotate(-6deg); }
+}
+.nav-wave > svg, svg.nav-wave { transform-origin: 50% 85%; animation: nav-wave 60s ease-in-out 1s infinite; }
+@media (prefers-reduced-motion: reduce) { .nav-wave > svg, svg.nav-wave { animation: none; } }
