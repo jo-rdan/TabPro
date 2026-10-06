@@ -59,7 +59,7 @@ export async function sendUnpaidSummaries() {
     await sendPushToOwner(
       venue.id,
       `🧾 ${bills.length} ${bills.length === 1 ? 'bill was' : 'bills were'} left open · ${sum.toLocaleString('en-US')} RWF`,
-      'Open TabPro to see the tables and the guests’ phone numbers.',
+      'Open Skuzi to see the tables and the guests’ phone numbers.',
     );
   }
 }

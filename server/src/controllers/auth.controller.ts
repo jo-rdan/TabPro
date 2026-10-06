@@ -3,6 +3,7 @@ import { signJwt } from "../services/auth.service";
 import { db } from "../lib/db";
 import { ApiResponse } from "@tabpro/shared";
 import { owners, venues } from "../models/schema";
+import { VENUE_TERMS_VERSION } from "../lib/venueTerms";
 import { eq } from "drizzle-orm";
 
 // Called after Google OAuth success
@@ -56,7 +57,8 @@ export async function getMe(req: Request, res: Response) {
       return;
     }
 
-    const body: ApiResponse = { success: true, data: owner };
+    // currentTermsVersion: the app asks owners to agree when theirs is older.
+    const body: ApiResponse = { success: true, data: { ...owner, currentTermsVersion: VENUE_TERMS_VERSION } };
     res.json(body);
   } catch (err) {
     throw err;

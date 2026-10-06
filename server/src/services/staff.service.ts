@@ -80,7 +80,7 @@ export async function loginByPhone(phone: string, pin: string): Promise<{ token:
     where: and(eq(staff.phone, normalizedPhone), eq(staff.pendingApproval, true)),
   });
   if (pending?.pin && (await bcrypt.compare(pin, pending.pin))) {
-    throw new Error('Your manager has not approved you yet. Ask them to tap "Approve" in TabPro.');
+    throw new Error('Your manager has not approved you yet. Ask them to tap "Approve" in Skuzi.');
   }
 
   recordFailedLogin(normalizedPhone);
@@ -341,7 +341,7 @@ export async function requestToJoin(stickerCode: string, name: string, rawPhone:
     timestamp: new Date().toISOString(),
   });
 
-  await sendPushToOwner(venue.id, `👋 ${member.name} wants to join your team`, 'Open TabPro to approve or decline.');
+  await sendPushToOwner(venue.id, `👋 ${member.name} wants to join your team`, 'Open Skuzi to approve or decline.');
 
   return { name: member.name, venueName: venue.name };
 }

@@ -7,9 +7,9 @@ import { eq, and, gte, isNull, desc, inArray } from 'drizzle-orm';
 const SESSION_TTL_SECONDS = 90;
 
 // ─── Static clock-in sticker ────────────────────────────────────────────────────
-// TabPro ships pre-printed blank stickers, each already carrying its own unique
+// Skuzi ships pre-printed blank stickers, each already carrying its own unique
 // permanent code (e.g. AB3X9K) that means nothing until an owner claims it. The
-// owner scans that physical sticker to bind it to their venue — TabPro never
+// owner scans that physical sticker to bind it to their venue — Skuzi never
 // generates or prints one on the owner's behalf.
 
 export async function getStickerStatus(venueId: string): Promise<{ claimed: boolean; code: string | null }> {

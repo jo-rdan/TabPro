@@ -74,7 +74,7 @@ const server = createServer(app);
 initWebSocket(server);
 
 server.listen(PORT, () => {
-  console.log(`✅ TabPro server running on http://localhost:${PORT}`);
+  console.log(`✅ Skuzi server running on http://localhost:${PORT}`);
   console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(isPawapayConfigured()
     ? `✅ Mobile Money: pawaPay ${PAWAPAY_ENV}`

@@ -70,9 +70,23 @@ export const venues = pgTable("venues", {
   clockInPin: text("clock_in_pin"),
   clockInStickerCode: text("clock_in_sticker_code").unique(),
   momoPhone: text("momo_phone"), // venue's Pawapay payout number
-  // Demo venues show TabPro to prospects: payments are simulated, never real.
+  // Demo venues show Skuzi to prospects: payments are simulated, never real.
   isDemo: boolean("is_demo").default(false).notNull(),
+  // Venue terms the owner agreed to in the app ("I agree"), replacing paper.
+  termsVersion: integer("terms_version"),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
+  termsAcceptedBy: text("terms_accepted_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Every time an owner agrees to the venue terms: the permanent record.
+export const venueTermsAcceptances = pgTable("venue_terms_acceptances", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  venueId: uuid("venue_id").references(() => venues.id, { onDelete: "cascade" }).notNull(),
+  ownerId: uuid("owner_id").references(() => owners.id, { onDelete: "cascade" }).notNull(),
+  ownerName: text("owner_name").notNull(),
+  version: integer("version").notNull(),
+  acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
 });
 
 // ─── Staff ────────────────────────────────────────────────────────────────────

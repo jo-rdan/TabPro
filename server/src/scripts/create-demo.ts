@@ -1,4 +1,4 @@
-// Creates the "Demo Lounge" venue used to show TabPro to prospects.
+// Creates the "Demo Lounge" venue used to show Skuzi to prospects.
 // Payments there are simulated: no pawaPay call, no real money.
 //
 //   yarn workspace @tabpro/server demo:create <owner-email>

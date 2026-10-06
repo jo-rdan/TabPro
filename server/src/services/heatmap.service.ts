@@ -3,7 +3,9 @@ import { orders, tabs, tables } from '../models/schema';
 import { eq, gte, and } from 'drizzle-orm';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const HOURS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]; // 11 AM – 10 PM
+const HOURS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1]; // 11 AM – 1 AM, bars run late
+// Kigali is UTC+2 all year; the server runs in UTC, so shift before reading hours.
+const KIGALI_MS = 2 * 60 * 60_000;
 
 function getMondayOfWeek(d: Date): Date {
   const day = d.getDay(); // 0 = Sun
@@ -46,10 +48,12 @@ export async function getBusyHoursHeatmap(venueId: string) {
 
   for (const tab of venueTabs) {
     for (const order of tab.orders) {
-      const d = new Date(order.placedAt);
-      const jsDay = d.getDay(); // 0=Sun, 1=Mon...
+      // A 00:30 order belongs to the night before, so read the day 6h earlier.
+      const local = new Date(new Date(order.placedAt).getTime() + KIGALI_MS);
+      const night = new Date(local.getTime() - 6 * 60 * 60_000);
+      const jsDay = night.getUTCDay(); // 0=Sun, 1=Mon...
       const dayIdx = jsDay === 0 ? 6 : jsDay - 1; // convert to Mon=0...Sun=6
-      const hour = d.getHours();
+      const hour = local.getUTCHours();
       grid[dayIdx][hour]++;
       dayTotals[dayIdx]++;
     }
@@ -112,6 +116,7 @@ export async function getBusyHoursHeatmap(venueId: string) {
 
 function formatHour(h: number): string {
   const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 24;
   const display = h > 12 ? h - 12 : h === 0 ? 12 : h;
   return `${display} ${ampm}`;
 }
