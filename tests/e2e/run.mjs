@@ -549,6 +549,22 @@ r = await call('POST', '/venues', { name: 'Other Bar', momoPhone: '0789000000', 
 const venue2 = r.json?.data?.id;
 r = await call('POST', '/staff', { venueId: venue2, name: 'Alice', phone: waiterPhone }, owner2Tok);
 check('Same waiter can join a second venue', r.status === 201 && r.json?.data?.staff?.venueId === venue2);
+// ── Google sign-in returns to the site it started from ───────────────────────
+console.log('\n── Sign-in');
+{
+  const stateFor = async (from) => {
+    const res = await fetch(`${BASE}/auth/google?from=${encodeURIComponent(from)}`, { redirect: 'manual' });
+    const loc = res.headers.get('location') || '';
+    return loc.startsWith('https://accounts.google.com') ? new URL(loc).searchParams.get('state') : `no Google redirect (${res.status})`;
+  };
+  let s = await stateFor('http://localhost:5198');
+  check('Sign-in started on the second site returns there', s === 'http://localhost:5198', s);
+  s = await stateFor('https://evil.example');
+  check('Sign-in from an unknown address returns to the main site', s === 'http://localhost:5199', s);
+  const cb = await fetch(`${BASE}/auth/google/callback?state=${encodeURIComponent('https://evil.example')}`, { redirect: 'manual' });
+  check('Sign-in callback never sends anyone to an unknown address', !(cb.headers.get('location') || '').includes('evil.example'), cb.headers.get('location'));
+}
+
 check('Server survived the whole run', await alive());
 
 // ── Done ─────────────────────────────────────────────────────────────────────
