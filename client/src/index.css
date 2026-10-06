@@ -96,3 +96,12 @@
 }
 .nav-wave > svg, svg.nav-wave { transform-origin: 50% 85%; animation: nav-wave 60s ease-in-out 1s infinite; }
 @media (prefers-reduced-motion: reduce) { .nav-wave > svg, svg.nav-wave { animation: none; } }
+
+/* Theme switch: the chosen icon gives a little sign of life */
+@keyframes theme-spin { from { transform: rotate(-90deg) scale(.6); } to { transform: rotate(0) scale(1); } }
+@keyframes theme-tilt { 0% { transform: rotate(30deg) scale(.6); } 60% { transform: rotate(-12deg) scale(1.1); } 100% { transform: rotate(0) scale(1); } }
+@keyframes theme-pop { 0% { transform: scale(.6); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.theme-spin { animation: theme-spin .5s cubic-bezier(.2,.8,.2,1); }
+.theme-tilt { animation: theme-tilt .5s cubic-bezier(.2,.8,.2,1); }
+.theme-pop { animation: theme-pop .35s ease-out; }
+@media (prefers-reduced-motion: reduce) { .theme-spin, .theme-tilt, .theme-pop { animation: none; } }

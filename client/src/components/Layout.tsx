@@ -8,8 +8,6 @@ import {
   ScrollText,
   Star,
   LogOut,
-  Sun,
-  Moon,
   BarChart2,
   Clock,
   Menu as MenuIcon,
@@ -18,6 +16,7 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { WavingHand } from "./Logo";
+import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
 import VenueLogo from "./VenueLogo";
 import LogoUploader from "./LogoUploader";
 import api from "../lib/api";
@@ -59,7 +58,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
     await api.patch(`/venues/${venue.id}/logo`, { logoUrl: url });
     await fetchMe();
   };
-  const { theme, toggle } = useThemeStore();
+  const { theme } = useThemeStore();
 
   const isActive = (href: string) => location.pathname === href;
   const [moreOpen, setMoreOpen] = useState(false);
@@ -173,15 +172,17 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             )}
           </div>
 
-          {/* Theme toggle */}
-          <button
-            onClick={toggle}
-            title={collapsed ? (theme === "dark" ? "Light mode" : "Dark mode") : undefined}
-            className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors ${collapsed ? "justify-center" : "px-3"}`}
-          >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            {!collapsed && (theme === "dark" ? "Light mode" : "Dark mode")}
-          </button>
+          {/* Theme: Light · Auto · Dark */}
+          {collapsed ? (
+            <div className="flex justify-center py-1.5">
+              <ThemeSwitch layout="column" />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2 pl-3 pr-1 py-1.5">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Theme</span>
+              <ThemeSwitch />
+            </div>
+          )}
 
           {/* Logout */}
           <button
@@ -225,12 +226,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
           </div>
         )}
         <div className="flex items-center gap-1">
-          <button
-            onClick={toggle}
-            className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <ThemeCycleButton />
           <button
             onClick={logout}
             className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -382,6 +378,9 @@ export default function Layout({ children, wide = false }: LayoutProps) {
                 );
               })}
             </div>
+
+            <p className="mt-6 mb-2.5 text-xs font-bold uppercase tracking-[0.14em] text-gray-400">Theme</p>
+            <ThemeSwitch layout="labels" />
           </div>
         </div>
       )}
