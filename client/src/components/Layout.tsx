@@ -95,7 +95,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
               <Wordmark size={24} on="light" className="nav-wave dark:hidden" />
               <Wordmark size={24} on="dark" className="nav-wave hidden dark:inline-flex" />
               <p className="mt-1.5 pl-8 text-[12px] font-semibold italic text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                Skuzi me, another round!
+                Skuzi! Another round.
               </p>
             </>
           )}
@@ -213,7 +213,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             </span>
             <span className="min-w-0">
               <span className="block font-display text-[15px] font-bold leading-tight text-gray-900 dark:text-white truncate">{venue.name}</span>
-              <span className="block text-[10.5px] italic font-semibold text-gray-500 dark:text-gray-400 truncate">Skuzi me, another round!</span>
+              <span className="block text-[10.5px] italic font-semibold text-gray-500 dark:text-gray-400 truncate">Skuzi! Another round.</span>
             </span>
           </button>
         ) : (
@@ -320,7 +320,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             <div className="mt-6 flex items-center justify-between rounded-2xl bg-gray-50 dark:bg-[#231A16] px-4 py-3">
               <Wordmark size={18} on="light" className="nav-wave dark:hidden" />
               <Wordmark size={18} on="dark" className="nav-wave hidden dark:inline-flex" />
-              <span className="text-xs italic font-semibold text-gray-500 dark:text-gray-400">Skuzi me, another round!</span>
+              <span className="text-xs italic font-semibold text-gray-500 dark:text-gray-400">Skuzi! Another round.</span>
             </div>
           </div>
         </div>
