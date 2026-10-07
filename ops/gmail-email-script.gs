@@ -1,4 +1,4 @@
-// TabPro → your Gmail. Paste this into script.google.com (see ops notes).
+// Skuzi → your Gmail. Paste this into script.google.com (see ops notes).
 // Sends demo-request emails to the Google account that owns this script.
 const SECRET = 'PASTE_THE_SECRET_HERE';
 
@@ -10,7 +10,7 @@ function doPost(e) {
     subject: data.subject,
     body: data.text,
     htmlBody: data.html,
-    name: 'TabPro',
+    name: 'Skuzi',
   });
   return ContentService.createTextOutput('ok');
 }
