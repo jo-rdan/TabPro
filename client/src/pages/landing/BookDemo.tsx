@@ -1,11 +1,13 @@
 import { useEffect, useState, FormEvent } from "react";
 import { X, Check, ArrowRight } from "lucide-react";
 import { apiFetch } from "../../lib/apiFetch";
+import { WAITLIST_MODE } from "../../lib/waitlistMode";
 
 const OPEN_EVENT = "tabpro:book-demo";
 
 // Any "Get started" button on the homepage calls this.
 export function openBookDemo() {
+  if (WAITLIST_MODE) { window.location.assign("/waitlist"); return; }
   window.dispatchEvent(new Event(OPEN_EVENT));
 }
 

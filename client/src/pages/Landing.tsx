@@ -8,6 +8,7 @@ import AnimatedLogo from "../components/AnimatedLogo";
 import ThemeSwitch, { ThemeCycleButton } from "../components/ThemeSwitch";
 import Wordmark from "../components/Wordmark";
 import BookDemo, { openBookDemo } from "./landing/BookDemo";
+import { WAITLIST_MODE, cta } from "../lib/waitlistMode";
 import {
   PhoneFrame, ScreenScan, ScreenMenu, ScreenCall, ScreenPay, WaiterCall, TonightCard,
   MoneyWidget, PayoutWidget, HeatmapWidget, LeaderboardWidget, MenuPhotoWidget, AlertsWidget,
@@ -90,11 +91,11 @@ function Nav() {
         <div className="flex items-center gap-2">
           <span className="hidden xl:block"><ThemeSwitch /></span>
           <ThemeCycleButton className="xl:hidden" />
-          <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--hero-body)] transition hover:text-[var(--hero-ink)] sm:block">
+          {!WAITLIST_MODE && <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--hero-body)] transition hover:text-[var(--hero-ink)] sm:block">
             {loggedIn ? "Dashboard" : "Log in"}
-          </Link>
+          </Link>}
           <button onClick={openBookDemo} className="rounded-full bg-[var(--cta-bg)] px-4 py-2 text-[13.5px] font-extrabold text-[var(--cta-ink)] transition hover:bg-[var(--cta-hover)]">
-            Book a demo
+            {cta("Book a demo")}
           </button>
         </div>
       </nav>
@@ -126,7 +127,7 @@ function Hero() {
                 <span className="sk-ping absolute left-1.5 h-2 w-2 rounded-full bg-[#A9BE9F]" />
                 <span className="relative ml-3">Kigali</span>
               </span>
-              Now setting up bars & restaurants
+              {WAITLIST_MODE ? "Coming soon to bars & restaurants" : "Now setting up bars & restaurants"}
             </span>
           </Reveal>
           <Reveal delay={80}>
@@ -148,7 +149,7 @@ function Hero() {
           <Reveal delay={240}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <button onClick={openBookDemo} className="sk-shine group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[var(--cta-bg)] px-7 py-4 text-[16px] font-extrabold text-[var(--cta-ink)] shadow-[0_14px_40px_-10px_var(--cta-glow)] transition hover:bg-[var(--cta-hover)] sm:w-auto">
-                Book a free demo
+                {cta("Book a free demo")}
                 <ArrowRight size={18} className="transition group-hover:translate-x-1" />
               </button>
               <a href="#try" className="inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-[16px] font-bold text-[var(--hero-ink)] ring-1 ring-[var(--hero-ring)] transition hover:bg-[var(--hero-chip)] sm:w-auto">
@@ -603,7 +604,7 @@ const FAQS = [
   { q: "What does it cost?", a: "Nothing to set up and no monthly fee. Skuzi keeps 8% of bills paid by Mobile Money through Skuzi. If a guest pays cash, Skuzi takes nothing." },
   { q: "Do I need to buy any equipment?", a: "No. Your waiters use their own phones, you use yours, and we bring the stickers for your tables." },
   { q: "What if some of my waiters don't have a smartphone?", a: "That's fine. Add them anyway: a manager's phone gets their table calls, so no guest is left waiting." },
-  { q: "How do I get started?", a: "Book a free demo. We come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
+  { q: "How do I get started?", a: WAITLIST_MODE ? "Join the waitlist. When your spot comes up, we come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." : "Book a free demo. We come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
 ];
 
 function Faq() {
@@ -618,7 +619,7 @@ function Faq() {
           </h2>
           <p className="mt-5 max-w-sm text-[16px] leading-relaxed text-[var(--body)]">
             Something else on your mind?{" "}
-            <button onClick={openBookDemo} className="font-bold text-[var(--rust-ink)] underline decoration-[#D9A441] decoration-2 underline-offset-4">Ask us during a free demo</button>.
+            <button onClick={openBookDemo} className="font-bold text-[var(--rust-ink)] underline decoration-[#D9A441] decoration-2 underline-offset-4">{WAITLIST_MODE ? "Join the waitlist and ask us" : "Ask us during a free demo"}</button>.
           </p>
         </Reveal>
         <Reveal delay={100}>
@@ -666,7 +667,7 @@ function FinalCta() {
             </p>
             <div className="mt-10 flex justify-center">
               <button onClick={openBookDemo} className="sk-shine group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#2B201B] px-8 py-4 text-[16px] font-extrabold text-[#F4EDE3] transition hover:bg-black">
-                Book a free demo <ArrowRight size={18} className="transition group-hover:translate-x-1" />
+                {cta("Book a free demo")} <ArrowRight size={18} className="transition group-hover:translate-x-1" />
               </button>
             </div>
           </div>
@@ -689,18 +690,18 @@ function Footer() {
               <span className="sk-ping absolute inline-flex h-full w-full rounded-full bg-[#86A27B] opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#86A27B]" />
             </span>
-            Now setting up venues in Kigali
+            {WAITLIST_MODE ? "Coming soon to Kigali" : "Now setting up venues in Kigali"}
           </p>
           <h2 className="mt-4 font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
             Ready when <span className="text-[#D9A441]">you are.</span>
           </h2>
         </div>
-        <button onClick={openBookDemo} aria-label="Book a demo" className="group relative h-36 w-36 flex-shrink-0 rounded-full sm:h-40 sm:w-40">
+        <button onClick={openBookDemo} aria-label={cta("Book a demo")} className="group relative h-36 w-36 flex-shrink-0 rounded-full sm:h-40 sm:w-40">
           <svg viewBox="0 0 200 200" className="sk-spin absolute inset-0 h-full w-full" aria-hidden="true">
             <defs><path id="sk-ring" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
             {/* textLength = the ring's circumference (2π·78), so the words close the loop exactly */}
             <text fill="rgba(244,237,227,0.75)" fontSize="15" fontWeight="700">
-              <textPath href="#sk-ring" textLength="488" lengthAdjust="spacing">BOOK A DEMO · FREE SETUP · BOOK A DEMO · FREE SETUP ·</textPath>
+              <textPath href="#sk-ring" textLength="488" lengthAdjust="spacing">{WAITLIST_MODE ? "JOIN THE WAITLIST · FIRST VENUES · JOIN THE WAITLIST · " : "BOOK A DEMO · FREE SETUP · BOOK A DEMO · FREE SETUP ·"}</textPath>
             </text>
           </svg>
           <span className="absolute inset-[30%] flex items-center justify-center rounded-full bg-[#D9A441] text-[#2B201B] shadow-[0_10px_40px_-6px_rgba(217,164,65,0.7)] transition duration-300 group-hover:scale-110">
@@ -721,8 +722,12 @@ function Footer() {
           <ul className="mt-5 space-y-3 text-[14px] text-[#D8CBBF]">
             <li><a className="hover:text-[#D9A441]" href="/terms.html">Terms & Conditions</a></li>
             <li><a className="hover:text-[#D9A441]" href="/privacy.html">Privacy Policy</a></li>
-            <li><Link className="hover:text-[#D9A441]" to="/login">Owner login</Link></li>
-            <li><Link className="hover:text-[#D9A441]" to="/waiter">Waiter login</Link></li>
+            {WAITLIST_MODE ? (
+              <li><Link className="hover:text-[#D9A441]" to="/waitlist">Join the waitlist</Link></li>
+            ) : (<>
+              <li><Link className="hover:text-[#D9A441]" to="/login">Owner login</Link></li>
+              <li><Link className="hover:text-[#D9A441]" to="/waiter">Waiter login</Link></li>
+            </>)}
           </ul>
         </div>
       </div>

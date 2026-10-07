@@ -33,6 +33,7 @@ import Receipt from "./pages/Receipt";
 import Landing from "./pages/Landing";
 import VenueTerms from "./pages/VenueTerms";
 import Waitlist from "./pages/Waitlist";
+import { WAITLIST_MODE } from "./lib/waitlistMode";
 
 export default function App() {
   const { init } = useThemeStore();
@@ -43,6 +44,16 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {WAITLIST_MODE ? (
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/waitlist" element={<Waitlist />} />
+          <Route path="/venue-terms" element={<VenueTerms />} />
+          <Route path="/privacy.html" element={null} />
+          <Route path="/terms.html" element={null} />
+          <Route path="*" element={<Navigate to="/waitlist" replace />} />
+        </Routes>
+      ) : (
       <Routes>
         {/* Public */}
         <Route path="/login" element={<Login />} />
@@ -168,6 +179,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      )}
     </BrowserRouter>
   );
 }
