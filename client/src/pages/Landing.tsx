@@ -127,7 +127,7 @@ function Hero() {
                 <span className="sk-ping absolute left-1.5 h-2 w-2 rounded-full bg-[#A9BE9F]" />
                 <span className="relative ml-3">Kigali</span>
               </span>
-              {WAITLIST_MODE ? "Coming soon to bars & restaurants" : "Now setting up bars & restaurants"}
+              {WAITLIST_MODE ? "Coming soon to restaurants & bars" : "Now setting up restaurants & bars"}
             </span>
           </Reveal>
           <Reveal delay={80}>
@@ -533,7 +533,7 @@ function Owners() {
                   </div>
                 ))}
               </div>
-              <CardTitle title="Made for how Kigali bars and restaurants really work" text="Shared tables, busy weekends, cash and MoMo side by side. Skuzi fits in, it doesn't fight you." />
+              <CardTitle title="Made for how Kigali restaurants and bars really work" text="Shared tables, busy weekends, cash and MoMo side by side. Skuzi fits in, it doesn't fight you." />
             </Card>
           </Reveal>
         </div>
