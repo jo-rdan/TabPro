@@ -149,6 +149,8 @@ export const qrStickers = pgTable("qr_stickers", {
   }),
   status: qrStickerStatusEnum("status").default("unclaimed").notNull(),
   claimedAt: timestamp("claimed_at"),
+  // The big number printed on the sticker ("5"): the table is named after it.
+  printedLabel: text("printed_label"),
 });
 
 export const tableAssignments = pgTable("table_assignments", {
@@ -305,6 +307,47 @@ export const campaignRecipients = pgTable("campaign_recipients", {
 }, (t) => ({
   oncePerCampaign: uniqueIndex("campaign_recipients_once").on(t.campaignId, t.customerId),
 }));
+
+// ─── Skuzi Creators ───────────────────────────────────────────────────────────
+// Creators (TikTok, Instagram…) bring new guests with their code. They earn
+// 500 RWF per new person who pays with Skuzi (bill 6,500 RWF or more), 1.5% of
+// smaller bills, paid monthly from what Skuzi already earned.
+export const creators = pgTable("creators", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  handle: text("handle"),               // @their_tiktok
+  phone: text("phone").notNull(),       // MoMo number for payouts (07XXXXXXXX)
+  wantedCode: text("wanted_code"),
+  code: text("code").unique(),          // set when approved
+  // 'applied' | 'active' | 'paused' | 'declined'
+  status: text("status").default("applied").notNull(),
+  // Their private page: /creator/<accessToken>
+  accessToken: text("access_token").notNull().unique(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  approvedAt: timestamp("approved_at"),
+});
+
+export const creatorPayouts = pgTable("creator_payouts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  creatorId: uuid("creator_id").references(() => creators.id, { onDelete: "cascade" }).notNull(),
+  amountRwf: integer("amount_rwf").notNull(),
+  people: integer("people").notNull(),
+  paidAt: timestamp("paid_at").defaultNow().notNull(),
+});
+
+// One row per new person a creator brought (a person counts once, ever).
+export const creatorReferrals = pgTable("creator_referrals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  creatorId: uuid("creator_id").references(() => creators.id, { onDelete: "cascade" }).notNull(),
+  payerPhone: text("payer_phone").notNull().unique(),
+  momoPaymentId: uuid("momo_payment_id").notNull().unique(),
+  venueId: uuid("venue_id").references(() => venues.id, { onDelete: "set null" }),
+  billRwf: integer("bill_rwf").notNull(),
+  earningRwf: integer("earning_rwf").notNull(),
+  payoutId: uuid("payout_id").references(() => creatorPayouts.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // ─── Bookings ─────────────────────────────────────────────────────────────────
 
@@ -531,6 +574,8 @@ export const momoPayments = pgTable("momo_payments", {
   tabproCommissionRwf: integer("tabpro_commission_rwf"),
   venuePayoutRwf: integer("venue_payout_rwf"),
   disbursementReferenceId: text("disbursement_reference_id").unique(),
+  // The creator whose code the guest typed when paying (Skuzi Creators).
+  creatorId: uuid("creator_id"),
   disbursementStatus: text("disbursement_status"),
   disbursedAt: timestamp("disbursed_at"),
   status: momoPaymentStatusEnum("status").default("pending").notNull(),

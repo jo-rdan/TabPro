@@ -3,6 +3,7 @@ import { orders, orderItems, tabs, menuItems, staffPoints, tableAssignments } fr
 import { eq, and } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
 import { notifyTable, notifyGuest } from './push.service';
+import { offerForTab } from './campaign.service';
 
 interface OrderItemInput {
   menuItemId: string;
@@ -80,6 +81,8 @@ export async function placeOrder(
       unitPriceRwf: menuItemRecords[i]!.priceRwf,
     })),
     total,
+    // A campaign guest's offer, so the waiter knows (e.g. "Free shot").
+    offer: tab.campaignId ? (await offerForTab(tabId))?.text ?? null : null,
   };
 
   // Broadcast to all venue connections (waiter + owner)
@@ -177,6 +180,7 @@ export async function getOrdersForVenue(venueId: string) {
     },
   });
 
-  // Filter to this venue's tables only
-  return openTabs.filter((tab) => tab.table.venueId === venueId);
+  // Filter to this venue's tables only, with any campaign offer for the waiter.
+  const mine = openTabs.filter((tab) => tab.table.venueId === venueId);
+  return Promise.all(mine.map(async (tab) => ({ ...tab, offer: tab.campaignId ? (await offerForTab(tab.id))?.text ?? null : null })));
 }

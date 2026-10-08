@@ -97,3 +97,16 @@ export function requireGuest(req: Request, res: Response, next: NextFunction) {
     res.status(401).json(body);
   }
 }
+
+// ─── The founder ─────────────────────────────────────────────────────────────
+// Skuzi-wide tools (creators, payouts) are only for the owner account named by
+// ADMIN_EMAIL. Run after requireAuth.
+export const adminEmail = () => (process.env.ADMIN_EMAIL || 'jordankayinamura@gmail.com').toLowerCase();
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.owner?.email?.toLowerCase() !== adminEmail()) {
+    const body: ApiResponse = { success: false, error: 'Only the Skuzi team can do this' };
+    res.status(403).json(body);
+    return;
+  }
+  next();
+}
