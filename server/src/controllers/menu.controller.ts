@@ -5,7 +5,7 @@ import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
 import { db } from '../lib/db';
 import { menuItems } from '../models/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 export async function handleGetMenu(req: Request, res: Response) {
   const { venueId } = req.params;
@@ -109,12 +109,26 @@ export async function handleUpdateMenuItem(req: Request, res: Response) {
     name: z.string().min(1).optional(),
     priceRwf: z.number().int().positive().optional(),
     category: z.string().min(1).optional(),
+    // Chef's pick: shown first on the venue's Skuzi page and on Explore.
+    featured: z.boolean().optional(),
   }).safeParse(req.body);
 
   if (!parsed.success) {
     const body: ApiResponse = { success: false, error: parsed.error.errors[0].message };
     res.status(400).json(body);
     return;
+  }
+
+  if (parsed.data.featured) {
+    const item = await db.query.menuItems.findFirst({ where: eq(menuItems.id, itemId) });
+    const picks = item
+      ? await db.query.menuItems.findMany({ where: and(eq(menuItems.venueId, item.venueId), eq(menuItems.featured, true)) })
+      : [];
+    if (picks.filter((p) => p.id !== itemId).length >= 3) {
+      const body: ApiResponse = { success: false, error: "You can pick 3 dishes. Remove one first." };
+      res.status(400).json(body);
+      return;
+    }
   }
 
   const [updated] = await db

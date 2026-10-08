@@ -54,6 +54,7 @@ import { startUnpaidBillsChecker } from './services/unpaid.service';
 import { startHeartbeatChecker } from './services/heartbeat.service';
 import { startPaymentReconciler } from './services/pawapay.service';
 import { startKeepAlive } from './lib/keepAlive';
+import { startScheduler } from './lib/scheduler';
 import { isPawapayConfigured, PAWAPAY_ENV } from './lib/pawapay';
 
 // Last line of defence: a failure in a background job (heartbeat checker,
@@ -76,6 +77,7 @@ server.listen(PORT, () => {
   startUnpaidBillsChecker();
   startPaymentReconciler();
   startKeepAlive();
+  startScheduler();
 });
 
 export default app;

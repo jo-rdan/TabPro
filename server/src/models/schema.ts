@@ -7,6 +7,8 @@ import {
   integer,
   date,
   pgEnum,
+  jsonb,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -76,6 +78,14 @@ export const venues = pgTable("venues", {
   termsVersion: integer("terms_version"),
   termsAcceptedAt: timestamp("terms_accepted_at"),
   termsAcceptedBy: text("terms_accepted_by"),
+  // The venue's own page on Skuzi: /v/<slug>. Set from the name, unique.
+  slug: text("slug").unique(),
+  // { mon: { open: "11:00", close: "01:00" } | null, … }. A close at or before
+  // the open time means after midnight. null = not set yet (defaults apply).
+  openingHours: jsonb("opening_hours"),
+  bookingsEnabled: boolean("bookings_enabled").default(true).notNull(),
+  // Shown on Explore. Demo venues never are, whatever this says.
+  listed: boolean("listed").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -159,6 +169,9 @@ export const customers = pgTable("customers", {
   phone: text("phone").notNull().unique(),
   name: text("name"),
   firstSeen: timestamp("first_seen").defaultNow().notNull(),
+  // "Want invites to Kigali's best nights?" Yes = campaigns may reach them.
+  invitesOptIn: boolean("invites_opt_in").default(false).notNull(),
+  invitesOptInAt: timestamp("invites_opt_in_at"),
 });
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
@@ -176,6 +189,8 @@ export const tabs = pgTable("tabs", {
   openedAt: timestamp("opened_at").defaultNow().notNull(),
   closedAt: timestamp("closed_at"),
   lastSeenAt: timestamp("last_seen_at").defaultNow(),
+  // The guest came because of this campaign (opened within 7 days of it).
+  campaignId: uuid("campaign_id"),
 });
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
@@ -217,6 +232,8 @@ export const menuItems = pgTable("menu_items", {
   category: text("category").notNull(),
   priceRwf: integer("price_rwf").notNull(),
   isAvailable: boolean("is_available").default(true).notNull(),
+  // Chef's pick: shown first on the venue's page and on Explore (max 3).
+  featured: boolean("featured").default(false).notNull(),
 });
 
 // ─── Ratings ──────────────────────────────────────────────────────────────────
@@ -256,11 +273,72 @@ export const campaigns = pgTable("campaigns", {
   venueId: uuid("venue_id")
     .references(() => venues.id, { onDelete: "cascade" })
     .notNull(),
+  title: text("title"),
   message: text("message").notNull(),
+  // 'none' | 'free_item' (offerLabel, e.g. "Free shot", served by staff) |
+  // 'discount_10' (10% off, applied when the guest pays with Skuzi).
+  offerType: text("offer_type").default("none").notNull(),
+  offerLabel: text("offer_label"),
+  // When the event happens (shown on Explore and the venue page), if any.
+  eventAt: timestamp("event_at"),
+  // 'regulars' = guests of this venue; 'everyone' = plus other Skuzi guests.
+  audience: text("audience").default("regulars").notNull(),
+  // 'scheduled' | 'sent' | 'cancelled' ('draft' for old rows).
   status: text("status").default("draft").notNull(),
+  sendAt: timestamp("send_at"),
   sentAt: timestamp("sent_at"),
   recipientCount: integer("recipient_count").default(0).notNull(),
   returnVisits: integer("return_visits").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Who a campaign reached, and whether they came (a tab within 7 days).
+export const campaignRecipients = pgTable("campaign_recipients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  campaignId: uuid("campaign_id").references(() => campaigns.id, { onDelete: "cascade" }).notNull(),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }).notNull(),
+  // Had a tab at the venue before the campaign was sent.
+  wasRegular: boolean("was_regular").default(false).notNull(),
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  cameAt: timestamp("came_at"),
+  cameTabId: uuid("came_tab_id"),
+}, (t) => ({
+  oncePerCampaign: uniqueIndex("campaign_recipients_once").on(t.campaignId, t.customerId),
+}));
+
+// ─── Bookings ─────────────────────────────────────────────────────────────────
+
+export const bookingStatusEnum = pgEnum("booking_status", [
+  "pending", "confirmed", "declined", "cancelled", "expired", "seated",
+]);
+
+export const bookings = pgTable("bookings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  venueId: uuid("venue_id").references(() => venues.id, { onDelete: "cascade" }).notNull(),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  partySize: integer("party_size").notNull(),
+  startsAt: timestamp("starts_at").notNull(),
+  note: text("note"),
+  status: bookingStatusEnum("status").default("pending").notNull(),
+  tableId: uuid("table_id").references(() => tables.id, { onDelete: "set null" }),
+  // The guest's private link to see or cancel it: /booking/<id>?t=<token>
+  accessToken: text("access_token").notNull(),
+  campaignId: uuid("campaign_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  decidedAt: timestamp("decided_at"),
+  reminderSentAt: timestamp("reminder_sent_at"),
+  seatedAt: timestamp("seated_at"),
+});
+
+// One-time codes that carry a guest from Safari to the Skuzi icon on their
+// Home Screen (iPhone keeps the two apart), so invites reach the right person.
+export const guestLinkCodes = pgTable("guest_link_codes", {
+  code: text("code").primaryKey(),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
 });
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────
@@ -377,6 +455,17 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
 export const campaignsRelations = relations(campaigns, ({ one }) => ({
   venue: one(venues, { fields: [campaigns.venueId], references: [venues.id] }),
 }));
+export const campaignRecipientsRelations = relations(campaignRecipients, ({ one }) => ({
+  campaign: one(campaigns, { fields: [campaignRecipients.campaignId], references: [campaigns.id] }),
+  customer: one(customers, { fields: [campaignRecipients.customerId], references: [customers.id] }),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  venue: one(venues, { fields: [bookings.venueId], references: [venues.id] }),
+  customer: one(customers, { fields: [bookings.customerId], references: [customers.id] }),
+  table: one(tables, { fields: [bookings.tableId], references: [tables.id] }),
+}));
+
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
@@ -396,6 +485,9 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
     .notNull(),
   // Set for a guest's phone: alerts about their own bill only.
   tabId: uuid("tab_id").references(() => tabs.id, { onDelete: "cascade" }),
+  // Set for a guest's device outside a bill: invites (if they said yes) and
+  // updates about their bookings.
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }),
   // Not unique: one browser can be signed up as the owner and as a waiter.
   endpoint: text("endpoint").notNull(),
   p256dh: text("p256dh").notNull(),

@@ -1,3 +1,4 @@
+import { CAMPAIGN_CUT_PERCENT } from "./campaign.service";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../lib/db";
 import { momoPayments, venues, tabs } from "../models/schema";
@@ -65,8 +66,11 @@ export async function requestTabPayment(
   }
 
   const bill = await getTabBill(tabId);
-  const { grandTotal } = bill;
+  // What the guest pays through Skuzi (after a campaign's 10% off, if any).
+  const grandTotal = bill.payWithSkuziTotal;
   if (grandTotal <= 0) throw new Error("There is nothing to pay on this tab");
+  // A guest a campaign brought: Skuzi's fee on this bill is 15% instead of 8%.
+  const cut = tab.campaignId ? CAMPAIGN_CUT_PERCENT / 100 : TABPRO_CUT;
 
   // Re-use a recent pending request for the same tab and amount.
   const recent = await db.query.momoPayments.findFirst({
@@ -102,7 +106,7 @@ export async function requestTabPayment(
   // Validates the number and works out MTN vs Airtel (throws PaymentRefusedError).
   const payer = await predictProvider(customerPhone);
 
-  const commission = Math.round(grandTotal * TABPRO_CUT);
+  const commission = Math.round(grandTotal * cut);
   const venuePayout = grandTotal - commission;
   const depositId = uuidv4();
 

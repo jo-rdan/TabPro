@@ -2,18 +2,20 @@ import { Router } from 'express';
 import {
   handleGetAudience,
   handleGetCampaigns,
+  handleGetCampaign,
   handleCreateCampaign,
-  handleSendCampaign,
+  handleCancelCampaign,
 } from '../controllers/campaign.controller';
 import { requireAuth } from '../middleware/auth.middleware';
-import { ownsVenue, venueFromParam, venueFromBody, venueOfCampaign } from '../middleware/venueAccess.middleware';
+import { ownsVenue, venueFromParam, venueFromBody } from '../middleware/venueAccess.middleware';
 
 const router = Router();
 
 router.use(requireAuth);
 router.get('/audience/:venueId', ownsVenue(venueFromParam()), handleGetAudience);
 router.get('/:venueId', ownsVenue(venueFromParam()), handleGetCampaigns);
+router.get('/:venueId/:campaignId', ownsVenue(venueFromParam()), handleGetCampaign);
 router.post('/', ownsVenue(venueFromBody()), handleCreateCampaign);
-router.post('/:campaignId/send/:venueId', ownsVenue(venueOfCampaign()), ownsVenue(venueFromParam()), handleSendCampaign);
+router.post('/:venueId/:campaignId/cancel', ownsVenue(venueFromParam()), handleCancelCampaign);
 
 export default router;
