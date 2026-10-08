@@ -1,4 +1,5 @@
 import { CAMPAIGN_CUT_PERCENT } from "./campaign.service";
+import { activeCreatorId, creditCreator } from "./creator.service";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../lib/db";
 import { momoPayments, venues, tabs } from "../models/schema";
@@ -53,6 +54,7 @@ export function venueAcceptsMobileMoney(venue: { momoPhone: string | null; isDem
 export async function requestTabPayment(
   tabId: string,
   customerPhone: string,
+  creatorCode?: string | null,
 ): Promise<{ depositId: string; grandTotal: number; commission: number; venuePayout: number }> {
   const tab = await db.query.tabs.findFirst({
     where: eq(tabs.id, tabId),
@@ -65,6 +67,7 @@ export async function requestTabPayment(
     throw new Error("This venue isn't set up for Mobile Money payments yet. Please pay your waiter.");
   }
 
+  const creatorId = await activeCreatorId(creatorCode);
   const bill = await getTabBill(tabId);
   // What the guest pays through Skuzi (after a campaign's 10% off, if any).
   const grandTotal = bill.payWithSkuziTotal;
@@ -78,6 +81,9 @@ export async function requestTabPayment(
     orderBy: [desc(momoPayments.createdAt)],
   });
   if (recent && recent.amountRwf === grandTotal && Date.now() - recent.createdAt.getTime() < PENDING_DEPOSIT_REUSE_MS) {
+    if (creatorId && recent.creatorId !== creatorId) {
+      await db.update(momoPayments).set({ creatorId }).where(eq(momoPayments.id, recent.id));
+    }
     return {
       depositId: recent.referenceId,
       grandTotal,
@@ -99,6 +105,7 @@ export async function requestTabPayment(
       tabproCommissionRwf: 0,
       venuePayoutRwf: 0,
       status: "pending",
+      creatorId,
     });
     return { depositId, grandTotal, commission: 0, venuePayout: 0 };
   }
@@ -122,6 +129,7 @@ export async function requestTabPayment(
     tabproCommissionRwf: commission,
     venuePayoutRwf: venuePayout,
     status: "pending",
+    creatorId,
   });
 
   try {
@@ -187,6 +195,9 @@ export async function checkTabPaymentAndMaybeDisburse(depositId: string): Promis
 
   // The customer has paid — settle the tab now, whatever happens with the payout.
   await markTabPaid(payment);
+  // A creator's code was used: credit them if this is a new person to Skuzi.
+  const paid = await db.query.momoPayments.findFirst({ where: eq(momoPayments.referenceId, depositId) });
+  if (paid) await creditCreator(paid).catch((err) => console.error("[creators] credit", err.message));
 
   await disburseToVenue(depositId);
 

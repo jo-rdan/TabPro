@@ -22,6 +22,9 @@ import BookTable from "./pages/guest/BookTable";
 import BookingStatus from "./pages/guest/BookingStatus";
 import Me from "./pages/guest/Me";
 import { HomeScreenGuide, Join } from "./pages/guest/HomeScreen";
+import CreatorJoin from "./pages/guest/CreatorJoin";
+import { CreatorHome, CreatorLink } from "./pages/guest/CreatorHome";
+import CreatorsAdmin from "./pages/owner/CreatorsAdmin";
 import Ratings from "./pages/owner/Ratings";
 import BusyHours from "./pages/owner/BusyHours";
 import Shifts from "./pages/owner/Shifts";
@@ -56,6 +59,8 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/waitlist" element={<Waitlist />} />
           <Route path="/venue-terms" element={<VenueTerms />} />
+          <Route path="/creators/join" element={<CreatorJoin />} />
+          <Route path="/creator/:token" element={<CreatorHome />} />
           <Route path="/privacy.html" element={null} />
           <Route path="/terms.html" element={null} />
           <Route path="*" element={<Navigate to="/waitlist" replace />} />
@@ -149,6 +154,12 @@ export default function App() {
         <Route path="/me" element={<Me />} />
         <Route path="/home-screen/:code" element={<HomeScreenGuide />} />
         <Route path="/join/:code" element={<Join />} />
+
+        {/* Skuzi Creators */}
+        <Route path="/creators/join" element={<CreatorJoin />} />
+        <Route path="/creator/:token" element={<CreatorHome />} />
+        <Route path="/c/:code" element={<CreatorLink />} />
+        <Route path="/creators" element={<ProtectedRoute><CreatorsAdmin /></ProtectedRoute>} />
         <Route
           path="/ratings"
           element={

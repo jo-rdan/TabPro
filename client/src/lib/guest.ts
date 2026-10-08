@@ -99,3 +99,14 @@ export function dayLabel(key: string, short = false) {
 export const rwf = (n: number) => `${n.toLocaleString("en-US")} RWF`;
 export const kigaliTime = (iso: string) =>
   new Date(new Date(iso).getTime() + 2 * 3600e3).toISOString().slice(11, 16);
+
+// ─── Skuzi Creators: the code a guest came with (kept 30 days on this phone) ──
+const CREATOR_KEY = "skuzi_creator_code";
+export function savedCreatorCode(): { code: string; name: string } | null {
+  try {
+    const v = JSON.parse(read(CREATOR_KEY) || "null");
+    if (!v?.code || Date.now() - (v.savedAt ?? 0) > 30 * 86400e3) return null;
+    return { code: v.code, name: v.name ?? "" };
+  } catch { return null; }
+}
+export const saveCreatorCode = (code: string, name: string) => write(CREATOR_KEY, JSON.stringify({ code, name, savedAt: Date.now() }));

@@ -46,6 +46,8 @@ interface LiveOrder {
   placedAt: string;
   items: OrderItemData[];
   total: number;
+  // The guest came with a campaign offer, e.g. "Free shot when you pay with Skuzi".
+  offer?: string | null;
 }
 
 interface NudgeAlert {
@@ -287,6 +289,7 @@ export default function WaiterOrders() {
               (s: number, i: any) => s + i.unitPriceRwf * i.quantity,
               0,
             ),
+            offer: tab.offer ?? null,
           });
         }
 
@@ -355,6 +358,7 @@ export default function WaiterOrders() {
               unitPriceRwf: i.unitPriceRwf,
             })),
             total: p.total,
+            offer: p.offer ?? null,
           },
           ...prev,
         ]);
@@ -1041,6 +1045,11 @@ export default function WaiterOrders() {
                     <span className="text-[17px] font-bold text-gray-900 dark:text-white">
                       {order.tableLabel}
                     </span>
+                    {order.offer && (
+                      <span title="This guest came with a campaign offer. Give it when they pay with Skuzi." className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">
+                        🎁 {order.offer.replace(/ when you pay with Skuzi$/, "")}
+                      </span>
+                    )}
                     {isManager && coveredTables.has(order.tableLabel) && (
                       <span title="This waiter has no smartphone: you're covering their table." className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
                         📵 Covering {coveredTables.get(order.tableLabel)}

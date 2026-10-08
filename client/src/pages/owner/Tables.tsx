@@ -46,6 +46,10 @@ export default function Tables() {
     setScannedCode(code);
     setShowScanner(false);
     setScanModal(true);
+    // Stickers carry a big printed number: name the table after it.
+    api.get('/tables/sticker-info', { params: { code } })
+      .then((r) => { if (r.data.data.printedLabel) setScanLabel((cur) => cur || `Table ${r.data.data.printedLabel}`); })
+      .catch(() => {});
   };
 
   const fetchTables = async () => {

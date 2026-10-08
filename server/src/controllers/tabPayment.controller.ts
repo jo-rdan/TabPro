@@ -12,6 +12,8 @@ import { z } from "zod";
 
 const tabPaySchema = z.object({
   phone: z.string().min(9),
+  // Skuzi Creators: the code the guest typed (optional, ignored if unknown).
+  creatorCode: z.string().max(30).optional().nullable(),
 });
 
 export async function handleInitiateTabPayment(req: Request, res: Response) {
@@ -23,7 +25,7 @@ export async function handleInitiateTabPayment(req: Request, res: Response) {
     return;
   }
   try {
-    const result = await requestTabPayment(tabId, parsed.data.phone);
+    const result = await requestTabPayment(tabId, parsed.data.phone, parsed.data.creatorCode);
     const body: ApiResponse = { success: true, data: result };
     res.json(body);
   } catch (err: any) {

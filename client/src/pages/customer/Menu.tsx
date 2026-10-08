@@ -19,6 +19,7 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 import { WsEvent } from "@tabpro/shared";
 import { apiFetch, apiBeacon } from "../../lib/apiFetch";
 import InviteOptIn from "../../components/guest/InviteOptIn";
+import { guestApi, savedCreatorCode, saveCreatorCode } from "../../lib/guest";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MenuItemData {
@@ -316,6 +317,18 @@ export default function CustomerMenu() {
   // A campaign brought this guest: their offer, and what they pay with Skuzi.
   const [skuziOffer, setSkuziOffer] = useState<{ title: string | null; offerType: string; text: string | null } | null>(null);
   const [payTotal, setPayTotal] = useState(0);
+  // Skuzi Creators: the code of the creator who brought this guest (optional).
+  const [creatorCode, setCreatorCode] = useState(() => savedCreatorCode()?.code ?? "");
+  const [creatorName, setCreatorName] = useState<string | null>(() => savedCreatorCode()?.name ?? null);
+  const [creatorCheck, setCreatorCheck] = useState<"idle" | "ok" | "unknown">(() => (savedCreatorCode() ? "ok" : "idle"));
+  const checkCreatorCode = async (raw: string) => {
+    const code = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!code) { setCreatorCheck("idle"); setCreatorName(null); return; }
+    try {
+      const r = await guestApi.get(`/creators/code/${code}`);
+      setCreatorName(r.data.data.name); setCreatorCheck("ok"); saveCreatorCode(r.data.data.code, r.data.data.name);
+    } catch { setCreatorName(null); setCreatorCheck("unknown"); }
+  };
 
   // ─── Mobile Money payment state ───────────────────────────────────────────────────
   type PayStep = "idle" | "entering_phone" | "waiting" | "success" | "failed";
@@ -583,7 +596,7 @@ export default function CustomerMenu() {
     try {
       setPayStep("waiting");
       setPayFailReason("");
-      const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned });
+      const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned, creatorCode: !isDemo && creatorCode && creatorCheck !== "unknown" ? creatorCode : null });
       setPayReferenceId(res.data.data.depositId);
     } catch (err: any) {
       // e.g. "Not enough balance on your Mobile Money account."
@@ -1119,13 +1132,32 @@ export default function CustomerMenu() {
                   </p>
                 )}
               </div>
+              {/* Skuzi Creators: who sent you? */}
+              {!isDemo && (
+                <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                  <label htmlFor="creator-code" className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                    Creator code <span className="normal-case tracking-normal font-medium">(optional)</span>
+                  </label>
+                  <input
+                    id="creator-code"
+                    value={creatorCode}
+                    onChange={(e) => { setCreatorCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setCreatorCheck("idle"); }}
+                    onBlur={() => checkCreatorCode(creatorCode)}
+                    placeholder="e.g. ALINE"
+                    maxLength={16}
+                    className="mt-2 w-full bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white focus:outline-none focus:border-brand-500"
+                  />
+                  {creatorCheck === "ok" && creatorName && <p className="text-xs text-green-600 dark:text-green-400 mt-2">✓ {creatorName}'s code. Thanks for coming!</p>}
+                  {creatorCheck === "unknown" && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">We don't know this code. You can still pay.</p>}
+                </div>
+              )}
               {/* Actions */}
               <div className="px-5 py-4 flex flex-col gap-2">
                 <button
                   onClick={handleMomoPay}
                   className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-colors"
                 >
-                  Confirm & pay {fmt(grandTotal)}
+                  Confirm & pay {fmt(payTotal || grandTotal)}
                 </button>
                 <button
                   onClick={() => setPayStep("idle")}

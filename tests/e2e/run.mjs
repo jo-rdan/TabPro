@@ -97,6 +97,12 @@ for (const [i, c] of codes.entries()) {
   r = await call('POST', '/tables/claim-scan', { venueId, label: `Table ${i + 1}`, scannedCode: `https://app/t/${c}` }, ownerTok);
   check(`Owner claims sticker → Table ${i + 1}`, r.status === 201, `status ${r.status}`);
 }
+{ // Stickers carry a big printed number: scanning one suggests "Table 7"
+  const numbered = rnd() + rnd();
+  await pg.query(`insert into qr_stickers (code,status,printed_label) values ($1,'unclaimed','7')`, [numbered]);
+  const si = await call('GET', `/tables/sticker-info?code=${encodeURIComponent('https://skuzi.app/t/' + numbered)}`, null, ownerTok);
+  check('Scanning a numbered sticker knows its printed number', si.json?.data?.printedLabel === '7' && si.json?.data?.claimed === false, JSON.stringify(si.json?.data));
+}
 r = await call('POST', '/tables/claim-scan', { venueId, label: 'Dup', scannedCode: codes[0] }, ownerTok);
 check('Re-claiming a used sticker → clear error, server stays up', r.status === 400 && (await alive()), r.json?.error);
 
@@ -653,6 +659,19 @@ console.log('\n── Explore, bookings & campaigns');
   r = await call('POST', `/campaigns/${demo.id}/${sched.json?.data?.id}/cancel`, {}, ownerTok);
   check('…and cancelled before it goes out', r.json?.data?.status === 'cancelled');
 
+  // Waiters see the offer of a guest the campaign brought
+  const wTable = await q1(`insert into tables (venue_id,label) values ($1,'Table 11') returning id`, [venueId]);
+  const wCode = rnd() + rnd();
+  await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [wCode, wTable.id]);
+  r = await call('POST', '/tabs/open', { qrCode: wCode, phone: '0788555666' });
+  await call('POST', '/orders', { tabId: r.json?.data?.tab?.id, items: [{ menuItemId: item('Fanta').id, quantity: 1 }] });
+  r = await call('GET', `/orders/venue/${venueId}`, null, staffTok);
+  check('Waiter sees the guest\'s offer (Free shot) on their order', (r.json?.data ?? []).some((t) => /Free shot/.test(t.offer ?? '')), JSON.stringify((r.json?.data ?? []).map((t) => t.offer)));
+
+  // A confirmed booking 1 hour from now gets its reminder (checked at the end of the run)
+  const remCust = await q1(`insert into customers (phone,name) values ('0788600999','Rita') returning id`);
+  await pg.query(`insert into bookings (venue_id,customer_id,name,phone,party_size,starts_at,status,access_token) values ($1,$2,'Reminder Rita','0788600999',2,now() + interval '1 hour','confirmed','tok-remind')`, [venueId, remCust.id]);
+
   // Guests stay in control
   r = await call('POST', '/guests/me/link-code', {}, guestTok);
   const code = r.json?.data?.code;
@@ -669,6 +688,87 @@ console.log('\n── Explore, bookings & campaigns');
   check('A broken booking link → "not found", not an error', r.status === 404, `status ${r.status}`);
 }
 
+
+// ── Skuzi Creators ───────────────────────────────────────────────────────────
+console.log('\n── Creators');
+{
+  const founder = await q1(`insert into owners (name,email,google_id) values ('Founder','jordankayinamura@gmail.com',$1) on conflict (email) do update set name='Founder' returning id,email`, [`g-${rnd()}`]);
+  const founderTok = jwt.sign({ ownerId: founder.id, email: founder.email }, JWT_SECRET, { expiresIn: '1d' });
+  r = await call('GET', '/auth/me', null, founderTok);
+  check('The founder account is recognised as Skuzi team', r.json?.data?.isAdmin === true);
+  r = await call('GET', '/auth/me', null, ownerTok);
+  check('…a restaurant owner is not', r.json?.data?.isAdmin === false);
+
+  r = await call('POST', '/creators/apply', { name: 'Aline Uwase', handle: 'aline.eats', phone: '+250 788 900 100', wantedCode: 'aline' });
+  check('A creator signs up', r.status === 201, r.json?.error);
+  r = await call('POST', '/creators/apply', { name: 'Aline Uwase', phone: '0788900100' });
+  check('Signing up twice with one number is refused politely', r.status === 409, r.json?.error);
+  r = await call('POST', '/creators/apply', { name: 'Bot', phone: '12345' });
+  check('A sign-up without a MoMo number is refused', r.status === 400, r.json?.error);
+  r = await call('GET', '/creators/admin', null, ownerTok);
+  check('A restaurant owner CANNOT see the creators list', r.status === 403);
+  r = await call('GET', '/creators/admin', null, founderTok);
+  const aline = (r.json?.data ?? []).find((c) => c.phone === '0788900100');
+  check('The founder sees the sign-up waiting, with the code they asked for', aline?.status === 'applied' && aline?.wantedCode === 'ALINE' && aline?.handle === '@aline.eats');
+  r = await call('POST', `/creators/admin/${aline?.id}/approve`, { code: 'aline' }, founderTok);
+  check('Founder approves them with their code', r.json?.data?.status === 'active' && r.json?.data?.code === 'ALINE', r.json?.error);
+  r = await call('POST', '/creators/admin', { name: 'Eric M', phone: '0788900200', code: 'ALINE' }, founderTok);
+  check('A code already taken is refused', r.status === 409, r.json?.error);
+  r = await call('POST', '/creators/admin', { name: 'Eric M', phone: '0788900200', code: 'ERICM' }, founderTok);
+  check('Founder adds a creator directly', r.status === 201 && r.json?.data?.code === 'ERICM', r.json?.error);
+  r = await call('GET', '/creators/code/aline');
+  check('Guests can check a code (first name only)', r.json?.data?.name === 'Aline' && r.json?.data?.code === 'ALINE');
+  r = await call('GET', '/creators/code/NOPE123');
+  check('An unknown code is just "unknown"', r.status === 404);
+
+  // Paying with a code
+  const crTable = await q1(`insert into tables (venue_id,label) values ($1,'Table 20') returning id`, [venueId]);
+  const crCode = rnd() + rnd();
+  await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [crCode, crTable.id]);
+  const payWithCode = async (phoneNo, qty, code) => {
+    const o = await call('POST', '/tabs/open', { qrCode: crCode, phone: phoneNo });
+    const tId = o.json?.data?.tab?.id;
+    await call('POST', '/orders', { tabId: tId, items: [{ menuItemId: item('Primus').id, quantity: qty }] });
+    const p = await call('POST', `/tabpayment/${tId}/pay`, { phone: phoneNo, creatorCode: code });
+    const d = p.json?.data?.depositId;
+    if (pawa.state.deposits.get(d)) pawa.state.deposits.get(d).status = 'COMPLETED';
+    await call('GET', `/tabpayment/${tId}/pay/status/${d}`);
+    await sleep(300);
+    return tId;
+  };
+  const refs = async () => (await q1(`select count(*)::int n, coalesce(sum(earning_rwf),0)::int s from creator_referrals where creator_id=$1`, [aline.id]));
+  await payWithCode('0788901001', 5, 'aline'); // 7,500 RWF
+  let rf = await refs();
+  check('New person pays 7,500 with Skuzi + code → creator earns 500', rf.n === 1 && rf.s === 500, JSON.stringify(rf));
+  await payWithCode('0788901001', 5, 'ALINE');
+  rf = await refs();
+  check('Same person again → counts once only', rf.n === 1, JSON.stringify(rf));
+  await payWithCode('0788901002', 2, 'ALINE'); // 3,000 RWF
+  rf = await refs();
+  check('Smaller bill (3,000) → creator earns 1.5% (45)', rf.n === 2 && rf.s === 545, JSON.stringify(rf));
+  await payWithCode('0788555666', 5, 'ALINE');
+  rf = await refs();
+  check('Someone who already paid with Skuzi before → not counted', rf.n === 2, JSON.stringify(rf));
+  await payWithCode('0788900100', 5, 'ALINE');
+  rf = await refs();
+  check("The creator's own number → not counted", rf.n === 2, JSON.stringify(rf));
+  await payWithCode('0788901003', 5, 'NOPE123');
+  check('An unknown code never blocks the payment', (await q1(`select count(*)::int n from momo_payments where phone='250788901003' and status='successful'`)).n === 1);
+
+  r = await call('GET', `/creators/me/${aline.accessToken}`);
+  check("Creator's own page shows people and money, never who", r.json?.data?.people === 2 && r.json?.data?.earnedRwf === 545 && r.json?.data?.unpaidRwf === 545 && !JSON.stringify(r.json?.data).includes('0788901001'), JSON.stringify({ p: r.json?.data?.people, e: r.json?.data?.earnedRwf }));
+  r = await call('GET', '/creators/me/not-a-real-token');
+  check('A wrong private link shows nothing', r.status === 404);
+  r = await call('POST', `/creators/admin/${aline.id}/paid`, {}, founderTok);
+  check('Founder records the MoMo payout', r.json?.data?.amountRwf === 545 && r.json?.data?.people === 2, r.json?.error);
+  r = await call('GET', `/creators/me/${aline.accessToken}`);
+  check('…creator sees it as paid', r.json?.data?.unpaidRwf === 0 && r.json?.data?.paidRwf === 545 && r.json?.data?.payouts?.length === 1);
+  r = await call('POST', `/creators/admin/${aline.id}/paid`, {}, founderTok);
+  check('Paying twice is refused (nothing left to pay)', r.status === 400, r.json?.error);
+  await call('POST', `/creators/admin/${aline.id}/status`, { status: 'paused' }, founderTok);
+  r = await call('GET', '/creators/code/ALINE');
+  check('A paused creator\'s code stops working', r.status === 404);
+}
 
 // ── Website: "Book a demo" ─────────────────────────────────────────────────
 console.log('\n── Book a demo');
@@ -740,8 +840,15 @@ console.log('\n── Sign-in');
 {
   // The request nobody answered (created at the start of the bookings section).
   let st;
-  for (let i = 0; i < 40; i++) { st = (await q1(`select status from bookings where access_token='tok-expire'`))?.status; if (st === 'expired') break; await sleep(2000); }
+  for (let i = 0; i < 40; i++) {
+    st = (await q1(`select status from bookings where access_token='tok-expire'`))?.status;
+    const reminded = (await q1(`select reminder_sent_at from bookings where access_token='tok-remind'`))?.reminder_sent_at;
+    if (st === 'expired' && reminded) break;
+    await sleep(2000);
+  }
   check('An unanswered booking request expires by itself', st === 'expired', st);
+  const rem = await q1(`select reminder_sent_at from bookings where access_token='tok-remind'`);
+  check('A confirmed booking gets its reminder 2 hours before', !!rem?.reminder_sent_at);
 }
 check('Server survived the whole run', await alive());
 
