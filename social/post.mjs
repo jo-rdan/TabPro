@@ -37,14 +37,24 @@ async function createPost(input) {
   }
 }
 
-/** Wait until the video is live on the website (a fresh deploy can take a few minutes). */
-async function waitForVideo(url) {
+/** Wait until this exact video is live on the website (a fresh deploy can take a few minutes). */
+async function waitForVideo(url, size) {
   for (let i = 0; i < 40; i++) {
     const r = await fetch(url, { method: "HEAD" }).catch(() => null);
-    if (r?.ok && /video/.test(r.headers.get("content-type") ?? "")) return true;
+    if (r?.ok && /video/.test(r.headers.get("content-type") ?? "") && Number(r.headers.get("content-length")) === size) return true;
     await new Promise((res) => setTimeout(res, 15000));
   }
   return false;
+}
+
+/** A post's fingerprint: its caption and its video file, so changing either re-queues it. */
+function fingerprint(post) {
+  const file = "client/public" + post.video;
+  const bytes = fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0);
+  let v = 7; for (let i = 0; i < bytes.length; i += 997) v = (v * 31 + bytes[i]) >>> 0;
+  v = (v * 31 + bytes.length) >>> 0;
+  const c = [...post.caption].reduce((h, ch) => (h * 31 + ch.codePointAt(0)) >>> 0, 7);
+  return { h: c.toString(36) + "." + v.toString(36), v: v.toString(36), size: bytes.length };
 }
 
 const queue = JSON.parse(fs.readFileSync("social/queue.json", "utf8"));
@@ -61,32 +71,27 @@ if (!channels.length) { console.error("✗ No Instagram channel connected in Buf
 
 const now = Date.now(), until = now + DAYS_AHEAD * 86400000;
 
-// Posts taken out of the plan: remove them from Buffer if they haven't gone out yet.
-const planned = new Set(queue.map((q) => q.id));
+// Posts taken out of the plan, or whose time, caption or video changed: take them
+// out of Buffer if they haven't gone out yet (changed ones are re-queued below).
+const plan = new Map(queue.map((q) => [q.id, q]));
 for (const [key, s] of Object.entries(sent)) {
-  const id = key.split(":")[0];
-  if (planned.has(id) || Date.parse(s.at) <= now) continue;
+  const q = plan.get(key.split(":")[0]);
+  const changed = !q || q.at !== s.at || fingerprint(q).h !== s.h;
+  if (!changed || Date.parse(s.at) <= now + 10 * 60000) continue;
   try {
     const d = await gql(`mutation($input: DeletePostInput!) { deletePost(input: $input) { ... on DeletePostSuccess { id } ... on VoidMutationError { message } } }`, { input: { id: s.bufferId } });
-    if (d.deletePost?.id) { delete sent[key]; console.log(`🗑 ${key} removed from Buffer`); }
-  } catch (e) { console.error(`✗ couldn't remove ${key}: ${e.message}`); }
+    if (d.deletePost?.id) { delete sent[key]; console.log(q ? `↻ ${key} changed, re-queueing` : `🗑 ${key} removed from Buffer`); }
+  } catch (e) { console.error(`✗ couldn't update ${key}: ${e.message}`); }
 }
 
 const due = queue.filter((q) => { const t = Date.parse(q.at); return t > now + 10 * 60000 && t <= until; });
 let failures = 0;
 for (const post of due) {
-  const url = SITE + post.video;
-  if (!(await waitForVideo(url))) { console.error(`✗ ${post.id}: video not reachable at ${url}`); failures++; continue; }
+  const fp = fingerprint(post);
+  const url = `${SITE}${post.video}?v=${fp.v}`;
+  if (!(await waitForVideo(url, fp.size))) { console.error(`✗ ${post.id}: video not live yet at ${url}`); failures++; continue; }
   for (const ch of channels) {
     const key = `${post.id}:${ch.service}`;
-    const hash = [...post.caption].reduce((h, c) => (h * 31 + c.codePointAt(0)) >>> 0, 7).toString(36);
-    // Caption changed since it was queued: replace it in Buffer.
-    if (sent[key] && sent[key].h !== hash && Date.parse(sent[key].at) > now + 10 * 60000) {
-      try {
-        const d = await gql(`mutation($input: DeletePostInput!) { deletePost(input: $input) { ... on DeletePostSuccess { id } ... on VoidMutationError { message } } }`, { input: { id: sent[key].bufferId } });
-        if (d.deletePost?.id) { delete sent[key]; console.log(`↻ ${key}: caption updated, re-queueing`); }
-      } catch (e) { console.error(`✗ ${key}: couldn't replace (${e.message})`); }
-    }
     if (sent[key]) continue;
     try {
       const r = await createPost({
@@ -94,7 +99,7 @@ for (const post of due) {
         assets: [{ video: { url, metadata: { thumbnailOffset: 1500 } } }],
         metadata: { instagram: { type: "reel", shouldShareToFeed: true } },
       });
-      if (r?.post?.id) { sent[key] = { bufferId: r.post.id, at: post.at, h: hash }; console.log(`✓ ${key} → ${post.at}`); }
+      if (r?.post?.id) { sent[key] = { bufferId: r.post.id, at: post.at, h: fp.h }; console.log(`✓ ${key} → ${post.at}`); }
       else { console.error(`✗ ${key}: ${r?.message ?? JSON.stringify(r)}`); failures++; }
     } catch (e) { console.error(`✗ ${key}: ${e.message}`); failures++; }
   }
