@@ -89,14 +89,21 @@ export async function createTable(venueId: string, label: string) {
   return { table, qrCode: sticker.code };
 }
 
+/** The code inside a scanned sticker (a full link or just the code). */
+const stickerCode = (scanned: string) => (scanned.includes("/t/") ? scanned.split("/t/").pop()!.trim() : scanned.trim()).split(/[?#]/)[0];
+
+/** Before naming a scanned table: the number printed on the sticker, if any. */
+export async function stickerInfo(scannedCode: string) {
+  const s = await db.query.qrStickers.findFirst({ where: eq(qrStickers.code, stickerCode(scannedCode)) });
+  return { printedLabel: s?.printedLabel ?? null, claimed: s?.status === "claimed" };
+}
+
 export async function claimScannedTable(
   venueId: string,
   label: string,
   scannedCode: string,
 ) {
-  const code = scannedCode.includes("/t/")
-    ? scannedCode.split("/t/").pop()!.trim()
-    : scannedCode.trim();
+  const code = stickerCode(scannedCode);
 
   const existing = await db.query.qrStickers.findFirst({
     where: eq(qrStickers.code, code),

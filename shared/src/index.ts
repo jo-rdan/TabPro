@@ -23,6 +23,8 @@ export interface Owner {
   phone: string | null;
   googleId: string;
   createdAt: string;
+  /** The Skuzi founder: sees Skuzi-wide tools (creators). */
+  isAdmin?: boolean;
 }
 
 // ─── Venue ────────────────────────────────────────────────────────────────────

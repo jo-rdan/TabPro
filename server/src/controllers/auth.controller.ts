@@ -4,6 +4,7 @@ import { db } from "../lib/db";
 import { ApiResponse } from "@tabpro/shared";
 import { owners, venues } from "../models/schema";
 import { VENUE_TERMS_VERSION } from "../lib/venueTerms";
+import { adminEmail } from "../middleware/auth.middleware";
 import { eq } from "drizzle-orm";
 import { siteFor } from "../lib/origins";
 
@@ -60,7 +61,8 @@ export async function getMe(req: Request, res: Response) {
     }
 
     // currentTermsVersion: the app asks owners to agree when theirs is older.
-    const body: ApiResponse = { success: true, data: { ...owner, currentTermsVersion: VENUE_TERMS_VERSION } };
+    // isAdmin: the founder, who sees Skuzi-wide tools (creators).
+    const body: ApiResponse = { success: true, data: { ...owner, currentTermsVersion: VENUE_TERMS_VERSION, isAdmin: owner.email.toLowerCase() === adminEmail() } };
     res.json(body);
   } catch (err) {
     throw err;
