@@ -1,6 +1,52 @@
 import { db } from '../lib/db';
 import { venues, subscriptions, owners, venueTermsAcceptances } from '../models/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull, like } from 'drizzle-orm';
+import { parseHours } from '../lib/hours';
+import { HttpError } from '../middleware/error.middleware';
+
+// ─── The venue's web address on Skuzi: /v/<slug> ─────────────────────────────
+export function slugify(name: string): string {
+  return name
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/g, '') || 'venue';
+}
+
+/** A free slug for this name: "sunset-lounge", else "sunset-lounge-2", … */
+export async function uniqueSlug(name: string, venueId?: string): Promise<string> {
+  const base = slugify(name);
+  const taken = new Set(
+    (await db.select({ slug: venues.slug, id: venues.id }).from(venues).where(like(venues.slug, `${base}%`)))
+      .filter((v) => v.id !== venueId)
+      .map((v) => v.slug),
+  );
+  if (!taken.has(base)) return base;
+  for (let i = 2; ; i++) if (!taken.has(`${base}-${i}`)) return `${base}-${i}`;
+}
+
+/** Venues made before slugs existed get one (runs at start-up). */
+export async function ensureVenueSlugs() {
+  const missing = await db.select({ id: venues.id, name: venues.name }).from(venues).where(isNull(venues.slug));
+  for (const v of missing) {
+    await db.update(venues).set({ slug: await uniqueSlug(v.name, v.id) }).where(eq(venues.id, v.id));
+  }
+}
+
+export async function updateVenueSettings(
+  venueId: string,
+  changes: { openingHours?: unknown; bookingsEnabled?: boolean },
+) {
+  const set: Partial<typeof venues.$inferInsert> = {};
+  if (changes.openingHours !== undefined) {
+    const hours = parseHours(changes.openingHours);
+    if (!hours) throw new HttpError(400, 'Please check the opening hours');
+    set.openingHours = hours;
+  }
+  if (changes.bookingsEnabled !== undefined) set.bookingsEnabled = changes.bookingsEnabled;
+  if (Object.keys(set).length === 0) return db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+  const [venue] = await db.update(venues).set(set).where(eq(venues.id, venueId)).returning();
+  return venue;
+}
 
 export async function createVenue(ownerId: string, name: string, location?: string, momoPhone?: string) {
   const trialEndsAt = new Date();
@@ -8,7 +54,7 @@ export async function createVenue(ownerId: string, name: string, location?: stri
 
   const [venue] = await db
     .insert(venues)
-    .values({ ownerId, name, location, momoPhone, trialEndsAt })
+    .values({ ownerId, name, location, momoPhone, trialEndsAt, slug: await uniqueSlug(name) })
     .returning();
 
   await db.insert(subscriptions).values({

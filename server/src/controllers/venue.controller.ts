@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createVenue, getVenuesByOwner, updateVenueLogo, updateVenueMomoPhone, acceptVenueTerms } from '../services/venue.service';
+import { createVenue, getVenuesByOwner, updateVenueLogo, updateVenueMomoPhone, acceptVenueTerms, updateVenueSettings } from '../services/venue.service';
 import { VENUE_TERMS_VERSION } from '../lib/venueTerms';
 import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
@@ -100,6 +100,19 @@ export async function handleAcceptTerms(req: Request, res: Response) {
     return;
   }
   const venue = await acceptVenueTerms(req.params.venueId, req.owner!.ownerId, VENUE_TERMS_VERSION);
+  const body: ApiResponse = { success: true, data: venue };
+  res.json(body);
+}
+
+// PATCH /venues/:venueId/settings: opening hours and taking bookings.
+export async function handleUpdateSettings(req: Request, res: Response) {
+  const parsed = z.object({ openingHours: z.unknown().optional(), bookingsEnabled: z.boolean().optional() }).safeParse(req.body ?? {});
+  if (!parsed.success) {
+    const body: ApiResponse = { success: false, error: 'Please check your settings' };
+    res.status(400).json(body);
+    return;
+  }
+  const venue = await updateVenueSettings(req.params.venueId, parsed.data);
   const body: ApiResponse = { success: true, data: venue };
   res.json(body);
 }

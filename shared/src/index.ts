@@ -43,6 +43,11 @@ export interface Venue {
   termsVersion?: number | null;
   termsAcceptedAt?: string | null;
   termsAcceptedBy?: string | null;
+  /** The venue's own page on Skuzi: /v/<slug>. */
+  slug?: string | null;
+  /** { mon: { open: "11:00", close: "01:00" } | null, … }; null = not set yet. */
+  openingHours?: Record<string, { open: string; close: string } | null> | null;
+  bookingsEnabled?: boolean;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────
@@ -202,7 +207,8 @@ export type WsEventType =
   | "staff_invite_accepted"
   | "staff_join_request"
   | "tab_paid"
-  | "disbursement_failed";
+  | "disbursement_failed"
+  | "booking_update";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;

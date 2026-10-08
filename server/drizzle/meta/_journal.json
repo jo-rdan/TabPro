@@ -169,6 +169,13 @@
       "when": 1791315632761,
       "tag": "0023_venue_terms",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791448232756,
+      "tag": "0024_campaigns_bookings",
+      "breakpoints": true
     }
   ]
 }

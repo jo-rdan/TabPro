@@ -36,6 +36,9 @@ export async function saveSubscription(
     where: and(
       eq(pushSubscriptions.endpoint, endpoint),
       staffId ? eq(pushSubscriptions.staffId, staffId) : isNull(pushSubscriptions.staffId),
+      // A guest row on the same phone stays a guest row.
+      isNull(pushSubscriptions.tabId),
+      isNull(pushSubscriptions.customerId),
     ),
   });
 
@@ -117,7 +120,7 @@ async function tableWaiterRoute(venueId: string, tableId: string, tabStaffId: st
 
 function ownerSubs(venueId: string) {
   return db.query.pushSubscriptions.findMany({
-    where: and(eq(pushSubscriptions.venueId, venueId), isNull(pushSubscriptions.staffId), isNull(pushSubscriptions.tabId)),
+    where: and(eq(pushSubscriptions.venueId, venueId), isNull(pushSubscriptions.staffId), isNull(pushSubscriptions.tabId), isNull(pushSubscriptions.customerId)),
   });
 }
 
@@ -187,7 +190,8 @@ export async function sendPushToOwner(
   data?: Record<string, unknown>,
 ) {
   if (!pushEnabled()) return;
-  await send(await ownerSubs(venueId), title, body, OWNER_URL, data);
+  // data.url, when given, is where tapping the alert goes (e.g. /bookings).
+  await send(await ownerSubs(venueId), title, body, (data?.url as string) || OWNER_URL, data);
 }
 
 // ─── Skuzi's own team (the founder) ─────────────────────────────────────────
@@ -205,7 +209,38 @@ export async function notifyAdmin(title: string, body: string) {
       inArray(pushSubscriptions.venueId, ownerVenues.map((v) => v.id)),
       isNull(pushSubscriptions.staffId),
       isNull(pushSubscriptions.tabId),
+      isNull(pushSubscriptions.customerId),
     ),
   });
   await send(subs, title, body, OWNER_URL);
+}
+
+// ─── Guests outside a bill ────────────────────────────────────────────────────
+// A guest's device for invites (only if they said yes) and booking updates.
+export async function saveGuestSubscription(customerId: string, venueId: string, endpoint: string, p256dh: string, auth: string) {
+  const existing = await db.query.pushSubscriptions.findFirst({
+    where: and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.customerId, customerId)),
+  });
+  if (existing) {
+    await db.update(pushSubscriptions).set({ p256dh, auth }).where(eq(pushSubscriptions.id, existing.id));
+    return existing;
+  }
+  const [created] = await db
+    .insert(pushSubscriptions)
+    .values({ venueId, customerId, endpoint, p256dh, auth })
+    .returning();
+  return created;
+}
+
+export async function guestHasDevice(customerId: string) {
+  return !!(await db.query.pushSubscriptions.findFirst({ where: eq(pushSubscriptions.customerId, customerId) }));
+}
+
+/** Tells a guest something on every device they connected (returns false if none). */
+export async function notifyCustomer(customerId: string, title: string, body: string, url: string) {
+  if (!pushEnabled()) return false;
+  const subs = await db.query.pushSubscriptions.findMany({ where: eq(pushSubscriptions.customerId, customerId) });
+  if (subs.length === 0) return false;
+  await send(subs, title, body, url);
+  return true;
 }
