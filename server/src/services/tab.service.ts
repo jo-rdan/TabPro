@@ -6,7 +6,8 @@ import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
 import { notifyTable, sendPushToOwner } from './push.service';
-import { trackReturnVisit } from './campaign.service';
+import { attributeVisit, offerForTab } from './campaign.service';
+import { onGuestSeated } from './booking.service';
 import { isPawapayConfigured } from '../lib/pawapay';
 
 // What customers may see about a venue — never the payout number, clock-in
@@ -64,6 +65,13 @@ function announceTabOpened(venueId: string, tab: { id: string; tableId: string; 
     .catch((err) => console.error('[push] seated', err));
 }
 
+// Guests just sat down: did a campaign bring them, and is it a booking?
+// Never blocks opening the tab.
+async function afterNewTab(venueId: string, tableId: string, tableLabel: string, customerId: string, tabId: string) {
+  await attributeVisit(venueId, customerId, tabId).catch((err) => console.error('[campaign] attribution', err.message));
+  await onGuestSeated(venueId, tableId, customerId, tableLabel).catch((err) => console.error('[booking] seated', err.message));
+}
+
 export async function openTab(qrCode: string, phone: string, name?: string) {
   const table = await getTableByQrCode(qrCode);
   if (!table) throw new Error("This table isn't set up in Skuzi yet. Please ask a waiter.");
@@ -74,10 +82,15 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
   const customer = await findOrCreateCustomer(phone, name);
 
   if (existingTab) {
+    // A friend joining the table may be the one the campaign brought.
+    if (!existingTab.campaignId) {
+      await attributeVisit(table.venue.id, customer.id, existingTab.id).catch(() => {});
+    }
     const { grouped } = await getMenuForVenue(table.venue.id);
     return {
       tab: existingTab,
       isExisting: true,
+      offer: await offerForTab(existingTab.id),
       venue: publicVenue(table.venue),
       table: { id: table.id, label: table.label },
       waiter: await waiterFor(existingTab.staffId),
@@ -104,11 +117,13 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
     .returning();
 
   announceTabOpened(table.venue.id, tab, table.label);
+  await afterNewTab(table.venue.id, table.id, table.label, customer.id, tab.id);
   const { grouped } = await getMenuForVenue(table.venue.id);
 
   return {
     tab,
     isExisting: false,
+    offer: await offerForTab(tab.id),
     venue: publicVenue(table.venue),
     table: { id: table.id, label: table.label },
     waiter: await waiterFor(tab.staffId),
@@ -155,8 +170,7 @@ export async function openTabByTableId(tableId: string, phone?: string) {
 
   announceTabOpened(table.venue.id, tab, table.label);
 
-  // Track return visit for campaign analytics (fire-and-forget)
-  trackReturnVisit(table.venue.id, customer.id).catch(() => {});
+  await afterNewTab(table.venue.id, table.id, table.label, customer.id, tab.id);
 
   return { tab, isExisting: false, venue: publicVenue(table.venue), table: { id: table.id, label: table.label }, waiter: await waiterFor(tab.staffId) };
 }
@@ -304,6 +318,10 @@ export async function getTabBill(tabId: string) {
 
   const grandTotal = lineItems.reduce((sum, l) => sum + l.subtotal, 0);
 
+  // A campaign guest's offer: 10% off applies when they pay with Skuzi.
+  const offer = tab.campaignId ? await offerForTab(tabId) : null;
+  const skuziDiscountRwf = offer?.offerType === 'discount_10' ? Math.round(grandTotal * 0.1) : 0;
+
   return {
     tabId,
     status: tab.status,
@@ -311,6 +329,9 @@ export async function getTabBill(tabId: string) {
     venueName: tab.table.venue.name,
     lineItems,
     grandTotal,
+    offer,
+    skuziDiscountRwf,
+    payWithSkuziTotal: grandTotal - skuziDiscountRwf,
     openedAt: tab.openedAt,
   };
 }

@@ -18,6 +18,7 @@ import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { WsEvent } from "@tabpro/shared";
 import { apiFetch, apiBeacon } from "../../lib/apiFetch";
+import InviteOptIn from "../../components/guest/InviteOptIn";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MenuItemData {
@@ -312,6 +313,9 @@ export default function CustomerMenu() {
   const [billLoading, setBillLoading] = useState(false);
   const [billLines, setBillLines] = useState<BillLine[]>([]);
   const [grandTotal, setGrandTotal] = useState(0);
+  // A campaign brought this guest: their offer, and what they pay with Skuzi.
+  const [skuziOffer, setSkuziOffer] = useState<{ title: string | null; offerType: string; text: string | null } | null>(null);
+  const [payTotal, setPayTotal] = useState(0);
 
   // ─── Mobile Money payment state ───────────────────────────────────────────────────
   type PayStep = "idle" | "entering_phone" | "waiting" | "success" | "failed";
@@ -419,7 +423,8 @@ export default function CustomerMenu() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
-      const { tab, venue, table, menuGrouped: mg, isExisting, waiter } = data.data;
+      const { tab, venue, table, menuGrouped: mg, isExisting, waiter, offer } = data.data;
+      setSkuziOffer(offer ?? null);
       setWaiterName(waiter?.name ?? null);
       setTabId(tab.id);
       setTabStatus(tab.status);
@@ -644,6 +649,8 @@ export default function CustomerMenu() {
       if (!data.success) return;
       setBillLines(data.data.lineItems);
       setGrandTotal(data.data.grandTotal);
+      setPayTotal(data.data.payWithSkuziTotal ?? data.data.grandTotal);
+      if (data.data.offer !== undefined) setSkuziOffer(data.data.offer);
       if (data.data.venueName) setVenueName(data.data.venueName);
       if (data.data.tableLabel) setTableLabel(data.data.tableLabel);
     } catch {}
@@ -996,6 +1003,16 @@ export default function CustomerMenu() {
               }}
             />
           </div>
+          {skuziOffer?.text && payStep === "idle" && (
+            <div className="mb-3 rounded-2xl bg-[#2B201B] px-4 py-3 text-[#F4EDE3]">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-[#D9A441]">{skuziOffer.title ?? "Your offer"}</p>
+              <p className="mt-0.5 text-sm font-bold">
+                {skuziOffer.offerType === "discount_10" && acceptsMobileMoney
+                  ? <>10% off with Skuzi: pay {fmt(payTotal)} instead of {fmt(grandTotal)}</>
+                  : <>{skuziOffer.text}. Show this to your waiter.</>}
+              </p>
+            </div>
+          )}
           {/* Mobile Money payment flow (pawaPay) */}
           {payStep === "idle" && acceptsMobileMoney && (
             <button
@@ -1050,7 +1067,7 @@ export default function CustomerMenu() {
                   Amount
                 </p>
                 <p className="text-xl font-black text-gray-900 dark:text-white">
-                  {fmt(grandTotal)}
+                  {fmt(payTotal || grandTotal)}
                 </p>
               </div>
               {/* Phone */}
@@ -1135,7 +1152,7 @@ export default function CustomerMenu() {
                     <span className="font-semibold text-gray-700 dark:text-gray-300">
                       {payPhone}
                     </span>{" "}
-                    and approve the Mobile Money request for {fmt(grandTotal)}
+                    and approve the Mobile Money request for {fmt(payTotal || grandTotal)}
                   </>
                 )}
               </p>
@@ -1163,7 +1180,7 @@ export default function CustomerMenu() {
                 Payment confirmed!
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {fmt(grandTotal)} received. Your official RRA receipt will be
+                {fmt(payTotal || grandTotal)} received. Your official RRA receipt will be
                 issued at the counter.
               </p>
             </div>
@@ -1266,7 +1283,7 @@ export default function CustomerMenu() {
   // ─── CLOSED ───────────────────────────────────────────────────────────────
   if (step === "closed") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 py-10">
         <div className="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
           <CheckCircle size={44} className="text-white" />
         </div>
@@ -1276,8 +1293,12 @@ export default function CustomerMenu() {
         <p className="text-sm text-gray-400">
           {venueName} · {tableLabel}
         </p>
-        <p className="text-4xl mt-8">👋</p>
-        <p className="text-sm text-gray-400 mt-3">See you next time</p>
+        <p className="text-sm text-gray-400 mt-3 mb-8">See you next time 👋</p>
+        {tabId && (
+          <div className="w-full max-w-sm">
+            <InviteOptIn tabId={tabId} />
+          </div>
+        )}
       </div>
     );
   }
@@ -1377,6 +1398,15 @@ export default function CustomerMenu() {
 
         {/* Menu content */}
         <div className="flex-1 px-4 pt-5 overflow-y-auto">
+          {skuziOffer?.text && (
+            <div className="mb-5 flex items-center gap-3 rounded-2xl border-[1.5px] border-amber-500/60 bg-amber-50 px-4 py-3 dark:bg-amber-500/10">
+              <span className="text-2xl" aria-hidden="true">🎁</span>
+              <div className="min-w-0">
+                <p className="text-sm font-extrabold text-gray-900 dark:text-white">{skuziOffer.title ?? "Your offer"}: {skuziOffer.text}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300">{skuziOffer.offerType === "discount_10" ? "Taken off automatically when you pay here." : "Show this to your waiter."}</p>
+              </div>
+            </div>
+          )}
           {/* Search results */}
           {filteredItems && (
             <div className="mb-6">

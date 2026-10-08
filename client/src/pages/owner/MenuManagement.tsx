@@ -9,6 +9,7 @@ import {
   X,
   Loader,
   Sparkles,
+  Star,
 } from "lucide-react";
 import Layout from "../../components/Layout";
 import ConfirmDialog from "../../components/ConfirmDialog";
@@ -21,6 +22,8 @@ interface MenuItemRow {
   category: string;
   priceRwf: number;
   isAvailable: boolean;
+  // Chef's pick: shown first on the venue's Skuzi page and on Explore (max 3).
+  featured?: boolean;
 }
 
 interface ExtractedItem {
@@ -131,6 +134,15 @@ export default function MenuManagement() {
     }
   };
 
+  const handleFeature = async (item: MenuItemRow) => {
+    try {
+      await api.patch(`/menu/items/${item.id}`, { featured: !item.featured });
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, featured: !item.featured } : i)));
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "Couldn't save. Check your connection.");
+    }
+  };
+
   const handleSaveEdit = async (itemId: string) => {
     try {
       await api.patch(`/menu/items/${itemId}`, {
@@ -211,6 +223,9 @@ export default function MenuManagement() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {items.length} items · {venue?.name}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+            <Star size={12} className="fill-amber-500 text-amber-500" /> Tap the star on up to 3 dishes: your chef's picks, shown first on your Skuzi page.
           </p>
         </div>
         <div className="flex gap-2">
@@ -430,6 +445,15 @@ export default function MenuManagement() {
                   </div>
                   {editingId !== item.id && (
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleFeature(item)}
+                        aria-label={item.featured ? `Remove ${item.name} from chef's picks` : `Make ${item.name} a chef's pick`}
+                        aria-pressed={!!item.featured}
+                        title={item.featured ? "Chef's pick (shown first on your Skuzi page)" : "Make it a chef's pick (up to 3)"}
+                        className="p-1 transition-colors"
+                      >
+                        <Star size={18} className={item.featured ? "fill-amber-500 text-amber-500" : "text-gray-300 hover:text-amber-500 dark:text-gray-600"} />
+                      </button>
                       <button
                         onClick={() => handleToggle(item.id)}
                         className="text-gray-400 hover:text-brand-500 transition-colors"

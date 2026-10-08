@@ -14,7 +14,14 @@ import InviteAccept from "./pages/owner/InviteAccept";
 import VenueSetup from "./pages/owner/VenueSetup";
 import MenuManagement from "./pages/owner/MenuManagement";
 import Subscription from "./pages/owner/Subscription";
-import Campaigns from "./pages/owner/Campaigns";
+import Campaigns, { CampaignNew, CampaignDetail } from "./pages/owner/Campaigns";
+import Bookings from "./pages/owner/Bookings";
+import Explore from "./pages/guest/Explore";
+import VenuePage from "./pages/guest/VenuePage";
+import BookTable from "./pages/guest/BookTable";
+import BookingStatus from "./pages/guest/BookingStatus";
+import Me from "./pages/guest/Me";
+import { HomeScreenGuide, Join } from "./pages/guest/HomeScreen";
 import Ratings from "./pages/owner/Ratings";
 import BusyHours from "./pages/owner/BusyHours";
 import Shifts from "./pages/owner/Shifts";
@@ -129,14 +136,19 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/campaigns"
-          element={
-            <ProtectedRoute>
-              <Campaigns />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+        <Route path="/campaigns/new" element={<ProtectedRoute><CampaignNew /></ProtectedRoute>} />
+        <Route path="/campaigns/:campaignId" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />
+        <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+
+        {/* Guests' own Skuzi: Explore, venue pages, bookings, invites */}
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/v/:slug" element={<VenuePage />} />
+        <Route path="/v/:slug/book" element={<BookTable />} />
+        <Route path="/booking/:id" element={<BookingStatus />} />
+        <Route path="/me" element={<Me />} />
+        <Route path="/home-screen/:code" element={<HomeScreenGuide />} />
+        <Route path="/join/:code" element={<Join />} />
         <Route
           path="/ratings"
           element={

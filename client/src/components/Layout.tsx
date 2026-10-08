@@ -1,11 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   QrCode,
   UtensilsCrossed,
   Users,
   History,
+  CalendarDays,
+  Megaphone,
   LogOut,
   Menu as MenuIcon,
   X,
@@ -31,7 +33,9 @@ interface LayoutProps {
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Tables", href: "/tables", icon: QrCode },
+  { label: "Bookings", href: "/bookings", icon: CalendarDays },
   { label: "Menu", href: "/menu", icon: UtensilsCrossed },
+  { label: "Campaigns", href: "/campaigns", icon: Megaphone },
   { label: "Staff", href: "/staff", icon: Users },
   { label: "History", href: "/history", icon: History },
   // Hidden for launch to keep Skuzi simple to pitch and learn; the pages
@@ -57,7 +61,23 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   };
   const { theme } = useThemeStore();
 
-  const isActive = (href: string) => location.pathname === href;
+  const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/");
+
+  // Booking requests waiting for an answer: a badge on "Bookings".
+  const [pendingBookings, setPendingBookings] = useState(0);
+  useEffect(() => {
+    if (!venue) return;
+    const check = () => api.get(`/venue-bookings/${venue.id}/pending-count`).then((r) => setPendingBookings(r.data.data.pending)).catch(() => {});
+    check();
+    const t = window.setInterval(check, 60_000);
+    return () => window.clearInterval(t);
+  }, [venue?.id, location.pathname]);
+  const badge = (href: string) =>
+    href === "/bookings" && pendingBookings > 0 ? (
+      <span className="min-w-[18px] rounded-full bg-brand-500 px-1.5 text-center text-[10.5px] font-bold leading-[18px] text-white" aria-label={`${pendingBookings} waiting`}>
+        {pendingBookings > 9 ? "9+" : pendingBookings}
+      </span>
+    ) : null;
   const [moreOpen, setMoreOpen] = useState(false);
   // Desktop sidebar can shrink to icons; remembered on this device only.
   const [collapsed, setCollapsed] = useState(() => {
@@ -149,8 +169,12 @@ export default function Layout({ children, wide = false }: LayoutProps) {
                 }
               `}
             >
-              <Icon size={17} className="flex-shrink-0" />
+              <span className="relative flex-shrink-0">
+                <Icon size={17} />
+                {collapsed && pendingBookings > 0 && href === "/bookings" && <span className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-[#2B201B]" />}
+              </span>
               {!collapsed && <span className="flex-1 whitespace-nowrap">{label}</span>}
+              {!collapsed && badge(href)}
             </Link>
           ))}
         </nav>
@@ -261,7 +285,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             key={href}
             to={href}
             className={`
-              flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors
+              relative flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors
               ${
                 isActive(href)
                   ? "text-brand-500"
@@ -269,7 +293,10 @@ export default function Layout({ children, wide = false }: LayoutProps) {
               }
             `}
           >
-            <Icon size={20} />
+            <span className="relative">
+              <Icon size={20} />
+              {href === "/bookings" && pendingBookings > 0 && <span className="absolute -right-2.5 -top-1.5">{badge(href)}</span>}
+            </span>
             <span className="text-[10px]">{label}</span>
             {isActive(href) && (
               <span className="absolute bottom-0 w-6 h-0.5 bg-brand-500 rounded-full" />

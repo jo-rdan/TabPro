@@ -66,3 +66,34 @@ export function requireStaffAuth(req: Request, res: Response, next: NextFunction
     res.status(401).json(body);
   }
 }
+
+// ─── Guests ──────────────────────────────────────────────────────────────────
+// A guest's phone gets a token when they say yes to invites at their table (or
+// connect the Skuzi icon on their Home Screen). It only lets them manage their
+// own invites and devices; it is never an owner or staff token.
+export interface GuestJwtPayload { guestId: string }
+
+declare global {
+  namespace Express {
+    interface Request { guest?: GuestJwtPayload }
+  }
+}
+
+export function signGuestToken(customerId: string): string {
+  return jwt.sign({ guestId: customerId }, process.env.JWT_SECRET!, { expiresIn: '365d' });
+}
+
+export function requireGuest(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : (req.headers['x-guest-token'] as string | undefined);
+  try {
+    if (!token) throw new Error('none');
+    const payload = jwt.verify(token, process.env.JWT_SECRET!) as GuestJwtPayload;
+    if (!payload.guestId) throw new Error('Not a guest token');
+    req.guest = payload;
+    next();
+  } catch {
+    const body: ApiResponse = { success: false, error: 'Please open Skuzi from your table again' };
+    res.status(401).json(body);
+  }
+}

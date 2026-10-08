@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuthStore } from "../lib/auth";
 import api from "../lib/api";
 import { TermsSummary, AgreeBox } from "./VenueTermsAgree";
+import { TERMS_WHATS_NEW } from "../lib/venueTerms";
 
 // Owners who joined before the in-app terms (or before a change to them) agree
 // once, here. It can't be skipped: nothing changes in how Skuzi works, but we
@@ -38,6 +39,11 @@ export default function TermsPrompt() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {isUpdate ? "Please read what's new and agree to keep using Skuzi." : "Nothing changes in how Skuzi works for you. We just need your OK, once."}
         </p>
+        {isUpdate && (
+          <ul className="mt-4 space-y-2 rounded-2xl bg-amber-50 p-4 text-sm text-gray-800 dark:bg-amber-500/10 dark:text-gray-200">
+            {TERMS_WHATS_NEW.map((t) => <li key={t} className="flex gap-2"><span className="font-bold text-brand-500">New</span><span>{t}</span></li>)}
+          </ul>
+        )}
         <div className="mt-4"><TermsSummary compact /></div>
         <AgreeBox checked={checked} onChange={setChecked} />
         {error && <p className="mt-2 text-sm text-red-500">{error}</p>}

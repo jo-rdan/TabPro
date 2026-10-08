@@ -87,9 +87,9 @@ check('Venue with "I agree" unticked is refused', r.status === 400 && /terms/i.t
 r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: true }, ownerTok);
 check('Owner creates venue', r.status === 201, `payout number stored as ${r.json?.data?.momoPhone}`);
 const venueId = r.json?.data?.id;
-check('Agreeing to the terms is recorded (version, time, name)', r.json?.data?.termsVersion === 1 && !!r.json?.data?.termsAcceptedAt && r.json?.data?.termsAcceptedBy === 'Owner', `v${r.json?.data?.termsVersion} by ${r.json?.data?.termsAcceptedBy}`);
+check('Agreeing to the terms is recorded (version, time, name)', r.json?.data?.termsVersion === 2 && !!r.json?.data?.termsAcceptedAt && r.json?.data?.termsAcceptedBy === 'Owner', `v${r.json?.data?.termsVersion} by ${r.json?.data?.termsAcceptedBy}`);
 r = await call('GET', '/auth/me', null, ownerTok);
-check('App knows which terms version is current', r.json?.data?.currentTermsVersion === 1 && r.json?.data?.name === 'Owner', `v${r.json?.data?.currentTermsVersion}`);
+check('App knows which terms version is current', r.json?.data?.currentTermsVersion === 2 && r.json?.data?.name === 'Owner', `v${r.json?.data?.currentTermsVersion}`);
 
 const codes = [rnd() + rnd(), rnd() + rnd(), rnd() + rnd()];
 for (const [i, c] of codes.entries()) {
@@ -498,6 +498,178 @@ const strangerId = (await q1('select id from staff where phone=$1', [strangerPho
 r = await call('DELETE', `/staff/${strangerId}/join-request`, null, ownerTok);
 check('Owner declines a stranger → removed', r.status === 200 && !(await q1('select id from staff where id=$1', [strangerId])));
 
+// ── Guests' own Skuzi: Explore, venue page, bookings, campaigns ─────────────
+console.log('\n── Explore, bookings & campaigns');
+{
+  const kigaliKey = (d) => new Date(d.getTime() + 2 * 3600e3).toISOString().slice(0, 10);
+  const addDays = (k, n) => { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+  const today = kigaliKey(new Date());
+  const tomorrow = addDays(today, 1);
+  const crypto = await import('crypto');
+  const fakeDevice = () => {
+    const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys();
+    return { endpoint: `https://push.invalid/${rnd()}`, keys: { p256dh: ecdh.getPublicKey().toString('base64url'), auth: crypto.randomBytes(16).toString('base64url') } };
+  };
+  // A request nobody answers expires on its own (checked at the end of the run).
+  await pg.query(`insert into bookings (venue_id,name,phone,party_size,starts_at,access_token) values ($1,'Late Larry','0788000777',2,now() - interval '2 minutes','tok-expire')`, [venueId]);
+
+  const slugRow = await q1('select slug from venues where id=$1', [venueId]);
+  check('Every venue gets its own web address', slugRow?.slug === 'test-bar', slugRow?.slug);
+  r = await call('GET', '/guests/v/test-bar');
+  check('Venue page shows the real menu and 3 dishes', r.status === 200 && Object.keys(r.json?.data?.menu ?? {}).length > 0 && r.json?.data?.picks?.items?.length > 0, `${r.json?.data?.picks?.label}`);
+  r = await call('GET', '/guests/explore');
+  check('Explore lists the venue', (r.json?.data?.venues ?? []).some((v) => v.slug === 'test-bar'));
+  check('Explore never shows a demo venue', !(r.json?.data?.venues ?? []).some((v) => v.name === 'Demo Lounge'));
+  r = await call('GET', '/guests/v/nope-nope');
+  check('Unknown venue page → 404', r.status === 404);
+
+  // Chef's picks: max 3
+  await call('POST', '/menu', { venueId, items: [{ name: 'Water', category: 'Drinks', priceRwf: 500 }] }, ownerTok);
+  const all = (await call('GET', `/menu/${venueId}`)).json?.data?.items ?? [];
+  const byName = (n) => all.find((m) => m.name === n);
+  for (const n of ['Primus', 'Brochette', 'Fanta']) await call('PATCH', `/menu/items/${byName(n).id}`, { featured: true }, ownerTok);
+  r = await call('PATCH', `/menu/items/${byName('Water').id}`, { featured: true }, ownerTok);
+  check("A 4th chef's pick is refused (3 max)", r.status === 400, r.json?.error);
+  r = await call('GET', '/guests/v/test-bar');
+  check("Venue page leads with the chef's picks", r.json?.data?.picks?.label === "Chef's picks" && r.json?.data?.picks?.items?.length === 3);
+
+  // Opening hours
+  r = await call('PATCH', `/venues/${venueId}/settings`, { openingHours: { mon: { open: '25:00', close: '02:00' } } }, ownerTok);
+  check('Broken opening hours are refused', r.status === 400, r.json?.error);
+  const night = { open: '10:00', close: '02:00' };
+  r = await call('PATCH', `/venues/${venueId}/settings`, { openingHours: { mon: night, tue: night, wed: night, thu: night, fri: night, sat: night, sun: null } }, ownerTok);
+  check('Owner sets opening hours (past midnight, closed Sundays)', r.status === 200);
+  const nextWeekday = (() => { for (let i = 1; i < 8; i++) { const k = addDays(today, i); if (new Date(k + 'T12:00:00Z').getUTCDay() !== 0) return k; } })();
+  const nextSunday = (() => { for (let i = 1; i < 8; i++) { const k = addDays(today, i); if (new Date(k + 'T12:00:00Z').getUTCDay() === 0) return k; } })();
+  r = await call('GET', `/guests/v/test-bar/times?date=${nextWeekday}`);
+  const times = r.json?.data?.times ?? [];
+  check('Booking times run from opening to an hour before closing (past midnight)', times[0] === '10:00' && times.includes('01:00') && !times.includes('01:30'), `${times[0]}…${times.at(-1)}`);
+  r = await call('GET', `/guests/v/test-bar/times?date=${nextSunday}`);
+  check('No booking times on a closed day', r.json?.data?.open === false && r.json?.data?.times?.length === 0);
+
+  // Bookings
+  const booking = { slug: 'test-bar', date: nextWeekday, time: '20:00', partySize: 4, name: 'Grace', phone: '+250 788 600 700', note: 'Birthday!' };
+  r = await call('POST', '/guests/bookings', booking);
+  const b1 = r.json?.data;
+  check('Guest books a table (request sent)', r.status === 201 && b1?.status === 'pending' && !!b1?.token, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, time: '21:00' });
+  check('Same guest, same night, same venue → told they already booked', r.status === 409, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, phone: '0788600711', time: '20:15' });
+  check('A time that is not offered is refused', r.status === 400, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, phone: '0788600712', date: addDays(today, -2) });
+  check('A day in the past is refused', r.status === 400, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, phone: '0788600713', date: addDays(today, 45) });
+  check('More than 30 days ahead is refused', r.status === 400, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, phone: '0788600714', partySize: 0 });
+  check('A party of 0 is refused', r.status === 400, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, phone: '12345' });
+  check('A phone that is not Rwandan mobile is refused', r.status === 400, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, date: nextSunday });
+  check('Booking a closed day is refused', r.status === 400, r.json?.error);
+  r = await call('GET', `/guests/bookings/${b1?.id}?t=${b1?.token}`);
+  check('Guest can see their booking with their private link', r.status === 200 && r.json?.data?.name === 'Grace');
+  r = await call('GET', `/guests/bookings/${b1?.id}?t=wrong`);
+  check('…but not without the right link', r.status === 404);
+  r = await call('GET', `/venue-bookings/${venueId}?date=${nextWeekday}`, null, ownerTok);
+  check('Owner sees the request on that night', (r.json?.data?.bookings ?? []).some((b) => b.id === b1?.id && b.status === 'pending' && b.partySize === 4) && r.json?.data?.pendingTotal >= 1);
+  r = await call('GET', `/venue-bookings/${venueId}?date=${nextWeekday}`, null, rivalTokEarly);
+  check('Another owner CANNOT see my bookings', r.status === 403, `status ${r.status}`);
+  r = await call('POST', `/venue-bookings/${venueId}/${b1?.id}/accept`, {}, rivalTokEarly);
+  check('Another owner CANNOT accept my bookings', r.status === 403, `status ${r.status}`);
+  const tbl = await q1(`select id,label from tables where venue_id=$1 order by label limit 1`, [venueId]);
+  r = await call('POST', `/venue-bookings/${venueId}/${b1?.id}/accept`, { tableId: tbl.id }, ownerTok);
+  check('Owner accepts and picks a table', r.status === 200 && r.json?.data?.status === 'confirmed' && r.json?.data?.tableId === tbl.id, r.json?.error);
+  r = await call('POST', `/venue-bookings/${venueId}/${b1?.id}/accept`, {}, ownerTok);
+  check('Accepting twice is refused politely', r.status === 400, r.json?.error);
+  r = await call('POST', '/guests/bookings', { ...booking, phone: '0788600800', name: 'Eric', time: '21:00' });
+  const b2 = r.json?.data;
+  r = await call('POST', `/venue-bookings/${venueId}/${b2?.id}/accept`, { tableId: tbl.id }, ownerTok);
+  check('Same table within 2 hours → owner told to pick another', r.status === 409 && /already booked/.test(r.json?.error ?? ''), r.json?.error);
+  r = await call('POST', `/guests/bookings/${b2?.id}/cancel`, { t: b2?.token });
+  check('Guest cancels with their link', r.status === 200 && r.json?.data?.status === 'cancelled');
+  r = await call('GET', `/guests/bookings/${b1?.id}?t=${b1?.token}`);
+  check('Guest sees "confirmed" and their table', r.json?.data?.status === 'confirmed' && r.json?.data?.table === tbl.label);
+
+  // Arrival: guests scan the table → booking marked arrived
+  const arrTable = await q1(`insert into tables (venue_id,label) values ($1,'Table 9') returning id`, [venueId]);
+  const arrCode = rnd() + rnd();
+  await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [arrCode, arrTable.id]);
+  const arrCust = await q1(`insert into customers (phone,name) values ('0788600900','Aline') returning id`);
+  const arr = await q1(`insert into bookings (venue_id,customer_id,name,phone,party_size,starts_at,status,table_id,access_token) values ($1,$2,'Aline','0788600900',6,now() + interval '20 minutes','confirmed',$3,'tok-arr') returning id`, [venueId, arrCust.id, arrTable.id]);
+  await call('POST', '/tabs/open', { qrCode: arrCode, phone: '0788 600 900' });
+  check('Booked guests scan their table → booking marked arrived', (await q1('select status from bookings where id=$1', [arr.id])).status === 'seated');
+  r = await call('GET', `/venue-bookings/${venueId}/tables`, null, ownerTok);
+  check('Tables screen knows tonight\'s reservations', Array.isArray(r.json?.data));
+
+  // Campaigns: only guests who said yes, and who have a device
+  r = await call('GET', `/campaigns/audience/${venueId}`, null, ownerTok);
+  check('A new venue starts with an audience of 0 (honest)', r.json?.data?.total === 0, JSON.stringify(r.json?.data));
+  r = await call('POST', '/guests/invites', { tabId: t2, optIn: true, subscription: fakeDevice() });
+  const guestTok = r.json?.data?.guestToken;
+  check('Guest says yes to invites after paying (device saved)', r.status === 200 && !!guestTok, r.json?.error);
+  r = await call('GET', '/guests/me', null, guestTok);
+  check('Guest can see their own invite setting', r.json?.data?.invitesOptIn === true && r.json?.data?.hasDevice === true);
+  r = await call('GET', '/guests/me');
+  check('…but nobody else can', r.status === 401);
+  r = await call('POST', '/guests/invites', { tabId: td, optIn: true, subscription: fakeDevice() });
+  check('A guest of another venue says yes too', r.status === 200);
+  r = await call('GET', `/campaigns/audience/${venueId}`, null, ownerTok);
+  check('Audience: 1 regular, 1 other Skuzi guest', r.json?.data?.regulars === 1 && r.json?.data?.others === 1, JSON.stringify(r.json?.data));
+  r = await call('POST', '/campaigns', { venueId, title: 'Karaoke Friday', message: 'Come sing with us from 20:00!', offerType: 'free_item', audience: 'regulars' }, ownerTok);
+  check('A free-item offer needs to say what it is', r.status === 400, r.json?.error);
+  const eventAt = new Date(Date.now() + 26 * 3600e3).toISOString();
+  r = await call('POST', '/campaigns', { venueId, title: 'Karaoke Friday', message: 'Come sing with us from 20:00!', offerType: 'discount_10', audience: 'regulars', eventAt }, ownerTok);
+  const c1 = r.json?.data;
+  check('Owner sends a campaign to regulars → only regulars get it', r.status === 201 && c1?.status === 'sent' && c1?.recipientCount === 1, `${c1?.recipientCount} reached`);
+  r = await call('GET', '/guests/explore');
+  check('The campaign shows on Explore as an event', (r.json?.data?.events ?? []).some((e) => e.id === c1?.id && /10% off/.test(e.offer ?? '')));
+  r = await call('GET', `/campaigns/${venueId}`, null, rivalTokEarly);
+  check('Another owner CANNOT see my campaigns', r.status === 403);
+
+  // The campaign brings the guest back: 10% off with Skuzi, Skuzi takes 15%
+  const backTable = await q1(`insert into tables (venue_id,label) values ($1,'Table 10') returning id`, [venueId]);
+  const backCode = rnd() + rnd();
+  await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [backCode, backTable.id]);
+  r = await call('POST', '/tabs/open', { qrCode: backCode, phone: '0788555666' });
+  const tBack = r.json?.data?.tab?.id;
+  check('Guest comes back → Skuzi knows the campaign brought them', r.json?.data?.offer?.offerType === 'discount_10', JSON.stringify(r.json?.data?.offer));
+  await call('POST', '/orders', { tabId: tBack, items: [{ menuItemId: item('Primus').id, quantity: 2 }] }); // 3,000
+  r = await call('GET', `/tabs/${tBack}/bill`);
+  check('Bill shows 10% off when paying with Skuzi', r.json?.data?.grandTotal === 3000 && r.json?.data?.payWithSkuziTotal === 2700, `${r.json?.data?.payWithSkuziTotal}`);
+  r = await call('POST', `/tabpayment/${tBack}/pay`, { phone: '0788555666' });
+  check('Guest pays 2,700; Skuzi takes 15% (405), venue gets 2,295', r.json?.data?.grandTotal === 2700 && r.json?.data?.commission === 405 && r.json?.data?.venuePayout === 2295, JSON.stringify(r.json?.data));
+  r = await call('GET', `/campaigns/${venueId}/${c1?.id}`, null, ownerTok);
+  check('Campaign results: 1 guest came, a regular', r.json?.data?.results?.came === 1 && r.json?.data?.results?.regulars === 1, JSON.stringify(r.json?.data?.results));
+
+  // Limits: 2 campaigns a week per venue, 2 invites a week per guest
+  r = await call('POST', '/campaigns', { venueId, title: 'Live band', message: 'Live band tonight!', offerType: 'free_item', offerLabel: 'Free shot', audience: 'everyone' }, ownerTok);
+  check('Second campaign to everyone reaches both guests', r.status === 201 && r.json?.data?.recipientCount === 2, `${r.json?.data?.recipientCount}`);
+  r = await call('POST', '/campaigns', { venueId, title: 'Third', message: 'One more thing!', offerType: 'none', audience: 'everyone' }, ownerTok);
+  check('A third campaign in one week is refused (keeps invites special)', r.status === 429, r.json?.error);
+  r = await call('POST', '/campaigns', { venueId: demo.id, title: 'Demo night', message: 'Come try Skuzi!', offerType: 'none', audience: 'everyone' }, ownerTok);
+  check('A guest who already got 2 invites this week is skipped', r.status === 201 && r.json?.data?.recipientCount === 1, `${r.json?.data?.recipientCount}`);
+  const sched = await call('POST', '/campaigns', { venueId: demo.id, title: 'Later', message: 'Next week!', offerType: 'none', audience: 'regulars', sendAt: new Date(Date.now() + 3 * 86400e3).toISOString() }, ownerTok);
+  check('A campaign can be scheduled for later', sched.status === 201 && sched.json?.data?.status === 'scheduled');
+  r = await call('POST', `/campaigns/${demo.id}/${sched.json?.data?.id}/cancel`, {}, ownerTok);
+  check('…and cancelled before it goes out', r.json?.data?.status === 'cancelled');
+
+  // Guests stay in control
+  r = await call('POST', '/guests/me/link-code', {}, guestTok);
+  const code = r.json?.data?.code;
+  r = await call('POST', '/guests/claim', { code });
+  check('iPhone Home Screen icon connects with a one-time code', r.status === 200 && !!r.json?.data?.guestToken);
+  r = await call('POST', '/guests/claim', { code });
+  check('…which works only once', r.status === 404);
+  r = await call('POST', '/guests/me/invites', { optIn: false }, guestTok);
+  r = await call('GET', `/campaigns/audience/${venueId}`, null, ownerTok);
+  check('Guest switches invites off → they leave every audience', r.json?.data?.regulars === 0, JSON.stringify(r.json?.data));
+  const strays = await q1(`select count(*)::int n from push_subscriptions where endpoint like 'https://push.invalid/%' and customer_id is null`);
+  check('Guest devices are never counted as the owner\'s', strays.n === 0, `${strays.n}`);
+  r = await call('POST', `/venue-bookings/${venueId}/not-an-id/accept`, {}, ownerTok);
+  check('A broken booking link → "not found", not an error', r.status === 404, `status ${r.status}`);
+}
+
+
 // ── Website: "Book a demo" ─────────────────────────────────────────────────
 console.log('\n── Book a demo');
 r = await call('POST', '/demo-requests', { name: 'Aline', venueName: 'Bichu Lounge', phone: '0788 123 456', area: 'Kimihurura', bestTime: 'Afternoon' });
@@ -516,8 +688,8 @@ check('Demo form blocks spam bursts', r.status === 429, `status ${r.status}`);
 // Owners who joined before agree once in the app; old versions are refused.
 r = await call('POST', `/venues/${venueId}/terms`, { version: 0 }, ownerTok);
 check('Agreeing to an old version of the terms is refused', r.status === 400, `status ${r.status}`);
-r = await call('POST', `/venues/${venueId}/terms`, { version: 1 }, ownerTok);
-check('Owner can agree to the current terms in the app', r.status === 200 && r.json?.data?.termsVersion === 1, `status ${r.status}`);
+r = await call('POST', `/venues/${venueId}/terms`, { version: 2 }, ownerTok);
+check('Owner can agree to the current terms in the app', r.status === 200 && r.json?.data?.termsVersion === 2, `status ${r.status}`);
 
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
@@ -526,7 +698,7 @@ for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff 
   r = await call('GET', path, null, rivalTok);
   check(`Another owner CANNOT read my ${name}`, r.status === 403, `status ${r.status}`);
 }
-r = await call('POST', `/venues/${venueId}/terms`, { version: 1 }, rivalTok);
+r = await call('POST', `/venues/${venueId}/terms`, { version: 2 }, rivalTok);
 check('Another owner CANNOT agree to terms for my venue', r.status === 403, `status ${r.status}`);
 r = await call('POST', '/menu', { venueId, items: [{ name: 'Free beer', category: 'Drinks', priceRwf: 1 }] }, rivalTok);
 check('Another owner CANNOT edit my menu', r.status === 403);
@@ -565,6 +737,12 @@ console.log('\n── Sign-in');
   check('Sign-in callback never sends anyone to an unknown address', !(cb.headers.get('location') || '').includes('evil.example'), cb.headers.get('location'));
 }
 
+{
+  // The request nobody answered (created at the start of the bookings section).
+  let st;
+  for (let i = 0; i < 40; i++) { st = (await q1(`select status from bookings where access_token='tok-expire'`))?.status; if (st === 'expired') break; await sleep(2000); }
+  check('An unanswered booking request expires by itself', st === 'expired', st);
+}
 check('Server survived the whole run', await alive());
 
 // ── Done ─────────────────────────────────────────────────────────────────────

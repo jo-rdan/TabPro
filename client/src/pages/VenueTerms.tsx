@@ -25,7 +25,7 @@ export default function VenueTerms() {
             </button>
           </div>
           <h1 className="mt-5 font-display text-3xl font-bold tracking-tight">Venue terms</h1>
-          <p className="mt-1 text-sm text-[#D8CBBF]">Version 1 · {TERMS_DATE} · between VNT250 Ltd (TIN 156430843), which runs Skuzi, and your venue</p>
+          <p className="mt-1 text-sm text-[#D8CBBF]">Version 2 · {TERMS_DATE} · between VNT250 Ltd (TIN 156430843), which runs Skuzi, and your venue</p>
           <svg width="100%" height="8" aria-hidden="true" className="absolute bottom-0 left-0">
             <defs><pattern id="imi-terms" width="14" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L7 0L14 8Z" fill="#A64B31" /></pattern></defs>
             <rect width="100%" height="8" fill="url(#imi-terms)" />
@@ -36,7 +36,7 @@ export default function VenueTerms() {
           <div className="flex flex-col gap-2 rounded-2xl bg-gray-100 dark:bg-[#231A16] px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4">
             <span className="font-display text-3xl font-bold text-brand-500 whitespace-nowrap">92 / 8</span>
             <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-              When a guest pays a bill through Skuzi by Mobile Money, your venue receives <b className="text-gray-900 dark:text-white">92%</b> on its MoMo straight away and Skuzi keeps <b className="text-gray-900 dark:text-white">8%</b>. Cash and other payments cost nothing. There is no monthly fee.
+              When a guest pays a bill through Skuzi by Mobile Money, your venue receives <b className="text-gray-900 dark:text-white">92%</b> on its MoMo straight away and Skuzi keeps <b className="text-gray-900 dark:text-white">8%</b>. Cash and other payments cost nothing. There is no monthly fee. For guests a campaign brings, Skuzi keeps <b className="text-gray-900 dark:text-white">15%</b> on their Skuzi bills (see Campaigns).
             </p>
           </div>
 

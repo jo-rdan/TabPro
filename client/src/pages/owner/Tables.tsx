@@ -62,6 +62,19 @@ export default function Tables() {
 
   useEffect(() => { fetchTables(); }, [venue]);
 
+  // Tonight's accepted bookings, shown on their table.
+  const [reserved, setReserved] = useState<Record<string, { name: string; partySize: number; time: string; status: string }>>({});
+  useEffect(() => {
+    if (!venue) return;
+    api.get(`/venue-bookings/${venue.id}/tables`)
+      .then((r) => {
+        const map: Record<string, { name: string; partySize: number; time: string; status: string }> = {};
+        for (const b of r.data.data) if (!map[b.tableId]) map[b.tableId] = b;
+        setReserved(map);
+      })
+      .catch(() => {});
+  }, [venue]);
+
   const handleCreate = async () => {
     if (!newLabel.trim() || !venue) return;
     setCreating(true);
@@ -184,7 +197,14 @@ export default function Tables() {
                 <QrCode size={18} className="text-gray-500 dark:text-gray-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{table.label}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {table.label}
+                  {reserved[table.id] && (
+                    <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold ${reserved[table.id].status === 'seated' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300'}`}>
+                      {reserved[table.id].status === 'seated' ? `${reserved[table.id].name} arrived` : `Reserved · ${reserved[table.id].name} · ${reserved[table.id].time} · ${reserved[table.id].partySize}`}
+                    </span>
+                  )}
+                </p>
                 {table.qrSticker ? (
                   <p className="text-xs text-gray-400 font-mono mt-0.5">/t/{table.qrSticker.code}</p>
                 ) : (

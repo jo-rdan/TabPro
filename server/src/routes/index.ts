@@ -15,6 +15,8 @@ import shiftRoutes from "./shift.routes";
 import clockinRoutes from "./clockin.routes";
 import tabPaymentRoutes from "./tabpayment.routes";
 import demoRequestRoutes from "./demoRequest.routes";
+import guestRoutes from "./guest.routes";
+import bookingRoutes from "./booking.routes";
 
 const router = Router();
 
@@ -34,5 +36,7 @@ router.use("/shifts", shiftRoutes);
 router.use("/clockin", clockinRoutes);
 router.use("/tabpayment", tabPaymentRoutes);
 router.use("/demo-requests", demoRequestRoutes);
+router.use("/guests", guestRoutes);
+router.use("/venue-bookings", bookingRoutes);
 
 export default router;
