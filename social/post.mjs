@@ -71,6 +71,21 @@ if (!channels.length) { console.error("✗ No Instagram channel connected in Buf
 
 const now = Date.now(), until = now + DAYS_AHEAD * 86400000;
 
+// Paused (social/paused.json exists): take every waiting post out of Buffer and
+// send nothing. To resume: delete social/paused.json and move the dates in queue.json.
+if (fs.existsSync("social/paused.json")) {
+  for (const [key, s] of Object.entries(sent)) {
+    if (Date.parse(s.at) <= now) continue;
+    try {
+      const d = await gql(`mutation($input: DeletePostInput!) { deletePost(input: $input) { ... on DeletePostSuccess { id } ... on VoidMutationError { message } } }`, { input: { id: s.bufferId } });
+      if (d.deletePost?.id) { delete sent[key]; console.log(`⏸ ${key} taken out of Buffer (paused)`); }
+    } catch (e) { console.error(`✗ couldn't remove ${key}: ${e.message}`); }
+  }
+  fs.writeFileSync("social/sent.json", JSON.stringify(sent, null, 2) + "\n");
+  console.log("Paused: nothing will be posted.");
+  process.exit(0);
+}
+
 // Posts taken out of the plan, or whose time, caption or video changed: take them
 // out of Buffer if they haven't gone out yet (changed ones are re-queued below).
 const plan = new Map(queue.map((q) => [q.id, q]));
