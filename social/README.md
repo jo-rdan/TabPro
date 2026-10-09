@@ -6,4 +6,5 @@
 - `sent.json`: what was already sent to Buffer (the robot's memory; committed back after each run).
 - Runs every day at 07:00 Kigali, whenever `queue.json` or the videos change, or by hand (Actions → Social posts → Run workflow).
 - Needs the `BUFFER_API_KEY` repository secret. Video sources live in ~/Documents/TabPro Business/_Design sources/social.
+- **Paused** while `social/paused.json` exists: waiting posts are taken out of Buffer and nothing is sent. To resume, delete it and move the dates in `queue.json`.
 - To change a post that hasn't gone out: edit its caption or time in `queue.json` and push; the robot replaces it in Buffer. Remove an entry to cancel it.

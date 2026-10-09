@@ -6,7 +6,7 @@ on:
     - cron: "0 5 * * *"   # every day at 05:00 UTC (07:00 Kigali)
   push:
     branches: [main]
-    paths: ["social/queue.json", "social/post.mjs", "client/public/social/**"]
+    paths: ["social/queue.json", "social/post.mjs", "social/paused.json", "client/public/social/**"]
   workflow_dispatch: {}
 permissions:
   contents: write
