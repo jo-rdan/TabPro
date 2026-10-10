@@ -1,5 +1,5 @@
-import { CAMPAIGN_CUT_PERCENT } from "./campaign.service";
 import { activeCreatorId, creditCreator } from "./creator.service";
+import { lockWallet, skuziCut, walletBalance, welcomeForPayment } from "./wallet.service";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../lib/db";
 import { momoPayments, venues, tabs } from "../models/schema";
@@ -19,8 +19,6 @@ import {
   PaymentRefusedError,
   PawapayError,
 } from "../lib/pawapay";
-
-const TABPRO_CUT = parseFloat(process.env.TABPRO_CUT_PERCENT || "8") / 100;
 
 // A customer who taps "pay" again while their phone prompt is still live gets
 // the same request back instead of a second charge.
@@ -55,7 +53,7 @@ export async function requestTabPayment(
   tabId: string,
   customerPhone: string,
   creatorCode?: string | null,
-): Promise<{ depositId: string; grandTotal: number; commission: number; venuePayout: number }> {
+): Promise<{ depositId: string; grandTotal: number; commission: number; venuePayout: number; billRwf: number; walletUsedRwf: number }> {
   const tab = await db.query.tabs.findFirst({
     where: eq(tabs.id, tabId),
     with: { table: { with: { venue: true } } },
@@ -69,26 +67,29 @@ export async function requestTabPayment(
 
   const creatorId = await activeCreatorId(creatorCode);
   const bill = await getTabBill(tabId);
-  // What the guest pays through Skuzi (after a campaign's 10% off, if any).
+  // The bill through Skuzi (after a campaign's 10% off, if any). The guest's
+  // Skuzi money, if they have some, comes off what they're asked to pay.
   const grandTotal = bill.payWithSkuziTotal;
   if (grandTotal <= 0) throw new Error("There is nothing to pay on this tab");
   // A guest a campaign brought: Skuzi's fee on this bill is 15% instead of 8%.
-  const cut = tab.campaignId ? CAMPAIGN_CUT_PERCENT / 100 : TABPRO_CUT;
+  const cut = skuziCut(tab.campaignId);
 
   // Re-use a recent pending request for the same tab and amount.
   const recent = await db.query.momoPayments.findFirst({
     where: and(eq(momoPayments.tabId, tabId), eq(momoPayments.status, "pending")),
     orderBy: [desc(momoPayments.createdAt)],
   });
-  if (recent && recent.amountRwf === grandTotal && Date.now() - recent.createdAt.getTime() < PENDING_DEPOSIT_REUSE_MS) {
+  if (recent && recent.amountRwf + recent.walletUsedRwf === grandTotal && Date.now() - recent.createdAt.getTime() < PENDING_DEPOSIT_REUSE_MS) {
     if (creatorId && recent.creatorId !== creatorId) {
       await db.update(momoPayments).set({ creatorId }).where(eq(momoPayments.id, recent.id));
     }
     return {
       depositId: recent.referenceId,
-      grandTotal,
+      grandTotal: recent.amountRwf,
       commission: recent.tabproCommissionRwf ?? 0,
       venuePayout: recent.venuePayoutRwf ?? 0,
+      billRwf: grandTotal,
+      walletUsedRwf: recent.walletUsedRwf,
     };
   }
 
@@ -107,37 +108,46 @@ export async function requestTabPayment(
       status: "pending",
       creatorId,
     });
-    return { depositId, grandTotal, commission: 0, venuePayout: 0 };
+    return { depositId, grandTotal, commission: 0, venuePayout: 0, billRwf: grandTotal, walletUsedRwf: 0 };
   }
 
   // Validates the number and works out MTN vs Airtel (throws PaymentRefusedError).
   const payer = await predictProvider(customerPhone);
 
-  const commission = Math.round(grandTotal * cut);
-  const venuePayout = grandTotal - commission;
+  const fee = Math.round(grandTotal * cut);
+  const venuePayout = grandTotal - fee;
   const depositId = uuidv4();
 
   // pawaPay: store the id before initiating, so a webhook or a timeout can
-  // always be reconciled.
-  await db.insert(momoPayments).values({
-    venueId: venue.id,
-    type: "tab",
-    tabId,
-    referenceId: depositId,
-    phone: payer.phoneNumber,
-    amountRwf: grandTotal,
-    tabproCommissionRwf: commission,
-    venuePayoutRwf: venuePayout,
-    status: "pending",
-    creatorId,
+  // always be reconciled. Skuzi money comes out of Skuzi's fee only, and the
+  // lock stops two payments spending the same money.
+  const walletUsedRwf = await db.transaction(async (tx) => {
+    await lockWallet(tx, payer.phoneNumber);
+    const used = Math.min(await walletBalance(payer.phoneNumber, tx), fee);
+    await tx.insert(momoPayments).values({
+      venueId: venue.id,
+      type: "tab",
+      tabId,
+      referenceId: depositId,
+      phone: payer.phoneNumber,
+      amountRwf: grandTotal - used,
+      tabproCommissionRwf: fee - used,
+      venuePayoutRwf: venuePayout,
+      walletUsedRwf: used,
+      status: "pending",
+      creatorId,
+    });
+    return used;
   });
+  const charged = grandTotal - walletUsedRwf;
+  const commission = fee - walletUsedRwf;
 
   try {
     await initiateDeposit({
       id: depositId,
       phoneNumber: payer.phoneNumber,
       provider: payer.provider,
-      amountRwf: grandTotal,
+      amountRwf: charged,
       customerMessage: statementText(venue.name),
       metadata: { tabId, venueId: venue.id },
     });
@@ -149,7 +159,7 @@ export async function requestTabPayment(
     throw err;
   }
 
-  return { depositId, grandTotal, commission, venuePayout };
+  return { depositId, grandTotal: charged, commission, venuePayout, billRwf: grandTotal, walletUsedRwf };
 }
 
 // ─── Settle a deposit: record it, close the tab, pay the venue ───────────────
@@ -161,6 +171,7 @@ export async function checkTabPaymentAndMaybeDisburse(depositId: string): Promis
   status: Outcome;
   disbursementStatus: string | null;
   failureMessage?: string;
+  welcomeRwf?: number;
 }> {
   const payment = await db.query.momoPayments.findFirst({
     where: eq(momoPayments.referenceId, depositId),
@@ -204,7 +215,9 @@ export async function checkTabPaymentAndMaybeDisburse(depositId: string): Promis
   const updated = await db.query.momoPayments.findFirst({
     where: eq(momoPayments.referenceId, depositId),
   });
-  return { status, disbursementStatus: updated?.disbursementStatus ?? null };
+  // Skuzi money this payment earned the guest (a creator brought them).
+  const welcomeRwf = await welcomeForPayment(payment.id).catch(() => 0);
+  return { status, disbursementStatus: updated?.disbursementStatus ?? null, welcomeRwf };
 }
 
 // Simulated payment for demo venues: approves itself, closes the tab, no payout.
@@ -240,7 +253,7 @@ async function markTabPaid(payment: typeof momoPayments.$inferSelect) {
     payload: {
       tabId: payment.tabId,
       tableLabel: bill?.tableLabel ?? "",
-      grandTotal: payment.amountRwf,
+      grandTotal: payment.amountRwf + payment.walletUsedRwf,
       commission: payment.tabproCommissionRwf,
       venuePayout: payment.venuePayoutRwf,
     },
@@ -251,13 +264,15 @@ async function markTabPaid(payment: typeof momoPayments.$inferSelect) {
 
   const label = bill?.tableLabel ?? "A table";
   const amount = (n: number | null) => `${(n ?? 0).toLocaleString("en-US")} RWF`;
+  // The venue's bill, including any part the guest's Skuzi money covered.
+  const billPaid = payment.amountRwf + payment.walletUsedRwf;
   await notifyTable(
     payment.venueId,
     tab.tableId,
     tab.staffId,
-    { title: `✅ ${label} paid ${amount(payment.amountRwf)}`, body: "Paid by Mobile Money. You can clear the table." },
+    { title: `✅ ${label} paid ${amount(billPaid)}`, body: "Paid by Mobile Money. You can clear the table." },
     {
-      title: `💰 ${label} paid ${amount(payment.amountRwf)}`,
+      title: `💰 ${label} paid ${amount(billPaid)}`,
       body: payment.type === "demo" ? "Demo payment, no real money." : `${amount(payment.venuePayoutRwf)} is on its way to your Mobile Money.`,
     },
   );

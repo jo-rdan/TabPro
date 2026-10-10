@@ -725,27 +725,39 @@ console.log('\n── Creators');
   const crTable = await q1(`insert into tables (venue_id,label) values ($1,'Table 20') returning id`, [venueId]);
   const crCode = rnd() + rnd();
   await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [crCode, crTable.id]);
-  const payWithCode = async (phoneNo, qty, code) => {
+  const payWithCode = async (phoneNo, qty, code, { fail = false } = {}) => {
     const o = await call('POST', '/tabs/open', { qrCode: crCode, phone: phoneNo });
     const tId = o.json?.data?.tab?.id;
     await call('POST', '/orders', { tabId: tId, items: [{ menuItemId: item('Primus').id, quantity: qty }] });
+    const bill = (await call('GET', `/tabs/${tId}/bill`)).json?.data;
     const p = await call('POST', `/tabpayment/${tId}/pay`, { phone: phoneNo, creatorCode: code });
     const d = p.json?.data?.depositId;
-    if (pawa.state.deposits.get(d)) pawa.state.deposits.get(d).status = 'COMPLETED';
-    await call('GET', `/tabpayment/${tId}/pay/status/${d}`);
+    const dep = pawa.state.deposits.get(d);
+    if (dep) { dep.status = fail ? 'FAILED' : 'COMPLETED'; if (fail) dep.failureCode = 'PAYMENT_NOT_APPROVED'; }
+    const st = await call('GET', `/tabpayment/${tId}/pay/status/${d}`);
     await sleep(300);
-    return tId;
+    return { tId, bill, pay: p.json?.data, sent: dep?.amount, status: st.json?.data };
   };
   const refs = async () => (await q1(`select count(*)::int n, coalesce(sum(earning_rwf),0)::int s from creator_referrals where creator_id=$1`, [aline.id]));
-  await payWithCode('0788901001', 5, 'aline'); // 7,500 RWF
+  const credits = async (msisdn) => (await q1(`select coalesce(sum(amount_rwf),0)::int s from guest_credits where phone=$1`, [msisdn])).s;
+  // 7,500 RWF bill → Skuzi's 8% = 600 → creator 25% = 150, guest 25% = 150, Skuzi keeps 300
+  let x = await payWithCode('0788901001', 5, 'aline');
   let rf = await refs();
-  check('New person pays 7,500 with Skuzi + code → creator earns 500', rf.n === 1 && rf.s === 500, JSON.stringify(rf));
-  await payWithCode('0788901001', 5, 'ALINE');
+  check('New person pays 7,500 with Skuzi + code → creator earns 25% of Skuzi\'s fee (150)', rf.n === 1 && rf.s === 150, JSON.stringify(rf));
+  check('…and the guest gets 150 Skuzi money back', (await credits('250788901001')) === 150 && x.status?.welcomeRwf === 150, JSON.stringify(x.status));
+  check('…the restaurant still gets its full 92% (6,900)', x.pay?.venuePayout === 6900 && x.pay?.walletUsedRwf === 0, JSON.stringify(x.pay));
+  // Same person again: no new creator money; their 150 comes off the bill, out of Skuzi's fee only
+  x = await payWithCode('0788901001', 5, 'ALINE');
   rf = await refs();
   check('Same person again → counts once only', rf.n === 1, JSON.stringify(rf));
-  await payWithCode('0788901002', 2, 'ALINE'); // 3,000 RWF
+  check('Their bill shows the 150 Skuzi money before paying', x.bill?.walletRwf === 150, JSON.stringify({ w: x.bill?.walletRwf }));
+  check('…MoMo asks for 7,350, restaurant still gets 6,900, Skuzi keeps 450', x.sent === '7350' && x.pay?.grandTotal === 7350 && x.pay?.venuePayout === 6900 && x.pay?.commission === 450 && x.pay?.walletUsedRwf === 150, JSON.stringify({ sent: x.sent, ...x.pay }));
+  check('…and the Skuzi money is used up (no welcome twice)', (await credits('250788901001')) === 150 && (await q1(`select coalesce(sum(wallet_used_rwf),0)::int s from momo_payments where phone='250788901001' and status='successful'`)).s === 150 && !x.status?.welcomeRwf);
+  check('Owner sees the whole bill (7,500) in History', (await q1(`select amount_rwf + wallet_used_rwf as b from momo_payments where tab_id=$1`, [x.tId])).b === 7500);
+  // 3,000 RWF bill → fee 240 → creator 60, guest 60
+  await payWithCode('0788901002', 2, 'ALINE');
   rf = await refs();
-  check('Smaller bill (3,000) → creator earns 1.5% (45)', rf.n === 2 && rf.s === 545, JSON.stringify(rf));
+  check('Smaller bill (3,000) → creator earns 60 (25% of 240)', rf.n === 2 && rf.s === 210, JSON.stringify(rf));
   await payWithCode('0788555666', 5, 'ALINE');
   rf = await refs();
   check('Someone who already paid with Skuzi before → not counted', rf.n === 2, JSON.stringify(rf));
@@ -754,15 +766,30 @@ console.log('\n── Creators');
   check("The creator's own number → not counted", rf.n === 2, JSON.stringify(rf));
   await payWithCode('0788901003', 5, 'NOPE123');
   check('An unknown code never blocks the payment', (await q1(`select count(*)::int n from momo_payments where phone='250788901003' and status='successful'`)).n === 1);
+  check('…and gives no Skuzi money', (await credits('250788901003')) === 0);
+  // Skuzi money never covers more than Skuzi's fee on a bill
+  await pg.query(`insert into guest_credits (phone, amount_rwf, momo_payment_id) values ('250788901004', 1000, gen_random_uuid())`);
+  x = await payWithCode('0788901004', 1, null); // 1,500 RWF → fee 120
+  check('Big Skuzi money on a small bill → only Skuzi\'s fee (120) is used, restaurant still gets 1,380', x.pay?.walletUsedRwf === 120 && x.pay?.venuePayout === 1380 && x.pay?.commission === 0 && x.sent === '1380', JSON.stringify(x.pay));
+  // A declined payment gives the Skuzi money back
+  await pg.query(`insert into guest_credits (phone, amount_rwf, momo_payment_id) values ('250788901005', 100, gen_random_uuid())`);
+  x = await payWithCode('0788901005', 5, null, { fail: true });
+  const again = (await call('GET', `/tabs/${x.tId}/bill`)).json?.data;
+  check('Payment declined → the Skuzi money is still there', x.pay?.walletUsedRwf === 100 && x.status?.status === 'failed' && again?.walletRwf === 100, JSON.stringify({ used: x.pay?.walletUsedRwf, w: again?.walletRwf }));
+  // The guest sees their Skuzi money on their own page
+  const firstTab = (await q1(`select tab_id from momo_payments where phone='250788901002' and status='successful' order by created_at limit 1`)).tab_id;
+  r = await call('POST', '/guests/invites', { tabId: firstTab, optIn: true });
+  r = await call('GET', '/guests/me', null, r.json?.data?.guestToken);
+  check('Guest page shows Skuzi money (60) and where it came from', r.json?.data?.wallet?.balanceRwf === 60 && r.json?.data?.wallet?.history?.[0]?.from === 'Aline', JSON.stringify(r.json?.data?.wallet));
 
   r = await call('GET', `/creators/me/${aline.accessToken}`);
-  check("Creator's own page shows people and money, never who", r.json?.data?.people === 2 && r.json?.data?.earnedRwf === 545 && r.json?.data?.unpaidRwf === 545 && !JSON.stringify(r.json?.data).includes('0788901001'), JSON.stringify({ p: r.json?.data?.people, e: r.json?.data?.earnedRwf }));
+  check("Creator's own page shows people and money, never who", r.json?.data?.people === 2 && r.json?.data?.earnedRwf === 210 && r.json?.data?.unpaidRwf === 210 && !JSON.stringify(r.json?.data).includes('0788901001'), JSON.stringify({ p: r.json?.data?.people, e: r.json?.data?.earnedRwf }));
   r = await call('GET', '/creators/me/not-a-real-token');
   check('A wrong private link shows nothing', r.status === 404);
   r = await call('POST', `/creators/admin/${aline.id}/paid`, {}, founderTok);
-  check('Founder records the MoMo payout', r.json?.data?.amountRwf === 545 && r.json?.data?.people === 2, r.json?.error);
+  check('Founder records the MoMo payout', r.json?.data?.amountRwf === 210 && r.json?.data?.people === 2, r.json?.error);
   r = await call('GET', `/creators/me/${aline.accessToken}`);
-  check('…creator sees it as paid', r.json?.data?.unpaidRwf === 0 && r.json?.data?.paidRwf === 545 && r.json?.data?.payouts?.length === 1);
+  check('…creator sees it as paid', r.json?.data?.unpaidRwf === 0 && r.json?.data?.paidRwf === 210 && r.json?.data?.payouts?.length === 1);
   r = await call('POST', `/creators/admin/${aline.id}/paid`, {}, founderTok);
   check('Paying twice is refused (nothing left to pay)', r.status === 400, r.json?.error);
   await call('POST', `/creators/admin/${aline.id}/status`, { status: 'paused' }, founderTok);

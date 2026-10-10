@@ -9,6 +9,7 @@ import {
   pgEnum,
   jsonb,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -349,6 +350,17 @@ export const creatorReferrals = pgTable("creator_referrals", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Skuzi money: a guest a creator brought gets part of Skuzi's fee on their
+// first bill back, to spend on a later Skuzi bill at any Skuzi venue.
+export const guestCredits = pgTable("guest_credits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  phone: text("phone").notNull(), // 2507XXXXXXXX, like momo_payments.phone
+  amountRwf: integer("amount_rwf").notNull(),
+  creatorId: uuid("creator_id").references(() => creators.id, { onDelete: "set null" }),
+  momoPaymentId: uuid("momo_payment_id").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({ phoneIdx: index("guest_credits_phone_idx").on(t.phone) }));
+
 // ─── Bookings ─────────────────────────────────────────────────────────────────
 
 export const bookingStatusEnum = pgEnum("booking_status", [
@@ -576,6 +588,8 @@ export const momoPayments = pgTable("momo_payments", {
   disbursementReferenceId: text("disbursement_reference_id").unique(),
   // The creator whose code the guest typed when paying (Skuzi Creators).
   creatorId: uuid("creator_id"),
+  // Skuzi money the guest spent on this bill (comes out of Skuzi's fee, never the venue's share).
+  walletUsedRwf: integer("wallet_used_rwf").default(0).notNull(),
   disbursementStatus: text("disbursement_status"),
   disbursedAt: timestamp("disbursed_at"),
   status: momoPaymentStatusEnum("status").default("pending").notNull(),

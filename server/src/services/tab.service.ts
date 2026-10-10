@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff } from '../models/schema';
+import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff, customers } from '../models/schema';
 import { eq, and, like, inArray } from 'drizzle-orm';
 import { getTableByQrCode } from './qr.service';
 import { findOrCreateCustomer } from './customer.service';
@@ -9,6 +9,7 @@ import { notifyTable, sendPushToOwner } from './push.service';
 import { attributeVisit, offerForTab } from './campaign.service';
 import { onGuestSeated } from './booking.service';
 import { isPawapayConfigured } from '../lib/pawapay';
+import { skuziCut, walletBalance } from './wallet.service';
 
 // What customers may see about a venue — never the payout number, clock-in
 // sticker code or PIN hash.
@@ -321,6 +322,16 @@ export async function getTabBill(tabId: string) {
   // A campaign guest's offer: 10% off applies when they pay with Skuzi.
   const offer = tab.campaignId ? await offerForTab(tabId) : null;
   const skuziDiscountRwf = offer?.offerType === 'discount_10' ? Math.round(grandTotal * 0.1) : 0;
+  const payWithSkuziTotal = grandTotal - skuziDiscountRwf;
+
+  // The guest's Skuzi money (from a creator's welcome): it can cover up to
+  // Skuzi's fee on this bill. The payment works out the final amount by the
+  // number that actually pays.
+  let walletRwf = 0;
+  if (!tab.table.venue.isDemo && tab.customerId && payWithSkuziTotal > 0) {
+    const customer = await db.query.customers.findFirst({ where: eq(customers.id, tab.customerId) });
+    if (customer) walletRwf = Math.min(await walletBalance(customer.phone), Math.round(payWithSkuziTotal * skuziCut(tab.campaignId)));
+  }
 
   return {
     tabId,
@@ -331,7 +342,8 @@ export async function getTabBill(tabId: string) {
     grandTotal,
     offer,
     skuziDiscountRwf,
-    payWithSkuziTotal: grandTotal - skuziDiscountRwf,
+    payWithSkuziTotal,
+    walletRwf,
     openedAt: tab.openedAt,
   };
 }
