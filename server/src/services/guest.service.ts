@@ -3,6 +3,7 @@ import { db } from "../lib/db";
 import { customers, guestLinkCodes, tabs } from "../models/schema";
 import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { HttpError } from "../middleware/error.middleware";
+import { walletFor } from "./wallet.service";
 import { signGuestToken } from "../middleware/auth.middleware";
 import { guestHasDevice, saveGuestSubscription } from "./push.service";
 
@@ -41,7 +42,7 @@ export async function setInvitesFromTab(tabId: string, optIn: boolean, subscript
 export async function getGuest(customerId: string) {
   const c = await db.query.customers.findFirst({ where: eq(customers.id, customerId) });
   if (!c) throw new HttpError(401, "Please open Skuzi from your table again");
-  return { name: c.name, invitesOptIn: c.invitesOptIn, hasDevice: await guestHasDevice(c.id) };
+  return { name: c.name, invitesOptIn: c.invitesOptIn, hasDevice: await guestHasDevice(c.id), wallet: await walletFor(c.phone) };
 }
 
 export async function setInvites(customerId: string, optIn: boolean) {

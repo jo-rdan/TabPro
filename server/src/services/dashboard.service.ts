@@ -103,7 +103,8 @@ export async function getActivityLog(venueId: string, limit = 100, night?: strin
           const demo = p.type === 'demo';
           return {
             method: 'momo' as const,
-            amountRwf: p.amountRwf,
+            // The whole bill, including any part the guest's Skuzi money covered.
+            amountRwf: p.amountRwf + p.walletUsedRwf,
             payoutRwf: demo ? p.amountRwf - Math.round(p.amountRwf * 0.08) : p.venuePayoutRwf,
             // 'successful' = on the owner's MoMo; 'failed' is retried automatically
             payoutStatus: (demo ? 'successful' : p.disbursementStatus ?? 'pending') as 'pending' | 'successful' | 'failed',

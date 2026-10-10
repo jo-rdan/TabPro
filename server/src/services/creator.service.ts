@@ -1,22 +1,23 @@
 import crypto from "crypto";
 import { db } from "../lib/db";
-import { creators, creatorPayouts, creatorReferrals, momoPayments, venues } from "../models/schema";
+import { creators, creatorPayouts, creatorReferrals, guestCredits, momoPayments, venues } from "../models/schema";
 import { and, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { HttpError } from "../middleware/error.middleware";
 import { normalizeGuestPhone, isRwandaMobile } from "./customer.service";
 import { notifyAdmin } from "./push.service";
 import { sendEmail, isEmailConfigured } from "../lib/email";
+import { GUEST_WELCOME_SHARE } from "./wallet.service";
 
-// Skuzi Creators: anyone with an audience gets a code. Each NEW person who pays
-// with Skuzi using it earns them 500 RWF (bill of 6,500 RWF or more) or 1.5% of
-// a smaller bill. Paid monthly from Skuzi's fee, which is already in hand.
-export const CREATOR_FLAT_RWF = 500;
-export const CREATOR_FLAT_MIN_BILL_RWF = 6_500;
-export const CREATOR_SMALL_BILL_RATE = 0.015;
+// Skuzi Creators: anyone with an audience gets a code. When a NEW person pays
+// with Skuzi using it (their first Skuzi payment ever), Skuzi's fee on that
+// bill is shared: 25% to the creator, 25% back to the guest as Skuzi money,
+// 50% stays with Skuzi. The venue's share never changes. Creators are paid
+// monthly from Skuzi's fee, which is already in hand.
+export const CREATOR_SHARE = 0.25;
 export const CREATOR_MIN_PAYOUT_RWF = 5_000;
 
-export const earningFor = (billRwf: number) =>
-  billRwf >= CREATOR_FLAT_MIN_BILL_RWF ? CREATOR_FLAT_RWF : Math.floor(billRwf * CREATOR_SMALL_BILL_RATE);
+/** The creator's part of Skuzi's fee on a new person's first bill. */
+export const earningFor = (skuziFeeRwf: number) => Math.round(skuziFeeRwf * CREATOR_SHARE);
 
 const CODE = /^[A-Z0-9]{3,16}$/;
 export const cleanCode = (raw: string) => raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -71,7 +72,8 @@ export async function activeCreatorId(raw?: string | null) {
 /**
  * A payment just succeeded. If the guest typed a creator's code and they're a
  * new person to Skuzi (this number never paid with Skuzi before), the creator
- * earns. Demo venues and the creator's own number never count. Safe to repeat.
+ * earns and the guest gets Skuzi money back. Demo venues and the creator's own
+ * number never count. Safe to repeat.
  */
 export async function creditCreator(payment: typeof momoPayments.$inferSelect) {
   if (!payment.creatorId || payment.status !== "successful" || payment.type !== "tab") return null;
@@ -100,10 +102,19 @@ export async function creditCreator(payment: typeof momoPayments.$inferSelect) {
       momoPaymentId: payment.id,
       venueId: venue.id,
       billRwf: payment.amountRwf,
-      earningRwf: earningFor(payment.amountRwf),
+      earningRwf: earningFor(payment.tabproCommissionRwf ?? 0),
     })
     .onConflictDoNothing()
     .returning();
+  // A retry after a crash finds the referral already there: still make sure the guest got their money.
+  const referral = row ?? (await db.query.creatorReferrals.findFirst({ where: eq(creatorReferrals.momoPaymentId, payment.id) }));
+  const welcome = Math.round((payment.tabproCommissionRwf ?? 0) * GUEST_WELCOME_SHARE);
+  if (referral && welcome > 0) {
+    await db
+      .insert(guestCredits)
+      .values({ phone: payment.phone, amountRwf: welcome, creatorId: creator.id, momoPaymentId: payment.id })
+      .onConflictDoNothing();
+  }
   return row ?? null;
 }
 

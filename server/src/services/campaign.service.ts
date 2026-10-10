@@ -233,7 +233,7 @@ async function resultsFor(campaignIds: string[]) {
       .groupBy(orders.tabId);
     for (const r of s) spent.set(r.tabId, r.total);
     const p = await db
-      .select({ tabId: momoPayments.tabId, amount: momoPayments.amountRwf, fee: momoPayments.tabproCommissionRwf })
+      .select({ tabId: momoPayments.tabId, amount: sql<number>`(${momoPayments.amountRwf} + ${momoPayments.walletUsedRwf})::int`, fee: momoPayments.tabproCommissionRwf })
       .from(momoPayments)
       .where(and(inArray(momoPayments.tabId, tabIds), eq(momoPayments.status, "successful")));
     for (const r of p) if (r.tabId) paid.set(r.tabId, { amount: r.amount, fee: r.fee ?? 0 });
