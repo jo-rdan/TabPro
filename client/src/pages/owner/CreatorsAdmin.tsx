@@ -43,7 +43,7 @@ export default function CreatorsAdmin() {
   const pageLink = (c: Creator) => `${window.location.origin}/creator/${c.accessToken}`;
   const waLink = (c: Creator) => {
     const to = '250' + c.phone.replace(/\D/g, '').replace(/^0/, '');
-    const text = `Hi ${c.name.split(' ')[0]}! You're now a Skuzi creator 🎉\nYour code: ${c.code}\nYour link: ${window.location.origin}/c/${c.code}\nYour earnings page (keep it private): ${pageLink(c)}\nYou earn 500 RWF for every new person who pays with Skuzi using your code.`;
+    const text = `Hi ${c.name.split(' ')[0]}! You're now a Skuzi creator 🎉\nYour code: ${c.code}\nYour link: ${window.location.origin}/c/${c.code}\nYour earnings page (keep it private): ${pageLink(c)}\nFor every new person who pays with Skuzi using your code, you earn 2% of their bill (8,000 RWF bill = 160 RWF), and they get the same back for their next Skuzi bill.`;
     return `https://wa.me/${to}?text=${encodeURIComponent(text)}`;
   };
 
@@ -59,7 +59,7 @@ export default function CreatorsAdmin() {
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Creators</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">People who bring new guests with their code. 500 RWF per person (bill ≥ 6,500), 1.5% below.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">People who bring new guests with their code. On a new person's first bill, Skuzi's fee is split: 25% creator, 25% back to the guest, 50% Skuzi.</p>
           </div>
           <button onClick={() => setAdding((a) => !a)} className="flex min-h-[44px] items-center gap-2 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-600"><Plus size={16} /> Add a creator</button>
         </div>

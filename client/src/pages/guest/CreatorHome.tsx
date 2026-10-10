@@ -92,10 +92,10 @@ export function CreatorHome() {
         <section className="mt-8 rounded-[22px] bg-[#2B201B] p-5 text-[#F4EDE3]">
           <h2 className="font-display text-lg font-extrabold">How you earn</h2>
           <ul className="mt-2 space-y-1.5 text-sm text-[#D8CBBF]">
-            <li><b className="text-[#D9A441]">500 RWF</b> per new person whose bill is 6,500 RWF or more.</li>
-            <li><b className="text-[#F4EDE3]">1.5%</b> of smaller bills.</li>
-            <li>They must be new to Skuzi, pay with Skuzi, and type your code (or open your link first).</li>
-            <li>Tip: tell them "spend 6,500 and use my code". Tag <b className="text-[#F4EDE3]">@skuzi</b> in your videos.</li>
+            <li>For every new person: <b className="text-[#D9A441]">2% of their first bill</b>. A bill of 8,000 RWF earns you 160 RWF; 20,000 RWF earns you 400 RWF.</li>
+            <li>They get the same amount back as Skuzi money for their next Skuzi bill. Tell them!</li>
+            <li>They must be new to Skuzi, pay with Skuzi, and type your code (or open your link first). Each person counts once.</li>
+            <li>Tip: bigger bills earn you more. Tag <b className="text-[#F4EDE3]">@skuzi.xyz</b> in your videos.</li>
           </ul>
         </section>
       </div>
@@ -122,7 +122,7 @@ export function CreatorLink() {
         {name ? (
           <>
             <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.02em]"><span className="text-[#D9A441]">{name}</span> invited you to Skuzi</h1>
-            <p className="max-w-xs text-[15px] text-[#D8CBBF]">Order and pay from your table at Skuzi restaurants. Less waiting, more fun. {name}'s code is saved for when you pay.</p>
+            <p className="max-w-xs text-[15px] text-[#D8CBBF]">Order and pay from your table at Skuzi restaurants. Pay with Skuzi and you get money back for your next Skuzi bill. {name}'s code is saved for when you pay.</p>
             <Link to="/explore" className="mt-2 flex min-h-[52px] items-center rounded-full bg-[#D9A441] px-8 text-base font-extrabold text-[#2B201B]">See where to go tonight</Link>
           </>
         ) : <p className="text-sm text-[#D8CBBF]" aria-live="polite">One moment…</p>}

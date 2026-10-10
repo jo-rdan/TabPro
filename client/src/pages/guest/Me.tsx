@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, BellOff, CalendarDays, ChevronRight, Lock, Smartphone } from "lucide-react";
+import { Bell, BellOff, CalendarDays, ChevronRight, Lock, Smartphone, Wallet } from "lucide-react";
 import GuestShell from "../../components/guest/GuestShell";
 import {
   guestApi, guestToken, guestName, savedBookings, apiError, dayLabel,
-  pushSupported, needsHomeScreen, getDeviceSubscription,
+  pushSupported, needsHomeScreen, getDeviceSubscription, rwf,
 } from "../../lib/guest";
 
-// "Me": invites on/off, this phone's notifications, and bookings saved here.
-type Guest = { name: string | null; invitesOptIn: boolean; hasDevice: boolean };
+// "Me": Skuzi money, invites on/off, this phone's notifications, and bookings saved here.
+type WalletLine = { kind: "got" | "used"; amountRwf: number; at: string; from: string | null; venue: string | null };
+type Guest = { name: string | null; invitesOptIn: boolean; hasDevice: boolean; wallet?: { balanceRwf: number; history: WalletLine[] } };
 type B = { id: string; token: string; status: string; date: string; time: string; partySize: number; startsAt: string; venue: { name: string; slug: string } };
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -67,6 +68,29 @@ export default function Me() {
     <GuestShell tab="me">
       <div className="mx-auto max-w-xl pt-6">
         <h1 className="font-display text-[30px] font-extrabold tracking-[-0.02em]">{name ? `Hi, ${name}` : "Your Skuzi"}</h1>
+
+        {guest?.wallet && guest.wallet.history.length > 0 && (
+          <section className="mt-5 rounded-[22px] border-[1.5px] border-[#E9D3A6] bg-[#FBF1DE] p-5 text-[#2B201B] dark:border-[#5A4423] dark:bg-[#2E2416] dark:text-[#F4EDE3]" aria-labelledby="money">
+            <h2 id="money" className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#D9A441]"><Wallet size={16} /> Your Skuzi money</h2>
+            <p className="mt-2 font-display text-[44px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">{rwf(guest.wallet.balanceRwf)}</p>
+            <p className="mt-2 text-sm text-[#6B574A] dark:text-[#D8CBBF]">
+              {guest.wallet.balanceRwf > 0
+                ? "Comes off your next bill when you pay with Skuzi, at any Skuzi restaurant."
+                : "All used. Thanks for paying with Skuzi!"}
+            </p>
+            <ul className="mt-4 divide-y divide-[#E9D3A6] border-t border-[#E9D3A6] dark:divide-[#5A4423] dark:border-[#5A4423]">
+              {guest.wallet.history.slice(0, 6).map((l, i) => (
+                <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                  <span className="min-w-0">
+                    <span className="block truncate font-bold">{l.kind === "got" ? (l.from ? `Welcome money from ${l.from}` : "Welcome money") : "Used on your bill"}</span>
+                    <span className="block truncate text-xs text-[#6B574A] dark:text-[#D8CBBF]">{l.venue ?? "Skuzi"} · {new Date(l.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                  </span>
+                  <span className={`flex-none font-extrabold tabular-nums ${l.kind === "got" ? "text-green-700 dark:text-green-400" : ""}`}>{l.kind === "got" ? "+" : "−"}{l.amountRwf.toLocaleString("en-US")}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="mt-5 rounded-[22px] bg-[#2B201B] p-5 text-[#F4EDE3]" aria-labelledby="inv">
           <h2 id="inv" className="font-display text-xl font-extrabold">Invites to Kigali's <span className="text-[#D9A441]">best nights</span></h2>

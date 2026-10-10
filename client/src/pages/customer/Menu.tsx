@@ -317,6 +317,11 @@ export default function CustomerMenu() {
   // A campaign brought this guest: their offer, and what they pay with Skuzi.
   const [skuziOffer, setSkuziOffer] = useState<{ title: string | null; offerType: string; text: string | null } | null>(null);
   const [payTotal, setPayTotal] = useState(0);
+  // Skuzi money: what the guest has to spend (from a creator's welcome), what
+  // this payment actually charged, and the welcome money this payment earned.
+  const [walletRwf, setWalletRwf] = useState(0);
+  const [chargedRwf, setChargedRwf] = useState<number | null>(null);
+  const [welcomeRwf, setWelcomeRwf] = useState(0);
   // Skuzi Creators: the code of the creator who brought this guest (optional).
   const [creatorCode, setCreatorCode] = useState(() => savedCreatorCode()?.code ?? "");
   const [creatorName, setCreatorName] = useState<string | null>(() => savedCreatorCode()?.name ?? null);
@@ -362,6 +367,7 @@ export default function CustomerMenu() {
     setTableLabel(s.tableLabel);
     setWaiterName(s.waiterName ?? null);
     setPhone(s.phone);
+    setWelcomeRwf(s.welcomeRwf ?? 0);
     const mg = s.menuGrouped as Record<string, MenuItemData[]>;
     setMenuGrouped(mg);
     setAllItems(Object.values(mg).flat());
@@ -586,6 +592,12 @@ export default function CustomerMenu() {
     };
   }, [tabId, tabStatus]);
 
+  // Skuzi money is used when paying from the number it belongs to (the one the
+  // guest started with); the server has the final word on the amount.
+  const samePhone = (a: string, b: string) => a.replace(/\D/g, "").slice(-9) === b.replace(/\D/g, "").slice(-9);
+  const useWallet = !isDemo && walletRwf > 0 && !!phone && samePhone(payPhone, phone) ? walletRwf : 0;
+  const toPay = (payTotal || grandTotal) - useWallet;
+
   const handleMomoPay = async () => {
     setPayPhoneError("");
     const cleaned = payPhone.trim().replace(/\s/g, "");
@@ -598,6 +610,7 @@ export default function CustomerMenu() {
       setPayFailReason("");
       const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned, creatorCode: !isDemo && creatorCode && creatorCheck !== "unknown" ? creatorCode : null });
       setPayReferenceId(res.data.data.depositId);
+      setChargedRwf(res.data.data.grandTotal ?? null);
     } catch (err: any) {
       // e.g. "Not enough balance on your Mobile Money account."
       setPayFailReason(err?.response?.data?.error ?? "");
@@ -626,10 +639,12 @@ export default function CustomerMenu() {
 
           if (status === "successful") {
             clearInterval(interval);
+            const welcome = res.data.data.welcomeRwf ?? 0;
+            setWelcomeRwf(welcome);
             setPayStep("success");
             setTabStatus("closed");
-            saveSession({ tabStatus: "closed" });
-            setTimeout(() => setStep("rating"), 2000);
+            saveSession({ tabStatus: "closed", welcomeRwf: welcome });
+            setTimeout(() => setStep("rating"), welcome > 0 ? 4500 : 2000);
             return;
           }
 
@@ -663,6 +678,7 @@ export default function CustomerMenu() {
       setBillLines(data.data.lineItems);
       setGrandTotal(data.data.grandTotal);
       setPayTotal(data.data.payWithSkuziTotal ?? data.data.grandTotal);
+      setWalletRwf(data.data.walletRwf ?? 0);
       if (data.data.offer !== undefined) setSkuziOffer(data.data.offer);
       if (data.data.venueName) setVenueName(data.data.venueName);
       if (data.data.tableLabel) setTableLabel(data.data.tableLabel);
@@ -1074,13 +1090,20 @@ export default function CustomerMenu() {
                     : "We'll send a Mobile Money request to this number"}
                 </p>
               </div>
+              {/* Skuzi money (from a creator's welcome) comes off the bill */}
+              {useWallet > 0 && (
+                <div className="px-5 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-[#FBF1DE] dark:bg-[#2E2416]">
+                  <p className="text-sm font-bold text-gray-800 dark:text-[#F4EDE3]">💰 Your Skuzi money</p>
+                  <p className="text-sm font-black text-green-700 dark:text-green-400">−{fmt(useWallet)}</p>
+                </div>
+              )}
               {/* Amount */}
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
                   Amount
                 </p>
                 <p className="text-xl font-black text-gray-900 dark:text-white">
-                  {fmt(payTotal || grandTotal)}
+                  {fmt(toPay)}
                 </p>
               </div>
               {/* Phone */}
@@ -1157,7 +1180,7 @@ export default function CustomerMenu() {
                   onClick={handleMomoPay}
                   className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-colors"
                 >
-                  Confirm & pay {fmt(payTotal || grandTotal)}
+                  Confirm & pay {fmt(toPay)}
                 </button>
                 <button
                   onClick={() => setPayStep("idle")}
@@ -1184,7 +1207,7 @@ export default function CustomerMenu() {
                     <span className="font-semibold text-gray-700 dark:text-gray-300">
                       {payPhone}
                     </span>{" "}
-                    and approve the Mobile Money request for {fmt(payTotal || grandTotal)}
+                    and approve the Mobile Money request for {fmt(chargedRwf ?? toPay)}
                   </>
                 )}
               </p>
@@ -1212,9 +1235,14 @@ export default function CustomerMenu() {
                 Payment confirmed!
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {fmt(payTotal || grandTotal)} received. Your official RRA receipt will be
+                {fmt(chargedRwf ?? toPay)} received. Your official RRA receipt will be
                 issued at the counter.
               </p>
+              {welcomeRwf > 0 && (
+                <p className="mt-3 rounded-xl bg-[#FBF1DE] px-3 py-2 text-sm font-bold text-[#2B201B] dark:bg-[#2E2416] dark:text-[#F4EDE3]">
+                  🎉 You got {fmt(welcomeRwf)} Skuzi money for your next Skuzi bill!
+                </p>
+              )}
             </div>
           )}
 
@@ -1326,6 +1354,12 @@ export default function CustomerMenu() {
           {venueName} · {tableLabel}
         </p>
         <p className="text-sm text-gray-400 mt-3 mb-8">See you next time 👋</p>
+        {welcomeRwf > 0 && (
+          <div className="w-full max-w-sm mb-4 rounded-2xl border-[1.5px] border-[#E9D3A6] bg-[#FBF1DE] px-5 py-4 text-center dark:border-[#5A4423] dark:bg-[#2E2416]">
+            <p className="text-sm font-black text-[#2B201B] dark:text-[#F4EDE3]">🎉 {fmt(welcomeRwf)} Skuzi money is waiting for you</p>
+            <p className="mt-1 text-xs text-[#6B574A] dark:text-[#D8CBBF]">It comes off your next bill when you pay with Skuzi, at any Skuzi restaurant.</p>
+          </div>
+        )}
         {tabId && (
           <div className="w-full max-w-sm">
             <InviteOptIn tabId={tabId} />

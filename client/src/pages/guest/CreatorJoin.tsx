@@ -4,7 +4,8 @@ import GuestShell, { Hand } from "../../components/guest/GuestShell";
 import { guestApi, apiError } from "../../lib/guest";
 
 // "Become a Skuzi creator": the sign-up page creators get from a DM.
-// They earn 500 RWF per new person who pays with Skuzi using their code.
+// When a new person pays with Skuzi using their code, the creator gets 25% of
+// Skuzi's fee on that bill and the guest gets 25% back as Skuzi money.
 export default function CreatorJoin() {
   const [form, setForm] = useState({ name: "", handle: "", phone: "", wantedCode: "" });
   const [busy, setBusy] = useState(false);
@@ -36,17 +37,17 @@ export default function CreatorJoin() {
         <section>
           <p className={label}>Skuzi Creators</p>
           <h1 className="mt-2 font-display text-[38px] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[56px]">
-            Earn <span className="text-brand-500 dark:text-[#D9A441]">500 RWF</span> for every person you bring.
+            Earn from <span className="text-brand-500 dark:text-[#D9A441]">every new person</span> you bring.
           </h1>
           <p className="mt-3 max-w-md text-[16px] leading-relaxed text-gray-600 dark:text-gray-300">
-            You already film where you eat and go out. Now every follower who pays with Skuzi using your code pays you.
+            You already film where you eat and go out. Now every new follower who pays with Skuzi using your code pays you, and they get money back too.
           </p>
 
           <ol className="mt-7 flex flex-col gap-3">
             {[
               { Icon: Check, title: "Get your code", text: "Sign up here. Once approved, you get your own code, like ALINE." },
-              { Icon: Video, title: "Film at a Skuzi restaurant", text: "Order and pay with Skuzi on camera. Say your code, tag @skuzi." },
-              { Icon: Smartphone, title: "Followers pay with Skuzi + your code", text: "Each new person who does it earns you money." },
+              { Icon: Video, title: "Film at a Skuzi restaurant", text: "Order and pay with Skuzi on camera. Say your code, tag @skuzi.xyz." },
+              { Icon: Smartphone, title: "Followers pay with Skuzi + your code", text: "Each new person earns you money, and gets money back for their next Skuzi bill." },
               { Icon: Wallet, title: "Paid to your MoMo, every month", text: "On the 1st, for everything the month before." },
             ].map(({ Icon, title, text }, i) => (
               <li key={title} className="flex gap-3.5">
@@ -61,10 +62,10 @@ export default function CreatorJoin() {
 
           <div className="mt-7 overflow-hidden rounded-[22px] bg-[#2B201B] text-[#F4EDE3]">
             <div className="grid grid-cols-2 divide-x divide-white/10">
-              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Bill of 6,500 RWF or more</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">500 RWF</p></div>
-              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Smaller bill</p><p className="font-display text-2xl font-extrabold">1.5%</p></div>
+              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 8,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">160 RWF</p></div>
+              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 20,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">400 RWF</p></div>
             </div>
-            <p className="border-t border-white/10 px-4 py-3 text-sm text-[#D8CBBF]">100 people bring you <b className="text-[#F4EDE3]">50,000 RWF</b>. No limit.</p>
+            <p className="border-t border-white/10 px-4 py-3 text-sm text-[#D8CBBF]">10 new people a day for a month (8,000 RWF bills) bring you <b className="text-[#F4EDE3]">48,000 RWF</b>. No limit. Bigger bills, more money.</p>
           </div>
         </section>
 
