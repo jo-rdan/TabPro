@@ -1,76 +1,49 @@
+// The Skuzi app icon: a waving hand (with its two motion lines) on a rust
+// tile. Same props as before, so every screen that shows <Logo /> gets it.
 interface LogoProps {
   size?: number;
   className?: string;
+  /** Tile colour and hand colour; defaults to the main rust icon. */
+  tone?: 'rust' | 'espresso' | 'milk';
 }
 
-export default function Logo({ size = 48, className = '' }: LogoProps) {
-  const s = size;
-  const pad = s * 0.18;
-  const gap = s * 0.08;
-  const sq = (s - pad * 2 - gap) / 2;
-  const r = sq * 0.28;
+const TONES = {
+  rust: { bg: '#A64B31', fg: '#F4EDE3' },
+  espresso: { bg: '#2B201B', fg: '#D9A441' },
+  milk: { bg: '#F4EDE3', fg: '#A64B31' },
+};
 
+export function WavingHand({ color, strokeWidth = 5.5 }: { color: string; strokeWidth?: number }) {
   return (
-    <svg
-      width={s}
-      height={s}
-      viewBox={`0 0 ${s} ${s}`}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-label="TabPro logo"
-    >
-      {/* Outer rounded square */}
-      <rect
-        width={s}
-        height={s}
-        rx={s * 0.22}
-        fill="#1D9E75"
-      />
+    <>
+      <g
+        transform="translate(48 56) rotate(-14) translate(-50 -54)"
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M37 55V27a5.5 5.5 0 0 1 11 0v21" />
+        <path d="M48 46V20a5.5 5.5 0 0 1 11 0v26" />
+        <path d="M59 46V24a5.5 5.5 0 0 1 11 0v24" />
+        <path d="M70 50V34a5 5 0 0 1 10 0v24c0 18-11 30-28 30h-3c-10 0-16-4-21-10l-12-15a5.5 5.5 0 0 1 8-7.5l10 9" />
+      </g>
+      {/* The motion lines are part of the logo: the hand has always just waved. */}
+      <g fill="none" stroke={color} strokeWidth={strokeWidth - 0.5} strokeLinecap="round">
+        <path d="M77 19q6 5 7 13" />
+        <path d="M82 10q10 7 11 21" opacity={0.5} />
+      </g>
+    </>
+  );
+}
 
-      {/* Top-left square */}
-      <rect
-        x={pad}
-        y={pad}
-        width={sq}
-        height={sq}
-        rx={r}
-        fill="white"
-        fillOpacity={0.95}
-      />
-
-      {/* Top-right square */}
-      <rect
-        x={pad + sq + gap}
-        y={pad}
-        width={sq}
-        height={sq}
-        rx={r}
-        fill="white"
-        fillOpacity={0.7}
-      />
-
-      {/* Bottom-left square */}
-      <rect
-        x={pad}
-        y={pad + sq + gap}
-        width={sq}
-        height={sq}
-        rx={r}
-        fill="white"
-        fillOpacity={0.7}
-      />
-
-      {/* Bottom-right square */}
-      <rect
-        x={pad + sq + gap}
-        y={pad + sq + gap}
-        width={sq}
-        height={sq}
-        rx={r}
-        fill="white"
-        fillOpacity={0.45}
-      />
+export default function Logo({ size = 48, className = '', tone = 'rust' }: LogoProps) {
+  const { bg, fg } = TONES[tone];
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" className={className} role="img" aria-label="Skuzi">
+      <rect width="100" height="100" rx="24" fill={bg} />
+      <WavingHand color={fg} />
     </svg>
   );
 }

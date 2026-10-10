@@ -7,9 +7,108 @@
     box-sizing: border-box;
   }
 
+  /* Skuzi headings: Bricolage Grotesque, a little tighter. */
+  h1, h2, h3 {
+    font-family: 'Bricolage Grotesque', Figtree, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
   body {
     @apply text-gray-900 bg-gray-50;
+    font-family: Figtree, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Owner dashboard: the money line draws itself, the "now" dot breathes,
+   bars grow in. Nothing moves for people who asked for less motion. */
+@keyframes money-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes money-fill { from { opacity: 0; } to { opacity: 1; } }
+@keyframes money-pulse { 0%, 100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.9); opacity: 0; } }
+@keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes cell-now { 0%, 100% { filter: none; } 50% { filter: brightness(1.15); } }
+.money-line { stroke-dasharray: 1; animation: money-draw 2.2s cubic-bezier(.3,.7,.2,1) both; }
+.money-area { animation: money-fill 1.2s .9s ease-out both; }
+.money-ring { transform-box: fill-box; transform-origin: center; animation: money-pulse 1.8s ease-out infinite; }
+.bar-grow { transform-origin: left center; animation: bar-grow 1.3s cubic-bezier(.2,.8,.2,1) both; }
+.cell-now { animation: cell-now 2.4s ease-in-out infinite; box-shadow: 0 0 0 2px #A64B31; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .money-line, .money-area, .money-ring, .bar-grow, .cell-now { animation: none; }
+}
+
+/* Skuzi logo animation (see AnimatedLogo.tsx). In a layer so `hidden` still wins. */
+@layer components {
+  .sz-lock { display: inline-flex; align-items: center; line-height: 1; }
+}
+.sz-hand-wrap { position: relative; z-index: 2; display: inline-block; transform-origin: 50% 90%; animation: sz-hand 7s cubic-bezier(.3,.7,.2,1) infinite; }
+.sz-hand { display: block; height: 1em; width: 1em; overflow: visible; }
+.sz-waves { animation: sz-waves 7s ease-out infinite; }
+.sz-clip { position: relative; z-index: 1; display: inline-block; overflow: hidden; margin-left: -0.5em; padding: 0.04em 0 0.12em 0.7em; }
+.sz-word { display: inline-block; font-family: 'Bricolage Grotesque', Figtree, sans-serif; font-weight: 600; letter-spacing: -0.04em; white-space: nowrap; animation: sz-word 7s cubic-bezier(.2,.8,.2,1) infinite; }
+@keyframes sz-hand {
+  0% { transform: translateX(1.16em) scale(1.3) rotate(0deg); }
+  6% { transform: translateX(1.16em) scale(1.3) rotate(-16deg); }
+  12% { transform: translateX(1.16em) scale(1.3) rotate(12deg); }
+  18% { transform: translateX(1.16em) scale(1.3) rotate(-16deg); }
+  24% { transform: translateX(1.16em) scale(1.3) rotate(12deg); }
+  30% { transform: translateX(1.16em) scale(1.3) rotate(0deg); }
+  42% { transform: translateX(0) scale(1) rotate(0deg); }
+  90% { transform: translateX(0) scale(1) rotate(0deg); }
+  97%, 100% { transform: translateX(1.16em) scale(1.3) rotate(0deg); }
+}
+@keyframes sz-waves { 0%, 28% { opacity: 1; } 36% { opacity: 0.2; } 50%, 100% { opacity: 1; } }
+@keyframes sz-word {
+  0%, 40% { transform: translateX(-140%); }
+  56% { transform: translateX(0); }
+  88% { transform: translateX(0); }
+  95%, 100% { transform: translateX(-140%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sz-hand-wrap, .sz-waves, .sz-word { animation: none; }
+}
+
+/* Coin jar drawing (phones): coins drop and settle, jar sways, ring glows */
+@keyframes jar-drop { 0% { transform: translateY(-170px); opacity: 0; } 8% { opacity: 1; } 62% { transform: translateY(0); } 76% { transform: translateY(-7px); } 88% { transform: translateY(0); } 94% { transform: translateY(-2px); } 100% { transform: translateY(0); } }
+@keyframes jar-sway { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
+@keyframes jar-ring { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.45; } }
+@keyframes jar-glint { 0%, 70%, 100% { opacity: 0; transform: scale(.4); } 80% { opacity: 1; transform: scale(1.4); } 90% { opacity: 0; transform: scale(.6); } }
+@keyframes jar-now { from { opacity: 0; } to { opacity: 1; } }
+.jar-coin { animation: jar-drop .9s cubic-bezier(.45,0,.25,1) both; }
+.jar-sway { transform-box: view-box; transform-origin: 160px 170px; animation: jar-sway 6s ease-in-out infinite; }
+.jar-ring { animation: jar-ring 2.4s ease-in-out infinite; }
+.jar-glint { transform-box: fill-box; transform-origin: center; animation: jar-glint 3.2s ease-in-out 2s infinite; }
+.jar-now { animation: jar-now .6s 1.2s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .jar-coin, .jar-sway, .jar-ring, .jar-glint, .jar-now { animation: none; }
+}
+
+/* Sidebar logo: the hand waves once a minute (about 2 seconds), then rests. */
+@keyframes nav-wave {
+  0%, 3.6%, 100% { transform: rotate(0); }
+  0.6% { transform: rotate(-16deg); }
+  1.2% { transform: rotate(12deg); }
+  1.8% { transform: rotate(-16deg); }
+  2.4% { transform: rotate(12deg); }
+  3% { transform: rotate(-6deg); }
+}
+.nav-wave > svg, svg.nav-wave { transform-origin: 50% 85%; animation: nav-wave 60s ease-in-out 1s infinite; }
+@media (prefers-reduced-motion: reduce) { .nav-wave > svg, svg.nav-wave { animation: none; } }
+
+/* Theme switch: the chosen icon gives a little sign of life */
+@keyframes theme-spin { from { transform: rotate(-90deg) scale(.6); } to { transform: rotate(0) scale(1); } }
+@keyframes theme-tilt { 0% { transform: rotate(30deg) scale(.6); } 60% { transform: rotate(-12deg) scale(1.1); } 100% { transform: rotate(0) scale(1); } }
+@keyframes theme-pop { 0% { transform: scale(.6); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.theme-spin { animation: theme-spin .5s cubic-bezier(.2,.8,.2,1); }
+.theme-tilt { animation: theme-tilt .5s cubic-bezier(.2,.8,.2,1); }
+.theme-pop { animation: theme-pop .35s ease-out; }
+@media (prefers-reduced-motion: reduce) { .theme-spin, .theme-tilt, .theme-pop { animation: none; } }
+
+/* History night picker: the card pops in, the days ripple in */
+@keyframes night-pop { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes night-cell { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+.night-pop { animation: night-pop .35s cubic-bezier(.2,.8,.2,1) both; }
+.night-cell { animation: night-cell .35s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .night-pop, .night-cell { animation: none; } }

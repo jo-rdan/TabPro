@@ -71,7 +71,7 @@ export default function Shifts() {
   const [tab, setTab] = useState<'shifts' | 'attendance'>('shifts');
 
   // ── Clock-in sticker + PIN ───────────────────────────────────────────────────
-  // TabPro ships a pre-printed blank sticker with its own permanent code. The
+  // Skuzi ships a pre-printed blank sticker with its own permanent code. The
   // owner claims it once (by scanning it, which opens /claim-sticker?code=...,
   // or by typing the code printed on it below) and never touches it again.
   const [stickerClaimed, setStickerClaimed] = useState(false);
@@ -252,7 +252,7 @@ export default function Shifts() {
         <button
           onClick={() => setTab('shifts')}
           className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
-            tab === 'shifts' ? 'bg-white dark:bg-[#161B22] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'
+            tab === 'shifts' ? 'bg-white dark:bg-[#2B201B] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'
           }`}
         >
           Shifts
@@ -260,7 +260,7 @@ export default function Shifts() {
         <button
           onClick={() => setTab('attendance')}
           className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
-            tab === 'attendance' ? 'bg-white dark:bg-[#161B22] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'
+            tab === 'attendance' ? 'bg-white dark:bg-[#2B201B] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'
           }`}
         >
           Attendance
@@ -279,7 +279,7 @@ export default function Shifts() {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-5">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-5">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
             {editingId ? 'Edit shift' : 'New shift'}
           </h3>
@@ -291,7 +291,7 @@ export default function Shifts() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Evening, Lunch, Morning"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -301,7 +301,7 @@ export default function Shifts() {
                   type="time"
                   value={startTime}
                   onChange={(e) => { setStartTime(e.target.value); e.target.blur(); }}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
               <div>
@@ -310,7 +310,7 @@ export default function Shifts() {
                   type="time"
                   value={endTime}
                   onChange={(e) => { setEndTime(e.target.value); e.target.blur(); }}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -340,7 +340,7 @@ export default function Shifts() {
       ) : (
         <div className="space-y-3">
           {shifts.map((shift) => (
-            <div key={shift.id} className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center justify-between">
+            <div key={shift.id} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center">
                   <Clock size={16} className="text-brand-500" />
@@ -385,7 +385,7 @@ export default function Shifts() {
         <div className="space-y-6">
           {/* QR + PIN setup */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex flex-col items-center text-center">
+            <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex flex-col items-center text-center">
               <div className="flex items-center gap-2 mb-3 self-start">
                 <QrCode size={16} className="text-brand-500" />
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">Clock-in sticker</h3>
@@ -403,7 +403,7 @@ export default function Shifts() {
               ) : (
                 <>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 max-w-xs">
-                    TabPro shipped you a blank sticker with its own unique code already printed on it.
+                    Skuzi shipped you a blank sticker with its own unique code already printed on it.
                     Scan it with your phone camera to claim it, or type the code below.
                   </p>
                   <div className="w-full flex gap-2">
@@ -412,7 +412,7 @@ export default function Shifts() {
                       value={claimInput}
                       onChange={(e) => setClaimInput(e.target.value.toUpperCase())}
                       placeholder="e.g. AB3X9K"
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                     <button
                       onClick={handleClaimSticker}
@@ -430,7 +430,7 @@ export default function Shifts() {
               )}
             </div>
 
-            <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+            <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <KeyRound size={16} className="text-brand-500" />
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">Venue PIN</h3>
@@ -485,7 +485,7 @@ export default function Shifts() {
           </div>
 
           {/* Today's attendance */}
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Today's attendance</h3>
             {attendanceLoading ? (
               <div className="flex justify-center py-8">
@@ -515,7 +515,7 @@ export default function Shifts() {
           </div>
 
           {/* Weekly hours */}
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Hours this week</h3>
             {attendanceLoading ? (
               <div className="flex justify-center py-8">

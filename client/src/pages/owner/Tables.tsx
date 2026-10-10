@@ -46,6 +46,10 @@ export default function Tables() {
     setScannedCode(code);
     setShowScanner(false);
     setScanModal(true);
+    // Stickers carry a big printed number: name the table after it.
+    api.get('/tables/sticker-info', { params: { code } })
+      .then((r) => { if (r.data.data.printedLabel) setScanLabel((cur) => cur || `Table ${r.data.data.printedLabel}`); })
+      .catch(() => {});
   };
 
   const fetchTables = async () => {
@@ -61,6 +65,19 @@ export default function Tables() {
   };
 
   useEffect(() => { fetchTables(); }, [venue]);
+
+  // Tonight's accepted bookings, shown on their table.
+  const [reserved, setReserved] = useState<Record<string, { name: string; partySize: number; time: string; status: string }>>({});
+  useEffect(() => {
+    if (!venue) return;
+    api.get(`/venue-bookings/${venue.id}/tables`)
+      .then((r) => {
+        const map: Record<string, { name: string; partySize: number; time: string; status: string }> = {};
+        for (const b of r.data.data) if (!map[b.tableId]) map[b.tableId] = b;
+        setReserved(map);
+      })
+      .catch(() => {});
+  }, [venue]);
 
   const handleCreate = async () => {
     if (!newLabel.trim() || !venue) return;
@@ -148,7 +165,7 @@ export default function Tables() {
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
       {ENABLE_MANUAL_TABLE_CREATION && showForm && (
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">New table</h3>
           <div className="flex gap-3">
             <input
@@ -157,7 +174,7 @@ export default function Tables() {
               onChange={(e) => setNewLabel(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               placeholder="e.g. Table 6, Window Booth, Bar Seat 1"
-              className="flex-1 px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="flex-1 px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <button
               onClick={handleCreate}
@@ -178,13 +195,20 @@ export default function Tables() {
 
       <div className="space-y-3">
         {tables.map((table) => (
-          <div key={table.id} className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center justify-between">
+          <div key={table.id} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                 <QrCode size={18} className="text-gray-500 dark:text-gray-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{table.label}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {table.label}
+                  {reserved[table.id] && (
+                    <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold ${reserved[table.id].status === 'seated' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300'}`}>
+                      {reserved[table.id].status === 'seated' ? `${reserved[table.id].name} arrived` : `Reserved · ${reserved[table.id].name} · ${reserved[table.id].time} · ${reserved[table.id].partySize}`}
+                    </span>
+                  )}
+                </p>
                 {table.qrSticker ? (
                   <p className="text-xs text-gray-400 font-mono mt-0.5">/t/{table.qrSticker.code}</p>
                 ) : (
@@ -226,7 +250,7 @@ export default function Tables() {
       {scanModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setScanModal(false)} />
-          <div className="relative bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+          <div className="relative bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Name this table</h3>
               <button onClick={() => setScanModal(false)}><X size={18} className="text-gray-400" /></button>
@@ -239,7 +263,7 @@ export default function Tables() {
               onChange={(e) => setScanLabel(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleClaimScan()}
               placeholder="e.g. Table 5, Patio Left"
-              className="w-full px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-3"
+              className="w-full px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-3"
             />
             {scanError && <p className="text-sm text-red-500 mb-3">{scanError}</p>}
             <button

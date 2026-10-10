@@ -14,7 +14,17 @@ import InviteAccept from "./pages/owner/InviteAccept";
 import VenueSetup from "./pages/owner/VenueSetup";
 import MenuManagement from "./pages/owner/MenuManagement";
 import Subscription from "./pages/owner/Subscription";
-import Campaigns from "./pages/owner/Campaigns";
+import Campaigns, { CampaignNew, CampaignDetail } from "./pages/owner/Campaigns";
+import Bookings from "./pages/owner/Bookings";
+import Explore from "./pages/guest/Explore";
+import VenuePage from "./pages/guest/VenuePage";
+import BookTable from "./pages/guest/BookTable";
+import BookingStatus from "./pages/guest/BookingStatus";
+import Me from "./pages/guest/Me";
+import { HomeScreenGuide, Join } from "./pages/guest/HomeScreen";
+import CreatorJoin from "./pages/guest/CreatorJoin";
+import { CreatorHome, CreatorLink } from "./pages/guest/CreatorHome";
+import CreatorsAdmin from "./pages/owner/CreatorsAdmin";
 import Ratings from "./pages/owner/Ratings";
 import BusyHours from "./pages/owner/BusyHours";
 import Shifts from "./pages/owner/Shifts";
@@ -31,7 +41,9 @@ import CustomerMenu from "./pages/customer/Menu";
 // Shared
 import Receipt from "./pages/Receipt";
 import Landing from "./pages/Landing";
+import VenueTerms from "./pages/VenueTerms";
 import Waitlist from "./pages/Waitlist";
+import { WAITLIST_MODE } from "./lib/waitlistMode";
 
 export default function App() {
   const { init } = useThemeStore();
@@ -42,6 +54,18 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {WAITLIST_MODE ? (
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/waitlist" element={<Waitlist />} />
+          <Route path="/venue-terms" element={<VenueTerms />} />
+          <Route path="/creators/join" element={<CreatorJoin />} />
+          <Route path="/creator/:token" element={<CreatorHome />} />
+          <Route path="/privacy.html" element={null} />
+          <Route path="/terms.html" element={null} />
+          <Route path="*" element={<Navigate to="/waitlist" replace />} />
+        </Routes>
+      ) : (
       <Routes>
         {/* Public */}
         <Route path="/login" element={<Login />} />
@@ -101,13 +125,14 @@ export default function App() {
           }
         />
         <Route
-          path="/activity"
+          path="/history"
           element={
             <ProtectedRoute>
               <ActivityLog />
             </ProtectedRoute>
           }
         />
+        <Route path="/activity" element={<Navigate to="/history" replace />} />
         <Route
           path="/subscription"
           element={
@@ -116,14 +141,25 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/campaigns"
-          element={
-            <ProtectedRoute>
-              <Campaigns />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+        <Route path="/campaigns/new" element={<ProtectedRoute><CampaignNew /></ProtectedRoute>} />
+        <Route path="/campaigns/:campaignId" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />
+        <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+
+        {/* Guests' own Skuzi: Explore, venue pages, bookings, invites */}
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/v/:slug" element={<VenuePage />} />
+        <Route path="/v/:slug/book" element={<BookTable />} />
+        <Route path="/booking/:id" element={<BookingStatus />} />
+        <Route path="/me" element={<Me />} />
+        <Route path="/home-screen/:code" element={<HomeScreenGuide />} />
+        <Route path="/join/:code" element={<Join />} />
+
+        {/* Skuzi Creators */}
+        <Route path="/creators/join" element={<CreatorJoin />} />
+        <Route path="/creator/:token" element={<CreatorHome />} />
+        <Route path="/c/:code" element={<CreatorLink />} />
+        <Route path="/creators" element={<ProtectedRoute><CreatorsAdmin /></ProtectedRoute>} />
         <Route
           path="/ratings"
           element={
@@ -157,6 +193,7 @@ export default function App() {
           }
         />
 
+        <Route path="/venue-terms" element={<VenueTerms />} />
         <Route path="/privacy.html" element={null} />
         <Route path="/terms.html" element={null} />
 
@@ -165,6 +202,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      )}
     </BrowserRouter>
   );
 }

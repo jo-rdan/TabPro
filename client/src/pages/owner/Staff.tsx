@@ -17,6 +17,7 @@ import { useAuthStore } from "../../lib/auth";
 import api from "../../lib/api";
 import JoinRequests from "../../components/JoinRequests";
 import Toast from "../../components/Toast";
+import ClockInSetup from "../../components/ClockInSetup";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import type { WsEvent } from "@tabpro/shared";
 
@@ -320,12 +321,12 @@ export default function Staff() {
         <p className="text-xs text-brand-700 dark:text-brand-300 leading-relaxed">
           Tables are automatically distributed evenly across your active waiters
           whenever you add a table or a team member. Waiters who aren't on the
-          list can scan your clock-in sticker and tap "Join the team" — you approve them here.
+          list can scan your staff sticker (below) and tap "Join the team". You approve them here.
         </p>
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
             Add team member
           </h3>
@@ -335,14 +336,14 @@ export default function Staff() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Full name"
-              className="px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="07XX XXX XXX"
-              className="px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-4">
@@ -353,7 +354,7 @@ export default function Staff() {
                   type="button"
                   onClick={() => setNewRole(r)}
                   className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors ${
-                    newRole === r ? "bg-white dark:bg-[#161B22] text-gray-900 dark:text-white shadow-sm" : "text-gray-500 dark:text-gray-400"
+                    newRole === r ? "bg-white dark:bg-[#2B201B] text-gray-900 dark:text-white shadow-sm" : "text-gray-500 dark:text-gray-400"
                   }`}
                 >
                   {r}
@@ -396,7 +397,7 @@ export default function Staff() {
         {sorted.map((member, i) => (
           <div
             key={member.id}
-            className={`bg-white dark:bg-[#161B22] border rounded-2xl p-5 transition-opacity ${
+            className={`bg-white dark:bg-[#2B201B] border rounded-2xl p-5 transition-opacity ${
               member.isActive
                 ? "border-gray-200 dark:border-gray-800"
                 : "border-gray-100 dark:border-gray-900 opacity-60"
@@ -640,7 +641,7 @@ export default function Staff() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setConfirmDeactivate(null)}
           />
-          <div className="relative bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+          <div className="relative bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 mb-4 mx-auto">
               <PowerOff size={22} className="text-red-500" />
             </div>
@@ -666,6 +667,13 @@ export default function Staff() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* How new waiters join and clock in (moved here from Shifts) */}
+      {venue && (
+        <div className="mt-8">
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Joining &amp; clock-in</h2>
+          <ClockInSetup venueId={venue.id} onToast={setToast} />
         </div>
       )}
     </Layout>

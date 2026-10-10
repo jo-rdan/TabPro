@@ -38,11 +38,11 @@ function getIntensity(count: number, max: number): number {
 }
 
 function intensityToColor(intensity: number, isDark: boolean): string {
-  if (intensity === 0) return isDark ? '#1f2937' : '#f1f5f9';
-  // Blue scale matching the mockup: light blue → deep blue
+  if (intensity === 0) return isDark ? '#3A2D26' : '#F0E8DD';
+  // Skuzi scale: milk → honey → rust (same as the dashboard's busy-hours card)
   const stops = isDark
-    ? ['#1e3a5f', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554']
-    : ['#dbeafe', '#93c5fd', '#3b82f6', '#2563eb', '#1d4ed8'];
+    ? ['#6B5233', '#B8862F', '#D9A441', '#B8703F', '#A64B31']
+    : ['#E6CFA9', '#DCAD55', '#D9A441', '#B8703F', '#A64B31'];
   const idx = Math.min(Math.floor(intensity * stops.length), stops.length - 1);
   return stops[idx];
 }
@@ -110,29 +110,29 @@ export default function BusyHours() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Busy Hours</h1>
           <p className="text-sm text-gray-400 mt-0.5">Last 4 weeks · {venue?.name}</p>
         </div>
-        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full">
+        <span className="px-3 py-1 bg-[#F5E6C4] dark:bg-[#D9A441]/15 text-[#7A5A16] dark:text-[#E9C77E] text-xs font-bold rounded-full">
           Elite
         </span>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-400 mb-1">Busiest day</p>
           <p className="text-xl font-black text-gray-900 dark:text-white">{data.busiestDay ?? '—'}</p>
         </div>
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-400 mb-1">Peak hour</p>
           <p className="text-xl font-black text-gray-900 dark:text-white">{data.peakHourLabel ?? '—'}</p>
         </div>
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-400 mb-1">Avg orders/hr</p>
           <p className="text-xl font-black text-gray-900 dark:text-white">{data.avgOrdersPerHour}</p>
         </div>
       </div>
 
       {/* Heatmap */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4 overflow-x-auto">
+      <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4 overflow-x-auto">
         <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
           Orders by Day &amp; Hour
         </p>
@@ -183,7 +183,7 @@ export default function BusyHours() {
 
       {/* Peak days ranked */}
       {data.peakDays.length > 0 && (
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
           <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
             Peak Days by Orders
           </p>
@@ -193,7 +193,7 @@ export default function BusyHours() {
                 <span className="w-10 text-sm font-bold text-gray-900 dark:text-white">{day}</span>
                 <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
                   <div
-                    className="h-2 rounded-full bg-blue-500"
+                    className="h-2 rounded-full bg-skuzi-honey"
                     style={{ width: `${(orders / maxDay) * 100}%` }}
                   />
                 </div>
@@ -207,13 +207,13 @@ export default function BusyHours() {
       )}
 
       {/* Staffing suggestion */}
-      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200/70 dark:border-purple-700/40 rounded-2xl p-5 flex gap-3">
-        <Lightbulb size={18} className="text-purple-500 flex-shrink-0 mt-0.5" />
+      <div className="bg-[#FBF3E2] dark:bg-[#D9A441]/10 border border-[#EBD3A0] dark:border-[#D9A441]/30 rounded-2xl p-5 flex gap-3">
+        <Lightbulb size={18} className="text-skuzi-honey flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-bold text-purple-800 dark:text-purple-300 mb-1">
+          <p className="text-sm font-bold text-[#6B4E12] dark:text-[#E9C77E] mb-1">
             Staffing suggestion
           </p>
-          <p className="text-sm text-purple-700 dark:text-purple-400">
+          <p className="text-sm text-[#7A5A16] dark:text-[#E9C77E]">
             {data.staffingSuggestion}
           </p>
         </div>

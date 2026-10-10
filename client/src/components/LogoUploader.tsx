@@ -7,9 +7,13 @@ interface Props {
   venueName: string;
   currentLogoUrl?: string | null;
   onUploaded: (url: string) => void;
+  /** Logo size in px. */
+  size?: number;
+  /** Hide the "Change logo" text link (the logo itself stays clickable). */
+  hideButton?: boolean;
 }
 
-export default function LogoUploader({ venueName, currentLogoUrl, onUploaded }: Props) {
+export default function LogoUploader({ venueName, currentLogoUrl, onUploaded, size = 72, hideButton = false }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { upload, uploading, error } = useCloudinaryUpload();
 
@@ -33,9 +37,9 @@ export default function LogoUploader({ venueName, currentLogoUrl, onUploaded }: 
   };
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative group cursor-pointer" onClick={() => inputRef.current?.click()}>
-        <VenueLogo logoUrl={currentLogoUrl} venueName={venueName} size={72} />
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative group cursor-pointer" onClick={() => inputRef.current?.click()} title={currentLogoUrl ? 'Change logo' : 'Upload logo'}>
+        <VenueLogo logoUrl={currentLogoUrl} venueName={venueName} size={size} />
         <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           {uploading
             ? <Loader2 size={20} className="text-white animate-spin" />
@@ -44,14 +48,14 @@ export default function LogoUploader({ venueName, currentLogoUrl, onUploaded }: 
         </div>
       </div>
 
-      <button
+      {!hideButton && <button
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
         className="text-xs text-brand-500 hover:text-brand-600 font-semibold disabled:opacity-50"
       >
         {uploading ? 'Uploading...' : currentLogoUrl ? 'Change logo' : 'Upload logo'}
-      </button>
+      </button>}
 
       {error && <p className="text-xs text-red-500">{error}</p>}
 

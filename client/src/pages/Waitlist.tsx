@@ -3,7 +3,7 @@ import { apiFetch } from "../lib/apiFetch";
 
 // Owners' launch waitlist (linked from Skuzi's Instagram bio). Self-contained
 // in the Skuzi look so it works on the live site before the rebrand ships.
-const TYPES = ["Bar", "Restaurant", "Lounge", "Hotel", "Other"];
+const TYPES = ["Restaurant", "Bar", "Lounge", "Hotel", "Other"];
 
 const HAND = (
   <svg viewBox="8 4 90 92" width="30" height="30" aria-hidden="true">
@@ -16,7 +16,7 @@ const HAND = (
 );
 
 export default function Waitlist() {
-  const [form, setForm] = useState({ name: "", venueName: "", phone: "", area: "", venueType: "Bar" });
+  const [form, setForm] = useState({ name: "", venueName: "", phone: "", area: "", venueType: "Restaurant" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [position, setPosition] = useState<number | null>(null);
@@ -65,7 +65,7 @@ export default function Waitlist() {
 
         {position === null ? (
           <>
-            <p className="mt-10 text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#D9A441]">For bar &amp; restaurant owners</p>
+            <p className="mt-10 text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#D9A441]">For restaurant &amp; bar owners</p>
             <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", letterSpacing: "-0.035em" }} className="mt-3 text-[40px] font-extrabold leading-[1.02]">
               Be one of the first venues on <span className="text-[#D9A441]">Skuzi.</span>
             </h1>

@@ -28,7 +28,7 @@ export default function Toast({ message, type = 'success', duration = 4000, onDi
   const Icon = type === 'success' ? CheckCircle : Info;
   const colors = type === 'success'
     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-    : 'bg-blue-600 text-white';
+    : 'bg-brand-500 text-white';
 
   return (
     <div

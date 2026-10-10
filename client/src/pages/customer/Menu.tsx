@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import api from "../../lib/api";
 import {
   ShoppingBag,
-  Bell,
   Receipt,
   CheckCircle,
   Loader,
@@ -14,11 +13,13 @@ import {
   Minus,
   Search,
 } from "lucide-react";
-import Logo from "../../components/Logo";
+import Logo, { WavingHand } from "../../components/Logo";
 import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { WsEvent } from "@tabpro/shared";
 import { apiFetch, apiBeacon } from "../../lib/apiFetch";
+import InviteOptIn from "../../components/guest/InviteOptIn";
+import { guestApi, savedCreatorCode, saveCreatorCode } from "../../lib/guest";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MenuItemData {
@@ -125,7 +126,7 @@ function getCatEmoji(cat: string) {
   return "🍽";
 }
 
-// ─── Menu item card with Foodish photo ───────────────────────────────────────
+// ─── Menu item card: photo on the left, name + price, add on the right ──────
 function MenuCard({
   item,
   qty,
@@ -151,101 +152,76 @@ function MenuCard({
 
   return (
     <div
-      className={`group flex flex-col bg-white dark:bg-[#1C2128] rounded-2xl overflow-hidden transition-all duration-200 ${
-        qty > 0
-          ? "ring-2 ring-brand-400 shadow-lg shadow-brand-500/10"
-          : "ring-1 ring-gray-200 dark:ring-gray-800 hover:ring-gray-300 dark:hover:ring-gray-700 hover:shadow-md"
+      className={`flex items-center gap-3.5 p-3 rounded-[22px] bg-white dark:bg-[#2B201B] transition-all ${
+        qty > 0 ? "ring-2 ring-brand-400/70" : "ring-1 ring-gray-200/70 dark:ring-gray-800"
       } ${!item.isAvailable ? "opacity-60" : ""}`}
     >
-      {/* Photo area */}
-      <div
-        className="relative overflow-hidden bg-gray-100 dark:bg-gray-800"
-        style={{ paddingBottom: "65%" }}
-      >
-        <div className="absolute inset-0">
-          {/* Emoji fallback always rendered behind */}
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700">
-            <span className="text-5xl opacity-40 select-none">{emoji}</span>
-          </div>
-          {/* Food photo */}
-          {imgUrl && (
-            <img
-              src={imgUrl}
-              alt={item.name}
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgUrl("")}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-            />
-          )}
-          {/* Gradient overlay at bottom for text readability */}
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/30 to-transparent" />
+      <div className="relative w-[74px] h-[74px] rounded-2xl overflow-hidden flex-shrink-0 bg-[#EFD9C9] dark:bg-gray-800">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-3xl opacity-50 select-none">{emoji}</span>
         </div>
-
-        {/* Qty badge */}
-        {qty > 0 && (
-          <div className="absolute top-2.5 left-2.5 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg z-10">
-            <span className="text-xs font-black text-brand-600">{qty}</span>
-          </div>
+        {imgUrl && (
+          <img
+            src={imgUrl}
+            alt={item.name}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgUrl("")}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+          />
         )}
-
-        {/* Unavailable overlay */}
         {!item.isAvailable && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-            <span className="text-xs font-bold text-white bg-black/70 px-3 py-1.5 rounded-full">
-              Unavailable
-            </span>
+          <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-white">Sold out</span>
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="p-3 flex flex-col flex-1">
-        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug line-clamp-1">
-          {item.name}
-        </p>
+      <div className="flex-1 min-w-0">
+        <p className="text-[15px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-1">{item.name}</p>
         {item.description && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-relaxed line-clamp-2">
-            {item.description}
-          </p>
+          <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug line-clamp-2">{item.description}</p>
         )}
-        <div className="flex items-center justify-between mt-auto pt-2.5">
-          <span className="text-sm font-black text-brand-500">
-            {fmt(item.priceRwf)}
-          </span>
-          {item.isAvailable &&
-            (qty === 0 ? (
-              <button
-                onClick={onAdd}
-                className="w-8 h-8 rounded-xl bg-brand-500 hover:bg-brand-600 flex items-center justify-center text-white shadow-md shadow-brand-500/30 active:scale-90 transition-all"
-              >
-                <Plus size={16} strokeWidth={3} />
-              </button>
-            ) : (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={onRemove}
-                  className="w-7 h-7 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center active:scale-90 transition-all"
-                >
-                  <Minus
-                    size={12}
-                    strokeWidth={3}
-                    className="text-gray-600 dark:text-gray-300"
-                  />
-                </button>
-                <span className="text-sm font-black text-gray-900 dark:text-white w-5 text-center">
-                  {qty}
-                </span>
-                <button
-                  onClick={onAdd}
-                  className="w-7 h-7 rounded-xl bg-brand-500 flex items-center justify-center text-white active:scale-90 transition-all"
-                >
-                  <Plus size={12} strokeWidth={3} />
-                </button>
-              </div>
-            ))}
-        </div>
+        <p className="text-[15px] font-bold text-brand-600 dark:text-brand-300 mt-1.5">{fmt(item.priceRwf)}</p>
       </div>
+
+      {item.isAvailable &&
+        (qty === 0 ? (
+          <button
+            onClick={onAdd}
+            aria-label={`Add ${item.name}`}
+            className="w-11 h-11 rounded-full bg-brand-500 hover:bg-brand-600 flex items-center justify-center text-white flex-shrink-0 active:scale-90 transition-all"
+          >
+            <Plus size={20} strokeWidth={3} />
+          </button>
+        ) : (
+          <div className="flex items-center gap-1 bg-gray-900 dark:bg-gray-50 text-white dark:text-gray-900 rounded-full p-1 flex-shrink-0">
+            <button
+              onClick={onRemove}
+              aria-label={`Remove one ${item.name}`}
+              className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-all hover:bg-white/10 dark:hover:bg-black/10"
+            >
+              <Minus size={15} strokeWidth={3} />
+            </button>
+            <span className="text-sm font-black w-5 text-center">{qty}</span>
+            <button
+              onClick={onAdd}
+              aria-label={`Add one more ${item.name}`}
+              className="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center active:scale-90 transition-all"
+            >
+              <Plus size={15} strokeWidth={3} />
+            </button>
+          </div>
+        ))}
     </div>
+  );
+}
+
+// The Skuzi hand, small, for the "call your waiter" button.
+function WaveIcon() {
+  return (
+    <svg width="22" height="22" viewBox="8 4 90 92" aria-hidden="true">
+      <WavingHand color="currentColor" strokeWidth={8} />
+    </svg>
   );
 }
 
@@ -258,7 +234,7 @@ function StatusBadge({ status }: { status: PlacedOrder["status"] }) {
     ],
     preparing: [
       "🍳 Preparing",
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
     ],
     delivered: [
       "✓ Delivered",
@@ -319,6 +295,7 @@ export default function CustomerMenu() {
   const [venueName, setVenueName] = useState("");
   const [venueLogoUrl, setVenueLogoUrl] = useState<string | null>(null);
   const [tableLabel, setTableLabel] = useState("");
+  const [waiterName, setWaiterName] = useState<string | null>(null);
   const [isGroupTab, setIsGroupTab] = useState(false);
   const [menuGrouped, setMenuGrouped] = useState<
     Record<string, MenuItemData[]>
@@ -337,6 +314,26 @@ export default function CustomerMenu() {
   const [billLoading, setBillLoading] = useState(false);
   const [billLines, setBillLines] = useState<BillLine[]>([]);
   const [grandTotal, setGrandTotal] = useState(0);
+  // A campaign brought this guest: their offer, and what they pay with Skuzi.
+  const [skuziOffer, setSkuziOffer] = useState<{ title: string | null; offerType: string; text: string | null } | null>(null);
+  const [payTotal, setPayTotal] = useState(0);
+  // Skuzi money: what the guest has to spend (from a creator's welcome), what
+  // this payment actually charged, and the welcome money this payment earned.
+  const [walletRwf, setWalletRwf] = useState(0);
+  const [chargedRwf, setChargedRwf] = useState<number | null>(null);
+  const [welcomeRwf, setWelcomeRwf] = useState(0);
+  // Skuzi Creators: the code of the creator who brought this guest (optional).
+  const [creatorCode, setCreatorCode] = useState(() => savedCreatorCode()?.code ?? "");
+  const [creatorName, setCreatorName] = useState<string | null>(() => savedCreatorCode()?.name ?? null);
+  const [creatorCheck, setCreatorCheck] = useState<"idle" | "ok" | "unknown">(() => (savedCreatorCode() ? "ok" : "idle"));
+  const checkCreatorCode = async (raw: string) => {
+    const code = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!code) { setCreatorCheck("idle"); setCreatorName(null); return; }
+    try {
+      const r = await guestApi.get(`/creators/code/${code}`);
+      setCreatorName(r.data.data.name); setCreatorCheck("ok"); saveCreatorCode(r.data.data.code, r.data.data.name);
+    } catch { setCreatorName(null); setCreatorCheck("unknown"); }
+  };
 
   // ─── Mobile Money payment state ───────────────────────────────────────────────────
   type PayStep = "idle" | "entering_phone" | "waiting" | "success" | "failed";
@@ -368,7 +365,9 @@ export default function CustomerMenu() {
     setAcceptsMobileMoney(s.acceptsMobileMoney !== false);
     setIsDemo(!!s.isDemo);
     setTableLabel(s.tableLabel);
+    setWaiterName(s.waiterName ?? null);
     setPhone(s.phone);
+    setWelcomeRwf(s.welcomeRwf ?? 0);
     const mg = s.menuGrouped as Record<string, MenuItemData[]>;
     setMenuGrouped(mg);
     setAllItems(Object.values(mg).flat());
@@ -443,7 +442,9 @@ export default function CustomerMenu() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
-      const { tab, venue, table, menuGrouped: mg, isExisting } = data.data;
+      const { tab, venue, table, menuGrouped: mg, isExisting, waiter, offer } = data.data;
+      setSkuziOffer(offer ?? null);
+      setWaiterName(waiter?.name ?? null);
       setTabId(tab.id);
       setTabStatus(tab.status);
       setVenueId(venue.id);
@@ -466,6 +467,7 @@ export default function CustomerMenu() {
           acceptsMobileMoney: venue.acceptsMobileMoney !== false,
           isDemo: !!venue.isDemo,
           tableLabel: table.label,
+          waiterName: waiter?.name ?? null,
           phone: phone.trim(),
           menuGrouped: mg,
         }),
@@ -590,6 +592,12 @@ export default function CustomerMenu() {
     };
   }, [tabId, tabStatus]);
 
+  // Skuzi money is used when paying from the number it belongs to (the one the
+  // guest started with); the server has the final word on the amount.
+  const samePhone = (a: string, b: string) => a.replace(/\D/g, "").slice(-9) === b.replace(/\D/g, "").slice(-9);
+  const useWallet = !isDemo && walletRwf > 0 && !!phone && samePhone(payPhone, phone) ? walletRwf : 0;
+  const toPay = (payTotal || grandTotal) - useWallet;
+
   const handleMomoPay = async () => {
     setPayPhoneError("");
     const cleaned = payPhone.trim().replace(/\s/g, "");
@@ -600,8 +608,9 @@ export default function CustomerMenu() {
     try {
       setPayStep("waiting");
       setPayFailReason("");
-      const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned });
+      const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned, creatorCode: !isDemo && creatorCode && creatorCheck !== "unknown" ? creatorCode : null });
       setPayReferenceId(res.data.data.depositId);
+      setChargedRwf(res.data.data.grandTotal ?? null);
     } catch (err: any) {
       // e.g. "Not enough balance on your Mobile Money account."
       setPayFailReason(err?.response?.data?.error ?? "");
@@ -630,10 +639,12 @@ export default function CustomerMenu() {
 
           if (status === "successful") {
             clearInterval(interval);
+            const welcome = res.data.data.welcomeRwf ?? 0;
+            setWelcomeRwf(welcome);
             setPayStep("success");
             setTabStatus("closed");
-            saveSession({ tabStatus: "closed" });
-            setTimeout(() => setStep("rating"), 2000);
+            saveSession({ tabStatus: "closed", welcomeRwf: welcome });
+            setTimeout(() => setStep("rating"), welcome > 0 ? 4500 : 2000);
             return;
           }
 
@@ -666,6 +677,9 @@ export default function CustomerMenu() {
       if (!data.success) return;
       setBillLines(data.data.lineItems);
       setGrandTotal(data.data.grandTotal);
+      setPayTotal(data.data.payWithSkuziTotal ?? data.data.grandTotal);
+      setWalletRwf(data.data.walletRwf ?? 0);
+      if (data.data.offer !== undefined) setSkuziOffer(data.data.offer);
       if (data.data.venueName) setVenueName(data.data.venueName);
       if (data.data.tableLabel) setTableLabel(data.data.tableLabel);
     } catch {}
@@ -711,9 +725,9 @@ export default function CustomerMenu() {
   // ─── IDENTIFY ─────────────────────────────────────────────────────────────
   if (step === "identify") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4 py-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 py-10">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
+          <div className="w-20 h-20 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
             <Logo size={44} />
           </div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-white">
@@ -723,7 +737,7 @@ export default function CustomerMenu() {
             Enter your details to start ordering
           </p>
         </div>
-        <div className="w-full max-w-sm bg-white dark:bg-[#161B22] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-7">
+        <div className="w-full max-w-sm bg-white dark:bg-[#2B201B] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-7">
           <div className="mb-4">
             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
               Phone number *
@@ -735,7 +749,7 @@ export default function CustomerMenu() {
               onKeyDown={(e) => e.key === "Enter" && handleIdentify()}
               placeholder="07XX XXX XXX"
               autoFocus
-              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#0D1117] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           <div className="mb-6">
@@ -748,14 +762,14 @@ export default function CustomerMenu() {
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleIdentify()}
               placeholder="e.g. Alice"
-              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#0D1117] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           {error && <p className="text-sm text-red-500 mb-4 -mt-2">{error}</p>}
           <button
             onClick={handleIdentify}
             disabled={loading}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30"
+            className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30"
           >
             {loading ? "Opening tab..." : "Open my tab →"}
           </button>
@@ -786,8 +800,8 @@ export default function CustomerMenu() {
   // ─── BILL ─────────────────────────────────────────────────────────────────
   if (step === "bill") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117]">
-        <div className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511]">
+        <div className="bg-white dark:bg-[#2B201B] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
             <div>
@@ -832,7 +846,7 @@ export default function CustomerMenu() {
                     textTransform: "uppercase",
                   }}
                 >
-                  — TabPro Receipt —
+                  — Skuzi Receipt —
                 </p>
                 <p
                   style={{
@@ -977,7 +991,7 @@ export default function CustomerMenu() {
                   <strong style={{ color: "#374151" }}>
                     payment confirmation
                   </strong>{" "}
-                  from TabPro, not a fiscal invoice. Your venue must issue you
+                  from Skuzi, not a fiscal invoice. Your venue must issue you
                   an official{" "}
                   <strong style={{ color: "#374151" }}>EBM receipt</strong> as
                   required by RRA law. Please collect it at the counter.
@@ -1001,7 +1015,7 @@ export default function CustomerMenu() {
                   {tabId?.replace(/-/g, "").slice(0, 16).toUpperCase()}
                 </p>
                 <p style={{ fontSize: 9, color: "#d1d5db", marginTop: 4 }}>
-                  Powered by TabPro
+                  Powered by Skuzi
                 </p>
               </div>
             </div>
@@ -1018,6 +1032,16 @@ export default function CustomerMenu() {
               }}
             />
           </div>
+          {skuziOffer?.text && payStep === "idle" && (
+            <div className="mb-3 rounded-2xl bg-[#2B201B] px-4 py-3 text-[#F4EDE3]">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-[#D9A441]">{skuziOffer.title ?? "Your offer"}</p>
+              <p className="mt-0.5 text-sm font-bold">
+                {skuziOffer.offerType === "discount_10" && acceptsMobileMoney
+                  ? <>10% off with Skuzi: pay {fmt(payTotal)} instead of {fmt(grandTotal)}</>
+                  : <>{skuziOffer.text}. Show this to your waiter.</>}
+              </p>
+            </div>
+          )}
           {/* Mobile Money payment flow (pawaPay) */}
           {payStep === "idle" && acceptsMobileMoney && (
             <button
@@ -1045,7 +1069,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "idle" && !acceptsMobileMoney && (
-            <div className="bg-gray-50 dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
+            <div className="bg-gray-50 dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
               <p className="text-sm font-bold text-gray-800 dark:text-white">Please pay your waiter</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 In-app Mobile Money isn't available at this venue yet.
@@ -1054,7 +1078,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "entering_phone" && (
-            <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               {/* Header */}
               <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
                 <p className="text-sm font-black text-gray-900 dark:text-white">
@@ -1066,13 +1090,20 @@ export default function CustomerMenu() {
                     : "We'll send a Mobile Money request to this number"}
                 </p>
               </div>
+              {/* Skuzi money (from a creator's welcome) comes off the bill */}
+              {useWallet > 0 && (
+                <div className="px-5 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-[#FBF1DE] dark:bg-[#2E2416]">
+                  <p className="text-sm font-bold text-gray-800 dark:text-[#F4EDE3]">💰 Your Skuzi money</p>
+                  <p className="text-sm font-black text-green-700 dark:text-green-400">−{fmt(useWallet)}</p>
+                </div>
+              )}
               {/* Amount */}
               <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
                   Amount
                 </p>
                 <p className="text-xl font-black text-gray-900 dark:text-white">
-                  {fmt(grandTotal)}
+                  {fmt(toPay)}
                 </p>
               </div>
               {/* Phone */}
@@ -1080,7 +1111,7 @@ export default function CustomerMenu() {
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
                   MTN MoMo or Airtel Money number
                 </p>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
                   <svg
                     width="16"
                     height="16"
@@ -1124,13 +1155,32 @@ export default function CustomerMenu() {
                   </p>
                 )}
               </div>
+              {/* Skuzi Creators: who sent you? */}
+              {!isDemo && (
+                <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                  <label htmlFor="creator-code" className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                    Creator code <span className="normal-case tracking-normal font-medium">(optional)</span>
+                  </label>
+                  <input
+                    id="creator-code"
+                    value={creatorCode}
+                    onChange={(e) => { setCreatorCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setCreatorCheck("idle"); }}
+                    onBlur={() => checkCreatorCode(creatorCode)}
+                    placeholder="e.g. ALINE"
+                    maxLength={16}
+                    className="mt-2 w-full bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white focus:outline-none focus:border-brand-500"
+                  />
+                  {creatorCheck === "ok" && creatorName && <p className="text-xs text-green-600 dark:text-green-400 mt-2">✓ {creatorName}'s code. Thanks for coming!</p>}
+                  {creatorCheck === "unknown" && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">We don't know this code. You can still pay.</p>}
+                </div>
+              )}
               {/* Actions */}
               <div className="px-5 py-4 flex flex-col gap-2">
                 <button
                   onClick={handleMomoPay}
                   className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-colors"
                 >
-                  Confirm & pay {fmt(grandTotal)}
+                  Confirm & pay {fmt(toPay)}
                 </button>
                 <button
                   onClick={() => setPayStep("idle")}
@@ -1143,7 +1193,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "waiting" && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl px-5 py-6 text-center">
+            <div className="bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-6 text-center">
               <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-sm font-black text-gray-800 dark:text-white mb-1">
                 Waiting for your approval
@@ -1157,7 +1207,7 @@ export default function CustomerMenu() {
                     <span className="font-semibold text-gray-700 dark:text-gray-300">
                       {payPhone}
                     </span>{" "}
-                    and approve the Mobile Money request for {fmt(grandTotal)}
+                    and approve the Mobile Money request for {fmt(chargedRwf ?? toPay)}
                   </>
                 )}
               </p>
@@ -1185,9 +1235,14 @@ export default function CustomerMenu() {
                 Payment confirmed!
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {fmt(grandTotal)} received. Your official RRA receipt will be
+                {fmt(chargedRwf ?? toPay)} received. Your official RRA receipt will be
                 issued at the counter.
               </p>
+              {welcomeRwf > 0 && (
+                <p className="mt-3 rounded-xl bg-[#FBF1DE] px-3 py-2 text-sm font-bold text-[#2B201B] dark:bg-[#2E2416] dark:text-[#F4EDE3]">
+                  🎉 You got {fmt(welcomeRwf)} Skuzi money for your next Skuzi bill!
+                </p>
+              )}
             </div>
           )}
 
@@ -1231,7 +1286,7 @@ export default function CustomerMenu() {
   // ─── RATING ───────────────────────────────────────────────────────────────
   if (step === "rating") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
             <div className="text-6xl mb-4">🌟</div>
@@ -1242,7 +1297,7 @@ export default function CustomerMenu() {
               {venueName} · {tableLabel}
             </p>
           </div>
-          <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
+          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
             <StarRow
               label="🍽 Food"
               value={foodScore}
@@ -1264,13 +1319,13 @@ export default function CustomerMenu() {
             onChange={(e) => setRatingComment(e.target.value)}
             placeholder="Leave a comment..."
             rows={3}
-            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
+            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
           />
           {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
           <button
             onClick={() => handleSubmitRating(false)}
             disabled={ratingLoading}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-brand-500/30 active:scale-95 transition-all"
+            className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-brand-500/30 active:scale-95 transition-all"
           >
             {ratingLoading ? "Submitting..." : "Submit rating"}
           </button>
@@ -1288,8 +1343,8 @@ export default function CustomerMenu() {
   // ─── CLOSED ───────────────────────────────────────────────────────────────
   if (step === "closed") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col items-center justify-center px-4">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-500 to-teal-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
           <CheckCircle size={44} className="text-white" />
         </div>
         <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
@@ -1298,8 +1353,18 @@ export default function CustomerMenu() {
         <p className="text-sm text-gray-400">
           {venueName} · {tableLabel}
         </p>
-        <p className="text-4xl mt-8">👋</p>
-        <p className="text-sm text-gray-400 mt-3">See you next time</p>
+        <p className="text-sm text-gray-400 mt-3 mb-8">See you next time 👋</p>
+        {welcomeRwf > 0 && (
+          <div className="w-full max-w-sm mb-4 rounded-2xl border-[1.5px] border-[#E9D3A6] bg-[#FBF1DE] px-5 py-4 text-center dark:border-[#5A4423] dark:bg-[#2E2416]">
+            <p className="text-sm font-black text-[#2B201B] dark:text-[#F4EDE3]">🎉 {fmt(welcomeRwf)} Skuzi money is waiting for you</p>
+            <p className="mt-1 text-xs text-[#6B574A] dark:text-[#D8CBBF]">It comes off your next bill when you pay with Skuzi, at any Skuzi restaurant.</p>
+          </div>
+        )}
+        {tabId && (
+          <div className="w-full max-w-sm">
+            <InviteOptIn tabId={tabId} />
+          </div>
+        )}
       </div>
     );
   }
@@ -1316,88 +1381,79 @@ export default function CustomerMenu() {
 
   return (
     // Desktop: side-by-side. Mobile: stacked
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0D1117] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col md:flex-row">
       {/* ── LEFT: Menu column ──────────────────────────────────────────────── */}
       <div
         className="flex-1 flex flex-col min-w-0"
-        style={{ paddingBottom: cartCount > 0 ? 80 : 0 }}
+        style={{ paddingBottom: (cartCount > 0 ? 84 : 0) + (placedOrders.length > 0 ? 68 : 0) }}
       >
-        {/* Sticky header */}
-        <div className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm">
-          <div className="px-4 pt-4 pb-3">
-            {/* Venue info row */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <VenueLogo
-                  logoUrl={venueLogoUrl}
-                  venueName={venueName}
-                  size={36}
-                />
-                <div>
-                  <h1 className="font-black text-gray-900 dark:text-white text-xl leading-tight">
-                    {venueName}
-                  </h1>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-400">{tableLabel}</span>
-                    {isDemo && <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">Demo · no real money</span>}
-                    {isGroupTab && (
-                      <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full font-bold">
-                        <Users size={10} /> Group tab
-                      </span>
-                    )}
-                  </div>
+        {/* Header: espresso band with the venue, the table, the waiter and the categories */}
+        <div className="sticky top-0 z-10 bg-[#2B201B] dark:bg-[#2B201B] text-[#F4EDE3] rounded-b-[28px] shadow-lg shadow-black/10">
+          <div className="px-5 pt-5 pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={44} />
+                <div className="min-w-0">
+                  <h1 className="font-display font-bold text-[22px] leading-tight truncate">{venueName}</h1>
+                  <p className="text-[13px] text-[#D8CBBF] truncate">
+                    {tableLabel}
+                    {waiterName ? ` · ${waiterName} is your waiter` : ""}
+                  </p>
                 </div>
               </div>
-              {/* Desktop nudge/bill — mobile shows in bottom area */}
               {placedOrders.length > 0 && (
-                <div className="hidden md:flex gap-2">
+                <div className="hidden md:flex gap-2 flex-shrink-0">
                   <button
                     onClick={handleNudge}
                     disabled={nudgeLoading || justNudged}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${justNudged ? "bg-amber-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"}`}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-[#D9A441] text-[#2B201B] disabled:opacity-70 transition-all"
                   >
-                    <Bell size={12} /> {justNudged ? "Sent!" : "Nudge waiter"}
+                    <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
                   </button>
                   <button
                     onClick={handleRequestBill}
                     disabled={billLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold border-2 border-[#F4EDE3]/80 text-[#F4EDE3] disabled:opacity-50 transition-all"
                   >
-                    <Receipt size={12} /> {billLoading ? "..." : "Pay bill"}
+                    <Receipt size={14} /> {billLoading ? "..." : "My bill"}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Search bar */}
-            <div className="relative mb-3">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
+            {(isDemo || isGroupTab) && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {isDemo && <span className="inline-flex items-center rounded-full bg-[#D9A441] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#2B201B]">Demo · no real money</span>}
+                {isGroupTab && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/10 px-2.5 py-1 rounded-full">
+                    <Users size={11} /> Group tab
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="relative mt-4">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#D8CBBF]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search menu..."
-                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 border-0 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                placeholder="Search the menu"
+                aria-label="Search the menu"
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-2xl bg-white/10 border-0 text-[#F4EDE3] placeholder-[#D8CBBF]/70 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
               />
             </div>
 
-            {/* Category chips */}
             {!searchQuery && (
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-0">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide mt-3 -mx-1 px-1">
                 {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => scrollToCategory(cat)}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 whitespace-nowrap ${
-                      activeCategory === cat
-                        ? "bg-brand-500 text-white shadow-md shadow-brand-500/30"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all active:scale-95 ${
+                      activeCategory === cat ? "bg-brand-500 text-white font-extrabold" : "bg-white/10 text-[#F4EDE3] font-semibold"
                     }`}
                   >
-                    <span>{getCatEmoji(cat)}</span>
                     {cat}
                   </button>
                 ))}
@@ -1407,7 +1463,16 @@ export default function CustomerMenu() {
         </div>
 
         {/* Menu content */}
-        <div className="flex-1 px-4 pt-4 overflow-y-auto">
+        <div className="flex-1 px-4 pt-5 overflow-y-auto">
+          {skuziOffer?.text && (
+            <div className="mb-5 flex items-center gap-3 rounded-2xl border-[1.5px] border-amber-500/60 bg-amber-50 px-4 py-3 dark:bg-amber-500/10">
+              <span className="text-2xl" aria-hidden="true">🎁</span>
+              <div className="min-w-0">
+                <p className="text-sm font-extrabold text-gray-900 dark:text-white">{skuziOffer.title ?? "Your offer"}: {skuziOffer.text}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300">{skuziOffer.offerType === "discount_10" ? "Taken off automatically when you pay here." : "Show this to your waiter."}</p>
+              </div>
+            </div>
+          )}
           {/* Search results */}
           {filteredItems && (
             <div className="mb-6">
@@ -1421,7 +1486,7 @@ export default function CustomerMenu() {
                   <p className="text-sm text-gray-400 mt-3">No items found</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {filteredItems.map((item) => (
                     <MenuCard
                       key={item.id}
@@ -1446,18 +1511,11 @@ export default function CustomerMenu() {
                 }}
                 className="mb-8"
               >
-                <div className="flex items-center gap-2.5 mb-4">
-                  <span className="text-2xl">{getCatEmoji(cat)}</span>
-                  <div>
-                    <h2 className="text-base font-black text-gray-900 dark:text-white">
-                      {cat}
-                    </h2>
-                    <p className="text-xs text-gray-400">
-                      {menuGrouped[cat].length} items
-                    </p>
-                  </div>
+                <div className="flex items-baseline justify-between mb-3 px-1">
+                  <h2 className="font-display text-2xl font-bold text-gray-900 dark:text-white">{cat}</h2>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{menuGrouped[cat].length} items</span>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {menuGrouped[cat].map((item) => (
                     <MenuCard
                       key={item.id}
@@ -1484,52 +1542,42 @@ export default function CustomerMenu() {
           <div className="h-4 md:h-8" />
         </div>
 
-        {/* Mobile nudge/bill bar — only when orders exist */}
-        {placedOrders.length > 0 && (
-          <div className="md:hidden fixed bottom-16 left-0 right-0 px-4 z-20 pointer-events-none">
-            <div className="flex gap-2 justify-end pointer-events-auto">
-              <button
-                onClick={handleNudge}
-                disabled={nudgeLoading || justNudged}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-xl transition-all ${justNudged ? "bg-amber-500 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
-              >
-                <Bell size={13} /> {justNudged ? "Sent!" : "Nudge"}
-              </button>
-              <button
-                onClick={handleRequestBill}
-                disabled={billLoading}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xl disabled:opacity-50"
-              >
-                <Receipt size={13} /> {billLoading ? "..." : "Pay bill"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile cart bar */}
-        {cartCount > 0 && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-2 bg-gradient-to-t from-gray-50 dark:from-[#0D1117] via-gray-50/90 dark:via-[#0D1117]/90 to-transparent z-20">
-            <button
-              onClick={() => setCartOpen(!cartOpen)}
-              className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl active:scale-98 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <ShoppingBag size={20} />
-                  <span className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-brand-500 rounded-full text-[10px] font-black text-white flex items-center justify-center border-2 border-gray-900 dark:border-white">
-                    {cartCount}
-                  </span>
-                </div>
-                <span className="text-sm font-black">View order</span>
+        {/* Mobile bottom: call the waiter, see the bill, send the order */}
+        {(placedOrders.length > 0 || cartCount > 0) && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(43,32,27,0.25)] flex flex-col gap-2.5">
+            {placedOrders.length > 0 && (
+              <div className="flex gap-2.5">
+                <button
+                  onClick={handleNudge}
+                  disabled={nudgeLoading || justNudged}
+                  className="flex-1 h-[54px] rounded-[18px] bg-[#D9A441] text-[#2B201B] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
+                >
+                  <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
+                </button>
+                <button
+                  onClick={handleRequestBill}
+                  disabled={billLoading}
+                  className="flex-1 h-[54px] rounded-[18px] border-2 border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-50/80 dark:bg-transparent text-base font-bold disabled:opacity-50 active:scale-[0.98] transition-all"
+                >
+                  {billLoading ? "..." : "My bill"}
+                </button>
               </div>
-              <span className="text-sm font-black">{fmt(cartTotal)}</span>
-            </button>
+            )}
+            {cartCount > 0 && (
+              <button
+                onClick={() => setCartOpen(!cartOpen)}
+                className="h-[60px] rounded-[20px] bg-brand-500 text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-brand-500/25 active:scale-[0.98] transition-all"
+              >
+                <span className="flex items-center gap-2"><ShoppingBag size={18} /> Send order · {cartCount} {cartCount === 1 ? "item" : "items"}</span>
+                <span>{fmt(cartTotal)}</span>
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* ── RIGHT: Order summary sidebar (desktop only) ─────────────────────── */}
-      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#161B22] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
+      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#2B201B] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
         <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-base font-black text-gray-900 dark:text-white">
             Order Summary
@@ -1641,7 +1689,7 @@ export default function CustomerMenu() {
             <button
               onClick={handlePlaceOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-500/30"
             >
               {orderLoading ? (
                 <>
@@ -1660,16 +1708,16 @@ export default function CustomerMenu() {
             <button
               onClick={handleNudge}
               disabled={nudgeLoading || justNudged}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all ${justNudged ? "bg-amber-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"}`}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#D9A441] text-[#2B201B] disabled:opacity-80 transition-all"
             >
-              <Bell size={13} /> {justNudged ? "Sent!" : "Nudge"}
+              <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
             </button>
             <button
               onClick={handleRequestBill}
               disabled={billLoading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-50 transition-all"
             >
-              <Receipt size={13} /> {billLoading ? "..." : "Pay bill"}
+              <Receipt size={13} /> {billLoading ? "..." : "My bill"}
             </button>
           </div>
         )}
@@ -1682,7 +1730,7 @@ export default function CustomerMenu() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setCartOpen(false)}
           />
-          <div className="relative bg-white dark:bg-[#161B22] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-[#2B201B] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-black text-gray-900 dark:text-white">
                 Your order
@@ -1744,7 +1792,7 @@ export default function CustomerMenu() {
             <button
               onClick={handlePlaceOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-teal-500 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-brand-500/30"
             >
               {orderLoading ? (
                 <>

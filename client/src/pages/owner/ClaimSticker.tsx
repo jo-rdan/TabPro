@@ -36,15 +36,15 @@ export default function ClaimSticker() {
 
   if (!code) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0D1117] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#1C1511] px-4">
         <p className="text-sm text-gray-500 dark:text-gray-400">This link is missing a sticker code.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0D1117] px-4">
-      <div className="w-full max-w-sm bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 text-center shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#1C1511] px-4">
+      <div className="w-full max-w-sm bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 text-center shadow-xl">
         {status === 'confirm' && (
           <>
             <div className="w-12 h-12 bg-brand-50 dark:bg-brand-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -81,13 +81,13 @@ export default function ClaimSticker() {
             <CheckCircle size={40} className="text-green-500 mx-auto mb-4" />
             <h1 className="text-base font-bold text-gray-900 dark:text-white mb-2">Sticker claimed!</h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
-              Peel it off and stick it at your venue entrance. It never changes again.
+              Stick it where your staff come in. New waiters scan it to join your team. It never changes again.
             </p>
             <button
-              onClick={() => navigate('/shifts')}
+              onClick={() => navigate('/staff')}
               className="w-full bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
             >
-              Go to Shifts
+              Go to Staff
             </button>
           </div>
         )}

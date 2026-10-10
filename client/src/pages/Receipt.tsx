@@ -122,7 +122,7 @@ export default function Receipt() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0D1117]">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#1C1511]">
         <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -130,7 +130,7 @@ export default function Receipt() {
 
   if (error || !bill) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0D1117]">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#1C1511]">
         <p className="text-sm text-red-500">{error || "Receipt not found."}</p>
       </div>
     );
@@ -141,7 +141,7 @@ export default function Receipt() {
   const vatAmount = bill.grandTotal - grandTotalBeforeVAT;
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0D1117] flex flex-col items-center py-10 px-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#1C1511] flex flex-col items-center py-10 px-4">
       {/* Print button */}
       <div className="w-full max-w-sm mb-4 flex justify-end print:hidden">
         <button
@@ -156,7 +156,7 @@ export default function Receipt() {
       {/* Receipt card */}
       <div
         id="receipt"
-        className="w-full max-w-sm bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:border print:rounded-none"
+        className="w-full max-w-sm bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:border print:rounded-none"
       >
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800 text-center">
@@ -251,7 +251,7 @@ export default function Receipt() {
               placeholder="e.g. 0781234567"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-[#0D1117] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-[#1C1511] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
             <button
@@ -271,7 +271,7 @@ export default function Receipt() {
 
         {/* WAITING — polling */}
         {paymentState === "waiting" && (
-          <div className="mx-6 mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-5 text-center">
+          <div className="mx-6 mb-6 bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl p-5 text-center">
             <Loader2
               size={28}
               className="text-brand-500 animate-spin mx-auto mb-3"
@@ -321,7 +321,7 @@ export default function Receipt() {
 
         {/* Footer */}
         <div className="px-6 pb-6 text-center">
-          <p className="text-xs text-gray-400">Powered by TabPro</p>
+          <p className="text-xs text-gray-400">Powered by Skuzi</p>
           <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">
             Ref: {bill.tabId.slice(0, 8).toUpperCase()}
           </p>

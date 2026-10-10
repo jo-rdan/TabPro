@@ -189,7 +189,7 @@ export default function ReceiptModal({ tabId, onClose }: Props) {
                   ▌▍▎▌▌▍▎▍▌▎▌▍▌▎▍▌
                 </p>
                 <p style={{ fontSize: 9, color: '#6B6354', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  Powered by TabPro
+                  Powered by Skuzi
                 </p>
                 <p style={{ fontSize: 9, color: '#D8D0BC', marginTop: 2 }}>
                   Ref: {bill.tabId.slice(0, 8).toUpperCase()}

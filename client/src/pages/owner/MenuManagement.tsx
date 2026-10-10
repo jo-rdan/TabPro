@@ -9,6 +9,7 @@ import {
   X,
   Loader,
   Sparkles,
+  Star,
 } from "lucide-react";
 import Layout from "../../components/Layout";
 import ConfirmDialog from "../../components/ConfirmDialog";
@@ -21,6 +22,8 @@ interface MenuItemRow {
   category: string;
   priceRwf: number;
   isAvailable: boolean;
+  // Chef's pick: shown first on the venue's Skuzi page and on Explore (max 3).
+  featured?: boolean;
 }
 
 interface ExtractedItem {
@@ -131,6 +134,15 @@ export default function MenuManagement() {
     }
   };
 
+  const handleFeature = async (item: MenuItemRow) => {
+    try {
+      await api.patch(`/menu/items/${item.id}`, { featured: !item.featured });
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, featured: !item.featured } : i)));
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "Couldn't save. Check your connection.");
+    }
+  };
+
   const handleSaveEdit = async (itemId: string) => {
     try {
       await api.patch(`/menu/items/${itemId}`, {
@@ -212,6 +224,9 @@ export default function MenuManagement() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {items.length} items · {venue?.name}
           </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+            <Star size={12} className="fill-amber-500 text-amber-500" /> Tap the star on up to 3 dishes: your chef's picks, shown first on your Skuzi page.
+          </p>
         </div>
         <div className="flex gap-2">
           <input
@@ -229,7 +244,7 @@ export default function MenuManagement() {
             {extracting ? (
               <Loader size={15} className="animate-spin" />
             ) : (
-              <Sparkles size={15} className="text-purple-500" />
+              <Sparkles size={15} className="text-skuzi-honey" />
             )}
             {extracting ? "Extracting..." : "Upload menu"}
           </button>
@@ -247,7 +262,7 @@ export default function MenuManagement() {
       {/* AI Review modal */}
       {showReview && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#161B22] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+          <div className="bg-white dark:bg-[#2B201B] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
             <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -328,7 +343,7 @@ export default function MenuManagement() {
 
       {/* Add form */}
       {showAddForm && (
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
+        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
             New item
           </h3>
@@ -338,21 +353,21 @@ export default function MenuManagement() {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Item name"
-              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <input
               type="text"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               placeholder="Category"
-              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <input
               type="number"
               value={newPrice}
               onChange={(e) => setNewPrice(e.target.value)}
               placeholder="Price (RWF)"
-              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#0D1117] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-3 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
           <button
@@ -376,9 +391,9 @@ export default function MenuManagement() {
         {Object.entries(grouped).map(([category, categoryItems]) => (
           <div
             key={category}
-            className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
+            className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
           >
-            <div className="px-5 py-3 bg-gray-50 dark:bg-[#0D1117]">
+            <div className="px-5 py-3 bg-gray-50 dark:bg-[#1C1511]">
               <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 {category}
               </h2>
@@ -396,13 +411,13 @@ export default function MenuManagement() {
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white w-40 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white w-40 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         />
                         <input
                           type="number"
                           value={editPrice}
                           onChange={(e) => setEditPrice(e.target.value)}
-                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0D1117] text-gray-900 dark:text-white w-28 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                          className="text-sm px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white w-28 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         />
                         <button
                           onClick={() => handleSaveEdit(item.id)}
@@ -430,6 +445,15 @@ export default function MenuManagement() {
                   </div>
                   {editingId !== item.id && (
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleFeature(item)}
+                        aria-label={item.featured ? `Remove ${item.name} from chef's picks` : `Make ${item.name} a chef's pick`}
+                        aria-pressed={!!item.featured}
+                        title={item.featured ? "Chef's pick (shown first on your Skuzi page)" : "Make it a chef's pick (up to 3)"}
+                        className="p-1 transition-colors"
+                      >
+                        <Star size={18} className={item.featured ? "fill-amber-500 text-amber-500" : "text-gray-300 hover:text-amber-500 dark:text-gray-600"} />
+                      </button>
                       <button
                         onClick={() => handleToggle(item.id)}
                         className="text-gray-400 hover:text-brand-500 transition-colors"
