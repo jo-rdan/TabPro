@@ -3,7 +3,7 @@
 Keep this short and current. The bot and interactive sessions both update it.
 
 ## Now
-- **Rebrand in progress: TabPro → Skuzi** (decided 2026-10-05, mockups approved: https://claude.ai/artifact/VzVgGeyoc3b4bVaYpmPRV1). Until it ships, the bot must NOT change UI, colours, copy or branding, and must skip the "design polish" step. Bug fixes only. Rebrand work lives on branch `skuzi-rebrand` (draft PR — never merge it; Jordan decides). Waiting on Jordan's new domain.
+- **Rebrand in progress: TabPro → Skuzi** (decided 2026-10-05, mockups approved: https://claude.ai/artifact/VzVgGeyoc3b4bVaYpmPRV1). Until it ships, the bot must NOT change UI, colours, copy or branding, and must skip the "design polish" step. Bug fixes only. Rebrand work lives on branch `skuzi-rebrand`. **Jordan himself merged PR #34 into main on 2026-10-10.** The freeze stays until Jordan says it is over (bot has not been told); still waiting on the new domain.
 - Launch outreach starts **2026-10-06**: Jordan contacts his cousin (Kigali food content
   creator) for warm intros, then pitches the first venue, **Bichu Lounge**.
 - pawaPay production is **not approved yet**: Jordan sends the bank document on Mon 2026-10-05.
@@ -34,4 +34,4 @@ Keep this short and current. The bot and interactive sessions both update it.
 - Buffer: an access token so posts can be scheduled automatically.
 
 ## Needs an interactive session
-- (none)
+- Confirm the Skuzi rebrand freeze is over (PR #34 is merged), so the bot may resume design polish and the bill/payment screens item.
