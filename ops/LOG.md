@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-12 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green; no open PRs. PR #51 (menu first, MoMo number asked at first order) was merged into main by Jordan and its Tests runs passed.
+- Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because the rebrand freeze has not been lifted.
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach). Check that prod applied migration 0026.
+
 ## 2026-10-11 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green; no open PRs. Draft PR #34 (Skuzi rebrand) was merged into main by Jordan on 2026-10-10 and its Tests run passed.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because the rebrand freeze has not been lifted. Updated STATE (#34 merged; asked Jordan to confirm the freeze is over).
