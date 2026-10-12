@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { openTab, openTabByTableId, getTab, nudgeWaiter, requestBill, getTabBill, closeTab } from '../services/tab.service';
+import { openTab, openTabByTableId, previewTable, getTab, nudgeWaiter, requestBill, getTabBill, closeTab } from '../services/tab.service';
 import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
 
@@ -19,6 +19,17 @@ export async function handleOpenTab(req: Request, res: Response) {
   const result = await openTab(parsed.data.qrCode, parsed.data.phone, parsed.data.name);
   const body: ApiResponse = { success: true, data: result };
   res.status(result.isExisting ? 200 : 201).json(body);
+}
+
+export async function handlePreviewTable(req: Request, res: Response) {
+  const result = await previewTable(req.params.qrCode);
+  if (!result) {
+    const body: ApiResponse = { success: false, error: "This table isn't set up in Skuzi yet. Please ask a waiter." };
+    res.status(404).json(body);
+    return;
+  }
+  const body: ApiResponse = { success: true, data: result };
+  res.json(body);
 }
 
 export async function handleGetTab(req: Request, res: Response) {

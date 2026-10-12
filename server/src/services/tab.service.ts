@@ -134,6 +134,27 @@ export async function openTab(qrCode: string, phone: string, name?: string) {
 }
 
 // Used by waiter for walk-in customers without smartphones
+/**
+ * What a guest sees right after scanning, before giving their number: the
+ * venue, the table, its waiter and the menu. Opens nothing; the tab opens
+ * when they send their first order.
+ */
+export async function previewTable(qrCode: string) {
+  const table = await getTableByQrCode(qrCode);
+  if (!table || !table.venue) return null;
+  const [assignment, existingTab, { grouped }] = await Promise.all([
+    db.query.tableAssignments.findFirst({ where: eq(tableAssignments.tableId, table.id) }),
+    findUnsettledTab(table.id),
+    getMenuForVenue(table.venue.id),
+  ]);
+  return {
+    venue: publicVenue(table.venue),
+    table: { id: table.id, label: table.label },
+    waiter: await waiterFor(existingTab?.staffId ?? assignment?.staffId ?? null),
+    menuGrouped: grouped,
+  };
+}
+
 export async function openTabByTableId(tableId: string, phone?: string) {
   const table = await db.query.tables.findFirst({
     where: eq(tables.id, tableId),

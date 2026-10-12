@@ -139,6 +139,15 @@ console.log('\n── Customer night (cash)');
 const ownerWs = socket(`venueId=${venueId}&token=${ownerTok}`);
 const staffWs = socket(`venueId=${venueId}&token=${staffTok}`);
 await sleep(500);
+// Menu first: scanning shows the venue and menu without asking for a number
+{
+  const tabsBefore = (await q1('select count(*)::int n from tabs')).n;
+  r = await call('GET', `/tabs/preview/${codes[0]}`);
+  check('Scan shows the menu before asking for a number', r.status === 200 && !!r.json?.data?.venue?.name && Object.keys(r.json?.data?.menuGrouped ?? {}).length > 0 && !!r.json?.data?.table?.label, JSON.stringify(r.json?.error ?? ''));
+  check('…and opens no tab until the first order', (await q1('select count(*)::int n from tabs')).n === tabsBefore);
+  r = await call('GET', '/tabs/preview/not-a-sticker');
+  check('Unknown sticker → clear message', r.status === 404 && /set up/.test(r.json?.error ?? ''));
+}
 r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788111222', name: 'Bob' });
 const tabId = r.json?.data?.tab?.id;
 check('Customer scans QR → tab opens with waiter', r.status === 201 && !!r.json?.data?.tab?.staffId, `status ${r.status}`);
