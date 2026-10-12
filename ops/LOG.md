@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-12 UTC · weekly
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (incl. #51 push); no open PRs, no `idea` PRs.
+- Did: opened the weekly issue #52 (what happened, Jordan's plan, 2 strategic ideas, 3 posts). No code changed, so no e2e run was needed.
+- Left off: waiting on Jordan (confirm freeze over, Skuzi domain, pawaPay, outreach status). Check that prod applied migration 0026.
+
 ## 2026-10-12 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green; no open PRs. PR #51 (menu first, MoMo number asked at first order) was merged into main by Jordan and its Tests runs passed.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because the rebrand freeze has not been lifted.

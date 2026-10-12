@@ -10,6 +10,7 @@ Keep this short and current. The bot and interactive sessions both update it.
   Until then, real venues can run with cash/waiter payment; MoMo switches on later.
 
 ## Sales pipeline
+(Weekly issue #52 opened 2026-10-12; outreach status not confirmed by Jordan yet.)
 | Who | Status | Next step |
 |---|---|---|
 | Cousin (content creator) | Not contacted | Jordan messages her 2026-10-06: video + demo link + ask for 2–3 owner intros |
