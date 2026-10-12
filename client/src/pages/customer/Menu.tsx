@@ -288,7 +288,8 @@ export default function CustomerMenu() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
+  // Menu first: the number is asked only when the guest sends their first order.
+  const [askPhone, setAskPhone] = useState(false);
   const [tabId, setTabId] = useState<string | null>(null);
   const [tabStatus, setTabStatus] = useState<TabStatus>("open");
   const [venueId, setVenueId] = useState<string | null>(null);
@@ -356,7 +357,10 @@ export default function CustomerMenu() {
   useEffect(() => {
     if (!qrCode) return;
     const saved = sessionStorage.getItem(SESSION_KEY(qrCode));
-    if (!saved) return;
+    if (!saved) {
+      loadPreview();
+      return;
+    }
     const s = JSON.parse(saved);
     setTabId(s.tabId);
     setTabStatus(s.tabStatus ?? "open");
@@ -419,14 +423,40 @@ export default function CustomerMenu() {
     },
   });
 
-  const handleIdentify = async () => {
-    if (!phone.trim()) {
-      setError("Phone number is required.");
-      return;
+  // What the guest sees right after scanning: the venue and the menu. No tab yet.
+  const loadPreview = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await apiFetch(`/tabs/preview/${qrCode}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      const { venue, table, menuGrouped: mg, waiter } = data.data;
+      setWaiterName(waiter?.name ?? null);
+      setVenueId(venue.id);
+      setVenueName(venue.name);
+      if (venue.logoUrl) setVenueLogoUrl(venue.logoUrl);
+      setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
+      setIsDemo(!!venue.isDemo);
+      setTableLabel(table.label);
+      setMenuGrouped(mg);
+      setAllItems(Object.values(mg).flat() as MenuItemData[]);
+      setActiveCategory(Object.keys(mg)[0] ?? "");
+      setStep("menu");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please scan again.");
+    } finally {
+      setLoading(false);
     }
-    if (phone.trim().length < 9) {
-      setError("Enter a valid phone number.");
-      return;
+  };
+
+  // The guest gave their number: open (or join) the table's tab. Returns the
+  // tab id, or null if the bill is already being paid (they land on the bill).
+  const openTabWithPhone = async (): Promise<string | null> => {
+    const cleaned = phone.trim();
+    if (cleaned.replace(/\D/g, "").length < 9) {
+      setError("Enter your MTN MoMo or Airtel Money number, e.g. 078 123 4567");
+      return null;
     }
     setLoading(true);
     setError("");
@@ -434,11 +464,7 @@ export default function CustomerMenu() {
       const res = await apiFetch("/tabs/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          qrCode,
-          phone: phone.trim(),
-          name: name.trim() || undefined,
-        }),
+        body: JSON.stringify({ qrCode, phone: cleaned }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
@@ -449,13 +475,11 @@ export default function CustomerMenu() {
       setTabStatus(tab.status);
       setVenueId(venue.id);
       setVenueName(venue.name);
-      if (venue.logoUrl) setVenueLogoUrl(venue.logoUrl);
       setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
       setIsDemo(!!venue.isDemo);
       setTableLabel(table.label);
       setMenuGrouped(mg);
       setAllItems(Object.values(mg).flat() as MenuItemData[]);
-      setActiveCategory(Object.keys(mg)[0] ?? "");
       setIsGroupTab(isExisting);
       sessionStorage.setItem(
         SESSION_KEY(qrCode!),
@@ -468,22 +492,41 @@ export default function CustomerMenu() {
           isDemo: !!venue.isDemo,
           tableLabel: table.label,
           waiterName: waiter?.name ?? null,
-          phone: phone.trim(),
+          phone: cleaned,
           menuGrouped: mg,
         }),
       );
-      // Re-scanning a table whose bill is already requested lands on the bill.
+      // Joining a table whose bill is already requested lands on the bill.
       if (tab.status === "bill_requested") {
+        setAskPhone(false);
         fetchBill(tab.id);
         setStep("bill");
-      } else {
-        setStep("menu");
+        return null;
       }
+      return tab.id as string;
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
+      return null;
     } finally {
       setLoading(false);
     }
+  };
+
+  // "Confirm order": the first time, ask for the number, then send.
+  const confirmOrder = () => {
+    if (tabId) {
+      handlePlaceOrder(tabId);
+      return;
+    }
+    setError("");
+    setCartOpen(false);
+    setAskPhone(true);
+  };
+  const sendFirstOrder = async () => {
+    const id = await openTabWithPhone();
+    if (!id) return;
+    setAskPhone(false);
+    await handlePlaceOrder(id);
   };
 
   const addToCart = (item: MenuItemData) =>
@@ -507,7 +550,7 @@ export default function CustomerMenu() {
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
   const getQty = (id: string) => cart.find((c) => c.id === id)?.quantity ?? 0;
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (id: string) => {
     if (!cart.length) return;
     setOrderLoading(true);
     try {
@@ -515,7 +558,7 @@ export default function CustomerMenu() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tabId,
+          tabId: id,
           source: "customer",
           items: cart.map((c) => ({ menuItemId: c.id, quantity: c.quantity })),
         }),
@@ -723,76 +766,31 @@ export default function CustomerMenu() {
   };
 
   // ─── IDENTIFY ─────────────────────────────────────────────────────────────
+  // Opening the table: the menu is on its way (or the sticker isn't set up).
   if (step === "identify") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 py-10">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
-            <Logo size={44} />
-          </div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white">
-            Welcome!
-          </h1>
-          <p className="text-gray-400 text-sm mt-2">
-            Enter your details to start ordering
-          </p>
+      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="w-20 h-20 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
+          <Logo size={44} />
         </div>
-        <div className="w-full max-w-sm bg-white dark:bg-[#2B201B] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-7">
-          <div className="mb-4">
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-              Phone number *
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleIdentify()}
-              placeholder="07XX XXX XXX"
-              autoFocus
-              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-              Name <span className="font-normal normal-case">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleIdentify()}
-              placeholder="e.g. Alice"
-              className="w-full px-4 py-3.5 text-base rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
-            />
-          </div>
-          {error && <p className="text-sm text-red-500 mb-4 -mt-2">{error}</p>}
-          <button
-            onClick={handleIdentify}
-            disabled={loading}
-            className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30"
-          >
-            {loading ? "Opening tab..." : "Open my tab →"}
-          </button>
-        </div>
-        <p className="text-xs text-gray-400 text-center mt-4">
-          By opening a tab you agree to our{" "}
-          <a
-            href={`${import.meta.env.VITE_APP_URL}/privacy.html`}
-            target="_blank"
-            className="underline hover:text-gray-500 transition-colors"
-          >
-            Privacy Policy
-          </a>
-          {" · "}
-          <a
-            href={`${import.meta.env.VITE_APP_URL}/terms.html`}
-            target="_blank"
-            className="underline hover:text-gray-500 transition-colors"
-          >
-            Terms
-          </a>
-          .
-        </p>
+        {error ? (
+          <>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white">Hmm, that didn't work</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">{error}</p>
+            <button
+              onClick={loadPreview}
+              disabled={loading}
+              className="mt-6 px-6 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-black disabled:opacity-50"
+            >
+              {loading ? "Trying…" : "Try again"}
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white">Welcome!</h1>
+            <p className="text-sm text-gray-400 mt-2 flex items-center gap-2"><Loader size={14} className="animate-spin" /> Opening the menu…</p>
+          </>
+        )}
       </div>
     );
   }
@@ -1382,6 +1380,51 @@ export default function CustomerMenu() {
   return (
     // Desktop: side-by-side. Mobile: stacked
     <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col md:flex-row">
+      {/* Last step before the first order: the guest's MoMo number */}
+      {askPhone && (
+        <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center bg-black/50 px-0 md:px-4" onClick={() => !loading && setAskPhone(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ask-phone-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full md:max-w-sm bg-white dark:bg-[#2B201B] rounded-t-[28px] md:rounded-[28px] px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl"
+          >
+            <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#D9A441]">Last step</p>
+            <h2 id="ask-phone-title" className="mt-1 text-2xl font-black text-gray-900 dark:text-white">Your MoMo number</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">So you can pay your bill from your phone when you're ready.</p>
+            <input
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendFirstOrder()}
+              placeholder="078 123 4567"
+              autoFocus
+              aria-label="Your MTN MoMo or Airtel Money number"
+              className="mt-4 w-full px-4 py-3.5 text-lg font-bold tracking-wide rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
+            />
+            {error && <p role="alert" className="text-sm text-red-500 mt-2">{error}</p>}
+            <button
+              onClick={sendFirstOrder}
+              disabled={loading || orderLoading}
+              className="mt-4 w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2"
+            >
+              {loading || orderLoading ? <><Loader size={16} className="animate-spin" /> Sending…</> : <>Send my order · {fmt(cartTotal)}</>}
+            </button>
+            <button onClick={() => setAskPhone(false)} disabled={loading} className="mt-2 w-full py-2 text-sm text-gray-400 hover:text-gray-600">
+              Not now
+            </button>
+            <p className="text-[11px] text-gray-400 text-center mt-2">
+              By sending, you agree to our{" "}
+              <a href={`${import.meta.env.VITE_APP_URL}/privacy.html`} target="_blank" rel="noreferrer" className="underline">Privacy Policy</a>
+              {" · "}
+              <a href={`${import.meta.env.VITE_APP_URL}/terms.html`} target="_blank" rel="noreferrer" className="underline">Terms</a>.
+            </p>
+          </div>
+        </div>
+      )}
       {/* ── LEFT: Menu column ──────────────────────────────────────────────── */}
       <div
         className="flex-1 flex flex-col min-w-0"
@@ -1687,7 +1730,7 @@ export default function CustomerMenu() {
             </div>
             {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
             <button
-              onClick={handlePlaceOrder}
+              onClick={confirmOrder}
               disabled={orderLoading}
               className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-500/30"
             >
@@ -1790,7 +1833,7 @@ export default function CustomerMenu() {
             </div>
             {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
             <button
-              onClick={handlePlaceOrder}
+              onClick={confirmOrder}
               disabled={orderLoading}
               className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-brand-500/30"
             >
