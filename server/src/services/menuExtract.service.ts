@@ -4,51 +4,60 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? '' });
 
 // Google retires models often (and blocks old ones for new keys), so try a few
 // and remember the first that answers. GEMINI_MODEL can force one.
-const MODEL_CANDIDATES = [process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-3.8-flash'].filter(Boolean) as string[];
+const MODEL_CANDIDATES = [process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean) as string[];
 let workingModel: string | null = null;
 
 const isModelGone = (err: any) => /NOT_FOUND|no longer available|not found/i.test(String(err?.message ?? err));
 
-// Last resort: ask Google which "flash" models this key can use.
-async function discoverFlashModel(): Promise<string | null> {
+// Ask Google which "flash" models this key can use: full models first, then
+// the "lite" ones (their free allowance is larger, and they read menus fine).
+async function discoverFlashModels(): Promise<string[]> {
   try {
     const pager = await ai.models.list();
-    const names: string[] = [];
+    const full: string[] = [];
+    const lite: string[] = [];
     for await (const m of pager) {
-      if (m.name && /flash/.test(m.name) && !/lite|image|tts|live|audio/.test(m.name)) names.push(m.name.replace(/^models\//, ''));
+      if (!m.name || !/flash/.test(m.name) || /image|tts|live|audio|preview|exp/.test(m.name)) continue;
+      const name = m.name.replace(/^models\//, '');
+      (/lite/.test(name) ? lite : full).push(name);
     }
-    return names.sort().reverse()[0] ?? null;
+    return [...full.sort().reverse(), ...lite.sort().reverse()];
   } catch {
-    return null;
+    return [];
   }
 }
 
 const isBusy = (err: any) => /UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|\b503\b|\b429\b/i.test(String(err?.message ?? err));
 
-// Google's free tier is often briefly overloaded: wait and try again.
+const isOverloaded = (err: any) => /UNAVAILABLE|overloaded|\b503\b/i.test(String(err?.message ?? err));
+
+// Google's free tier is often briefly overloaded: wait and try again. Out of
+// free allowance (RESOURCE_EXHAUSTED) won't fix itself in seconds, so move on.
 async function withBusyRetry<T>(fn: () => Promise<T>): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await fn();
     } catch (err) {
-      if (!isBusy(err) || attempt >= 3) throw err;
+      if (!isOverloaded(err) || attempt >= 2) throw err;
       await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
     }
   }
 }
 
+// Tries models until one answers. A model that is gone, busy or out of free
+// allowance doesn't stop us: the next one is tried, then whatever Google lists.
 async function generate(contents: any): Promise<string> {
   const tried = new Set<string>();
   const queue = workingModel ? [workingModel, ...MODEL_CANDIDATES] : [...MODEL_CANDIDATES];
   let discovered = false;
+  let lastReason = '';
   while (true) {
     const model = queue.find((m) => !tried.has(m));
     if (!model) {
       if (discovered) break;
       discovered = true;
-      const found = await discoverFlashModel();
-      if (found && !tried.has(found)) { queue.push(found); continue; }
-      break;
+      queue.push(...(await discoverFlashModels()));
+      continue;
     }
     tried.add(model);
     try {
@@ -56,17 +65,18 @@ async function generate(contents: any): Promise<string> {
       workingModel = model;
       return response.text ?? '';
     } catch (err: any) {
-      if (!isModelGone(err)) {
-        const raw = String(err?.message ?? err);
-        console.error('[menuExtract]', model, raw);
-        // Google's short status (e.g. RESOURCE_EXHAUSTED) helps support without exposing anything.
-        const reason = raw.match(/"status":\s*"([A-Z_]+)"/)?.[1] ?? raw.match(/\b(4\d\d|5\d\d)\b/)?.[1] ?? 'unknown';
-        throw new Error(`Could not read the menu right now (${reason}). Try again, or add items by hand.`);
-      }
+      const raw = String(err?.message ?? err);
+      if (isModelGone(err)) continue;
+      console.error('[menuExtract]', model, raw);
+      // Google's short status (e.g. RESOURCE_EXHAUSTED) helps support without exposing anything.
+      lastReason = raw.match(/"status":\s*"([A-Z_]+)"/)?.[1] ?? raw.match(/\b(4\d\d|5\d\d)\b/)?.[1] ?? 'unknown';
+      if (workingModel === model) workingModel = null;
+      if (isBusy(err)) continue;
+      throw new Error(`Could not read the menu right now (${lastReason}). Try again, or add items by hand.`);
     }
   }
-  console.error('[menuExtract] no Gemini model available; tried', [...tried].join(', '));
-  throw new Error('Could not read the menu right now. Try again, or add items by hand.');
+  console.error('[menuExtract] no Gemini model answered; tried', [...tried].join(', '));
+  throw new Error(`Could not read the menu right now${lastReason ? ` (${lastReason})` : ''}. Try again in a minute, or add items by hand.`);
 }
 
 function assertConfigured() {
