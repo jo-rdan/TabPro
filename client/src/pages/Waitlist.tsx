@@ -69,7 +69,7 @@ export default function Waitlist() {
             <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", letterSpacing: "-0.035em" }} className="mt-3 text-[40px] font-extrabold leading-[1.02]">
               Be one of the first venues on <span className="text-[#D9A441]">Skuzi.</span>
             </h1>
-            <p className="mt-4 text-[16px] leading-relaxed text-[#D8CBBF]">Guests order, call their waiter and pay with MoMo from their table. You see every table and every franc, live.</p>
+            <p className="mt-4 text-[16px] leading-relaxed text-[#D8CBBF]">Guests order, pay, and enjoy from their table, and their waiter is just one tap away. You see every table and every franc, live.</p>
             <ul className="mt-5 space-y-2 text-[15px] text-[#F4EDE3]">
               {["Less waiting, more rounds ordered", "Your 92% of MoMo bills, in seconds", "Free setup. No machine. No monthly fee."].map((t) => (
                 <li key={t} className="flex gap-2.5"><span className="text-[#D9A441]">✓</span>{t}</li>

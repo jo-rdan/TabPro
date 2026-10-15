@@ -142,7 +142,7 @@ function Hero() {
           </Reveal>
           <Reveal delay={160}>
             <p className="mx-auto mt-8 max-w-2xl text-[17px] leading-relaxed text-[var(--hero-body)] sm:text-[19px]">
-              Your guests order, call their waiter and pay with Mobile Money from their own phone.
+              Your guests order, pay, and enjoy from their own phone, and their waiter is just one tap away.
               You see every table and every franc, even when you're not there.
             </p>
           </Reveal>

@@ -245,7 +245,7 @@ export async function nudgeWaiter(tabId: string) {
     tab.table.venueId,
     tab.tableId,
     tab.staffId,
-    { title: `👋 ${tab.table.label} needs you`, body: 'A customer is calling for a waiter' },
+    { title: `👋 ${tab.table.label} needs you`, body: 'A guest would love a hand 👋' },
     { title: `👋 ${tab.table.label} called a waiter`, body: 'Their waiter has been notified' },
   );
 

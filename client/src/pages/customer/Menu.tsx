@@ -216,7 +216,7 @@ function MenuCard({
   );
 }
 
-// The Skuzi hand, small, for the "call your waiter" button.
+// The Skuzi hand, small, for the "Skuzi!" button (your waiter is one tap away).
 function WaveIcon() {
   return (
     <svg width="22" height="22" viewBox="8 4 90 92" aria-hidden="true">
@@ -1451,7 +1451,7 @@ export default function CustomerMenu() {
                     disabled={nudgeLoading || justNudged}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-[#D9A441] text-[#2B201B] disabled:opacity-70 transition-all"
                   >
-                    <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
+                    {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
                   </button>
                   <button
                     onClick={handleRequestBill}
@@ -1585,7 +1585,7 @@ export default function CustomerMenu() {
           <div className="h-4 md:h-8" />
         </div>
 
-        {/* Mobile bottom: call the waiter, see the bill, send the order */}
+        {/* Mobile bottom: reach the waiter, see the bill, send the order */}
         {(placedOrders.length > 0 || cartCount > 0) && (
           <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(43,32,27,0.25)] flex flex-col gap-2.5">
             {placedOrders.length > 0 && (
@@ -1595,7 +1595,7 @@ export default function CustomerMenu() {
                   disabled={nudgeLoading || justNudged}
                   className="flex-1 h-[54px] rounded-[18px] bg-[#D9A441] text-[#2B201B] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
                 >
-                  <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
+                  {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
                 </button>
                 <button
                   onClick={handleRequestBill}
@@ -1753,7 +1753,7 @@ export default function CustomerMenu() {
               disabled={nudgeLoading || justNudged}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#D9A441] text-[#2B201B] disabled:opacity-80 transition-all"
             >
-              <WaveIcon /> {justNudged ? "Waiter called!" : "Skuzi!"}
+              {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
             </button>
             <button
               onClick={handleRequestBill}
