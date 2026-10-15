@@ -973,7 +973,7 @@ export default function WaiterOrders() {
                 </svg>
                 <div>
                   <p className="font-display text-[26px] font-bold leading-none">Skuzi! {nudge.tableLabel}</p>
-                  <p className="text-sm font-semibold mt-1 text-white/85">is calling you · {timeAgo(nudge.timestamp)}</p>
+                  <p className="text-sm font-semibold mt-1 text-white/85">would love a hand · {timeAgo(nudge.timestamp)}</p>
                 </div>
               </div>
               <button

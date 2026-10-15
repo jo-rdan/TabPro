@@ -167,7 +167,7 @@ export function ScreenCall() {
         <div className="sk-toast mx-1 mt-5 flex flex-col items-center rounded-3xl bg-[#D9A441] px-4 py-5 text-center text-[#2B201B]">
           <span className="sk-wave inline-block"><Hand size={44} color="#2B201B" /></span>
           <p className="mt-2 font-display text-[18px] font-bold">Skuzi!</p>
-          <p className="text-[11px] font-semibold">Eric got your call. He's on his way.</p>
+          <p className="text-[11px] font-semibold">Eric knows. He'll be right with you.</p>
         </div>
       </div>
     </div>
@@ -230,7 +230,7 @@ export function WaiterCall({ calling }: { calling: boolean }) {
           <span className="sk-wave inline-block"><Hand size={34} color="#F4EDE3" /></span>
           <div>
             <p className="font-display text-[17px] font-bold leading-tight">Skuzi! Table 4</p>
-            <p className="text-[11.5px] text-[#F5E1D7]">is calling you · now</p>
+            <p className="text-[11.5px] text-[#F5E1D7]">would love a hand · now</p>
           </div>
         </div>
       ) : (

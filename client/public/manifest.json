@@ -1,7 +1,7 @@
 {
   "name": "Skuzi",
   "short_name": "Skuzi",
-  "description": "Order, call your waiter and pay from your table",
+  "description": "Order, pay, and enjoy at your table. Your waiter is just one tap away.",
   "theme_color": "#2B201B",
   "background_color": "#F4EDE3",
   "display": "standalone",
