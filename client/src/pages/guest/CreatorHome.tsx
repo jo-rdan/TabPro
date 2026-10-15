@@ -92,7 +92,7 @@ export function CreatorHome() {
         <section className="mt-8 rounded-[22px] bg-[#2B201B] p-5 text-[#F4EDE3]">
           <h2 className="font-display text-lg font-extrabold">How you earn</h2>
           <ul className="mt-2 space-y-1.5 text-sm text-[#D8CBBF]">
-            <li>For every new person: <b className="text-[#D9A441]">2% of their first bill</b>. A bill of 8,000 RWF earns you 160 RWF; 20,000 RWF earns you 400 RWF.</li>
+            <li>For every new person: <b className="text-[#D9A441]">a share of their first bill</b>. A bill of 8,000 RWF earns you 64 RWF; 20,000 RWF earns you 184 RWF.</li>
             <li>They get the same amount back as Skuzi money for their next Skuzi bill. Tell them!</li>
             <li>They must be new to Skuzi, pay with Skuzi, and type your code (or open your link first). Each person counts once.</li>
             <li>Tip: bigger bills earn you more. Tag <b className="text-[#F4EDE3]">@skuzi.xyz</b> in your videos.</li>

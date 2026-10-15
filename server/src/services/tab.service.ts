@@ -9,7 +9,7 @@ import { notifyTable, sendPushToOwner } from './push.service';
 import { attributeVisit, offerForTab } from './campaign.service';
 import { onGuestSeated } from './booking.service';
 import { isPawapayConfigured } from '../lib/pawapay';
-import { skuziCut, walletBalance } from './wallet.service';
+import { skuziCut, skuziNetRwf, walletBalance } from './wallet.service';
 
 // What customers may see about a venue — never the payout number, clock-in
 // sticker code or PIN hash.
@@ -345,13 +345,13 @@ export async function getTabBill(tabId: string) {
   const skuziDiscountRwf = offer?.offerType === 'discount_10' ? Math.round(grandTotal * 0.1) : 0;
   const payWithSkuziTotal = grandTotal - skuziDiscountRwf;
 
-  // The guest's Skuzi money (from a creator's welcome): it can cover up to
-  // Skuzi's fee on this bill. The payment works out the final amount by the
-  // number that actually pays.
+  // The guest's Skuzi money (from a creator's welcome): it can cover up to what
+  // Skuzi keeps on this bill after pawaPay's costs. The payment works out the
+  // final amount by the number that actually pays.
   let walletRwf = 0;
   if (!tab.table.venue.isDemo && tab.customerId && payWithSkuziTotal > 0) {
     const customer = await db.query.customers.findFirst({ where: eq(customers.id, tab.customerId) });
-    if (customer) walletRwf = Math.min(await walletBalance(customer.phone), Math.round(payWithSkuziTotal * skuziCut(tab.campaignId)));
+    if (customer) walletRwf = Math.min(await walletBalance(customer.phone), skuziNetRwf(payWithSkuziTotal, Math.round(payWithSkuziTotal * skuziCut(tab.campaignId))));
   }
 
   return {

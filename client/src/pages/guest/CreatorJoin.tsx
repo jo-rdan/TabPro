@@ -5,7 +5,7 @@ import { guestApi, apiError } from "../../lib/guest";
 
 // "Become a Skuzi creator": the sign-up page creators get from a DM.
 // When a new person pays with Skuzi using their code, the creator gets 25% of
-// Skuzi's fee on that bill and the guest gets 25% back as Skuzi money.
+// what Skuzi keeps on that bill and the guest gets 25% back as Skuzi money.
 export default function CreatorJoin() {
   const [form, setForm] = useState({ name: "", handle: "", phone: "", wantedCode: "" });
   const [busy, setBusy] = useState(false);
@@ -62,10 +62,10 @@ export default function CreatorJoin() {
 
           <div className="mt-7 overflow-hidden rounded-[22px] bg-[#2B201B] text-[#F4EDE3]">
             <div className="grid grid-cols-2 divide-x divide-white/10">
-              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 8,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">160 RWF</p></div>
-              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 20,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">400 RWF</p></div>
+              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 8,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">64 RWF</p></div>
+              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 20,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">184 RWF</p></div>
             </div>
-            <p className="border-t border-white/10 px-4 py-3 text-sm text-[#D8CBBF]">10 new people a day for a month (8,000 RWF bills) bring you <b className="text-[#F4EDE3]">48,000 RWF</b>. No limit. Bigger bills, more money.</p>
+            <p className="border-t border-white/10 px-4 py-3 text-sm text-[#D8CBBF]">10 new people a day for a month (8,000 RWF bills) bring you <b className="text-[#F4EDE3]">19,200 RWF</b>. No limit. Bigger bills, more money.</p>
           </div>
         </section>
 
