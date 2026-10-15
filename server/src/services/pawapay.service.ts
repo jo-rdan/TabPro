@@ -1,5 +1,5 @@
 import { activeCreatorId, creditCreator } from "./creator.service";
-import { lockWallet, skuziCut, walletBalance, welcomeForPayment } from "./wallet.service";
+import { lockWallet, skuziCut, skuziNetRwf, walletBalance, welcomeForPayment } from "./wallet.service";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../lib/db";
 import { momoPayments, venues, tabs } from "../models/schema";
@@ -123,7 +123,8 @@ export async function requestTabPayment(
   // lock stops two payments spending the same money.
   const walletUsedRwf = await db.transaction(async (tx) => {
     await lockWallet(tx, payer.phoneNumber);
-    const used = Math.min(await walletBalance(payer.phoneNumber, tx), fee);
+    // Never more than what Skuzi keeps on this bill after pawaPay's costs.
+    const used = Math.min(await walletBalance(payer.phoneNumber, tx), skuziNetRwf(grandTotal, fee));
     await tx.insert(momoPayments).values({
       venueId: venue.id,
       type: "tab",

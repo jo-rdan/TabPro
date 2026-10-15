@@ -4,15 +4,30 @@ import { and, desc, eq, gt, inArray, sql } from "drizzle-orm";
 import { toRwandaMsisdn } from "../lib/pawapay";
 import { CAMPAIGN_CUT_PERCENT } from "./campaign.service";
 
-// Skuzi money. A new person a creator brought gets 25% of Skuzi's fee on their
-// first bill back, to spend on a later Skuzi bill at any Skuzi venue. Skuzi
-// pays it from its own fee: the venue's share of a bill never changes, and a
-// bill can never use more Skuzi money than Skuzi's fee on it.
+// Skuzi money. A new person a creator brought gets 25% of what Skuzi keeps on
+// their first bill (its fee minus pawaPay's costs) back, to spend on a later
+// Skuzi bill at any Skuzi venue. Skuzi pays it from what it keeps: the venue's
+// share never changes, and a bill never uses more Skuzi money than Skuzi keeps
+// on it, so Skuzi never loses money on a bill.
 export const GUEST_WELCOME_SHARE = 0.25;
 
 export const TABPRO_CUT = parseFloat(process.env.TABPRO_CUT_PERCENT || "8") / 100;
 /** Skuzi's fee on a bill: 15% for a guest a campaign brought, else 8%. */
 export const skuziCut = (campaignId: string | null | undefined) => (campaignId ? CAMPAIGN_CUT_PERCENT / 100 : TABPRO_CUT);
+
+// What pawaPay and the mobile network take on one bill (Rwanda, pawapay.io/fees,
+// Oct 2026), worst case = MTN on both legs: 3.1% to collect from the guest,
+// 60 RWF + 1% to send the venue its share. Override with env if pawaPay's
+// prices for our account differ.
+const COLLECT_RATE = parseFloat(process.env.PAWAPAY_COLLECT_RATE || "0.031");
+const PAYOUT_FIXED_RWF = parseFloat(process.env.PAWAPAY_PAYOUT_FIXED_RWF || "60");
+const PAYOUT_RATE = parseFloat(process.env.PAWAPAY_PAYOUT_RATE || "0.01");
+export const paymentCostsRwf = (billRwf: number, venuePayoutRwf: number) =>
+  Math.ceil(billRwf * COLLECT_RATE + PAYOUT_FIXED_RWF + venuePayoutRwf * PAYOUT_RATE);
+
+/** What Skuzi really keeps on a bill: its fee minus pawaPay's costs (never below 0). */
+export const skuziNetRwf = (billRwf: number, skuziFeeRwf: number) =>
+  Math.max(0, skuziFeeRwf - paymentCostsRwf(billRwf, billRwf - skuziFeeRwf));
 
 type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 

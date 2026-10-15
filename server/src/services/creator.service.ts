@@ -6,18 +6,20 @@ import { HttpError } from "../middleware/error.middleware";
 import { normalizeGuestPhone, isRwandaMobile } from "./customer.service";
 import { notifyAdmin } from "./push.service";
 import { sendEmail, isEmailConfigured } from "../lib/email";
-import { GUEST_WELCOME_SHARE } from "./wallet.service";
+import { GUEST_WELCOME_SHARE, skuziNetRwf } from "./wallet.service";
 
 // Skuzi Creators: anyone with an audience gets a code. When a NEW person pays
-// with Skuzi using it (their first Skuzi payment ever), Skuzi's fee on that
-// bill is shared: 25% to the creator, 25% back to the guest as Skuzi money,
-// 50% stays with Skuzi. The venue's share never changes. Creators are paid
-// monthly from Skuzi's fee, which is already in hand.
+// with Skuzi using it (their first Skuzi payment ever), what Skuzi keeps on
+// that bill (its fee minus pawaPay's costs) is shared: 25% to the creator, 25%
+// back to the guest as Skuzi money, 50% stays with Skuzi. The venue's share
+// never changes. Creators are paid monthly from money already in hand.
 export const CREATOR_SHARE = 0.25;
 export const CREATOR_MIN_PAYOUT_RWF = 5_000;
 
-/** The creator's part of Skuzi's fee on a new person's first bill. */
-export const earningFor = (skuziFeeRwf: number) => Math.round(skuziFeeRwf * CREATOR_SHARE);
+/** The creator's part of what Skuzi keeps on a new person's first bill. */
+export const earningFor = (billRwf: number, skuziFeeRwf: number) => Math.floor(skuziNetRwf(billRwf, skuziFeeRwf) * CREATOR_SHARE);
+/** The guest's welcome money on that same bill. */
+export const welcomeFor = (billRwf: number, skuziFeeRwf: number) => Math.floor(skuziNetRwf(billRwf, skuziFeeRwf) * GUEST_WELCOME_SHARE);
 
 const CODE = /^[A-Z0-9]{3,16}$/;
 export const cleanCode = (raw: string) => raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -102,13 +104,13 @@ export async function creditCreator(payment: typeof momoPayments.$inferSelect) {
       momoPaymentId: payment.id,
       venueId: venue.id,
       billRwf: payment.amountRwf,
-      earningRwf: earningFor(payment.tabproCommissionRwf ?? 0),
+      earningRwf: earningFor(payment.amountRwf, payment.tabproCommissionRwf ?? 0),
     })
     .onConflictDoNothing()
     .returning();
   // A retry after a crash finds the referral already there: still make sure the guest got their money.
   const referral = row ?? (await db.query.creatorReferrals.findFirst({ where: eq(creatorReferrals.momoPaymentId, payment.id) }));
-  const welcome = Math.round((payment.tabproCommissionRwf ?? 0) * GUEST_WELCOME_SHARE);
+  const welcome = welcomeFor(payment.amountRwf, payment.tabproCommissionRwf ?? 0);
   if (referral && welcome > 0) {
     await db
       .insert(guestCredits)
