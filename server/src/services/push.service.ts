@@ -67,7 +67,10 @@ async function send(subs: Sub[], title: string, body: string, url: string, data?
 
   const results = await Promise.allSettled(
     unique.map((sub) =>
-      webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload),
+      // High urgency: a locked Android phone holds "normal" pushes until it wakes
+      // up, which made order and waiter alerts arrive only when the phone was
+      // opened. TTL: an alert older than 6 hours is no longer useful.
+      webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload, { urgency: "high", TTL: 6 * 3600 }),
     ),
   );
 
