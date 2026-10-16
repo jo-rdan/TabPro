@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import {
   CheckCircle,
   Clock,
   ChefHat,
-  AlertCircle,
   Receipt,
   X,
   BellRing,
@@ -136,7 +135,9 @@ const STATUS_CONFIG = {
 
 export default function WaiterOrders() {
   const [searchParams] = useSearchParams();
-  const venueId = searchParams.get("venueId") ?? "";
+  // Opening a notification lands on /waiter/orders with no ?venueId, so fall
+  // back to the venue saved at sign-in on this device.
+  const venueId = searchParams.get("venueId") || localStorage.getItem("tabpro_staff_venue") || "";
   // Needed to tag this device's push subscription as belonging to THIS staff
   // member (not the owner). Previously never read from the URL, so every
   // waiter's subscription was saved with staffId=null and the server treated
@@ -731,20 +732,9 @@ export default function WaiterOrders() {
 
   // ── No venueId ────────────────────────────────────────────────────────────
 
+  // Not signed in on this device: send the waiter to sign in instead of an error.
   if (!venueId) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex items-center justify-center px-4">
-        <div className="text-center">
-          <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
-            No venue ID provided
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Open this page via the link your owner shared.
-          </p>
-        </div>
-      </div>
-    );
+    return <Navigate to="/waiter" replace />;
   }
 
   // ── PIN lock screen ────────────────────────────────────────────────────────
