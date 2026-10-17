@@ -8,7 +8,6 @@ import {
   History,
   CalendarDays,
   Megaphone,
-  Clapperboard,
   LogOut,
   Menu as MenuIcon,
   X,
@@ -49,7 +48,6 @@ const NAV_ITEMS = [
 // items, so they stay visible as an upsell instead of disappearing.
 const PINNED_NAV = NAV_ITEMS.slice(0, 3);
 // The founder also sees Skuzi-wide tools.
-const FOUNDER_NAV = [{ label: "Creators", href: "/creators", icon: Clapperboard }];
 
 export default function Layout({ children, wide = false }: LayoutProps) {
   const location = useLocation();
@@ -63,7 +61,8 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   };
   const { theme } = useThemeStore();
 
-  const navItems = owner?.isAdmin ? [...NAV_ITEMS, ...FOUNDER_NAV] : NAV_ITEMS;
+  // Creators stays off the menu (it was showing on the founder's screen in front of staff); the founder opens /creators directly.
+  const navItems = NAV_ITEMS;
   const MORE_NAV = navItems.slice(3);
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/");
 

@@ -80,7 +80,7 @@ export default function BookTable() {
   const chip = (on: boolean) => `border-[1.5px] font-bold ${on ? "border-gray-900 bg-gray-900 text-[#F4EDE3] dark:border-[#D9A441] dark:bg-[#D9A441] dark:text-[#2B201B]" : "border-gray-200 bg-white text-gray-900 dark:border-[#3A2D26] dark:bg-[#2B201B] dark:text-[#F4EDE3]"}`;
 
   return (
-    <GuestShell header={false}>
+    <GuestShell tone="night" header={false}>
       <div className="mx-auto max-w-xl">
         <div className="-mx-5 bg-[#1C1511] px-5 pb-6 pt-4 text-[#F4EDE3] md:mx-0 md:mt-6 md:rounded-[28px] md:px-8">
           <Link to={`/v/${slug}`} aria-label="Back" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/15"><ArrowLeft size={18} /></Link>
