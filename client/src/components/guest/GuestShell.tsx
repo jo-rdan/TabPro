@@ -16,7 +16,7 @@ export function Hand({ className = "h-7 w-7", color = "#D9A441" }: { className?:
 
 const TABS: { id: Tab; label: string; href: string; Icon: typeof Compass }[] = [
   { id: "explore", label: "Explore", href: "/explore", Icon: Compass },
-  { id: "bookings", label: "Bookings", href: "/me#bookings", Icon: CalendarDays },
+  { id: "bookings", label: "Bookings", href: "/my-bookings", Icon: CalendarDays },
   { id: "me", label: "Me", href: "/me", Icon: UserRound },
 ];
 
@@ -32,7 +32,7 @@ export function GuestLogo({ night = false }: { night?: boolean }) {
 export default function GuestShell({
   children,
   tab,
-  tone = "day",
+  tone,
   header = true,
 }: {
   children: React.ReactNode;
@@ -40,10 +40,12 @@ export default function GuestShell({
   tone?: "night" | "day";
   header?: boolean;
 }) {
-  const night = tone === "night";
+  // The guest tabs (Explore, Bookings, Me and the pages under them) share the
+  // espresso "night" look, so moving between tabs never flips light/dark.
+  const night = tone ? tone === "night" : !!tab;
   const bg = night ? "bg-[#1C1511] text-[#F4EDE3]" : "bg-[#FFFCF7] text-gray-900 dark:bg-[#1C1511] dark:text-[#F4EDE3]";
   return (
-    <div className={`min-h-screen ${bg} font-sans [overflow-x:clip]`}>
+    <div className={`min-h-screen ${bg} ${night ? "dark" : ""} font-sans [overflow-x:clip]`}>
       {header && (
         <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-5 md:px-8">
           <GuestLogo night={night} />

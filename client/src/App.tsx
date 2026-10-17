@@ -21,6 +21,7 @@ import VenuePage from "./pages/guest/VenuePage";
 import BookTable from "./pages/guest/BookTable";
 import BookingStatus from "./pages/guest/BookingStatus";
 import Me from "./pages/guest/Me";
+import MyBookings from "./pages/guest/MyBookings";
 import { HomeScreenGuide, Join } from "./pages/guest/HomeScreen";
 import CreatorJoin from "./pages/guest/CreatorJoin";
 import { CreatorHome, CreatorLink } from "./pages/guest/CreatorHome";
@@ -152,6 +153,7 @@ export default function App() {
         <Route path="/v/:slug/book" element={<BookTable />} />
         <Route path="/booking/:id" element={<BookingStatus />} />
         <Route path="/me" element={<Me />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/home-screen/:code" element={<HomeScreenGuide />} />
         <Route path="/join/:code" element={<Join />} />
 
