@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-17 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-10-17); no open PRs. PR #56 (high-urgency notifications) and #57 (waiter notification opens right screen) were merged by Jordan on 2026-10-16 and their Tests runs passed.
+- Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because the rebrand freeze has not been lifted.
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach). Check that prod applied migration 0026.
+
 ## 2026-10-16 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green; no open PRs. PR #55 (warmer waiter wording) was merged by Jordan on 2026-10-15 and its Tests runs passed.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because the rebrand freeze has not been lifted.
