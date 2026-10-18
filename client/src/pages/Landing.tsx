@@ -11,7 +11,7 @@ import BookDemo, { openBookDemo } from "./landing/BookDemo";
 import { WAITLIST_MODE, cta } from "../lib/waitlistMode";
 import {
   PhoneFrame, ScreenScan, ScreenMenu, ScreenCall, ScreenPay, WaiterCall, TonightCard,
-  MoneyWidget, PayoutWidget, HeatmapWidget, LeaderboardWidget, MenuPhotoWidget, AlertsWidget,
+  MoneyWidget, PayoutWidget, AlertsWidget,
   Hand, useInView,
 } from "./landing/screens";
 
@@ -491,7 +491,7 @@ function Owners() {
           <div>
             <Eyebrow>For owners</Eyebrow>
             <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-              Every table, every franc, <span className="text-[var(--rust-ink)]">in your pocket.</span>
+              Your restaurant, <span className="text-[var(--rust-ink)]">from anywhere.</span>
             </h2>
           </div>
           <p className="max-w-lg text-[18px] leading-relaxed text-[var(--body)] lg:justify-self-end">
@@ -506,26 +506,17 @@ function Owners() {
           <Reveal delay={80} className="md:col-span-2">
             <Card dark><PayoutWidget /><CardTitle dark title="Paid in seconds" text="The moment a guest pays, your money goes straight to your Mobile Money." /></Card>
           </Reveal>
-          <Reveal className="md:col-span-2">
-            <Card><AlertsWidget /><CardTitle title="You hear about everything" text="Guests seated, waiters called, bills paid. Nothing happens without you knowing." /></Card>
-          </Reveal>
-          <Reveal delay={80} className="md:col-span-2">
-            <Card><HeatmapWidget /><CardTitle title="Know your busy hours" text="See which nights and hours are packed, and put the right number of waiters on." /></Card>
-          </Reveal>
-          <Reveal delay={160} className="md:col-span-2">
-            <Card><LeaderboardWidget /><CardTitle title="Great service gets noticed" text="Guests rate their waiter. The best ones rise to the top, and you know who to reward." /></Card>
-          </Reveal>
           <Reveal className="md:col-span-3">
-            <Card><MenuPhotoWidget /><CardTitle title="Your menu from one photo" text="Take a picture of your paper menu. Skuzi types it in for you. Change a price any time." /></Card>
+            <Card><AlertsWidget /><CardTitle title="You hear about everything" text="Guests seated, waiters called, bills paid. Nothing happens without you knowing." /></Card>
           </Reveal>
           <Reveal delay={80} className="md:col-span-3">
             <Card>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  ["Waiters without a smartphone?", "No problem. A manager covers their tables."],
-                  ["Shifts & clock-in", "Staff clock in by scanning your venue's sticker."],
-                  ["New staff in a minute", "They join from a WhatsApp link."],
                   ["Any phone works", "Guests, waiters and you. No downloads."],
+                  ["Cash still welcome", "MoMo and cash, side by side."],
+                  ["Every waiter covered", "No smartphone? A manager covers their tables."],
+                  ["Set up in one visit", "We come to you and get your team going."],
                 ].map(([t, d]) => (
                   <div key={t} className="rounded-2xl bg-[var(--bg)] p-4">
                     <p className="flex items-start gap-1.5 text-[14px] font-extrabold leading-snug"><Check size={15} strokeWidth={3} className="mt-0.5 flex-shrink-0 text-[#5E7A55]" />{t}</p>
@@ -535,6 +526,22 @@ function Owners() {
               </div>
               <CardTitle title="Made for how Kigali restaurants and bars really work" text="Shared tables, busy weekends, cash and MoMo side by side. Skuzi fits in, it doesn't fight you." />
             </Card>
+          </Reveal>
+          <Reveal className="md:col-span-6">
+            <div className="relative overflow-hidden rounded-[28px] bg-[#D9A441] p-7 text-[#2B201B] sm:p-10">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/20" />
+              <div className="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/10" />
+              <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="max-w-xl">
+                  <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#2B201B]/70">And there's more inside</p>
+                  <h3 className="mt-2 font-display text-[30px] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">The rest, we show you in person.</h3>
+                  <p className="mt-3 text-[16px] leading-relaxed text-[#2B201B]/80">Tools to fill your quiet nights, bring guests back and keep your team sharp. Five minutes, at your restaurant, on your own phone.</p>
+                </div>
+                <button onClick={openBookDemo} className="group inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-full bg-[#2B201B] px-7 py-4 text-[16px] font-extrabold text-[#F4EDE3] transition hover:bg-black">
+                  {cta("Book a demo")} <ArrowRight size={18} className="transition group-hover:translate-x-0.5" />
+                </button>
+              </div>
+            </div>
           </Reveal>
         </div>
       </div>
