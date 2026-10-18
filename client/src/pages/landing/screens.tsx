@@ -307,9 +307,9 @@ export function PayoutWidget() {
   return (
     <div className="space-y-2.5">
       {[
-        ["Table 4 paid", "7,300 RWF", "+6,716 RWF to your MoMo", "just now"],
-        ["Table 9 paid", "14,500 RWF", "+13,340 RWF to your MoMo", "4 min ago"],
-        ["Table 2 paid", "9,000 RWF", "+8,280 RWF to your MoMo", "11 min ago"],
+        ["Table 4 paid", "7,300 RWF", "Sent to your MoMo", "just now"],
+        ["Table 9 paid", "14,500 RWF", "Sent to your MoMo", "4 min ago"],
+        ["Table 2 paid", "9,000 RWF", "Sent to your MoMo", "11 min ago"],
       ].map(([t, a, s, w], i) => (
         <div key={t} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10" style={{ opacity: 1 - i * 0.22 }}>
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#5E7A55]/30"><Check size={16} className="text-[#A9BE9F]" /></span>
