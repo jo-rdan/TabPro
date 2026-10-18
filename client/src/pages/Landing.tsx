@@ -142,8 +142,8 @@ function Hero() {
           </Reveal>
           <Reveal delay={160}>
             <p className="mx-auto mt-8 max-w-2xl text-[17px] leading-relaxed text-[var(--hero-body)] sm:text-[19px]">
-              Your guests order, pay, and enjoy from their own phone, and their waiter is just one tap away.
-              You see every table and every franc, even when you're not there.
+              Faster orders. Happier guests. A more organized staff.
+              And your whole restaurant, live on your phone.
             </p>
           </Reveal>
           <Reveal delay={240}>
