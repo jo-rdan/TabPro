@@ -71,7 +71,7 @@ export default function Waitlist() {
             </h1>
             <p className="mt-4 text-[16px] leading-relaxed text-[#D8CBBF]">Guests order, pay, and enjoy from their table, and their waiter is just one tap away. You see every table and every franc, live.</p>
             <ul className="mt-5 space-y-2 text-[15px] text-[#F4EDE3]">
-              {["Less waiting, more rounds ordered", "Your 92% of MoMo bills, in seconds", "Free setup. No machine. No monthly fee."].map((t) => (
+              {["Less waiting, more rounds ordered", "Your MoMo money, in seconds", "Free setup. No machine."].map((t) => (
                 <li key={t} className="flex gap-2.5"><span className="text-[#D9A441]">✓</span>{t}</li>
               ))}
             </ul>
