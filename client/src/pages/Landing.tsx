@@ -84,7 +84,7 @@ function Nav() {
           <AnimatedLogo size={28} on="dark" bg="#1C1511" className="hidden dark:inline-flex" />
         </a>
         <div className="hidden items-center gap-1 rounded-full bg-[var(--hero-chip)] p-1 ring-1 ring-[var(--hero-ring)] md:flex">
-          {[["How it works", "#tour"], ["For owners", "#owners"], ["Pricing", "#pricing"], ["Questions", "#faq"]].map(([l, h]) => (
+          {[["How it works", "#tour"], ["For owners", "#owners"], ["Questions", "#faq"]].map(([l, h]) => (
             <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[var(--hero-body)] transition hover:bg-[var(--hero-chip)] hover:text-[var(--hero-ink)]">{l}</a>
           ))}
         </div>
@@ -504,7 +504,7 @@ function Owners() {
             <Card><MoneyWidget active={inView} /><CardTitle title="Tonight's money, live" text="Every paid bill adds to the line. Know how the night is going before closing time, not after." /></Card>
           </Reveal>
           <Reveal delay={80} className="md:col-span-2">
-            <Card dark><PayoutWidget /><CardTitle dark title="Paid in seconds" text="The moment a guest pays, your 92% goes straight to your Mobile Money." /></Card>
+            <Card dark><PayoutWidget /><CardTitle dark title="Paid in seconds" text="The moment a guest pays, your money goes straight to your Mobile Money." /></Card>
           </Reveal>
           <Reveal className="md:col-span-2">
             <Card><AlertsWidget /><CardTitle title="You hear about everything" text="Guests seated, waiters called, bills paid. Nothing happens without you knowing." /></Card>
@@ -542,66 +542,13 @@ function Owners() {
   );
 }
 
-// ─── Pricing ─────────────────────────────────────────────────────────────────
-
-function Pricing() {
-  const [bill, setBill] = useState(10000);
-  const pct = ((bill - 2000) / 58000) * 100;
-  return (
-    <section id="pricing" className="relative scroll-mt-16 overflow-hidden bg-[var(--bg)] py-24 sm:py-32">
-      <div className="sk-glow-sm pointer-events-none absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 opacity-50" />
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <Eyebrow>Pricing</Eyebrow>
-          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-            You only pay <Swoosh><span className="text-[var(--rust-ink)]">when you get paid.</span></Swoosh>
-          </h2>
-          <p className="mx-auto mt-7 max-w-xl text-[18px] leading-relaxed text-[var(--body)]">
-            No setup fee. No monthly fee. No machine. Skuzi keeps 8% of bills paid by Mobile Money through Skuzi. Cash? That's free.
-          </p>
-        </Reveal>
-
-        <Reveal delay={100} className="mx-auto mt-14 max-w-4xl">
-          <div className="rounded-[32px] bg-[#2B201B] p-7 text-[#F4EDE3] shadow-[0_40px_80px_-40px_rgba(43,32,27,0.7)] ring-1 ring-white/5 sm:p-10">
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <p className="text-[15px] font-semibold text-[#D8CBBF]">A guest pays a bill of</p>
-              <p className="font-display text-[28px] font-bold tabular-nums">{fmt(bill)} RWF</p>
-            </div>
-            <input
-              type="range" min={2000} max={60000} step={500} value={bill}
-              onChange={(e) => setBill(Number(e.target.value))}
-              className="sk-range sk-range-dark mt-4 w-full"
-              aria-label="Bill amount"
-              style={{ background: `linear-gradient(90deg, #D9A441 ${pct}%, rgba(244,237,227,0.15) ${pct}%)` }}
-            />
-            <div className="mt-8 flex h-16 overflow-hidden rounded-2xl">
-              <div className="flex flex-[92] items-center justify-between gap-2 bg-[#5E7A55] px-5">
-                <span className="text-[14px] font-bold">You get, in seconds</span>
-                <span className="font-display text-[20px] font-bold tabular-nums">{fmt(bill * 0.92)}</span>
-              </div>
-              <div className="flex min-w-[64px] flex-[8] items-center justify-center bg-[#A64B31] px-1 text-center">
-                <span className="text-[11px] font-bold leading-tight">Skuzi<br />{fmt(bill * 0.08)}</span>
-              </div>
-            </div>
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {["Skuzi stickers for every table", "Unlimited tables & waiters", "Free setup and training, on site"].map((t) => (
-                <p key={t} className="flex items-center gap-2 text-[14.5px] text-[#D8CBBF]"><Check size={16} strokeWidth={3} className="flex-shrink-0 text-[#D9A441]" />{t}</p>
-              ))}
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
 // ─── Questions ───────────────────────────────────────────────────────────────
 
 const FAQS = [
   { q: "Do my guests need to download an app?", a: "No. They scan the sticker on the table with their phone camera and your menu opens. It works on any smartphone." },
   { q: "How do guests pay?", a: "With MTN MoMo or Airtel Money, from their own phone. They approve with their PIN. Skuzi never sees their PIN. Cash still works as usual." },
-  { q: "When do I get my money?", a: "Right away. As soon as the guest's payment is confirmed, your 92% is sent to your venue's Mobile Money number, usually within seconds." },
-  { q: "What does it cost?", a: "Nothing to set up and no monthly fee. Skuzi keeps 8% of bills paid by Mobile Money through Skuzi. If a guest pays cash, Skuzi takes nothing." },
+  { q: "When do I get my money?", a: "Right away. As soon as the guest's payment is confirmed, your share is sent to your venue's Mobile Money number, usually within seconds." },
+  { q: "What does it cost?", a: "Nothing to set up, no machine to buy, and you can try it free for a week. Book a demo and we'll walk you through it in 5 minutes." },
   { q: "Do I need to buy any equipment?", a: "No. Your waiters use their own phones, you use yours, and we bring the stickers for your tables." },
   { q: "What if some of my waiters don't have a smartphone?", a: "That's fine. Add them anyway: a manager's phone gets their table calls, so no guest is left waiting." },
   { q: "How do I get started?", a: WAITLIST_MODE ? "Join the waitlist. When your spot comes up, we come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." : "Book a free demo. We come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
@@ -831,7 +778,6 @@ export default function Landing() {
         <OneMoreRound />
         <Tour />
         <Owners />
-        <Pricing />
         <Faq />
         <FinalCta />
       </main>
