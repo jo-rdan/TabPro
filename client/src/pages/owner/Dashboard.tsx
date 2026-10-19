@@ -326,7 +326,9 @@ export default function Dashboard() {
       }
       if (event.type === 'tab_paid') {
         const p = event.payload as any;
-        setToast(`💰 ${p.tableLabel} paid ${p.grandTotal?.toLocaleString()} RWF — payout of ${p.venuePayout?.toLocaleString()} RWF on its way to your Mobile Money`);
+        setToast(p.venuePayout
+          ? `💰 ${p.tableLabel} paid ${p.grandTotal?.toLocaleString()} RWF — ${p.venuePayout.toLocaleString()} RWF on its way to your Mobile Money`
+          : `💰 ${p.tableLabel} paid ${p.grandTotal?.toLocaleString()} RWF`);
         setAlerts((prev) => prev.filter((a) => a.tabId !== p.tabId));
       }
       if (event.type === 'staff_join_request') {
