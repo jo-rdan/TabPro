@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-20 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-10-20); no open PRs. PRs #63, #65, #66 (tangerine retheme, Privacy & Terms), #67, #68, #69 and #70 (guest menu work) were merged on 2026-10-19/20; their PR Tests runs passed (the run for the #70 merge on main was still in progress at check time).
+- Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over (the retheme and guest menu PRs came from Jordan's own sessions).
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach). Check that prod applied migration 0026, and that the Tests run on main after #70 passed.
+
 ## 2026-10-19 UTC · weekly
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-10-19); no open PRs, no `idea` PRs.
 - Did: opened the weekly issue #62 (what happened, Jordan's plan, 2 strategic ideas, 3 posts). No code changed, so no e2e run was needed.
