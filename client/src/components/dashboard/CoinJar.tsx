@@ -89,7 +89,7 @@ export default function CoinJar({ total, benchmark, benchmarkLabel, dark }: Coin
 // drawing. Coins drop in one by one and settle, the jar sways a little and the
 // ring glows, so it feels alive without loading 3D.
 function FlatJar({ coins, ringLabel, nowLabel, dark }: { coins: number; ringLabel: string | null; nowLabel: string; dark: boolean }) {
-  const glass = dark ? '#F4EDE3' : '#5C4D44';
+  const glass = dark ? '#F4F0F7' : '#554A60';
   const cx = 160, w = 104, top = 34, bottom = 166;
   const left = cx - w / 2, right = cx + w / 2;
   const layerH = (bottom - top - 8) / (MAX_COINS / PER_LAYER);
@@ -115,8 +115,8 @@ function FlatJar({ coins, ringLabel, nowLabel, dark }: { coins: number; ringLabe
           <stop offset="1" stopColor={glass} stopOpacity="0.2" />
         </linearGradient>
         <radialGradient id={`jar-glow-${uid}`}>
-          <stop offset="0" stopColor="#D9A441" stopOpacity={dark ? 0.35 : 0.25} />
-          <stop offset="1" stopColor="#D9A441" stopOpacity="0" />
+          <stop offset="0" stopColor="#F2B33A" stopOpacity={dark ? 0.35 : 0.25} />
+          <stop offset="1" stopColor="#F2B33A" stopOpacity="0" />
         </radialGradient>
       </defs>
       <ellipse cx={cx} cy={bottom - 4} rx="90" ry="22" fill={`url(#jar-glow-${uid})`} />
@@ -127,8 +127,8 @@ function FlatJar({ coins, ringLabel, nowLabel, dark }: { coins: number; ringLabe
           {coinList.map((c) => (
             <g key={c.i} className="jar-coin" style={{ animationDelay: `${Math.min(c.i, 40) * 55}ms` }}>
               <ellipse cx={c.x} cy={c.y + 2.5} rx="15" ry="5.5" fill="#9C6F22" />
-              <ellipse cx={c.x} cy={c.y} rx="15" ry="5.5" fill="#E0AD4C" />
-              <ellipse cx={c.x - 2} cy={c.y - 0.8} rx="9" ry="2.8" fill="#F2CC7A" opacity="0.7" />
+              <ellipse cx={c.x} cy={c.y} rx="15" ry="5.5" fill="#F2B33A" />
+              <ellipse cx={c.x - 2} cy={c.y - 0.8} rx="9" ry="2.8" fill="#FFD15C" opacity="0.7" />
             </g>
           ))}
         </g>
@@ -142,10 +142,10 @@ function FlatJar({ coins, ringLabel, nowLabel, dark }: { coins: number; ringLabe
         {coins > 0 && <circle className="jar-glint" cx={coinList[coinList.length - 1].x + 6} cy={topY - 4} r="2.5" fill="#FFF6DD" />}
       </g>
       {ringLabel && (
-        <text x={right + 16} y={ringY + 5} fill={dark ? '#E08A6A' : '#9A4129'} fontSize="14" fontWeight="700" fontFamily="Figtree, sans-serif">{ringLabel}</text>
+        <text x={right + 16} y={ringY + 5} fill={dark ? '#F0884F' : '#A63F15'} fontSize="14" fontWeight="700" fontFamily="Figtree, sans-serif">{ringLabel}</text>
       )}
       {nowLabel && (
-        <text className="jar-now" x={left - 14} y={Math.max(topY, top + 14) + 4} textAnchor="end" fill={dark ? '#D9A441' : '#8F6620'} fontSize="16" fontWeight="800" fontFamily="Figtree, sans-serif">{nowLabel}</text>
+        <text className="jar-now" x={left - 14} y={Math.max(topY, top + 14) + 4} textAnchor="end" fill={dark ? '#F2B33A' : '#A06D14'} fontSize="16" fontWeight="800" fontFamily="Figtree, sans-serif">{nowLabel}</text>
       )}
     </svg>
   );

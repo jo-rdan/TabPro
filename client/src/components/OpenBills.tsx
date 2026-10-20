@@ -41,7 +41,7 @@ export default function OpenBills({ venueId, className = "" }: { venueId: string
         type="button"
         onClick={() => count > 0 && setOpen(true)}
         disabled={count === 0}
-        className={`text-left bg-white dark:bg-[#2B201B] border rounded-2xl px-4 py-3.5 transition-colors ${
+        className={`text-left bg-white dark:bg-[#231A2C] border rounded-2xl px-4 py-3.5 transition-colors ${
           count > 0
             ? "border-amber-300 dark:border-amber-700/60 hover:border-amber-500 cursor-pointer"
             : "border-gray-200 dark:border-gray-800 cursor-default"
@@ -74,7 +74,7 @@ export default function OpenBills({ venueId, className = "" }: { venueId: string
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="open-bills-title">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="relative w-full sm:max-w-md bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[80vh] flex flex-col">
+          <div className="relative w-full sm:max-w-md bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[80vh] flex flex-col">
             <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
               <div>
                 <h2 id="open-bills-title" className="text-lg font-bold text-gray-900 dark:text-white">Bills left open</h2>

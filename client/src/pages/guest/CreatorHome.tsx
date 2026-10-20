@@ -29,34 +29,34 @@ export function CreatorHome() {
   }, [token]);
 
   if (error) return <GuestShell><GuestState title={error === "missing" ? "We couldn't find this page" : "Couldn't load your page"} text={error === "missing" ? "Ask the Skuzi team to send you your link again." : error} /></GuestShell>;
-  if (!h) return <GuestShell><div className="mx-auto mt-16 h-48 max-w-md animate-pulse rounded-3xl bg-gray-100 dark:bg-[#2B201B]" /></GuestShell>;
+  if (!h) return <GuestShell><div className="mx-auto mt-16 h-48 max-w-md animate-pulse rounded-3xl bg-gray-100 dark:bg-[#231A2C]" /></GuestShell>;
 
   const link = h.code ? `${window.location.origin}/c/${h.code}` : "";
   const copy = async (what: "code" | "link") => {
     try { await navigator.clipboard.writeText(what === "code" ? h.code ?? "" : link); setCopied(what); setTimeout(() => setCopied(null), 1600); } catch { /* ignore */ }
   };
-  const stat = "rounded-2xl border-[1.5px] border-gray-200 bg-white p-4 dark:border-[#3A2D26] dark:bg-[#2B201B]";
+  const stat = "rounded-2xl border-[1.5px] border-gray-200 bg-white p-4 dark:border-[#33293F] dark:bg-[#231A2C]";
 
   return (
     <GuestShell>
       <div className="mx-auto max-w-3xl pt-6">
-        <p className="text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#D9A441]">Skuzi Creator</p>
+        <p className="text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#F2B33A]">Skuzi Creator</p>
         <h1 className="font-display text-[32px] font-extrabold tracking-[-0.02em]">Hi, {h.name.split(" ")[0]}</h1>
 
         {h.status === "applied" && <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">We're reviewing your sign-up. You'll get your code on WhatsApp soon.</p>}
         {h.status === "paused" && <p className="mt-4 rounded-2xl bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">Your code is paused right now. Contact the Skuzi team.</p>}
 
         {h.code && (
-          <div className="mt-5 rounded-[24px] bg-[radial-gradient(120%_120%_at_100%_0%,#A64B31,#2B201B_62%)] p-5 text-[#F4EDE3] md:p-7">
-            <p className="text-sm text-[#F4E3D7]">Your code</p>
+          <div className="mt-5 rounded-[24px] bg-[radial-gradient(120%_120%_at_100%_0%,#BF4A1A,#231A2C_62%)] p-5 text-[#F4F0F7] md:p-7">
+            <p className="text-sm text-[#FCE3D3]">Your code</p>
             <div className="mt-1 flex flex-wrap items-center gap-3">
               <span className="font-display text-[44px] font-extrabold leading-none tracking-[0.04em]">{h.code}</span>
               <button onClick={() => copy("code")} className="flex min-h-[40px] items-center gap-1.5 rounded-full bg-white/15 px-4 text-sm font-bold hover:bg-white/25">{copied === "code" ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy</>}</button>
             </div>
-            <p className="mt-4 text-sm text-[#F4E3D7]">Your link (put it in your bio)</p>
+            <p className="mt-4 text-sm text-[#FCE3D3]">Your link (put it in your bio)</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <span className="break-all text-[15px] font-bold">{link.replace(/^https?:\/\//, "")}</span>
-              <button onClick={() => copy("link")} className="flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#D9A441] px-4 text-sm font-extrabold text-[#2B201B]">{copied === "link" ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy link</>}</button>
+              <button onClick={() => copy("link")} className="flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#F2B33A] px-4 text-sm font-extrabold text-[#231A2C]">{copied === "link" ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy link</>}</button>
             </div>
           </div>
         )}
@@ -76,9 +76,9 @@ export function CreatorHome() {
         <section className="mt-8">
           <h2 className="font-display text-xl font-extrabold">People you brought</h2>
           {h.recent.length === 0 ? (
-            <p className="mt-2 rounded-2xl border-[1.5px] border-dashed border-gray-200 p-5 text-sm text-gray-500 dark:border-[#3A2D26] dark:text-gray-400">Nobody yet. Post a video at a Skuzi restaurant and say your code!</p>
+            <p className="mt-2 rounded-2xl border-[1.5px] border-dashed border-gray-200 p-5 text-sm text-gray-500 dark:border-[#33293F] dark:text-gray-400">Nobody yet. Post a video at a Skuzi restaurant and say your code!</p>
           ) : (
-            <ul className="mt-2 divide-y divide-gray-100 rounded-2xl border-[1.5px] border-gray-200 bg-white dark:divide-[#3A2D26] dark:border-[#3A2D26] dark:bg-[#2B201B]">
+            <ul className="mt-2 divide-y divide-gray-100 rounded-2xl border-[1.5px] border-gray-200 bg-white dark:divide-[#33293F] dark:border-[#33293F] dark:bg-[#231A2C]">
               {h.recent.map((r, i) => (
                 <li key={i} className="flex items-center justify-between px-4 py-3 text-sm">
                   <span>{day(r.createdAt)} · {r.venue ?? "A Skuzi restaurant"}</span>
@@ -89,13 +89,13 @@ export function CreatorHome() {
           )}
         </section>
 
-        <section className="mt-8 rounded-[22px] bg-[#2B201B] p-5 text-[#F4EDE3]">
+        <section className="mt-8 rounded-[22px] bg-[#231A2C] p-5 text-[#F4F0F7]">
           <h2 className="font-display text-lg font-extrabold">How you earn</h2>
-          <ul className="mt-2 space-y-1.5 text-sm text-[#D8CBBF]">
-            <li>For every new person: <b className="text-[#D9A441]">a share of their first bill</b>. A bill of 8,000 RWF earns you 64 RWF; 20,000 RWF earns you 184 RWF.</li>
+          <ul className="mt-2 space-y-1.5 text-sm text-[#D3CADC]">
+            <li>For every new person: <b className="text-[#F2B33A]">a share of their first bill</b>. A bill of 8,000 RWF earns you 64 RWF; 20,000 RWF earns you 184 RWF.</li>
             <li>They get the same amount back as Skuzi money for their next Skuzi bill. Tell them!</li>
             <li>They must be new to Skuzi, pay with Skuzi, and type your code (or open your link first). Each person counts once.</li>
-            <li>Tip: bigger bills earn you more. Tag <b className="text-[#F4EDE3]">@skuzi.xyz</b> in your videos.</li>
+            <li>Tip: bigger bills earn you more. Tag <b className="text-[#F4F0F7]">@skuzi.xyz</b> in your videos.</li>
           </ul>
         </section>
       </div>
@@ -121,11 +121,11 @@ export function CreatorLink() {
         <Hand className="h-16 w-16" />
         {name ? (
           <>
-            <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.02em]"><span className="text-[#D9A441]">{name}</span> invited you to Skuzi</h1>
-            <p className="max-w-xs text-[15px] text-[#D8CBBF]">Order and pay from your table at Skuzi restaurants. Pay with Skuzi and you get money back for your next Skuzi bill. {name}'s code is saved for when you pay.</p>
-            <Link to="/explore" className="mt-2 flex min-h-[52px] items-center rounded-full bg-[#D9A441] px-8 text-base font-extrabold text-[#2B201B]">See where to go tonight</Link>
+            <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.02em]"><span className="text-[#F2B33A]">{name}</span> invited you to Skuzi</h1>
+            <p className="max-w-xs text-[15px] text-[#D3CADC]">Order and pay from your table at Skuzi restaurants. Pay with Skuzi and you get money back for your next Skuzi bill. {name}'s code is saved for when you pay.</p>
+            <Link to="/explore" className="mt-2 flex min-h-[52px] items-center rounded-full bg-[#F2B33A] px-8 text-base font-extrabold text-[#231A2C]">See where to go tonight</Link>
           </>
-        ) : <p className="text-sm text-[#D8CBBF]" aria-live="polite">One moment…</p>}
+        ) : <p className="text-sm text-[#D3CADC]" aria-live="polite">One moment…</p>}
       </div>
     </GuestShell>
   );

@@ -50,7 +50,7 @@ export default function CreatorsAdmin() {
   const shown = (list ?? []).filter((c) => (tab === 'other' ? c.status === 'paused' || c.status === 'declined' : c.status === tab));
   const dueNow = (list ?? []).filter((c) => c.unpaidRwf >= MIN_PAYOUT);
   const count = (s: Tab) => (list ?? []).filter((c) => (s === 'other' ? c.status === 'paused' || c.status === 'declined' : c.status === s)).length;
-  const input = 'min-h-[42px] rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#1C1511] dark:text-white';
+  const input = 'min-h-[42px] rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#1B1524] dark:text-white';
   const btn = 'min-h-[40px] rounded-xl px-3.5 text-sm font-bold disabled:opacity-50';
 
   return (
@@ -65,12 +65,12 @@ export default function CreatorsAdmin() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-2xl bg-[#2B201B] p-5 text-[#F4EDE3]">
+          <div className="rounded-2xl bg-[#231A2C] p-5 text-[#F4F0F7]">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-500"><Wallet size={14} /> To pay on the 1st</p>
             <p className="mt-1 font-display text-3xl font-extrabold">{rwf(dueNow.reduce((n, c) => n + c.unpaidRwf, 0))}</p>
-            <p className="text-sm text-[#D8CBBF]">{dueNow.length} creator{dueNow.length === 1 ? '' : 's'} at {rwf(MIN_PAYOUT)} or more. Send by MoMo, then tap "Mark paid".</p>
+            <p className="text-sm text-[#D3CADC]">{dueNow.length} creator{dueNow.length === 1 ? '' : 's'} at {rwf(MIN_PAYOUT)} or more. Send by MoMo, then tap "Mark paid".</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-[#2B201B]">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-[#231A2C]">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Sign-up link to send in DMs</p>
             <p className="mt-1 break-all font-bold text-gray-900 dark:text-white">{joinLink.replace(/^https?:\/\//, '')}</p>
             <button onClick={async () => { try { await navigator.clipboard.writeText(joinLink); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ } }}
@@ -80,7 +80,7 @@ export default function CreatorsAdmin() {
 
         {adding && (
           <form onSubmit={(e) => { e.preventDefault(); run('new', () => api.post('/creators/admin', { ...form, handle: form.handle || null }), `${form.name} added with code ${form.code.toUpperCase()}`).then(() => { setAdding(false); setForm({ name: '', handle: '', phone: '', code: '' }); }); }}
-            className="mt-4 grid gap-2 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#2B201B] sm:grid-cols-5">
+            className="mt-4 grid gap-2 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#231A2C] sm:grid-cols-5">
             <label className="sr-only" htmlFor="ad-name">Name</label><input id="ad-name" className={input} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <label className="sr-only" htmlFor="ad-handle">TikTok or Instagram</label><input id="ad-handle" className={input} placeholder="@account" value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
             <label className="sr-only" htmlFor="ad-phone">MoMo number</label><input id="ad-phone" className={input} placeholder="MoMo 07…" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
@@ -92,7 +92,7 @@ export default function CreatorsAdmin() {
         <div className="mt-6 flex gap-2" role="tablist">
           {([['applied', 'Waiting'], ['active', 'Active'], ['other', 'Paused']] as [Tab, string][]).map(([t, l]) => (
             <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-              className={`min-h-[40px] rounded-full border px-4 text-sm font-bold ${tab === t ? 'border-gray-900 bg-gray-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-gray-900' : 'border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-[#2B201B] dark:text-gray-200'}`}>
+              className={`min-h-[40px] rounded-full border px-4 text-sm font-bold ${tab === t ? 'border-gray-900 bg-gray-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-gray-900' : 'border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-[#231A2C] dark:text-gray-200'}`}>
               {l} · {count(t)}
             </button>
           ))}
@@ -108,7 +108,7 @@ export default function CreatorsAdmin() {
         ) : (
           <ul className="mt-4 space-y-2">
             {shown.map((c) => (
-              <li key={c.id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#2B201B]">
+              <li key={c.id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#231A2C]">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-bold text-gray-900 dark:text-white">{c.name} {c.code && <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-extrabold tracking-wider text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">{c.code}</span>}</p>

@@ -75,18 +75,18 @@ export default function BookTable() {
     return <GuestShell tab="explore"><GuestState title={`${venue.name} isn't taking bookings on Skuzi right now`} text="You can still walk in, or try another day." action={<Link to={`/v/${slug}`} className="mt-2 flex min-h-[44px] items-center rounded-full bg-brand-500 px-6 font-extrabold text-white">See the menu</Link>} /></GuestShell>;
   }
 
-  const label = "text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#D9A441]";
-  const field = "h-12 w-full rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 text-[15px] font-semibold text-gray-900 outline-none placeholder:font-medium placeholder:text-gray-400 focus:border-brand-500 dark:border-[#3A2D26] dark:bg-[#2B201B] dark:text-[#F4EDE3]";
-  const chip = (on: boolean) => `border-[1.5px] font-bold ${on ? "border-gray-900 bg-gray-900 text-[#F4EDE3] dark:border-[#D9A441] dark:bg-[#D9A441] dark:text-[#2B201B]" : "border-gray-200 bg-white text-gray-900 dark:border-[#3A2D26] dark:bg-[#2B201B] dark:text-[#F4EDE3]"}`;
+  const label = "text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#F2B33A]";
+  const field = "h-12 w-full rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 text-[15px] font-semibold text-gray-900 outline-none placeholder:font-medium placeholder:text-gray-400 focus:border-brand-500 dark:border-[#33293F] dark:bg-[#231A2C] dark:text-[#F4F0F7]";
+  const chip = (on: boolean) => `border-[1.5px] font-bold ${on ? "border-gray-900 bg-gray-900 text-[#F4F0F7] dark:border-[#F2B33A] dark:bg-[#F2B33A] dark:text-[#231A2C]" : "border-gray-200 bg-white text-gray-900 dark:border-[#33293F] dark:bg-[#231A2C] dark:text-[#F4F0F7]"}`;
 
   return (
     <GuestShell tone="night" header={false}>
       <div className="mx-auto max-w-xl">
-        <div className="-mx-5 bg-[#1C1511] px-5 pb-6 pt-4 text-[#F4EDE3] md:mx-0 md:mt-6 md:rounded-[28px] md:px-8">
+        <div className="-mx-5 bg-[#1B1524] px-5 pb-6 pt-4 text-[#F4F0F7] md:mx-0 md:mt-6 md:rounded-[28px] md:px-8">
           <Link to={`/v/${slug}`} aria-label="Back" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/15"><ArrowLeft size={18} /></Link>
-          <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.08em] text-[#D9A441]">Book a table</p>
+          <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.08em] text-[#F2B33A]">Book a table</p>
           <h1 className="font-display text-[28px] font-extrabold tracking-[-0.02em]">{venue?.name ?? "…"}</h1>
-          <p className="text-sm text-[#D8CBBF]">Free. No call needed. The restaurant confirms.</p>
+          <p className="text-sm text-[#D3CADC]">Free. No call needed. The restaurant confirms.</p>
         </div>
 
         <form onSubmit={submit} className="mt-5 flex flex-col gap-5" noValidate>
@@ -105,9 +105,9 @@ export default function BookTable() {
           <fieldset>
             <legend className={label}>Time</legend>
             {times === null ? (
-              <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">{[0, 1, 2, 3].map((i) => <div key={i} className="h-11 animate-pulse rounded-xl bg-gray-100 dark:bg-[#2B201B]" />)}</div>
+              <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">{[0, 1, 2, 3].map((i) => <div key={i} className="h-11 animate-pulse rounded-xl bg-gray-100 dark:bg-[#231A2C]" />)}</div>
             ) : times.length === 0 ? (
-              <p className="mt-2 rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-600 dark:bg-[#2B201B] dark:text-gray-300">
+              <p className="mt-2 rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-600 dark:bg-[#231A2C] dark:text-gray-300">
                 {day === kigaliDay(0) ? "No more times today. Pick another day." : "Closed that day. Pick another day."}
               </p>
             ) : (
@@ -122,14 +122,14 @@ export default function BookTable() {
             )}
           </fieldset>
 
-          <div className="flex items-center justify-between rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 py-3 dark:border-[#3A2D26] dark:bg-[#2B201B]">
+          <div className="flex items-center justify-between rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 py-3 dark:border-[#33293F] dark:bg-[#231A2C]">
             <span id="people" className="font-bold">People</span>
             <div className="flex items-center gap-4" role="group" aria-labelledby="people">
               <button type="button" aria-label="Fewer people" disabled={party <= 1} onClick={() => setParty((p) => Math.max(1, p - 1))}
-                className="flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-gray-200 disabled:opacity-40 dark:border-[#3A2D26]"><Minus size={18} /></button>
+                className="flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-gray-200 disabled:opacity-40 dark:border-[#33293F]"><Minus size={18} /></button>
               <span className="min-w-[24px] text-center font-display text-2xl font-extrabold" aria-live="polite">{party}</span>
               <button type="button" aria-label="More people" disabled={party >= 30} onClick={() => setParty((p) => Math.min(30, p + 1))}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-900 text-[#F4EDE3] disabled:opacity-40 dark:bg-[#D9A441] dark:text-[#2B201B]"><Plus size={18} /></button>
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-900 text-[#F4F0F7] disabled:opacity-40 dark:bg-[#F2B33A] dark:text-[#231A2C]"><Plus size={18} /></button>
             </div>
           </div>
 

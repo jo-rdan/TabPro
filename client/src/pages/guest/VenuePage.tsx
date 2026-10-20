@@ -55,8 +55,8 @@ export default function VenuePage() {
   if (!page) {
     return (
       <GuestShell tab="explore" header={false}>
-        <div className="-mx-5 h-48 animate-pulse bg-[#2B201B] md:mx-0 md:mt-6 md:rounded-[28px]" />
-        <div className="mt-6 space-y-3">{[0, 1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-2xl bg-gray-100 dark:bg-[#2B201B]" />)}</div>
+        <div className="-mx-5 h-48 animate-pulse bg-[#231A2C] md:mx-0 md:mt-6 md:rounded-[28px]" />
+        <div className="mt-6 space-y-3">{[0, 1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-2xl bg-gray-100 dark:bg-[#231A2C]" />)}</div>
       </GuestShell>
     );
   }
@@ -72,7 +72,7 @@ export default function VenuePage() {
       <div className="md:grid md:grid-cols-[1fr_320px] md:gap-8 md:pt-6">
         <div className="min-w-0">
           {/* Hero */}
-          <div className="-mx-5 bg-[radial-gradient(120%_120%_at_100%_0%,#A64B31,#2B201B_62%)] px-5 pb-8 pt-4 text-[#F4EDE3] md:mx-0 md:rounded-[28px] md:px-8 md:pt-6">
+          <div className="-mx-5 bg-[radial-gradient(120%_120%_at_100%_0%,#C9501E,#231A2C_62%)] px-5 pb-8 pt-4 text-[#F4F0F7] md:mx-0 md:rounded-[28px] md:px-8 md:pt-6">
             <Link to="/explore" aria-label="Back to Explore" className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 hover:bg-black/40">
               <ArrowLeft size={18} />
             </Link>
@@ -80,21 +80,21 @@ export default function VenuePage() {
             <div className="mt-2 flex flex-wrap gap-1.5">
               {page.location && <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold"><MapPin size={12} />{page.location}</span>}
               {status && <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${page.status.open ? "bg-[#5E7A55]/90" : "bg-white/15"}`}>{status}</span>}
-              {page.isDemo && <span className="rounded-full bg-[#D9A441] px-2.5 py-1 text-xs font-extrabold text-[#2B201B]">Demo restaurant</span>}
+              {page.isDemo && <span className="rounded-full bg-[#F2B33A] px-2.5 py-1 text-xs font-extrabold text-[#231A2C]">Demo restaurant</span>}
             </div>
           </div>
 
           {event && (
-            <div className="relative -mt-4 rounded-[20px] border-[1.5px] border-gray-200 bg-white p-4 shadow-[0_8px_24px_rgba(43,32,27,.08)] dark:border-[#3A2D26] dark:bg-[#2B201B]">
+            <div className="relative -mt-4 rounded-[20px] border-[1.5px] border-gray-200 bg-white p-4 shadow-[0_8px_24px_rgba(35,26,44,.08)] dark:border-[#33293F] dark:bg-[#231A2C]">
               <div className="flex items-start gap-3">
                 <div className="flex w-14 flex-none flex-col items-center">
-                  <span className="text-[11px] font-extrabold uppercase text-brand-500 dark:text-[#D9A441]">{evDay(event.eventAt) === todayKey ? "Tonight" : dayLabel(evDay(event.eventAt), true)}</span>
+                  <span className="text-[11px] font-extrabold uppercase text-brand-500 dark:text-[#F2B33A]">{evDay(event.eventAt) === todayKey ? "Tonight" : dayLabel(evDay(event.eventAt), true)}</span>
                   <span className="font-display text-lg font-extrabold">{event.time}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="font-extrabold">{event.title}</p>
                   <p className="text-[13.5px] leading-snug text-gray-600 dark:text-gray-300">{event.message}</p>
-                  {event.offer && <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-bold text-brand-600 dark:text-[#D9A441]"><Gift size={15} /> {event.offer}</p>}
+                  {event.offer && <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-bold text-brand-600 dark:text-[#F2B33A]"><Gift size={15} /> {event.offer}</p>}
                 </div>
               </div>
             </div>
@@ -105,10 +105,10 @@ export default function VenuePage() {
               <h2 id="picks" className="font-display text-xl font-extrabold">{page.picks.label}</h2>
               <div className="mt-3 grid grid-cols-3 gap-2.5">
                 {page.picks.items.map((i) => (
-                  <div key={i.id} className="rounded-[18px] bg-[#2B201B] p-3 text-[#F4EDE3]">
-                    <div className="flex h-14 items-center justify-center rounded-xl bg-[#5C3A2C]"><DishIcon category={i.category} className="h-7 w-7" /></div>
+                  <div key={i.id} className="rounded-[18px] bg-[#231A2C] p-3 text-[#F4F0F7]">
+                    <div className="flex h-14 items-center justify-center rounded-xl bg-[#5A2A1A]"><DishIcon category={i.category} className="h-7 w-7" /></div>
                     <p className="mt-2 line-clamp-2 text-[13px] font-bold leading-tight">{i.name}</p>
-                    <p className="mt-1 text-[12.5px] font-bold text-[#D9A441]">{rwf(i.priceRwf)}</p>
+                    <p className="mt-1 text-[12.5px] font-bold text-[#F2B33A]">{rwf(i.priceRwf)}</p>
                   </div>
                 ))}
               </div>
@@ -126,14 +126,14 @@ export default function VenuePage() {
                     aria-selected={shown === c}
                     onClick={() => setCat(c)}
                     className={`min-h-[40px] flex-none rounded-full border-[1.5px] px-4 text-[13.5px] font-bold ${
-                      shown === c ? "border-gray-900 bg-gray-900 text-[#F4EDE3] dark:border-[#D9A441] dark:bg-[#D9A441] dark:text-[#2B201B]" : "border-gray-200 bg-white dark:border-[#3A2D26] dark:bg-transparent"
+                      shown === c ? "border-gray-900 bg-gray-900 text-[#F4F0F7] dark:border-[#F2B33A] dark:bg-[#F2B33A] dark:text-[#231A2C]" : "border-gray-200 bg-white dark:border-[#33293F] dark:bg-transparent"
                     }`}
                   >
                     {c}
                   </button>
                 ))}
               </div>
-              <ul className="mt-2 divide-y divide-gray-100 dark:divide-[#3A2D26]">
+              <ul className="mt-2 divide-y divide-gray-100 dark:divide-[#33293F]">
                 {(shown ? page.menu[shown] : []).map((i) => (
                   <li key={i.id} className="flex items-center justify-between gap-4 py-3.5">
                     <div className="min-w-0">
@@ -151,7 +151,7 @@ export default function VenuePage() {
 
         {/* Side: book + hours (bottom bar on phones) */}
         <aside className="mt-8 md:mt-0">
-          <div className="md:sticky md:top-6 md:rounded-[24px] md:border-[1.5px] md:border-gray-200 md:p-5 md:dark:border-[#3A2D26]">
+          <div className="md:sticky md:top-6 md:rounded-[24px] md:border-[1.5px] md:border-gray-200 md:p-5 md:dark:border-[#33293F]">
             {page.bookingsEnabled && (
               <Link to={bookHref} className="hidden min-h-[54px] items-center justify-center rounded-full bg-brand-500 text-base font-extrabold text-white hover:bg-brand-600 md:flex">
                 Book a table
@@ -178,7 +178,7 @@ export default function VenuePage() {
       </div>
 
       {page.bookingsEnabled && (
-        <div className="fixed inset-x-0 bottom-[64px] z-20 border-t border-gray-200 bg-[#FFFCF7]/95 px-5 py-3 backdrop-blur dark:border-[#3A2D26] dark:bg-[#1C1511]/95 md:hidden" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
+        <div className="fixed inset-x-0 bottom-[64px] z-20 border-t border-gray-200 bg-[#FDFCFE]/95 px-5 py-3 backdrop-blur dark:border-[#33293F] dark:bg-[#1B1524]/95 md:hidden" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
           <Link to={bookHref} className="mx-auto flex min-h-[52px] max-w-md items-center justify-center rounded-full bg-brand-500 text-base font-extrabold text-white">
             Book a table
           </Link>

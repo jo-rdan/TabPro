@@ -50,21 +50,21 @@ export function Hand({ size = 18, color = "currentColor", className = "" }: { si
 
 export function PhoneFrame({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`relative rounded-[2.9rem] bg-[#140F0C] p-[10px] shadow-[0_50px_90px_-30px_rgba(0,0,0,0.7)] ring-1 ring-white/10 ${className}`}>
-      <div className="absolute left-1/2 top-[10px] z-20 h-[24px] w-[104px] -translate-x-1/2 rounded-b-[16px] bg-[#140F0C]" />
-      <div className="relative h-full overflow-hidden rounded-[2.35rem] bg-[#F4EDE3] text-[#2B201B]">{children}</div>
+    <div className={`relative rounded-[2.9rem] bg-[#120E18] p-[10px] shadow-[0_50px_90px_-30px_rgba(0,0,0,0.7)] ring-1 ring-white/10 ${className}`}>
+      <div className="absolute left-1/2 top-[10px] z-20 h-[24px] w-[104px] -translate-x-1/2 rounded-b-[16px] bg-[#120E18]" />
+      <div className="relative h-full overflow-hidden rounded-[2.35rem] bg-[#F4F0F7] text-[#231A2C]">{children}</div>
     </div>
   );
 }
 
 function VenueHeader({ waiter = "Eric" }: { waiter?: string }) {
   return (
-    <div className="rounded-b-[22px] bg-[#2B201B] px-4 pb-4 pt-9 text-[#F4EDE3]">
+    <div className="rounded-b-[22px] bg-[#231A2C] px-4 pb-4 pt-9 text-[#F4F0F7]">
       <div className="flex items-center justify-between">
         <p className="font-display text-[16px] font-bold leading-tight">Your Place</p>
-        <span className="rounded-full bg-[#D9A441] px-2 py-0.5 text-[9px] font-extrabold text-[#2B201B]">Table 4</span>
+        <span className="rounded-full bg-[#F2B33A] px-2 py-0.5 text-[9px] font-extrabold text-[#231A2C]">Table 4</span>
       </div>
-      <p className="mt-0.5 text-[10.5px] text-[#D8CBBF]">{waiter} is your waiter</p>
+      <p className="mt-0.5 text-[10.5px] text-[#D3CADC]">{waiter} is your waiter</p>
     </div>
   );
 }
@@ -73,21 +73,21 @@ function VenueHeader({ waiter = "Eric" }: { waiter?: string }) {
 
 export function ScreenScan() {
   return (
-    <div className="relative flex h-full flex-col items-center justify-center bg-[#1C1511]">
-      <div className="absolute inset-0 opacity-60" style={{ background: "radial-gradient(circle at 50% 42%, rgba(217,164,65,.35) 0%, transparent 55%)" }} />
+    <div className="relative flex h-full flex-col items-center justify-center bg-[#1B1524]">
+      <div className="absolute inset-0 opacity-60" style={{ background: "radial-gradient(circle at 50% 42%, rgba(242,179,58,.35) 0%, transparent 55%)" }} />
       <div className="relative h-44 w-44">
         {["left-0 top-0 border-l-4 border-t-4 rounded-tl-2xl", "right-0 top-0 border-r-4 border-t-4 rounded-tr-2xl", "left-0 bottom-0 border-l-4 border-b-4 rounded-bl-2xl", "right-0 bottom-0 border-r-4 border-b-4 rounded-br-2xl"].map((c) => (
-          <span key={c} className={`absolute h-10 w-10 border-[#D9A441] ${c}`} />
+          <span key={c} className={`absolute h-10 w-10 border-[#F2B33A] ${c}`} />
         ))}
         {/* The table sticker: a rust tile with the hand, as on real tables */}
-        <div className="absolute inset-6 flex flex-col items-center justify-center gap-1 rounded-2xl bg-[#A64B31] shadow-xl">
-          <Hand size={46} color="#F4EDE3" />
-          <span className="font-display text-[13px] font-bold text-[#F4EDE3]">Scan me</span>
+        <div className="absolute inset-6 flex flex-col items-center justify-center gap-1 rounded-2xl bg-[#BF4A1A] shadow-xl">
+          <Hand size={46} color="#F4F0F7" />
+          <span className="font-display text-[13px] font-bold text-[#F4F0F7]">Scan me</span>
         </div>
-        <span className="sk-scanline absolute inset-x-3 h-0.5 rounded-full bg-[#D9A441] shadow-[0_0_16px_4px_rgba(217,164,65,0.7)]" />
+        <span className="sk-scanline absolute inset-x-3 h-0.5 rounded-full bg-[#F2B33A] shadow-[0_0_16px_4px_rgba(242,179,58,0.7)]" />
       </div>
-      <p className="relative mt-8 text-[12.5px] font-semibold text-[#F4EDE3]">Point your camera at the sticker</p>
-      <p className="relative mt-1 text-[10.5px] text-[#A39282]">No app to download</p>
+      <p className="relative mt-8 text-[12.5px] font-semibold text-[#F4F0F7]">Point your camera at the sticker</p>
+      <p className="relative mt-1 text-[10.5px] text-[#9C90A8]">No app to download</p>
     </div>
   );
 }
@@ -108,23 +108,23 @@ export function ScreenMenu({ onCall, called = false, compact = false }: { onCall
     <div className="flex h-full flex-col">
       <VenueHeader />
       <div className="px-3 pt-3">
-        <div className="flex items-center gap-2 rounded-xl bg-[#FFFCF7] px-3 py-2 text-[11px] text-[#A39282] ring-1 ring-[#E3D6C6]">
+        <div className="flex items-center gap-2 rounded-xl bg-[#FDFCFE] px-3 py-2 text-[11px] text-[#9C90A8] ring-1 ring-[#E2DCE8]">
           <Search size={12} /> Search the menu
         </div>
       </div>
       <div className="flex-1 space-y-2 overflow-hidden px-3 py-3">
         {MENU.slice(0, compact ? 3 : 4).map((m, i) => (
-          <div key={m.name} className="flex items-center gap-3 rounded-2xl bg-[#FFFCF7] p-2.5 ring-1 ring-[#E3D6C6]">
+          <div key={m.name} className="flex items-center gap-3 rounded-2xl bg-[#FDFCFE] p-2.5 ring-1 ring-[#E2DCE8]">
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-bold">{m.name}</p>
-              <p className="text-[10px] text-[#7A6A5F]">{m.note}</p>
-              <p className="text-[11px] font-bold text-[#A64B31]">{fmt(m.price)} RWF</p>
+              <p className="text-[10px] text-[#6F6379]">{m.note}</p>
+              <p className="text-[11px] font-bold text-[#BF4A1A]">{fmt(m.price)} RWF</p>
             </div>
             <button
               type="button"
               aria-label={`Add ${m.name}`}
               onClick={() => setQty((q) => q.map((v, j) => (j === i ? v + 1 : v)))}
-              className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-bold transition active:scale-90 ${qty[i] ? "bg-[#2B201B] text-[#F4EDE3]" : "bg-[#A64B31] text-[#F4EDE3]"}`}
+              className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-bold transition active:scale-90 ${qty[i] ? "bg-[#231A2C] text-[#F4F0F7]" : "bg-[#BF4A1A] text-[#F4F0F7]"}`}
             >
               {qty[i] ? qty[i] : <Plus size={14} />}
             </button>
@@ -135,12 +135,12 @@ export function ScreenMenu({ onCall, called = false, compact = false }: { onCall
         <button
           type="button"
           onClick={onCall}
-          className={`relative flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-[13px] font-extrabold transition active:scale-[0.98] ${called ? "bg-[#5E7A55] text-[#F4EDE3]" : "bg-[#D9A441] text-[#2B201B]"}`}
+          className={`relative flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-[13px] font-extrabold transition active:scale-[0.98] ${called ? "bg-[#5E7A55] text-[#F4F0F7]" : "bg-[#F2B33A] text-[#231A2C]"}`}
         >
-          {called ? <><Check size={15} strokeWidth={3} /> Eric is on his way</> : <><Hand size={17} color="#2B201B" /> Skuzi!</>}
-          {onCall && !called && <span className="sk-tapme absolute -right-1 -top-2 rounded-full bg-[#A64B31] px-2 py-0.5 text-[9px] font-extrabold text-[#F4EDE3]">Tap me</span>}
+          {called ? <><Check size={15} strokeWidth={3} /> Eric is on his way</> : <><Hand size={17} color="#231A2C" /> Skuzi!</>}
+          {onCall && !called && <span className="sk-tapme absolute -right-1 -top-2 rounded-full bg-[#BF4A1A] px-2 py-0.5 text-[9px] font-extrabold text-[#F4F0F7]">Tap me</span>}
         </button>
-        <div className="flex items-center justify-between rounded-2xl bg-[#A64B31] px-4 py-3 text-[#F4EDE3]">
+        <div className="flex items-center justify-between rounded-2xl bg-[#BF4A1A] px-4 py-3 text-[#F4F0F7]">
           <span className="text-[12px] font-bold">Send order · {items} items</span>
           <span className="text-[12px] font-bold">{fmt(total)} RWF</span>
         </div>
@@ -154,18 +154,18 @@ export function ScreenCall() {
     <div className="flex h-full flex-col">
       <VenueHeader />
       <div className="flex-1 space-y-2.5 px-3 py-3">
-        <p className="px-1 text-[10px] font-bold uppercase tracking-wider text-[#7A6A5F]">Your orders</p>
+        <p className="px-1 text-[10px] font-bold uppercase tracking-wider text-[#6F6379]">Your orders</p>
         {[
           ["2 × Primus · Brochette", "Served", "bg-[#E4EADF] text-[#3F5A38]"],
-          ["1 × Fanta Citron", "Preparing", "bg-[#2B201B] text-[#F4EDE3]"],
+          ["1 × Fanta Citron", "Preparing", "bg-[#231A2C] text-[#F4F0F7]"],
         ].map(([t, s, c]) => (
-          <div key={t} className="flex items-center justify-between rounded-2xl bg-[#FFFCF7] p-3 ring-1 ring-[#E3D6C6]">
+          <div key={t} className="flex items-center justify-between rounded-2xl bg-[#FDFCFE] p-3 ring-1 ring-[#E2DCE8]">
             <span className="text-[11.5px] font-semibold">{t}</span>
             <span className={`rounded-full px-2 py-0.5 text-[9.5px] font-bold ${c}`}>{s}</span>
           </div>
         ))}
-        <div className="sk-toast mx-1 mt-5 flex flex-col items-center rounded-3xl bg-[#D9A441] px-4 py-5 text-center text-[#2B201B]">
-          <span className="sk-wave inline-block"><Hand size={44} color="#2B201B" /></span>
+        <div className="sk-toast mx-1 mt-5 flex flex-col items-center rounded-3xl bg-[#F2B33A] px-4 py-5 text-center text-[#231A2C]">
+          <span className="sk-wave inline-block"><Hand size={44} color="#231A2C" /></span>
           <p className="mt-2 font-display text-[18px] font-bold">Skuzi!</p>
           <p className="text-[11px] font-semibold">Eric knows. He'll be right with you.</p>
         </div>
@@ -183,35 +183,35 @@ export function ScreenPay() {
   return (
     <div className="flex h-full flex-col">
       <VenueHeader />
-      <div className="mx-3 mt-3 rounded-2xl bg-[#FFFCF7] p-4 ring-1 ring-[#E3D6C6]">
+      <div className="mx-3 mt-3 rounded-2xl bg-[#FDFCFE] p-4 ring-1 ring-[#E2DCE8]">
         {[["Primus", "2 × 1,500", "3,000"], ["Goat brochette", "1 × 3,500", "3,500"], ["Fanta Citron", "1 × 800", "800"]].map(([n, q, s]) => (
           <div key={n} className="flex justify-between py-1.5 text-[11.5px]">
-            <span className="font-semibold">{n} <span className="font-normal text-[#A39282]">{q}</span></span>
+            <span className="font-semibold">{n} <span className="font-normal text-[#9C90A8]">{q}</span></span>
             <span className="font-semibold">{s}</span>
           </div>
         ))}
-        <div className="mt-2 flex items-end justify-between border-t border-dashed border-[#E3D6C6] pt-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6A5F]">Total</span>
+        <div className="mt-2 flex items-end justify-between border-t border-dashed border-[#E2DCE8] pt-3">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#6F6379]">Total</span>
           <span className="font-display text-[20px] font-bold">7,300 <span className="text-[11px]">RWF</span></span>
         </div>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
         {done ? (
           <div className="sk-pop flex flex-col items-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#5E7A55] text-[#F4EDE3] shadow-lg shadow-[#5E7A55]/40"><Check size={30} strokeWidth={3} /></span>
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#5E7A55] text-[#F4F0F7] shadow-lg shadow-[#5E7A55]/40"><Check size={30} strokeWidth={3} /></span>
             <p className="mt-3 text-[14px] font-extrabold">Paid · 7,300 RWF</p>
-            <p className="mt-1 text-[10.5px] text-[#7A6A5F]">Thank you! See you next time.</p>
+            <p className="mt-1 text-[10.5px] text-[#6F6379]">Thank you! See you next time.</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <Loader2 size={34} className="animate-spin text-[#A64B31]" />
+            <Loader2 size={34} className="animate-spin text-[#BF4A1A]" />
             <p className="mt-3 text-[13px] font-extrabold">Approve on your phone</p>
-            <p className="mt-1 text-[10.5px] text-[#7A6A5F]">Enter your MoMo PIN to confirm</p>
+            <p className="mt-1 text-[10.5px] text-[#6F6379]">Enter your MoMo PIN to confirm</p>
           </div>
         )}
       </div>
       <div className="flex justify-center gap-1.5 pb-6">
-        <span className="rounded-full bg-[#ffcb05] px-2.5 py-1 text-[9px] font-extrabold text-[#2B201B]">MTN MoMo</span>
+        <span className="rounded-full bg-[#ffcb05] px-2.5 py-1 text-[9px] font-extrabold text-[#231A2C]">MTN MoMo</span>
         <span className="rounded-full bg-[#e40000] px-2.5 py-1 text-[9px] font-extrabold text-white">Airtel Money</span>
       </div>
     </div>
@@ -223,21 +223,21 @@ export function ScreenPay() {
 /** The waiter's phone card: quiet, then buzzes when the guest taps Skuzi!. */
 export function WaiterCall({ calling }: { calling: boolean }) {
   return (
-    <div className={`w-[230px] rounded-[24px] p-4 shadow-[0_30px_60px_-25px_rgba(0,0,0,0.6)] transition-colors duration-300 ${calling ? "sk-buzz bg-[#A64B31] text-[#F4EDE3]" : "bg-[#FFFCF7] text-[#2B201B]"}`}>
-      <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${calling ? "text-[#F5E1D7]" : "text-[#7A6A5F]"}`}>Eric's phone</p>
+    <div className={`w-[230px] rounded-[24px] p-4 shadow-[0_30px_60px_-25px_rgba(0,0,0,0.6)] transition-colors duration-300 ${calling ? "sk-buzz bg-[#BF4A1A] text-[#F4F0F7]" : "bg-[#FDFCFE] text-[#231A2C]"}`}>
+      <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${calling ? "text-[#FCE3D3]" : "text-[#6F6379]"}`}>Eric's phone</p>
       {calling ? (
         <div className="mt-2 flex items-center gap-3">
-          <span className="sk-wave inline-block"><Hand size={34} color="#F4EDE3" /></span>
+          <span className="sk-wave inline-block"><Hand size={34} color="#F4F0F7" /></span>
           <div>
             <p className="font-display text-[17px] font-bold leading-tight">Skuzi! Table 4</p>
-            <p className="text-[11.5px] text-[#F5E1D7]">would love a hand · now</p>
+            <p className="text-[11.5px] text-[#FCE3D3]">would love a hand · now</p>
           </div>
         </div>
       ) : (
         <div className="mt-2 space-y-1.5">
           {[["Table 2", "2 × Mützig"], ["Table 7", "Brochette, chips"]].map(([t, d]) => (
-            <div key={t} className="flex items-center justify-between rounded-xl bg-[#F4EDE3] px-3 py-2 text-[11.5px]">
-              <b>{t}</b><span className="text-[#5C4D44]">{d}</span>
+            <div key={t} className="flex items-center justify-between rounded-xl bg-[#F4F0F7] px-3 py-2 text-[11.5px]">
+              <b>{t}</b><span className="text-[#554A60]">{d}</span>
             </div>
           ))}
         </div>
@@ -260,17 +260,17 @@ export function TonightCard() {
   const v = useCountUp(target, inView, 1200);
   const fill = Math.min(0.92, 0.35 + (v - 186500) / 300000);
   return (
-    <div ref={ref} className="flex w-[240px] items-center gap-4 rounded-[24px] bg-[#2B201B] p-4 text-[#F4EDE3] shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)] ring-1 ring-white/10">
+    <div ref={ref} className="flex w-[240px] items-center gap-4 rounded-[24px] bg-[#231A2C] p-4 text-[#F4F0F7] shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)] ring-1 ring-white/10">
       <svg viewBox="0 0 40 56" className="h-14 w-10 flex-shrink-0" aria-hidden="true">
         <clipPath id="sk-jar"><rect x="4" y="8" width="32" height="44" rx="7" /></clipPath>
-        <rect x="4" y={8 + 44 * (1 - fill)} width="32" height="44" fill="#D9A441" clipPath="url(#sk-jar)" style={{ transition: "y .8s cubic-bezier(.2,.8,.2,1)" }} />
-        <rect x="4" y="8" width="32" height="44" rx="7" fill="none" stroke="#F4EDE3" strokeOpacity=".5" strokeWidth="2" />
-        <rect x="2" y="3" width="36" height="6" rx="3" fill="#F4EDE3" fillOpacity=".35" />
+        <rect x="4" y={8 + 44 * (1 - fill)} width="32" height="44" fill="#F2B33A" clipPath="url(#sk-jar)" style={{ transition: "y .8s cubic-bezier(.2,.8,.2,1)" }} />
+        <rect x="4" y="8" width="32" height="44" rx="7" fill="none" stroke="#F4F0F7" strokeOpacity=".5" strokeWidth="2" />
+        <rect x="2" y="3" width="36" height="6" rx="3" fill="#F4F0F7" fillOpacity=".35" />
       </svg>
       <div>
-        <p className="text-[11px] text-[#D8CBBF]">Tonight so far</p>
+        <p className="text-[11px] text-[#D3CADC]">Tonight so far</p>
         <p className="font-display text-[24px] font-bold leading-tight tabular-nums">{fmt(v)}</p>
-        <p className="text-[11px] font-bold text-[#D9A441]">RWF · on your phone</p>
+        <p className="text-[11px] font-bold text-[#F2B33A]">RWF · on your phone</p>
       </div>
     </div>
   );
@@ -292,12 +292,12 @@ export function MoneyWidget({ active }: { active: boolean }) {
       <svg viewBox="0 0 300 70" className="mt-3 h-24 w-full" preserveAspectRatio="none" aria-hidden="true" style={{ overflow: "visible" }}>
         <defs>
           <linearGradient id="sk-money" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor="#D9A441" stopOpacity="0.5" />
-            <stop offset="1" stopColor="#D9A441" stopOpacity="0" />
+            <stop offset="0" stopColor="#F2B33A" stopOpacity="0.5" />
+            <stop offset="1" stopColor="#F2B33A" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={`${path} L 300 70 L 0 70 Z`} fill="url(#sk-money)" />
-        <path d={path} fill="none" stroke="#A64B31" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" className={active ? "sk-draw" : "opacity-0"} pathLength={1} />
+        <path d={path} fill="none" stroke="#BF4A1A" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" className={active ? "sk-draw" : "opacity-0"} pathLength={1} />
       </svg>
     </div>
   );
@@ -314,8 +314,8 @@ export function PayoutWidget() {
         <div key={t} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10" style={{ opacity: 1 - i * 0.22 }}>
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#5E7A55]/30"><Check size={16} className="text-[#A9BE9F]" /></span>
           <div className="min-w-0 flex-1">
-            <p className="flex justify-between text-[12.5px] font-bold text-[#F4EDE3]"><span>{t}</span><span>{a}</span></p>
-            <p className="flex justify-between gap-2 text-[10.5px] text-[#A39282]"><span className="truncate">{s}</span><span className="flex-shrink-0">{w}</span></p>
+            <p className="flex justify-between text-[12.5px] font-bold text-[#F4F0F7]"><span>{t}</span><span>{a}</span></p>
+            <p className="flex justify-between gap-2 text-[10.5px] text-[#9C90A8]"><span className="truncate">{s}</span><span className="flex-shrink-0">{w}</span></p>
           </div>
         </div>
       ))}
@@ -323,7 +323,7 @@ export function PayoutWidget() {
   );
 }
 
-const HEAT = ["#F0E8DD", "#E6CFA9", "#D9A441", "#B8703F", "#A64B31"];
+const HEAT = ["#EFEBF2", "#FFE08A", "#F2B33A", "#D0561F", "#BF4A1A"];
 export function HeatmapWidget() {
   const days = ["M", "T", "W", "T", "F", "S", "S"];
   const lvl = (d: number, h: number) => {
@@ -353,12 +353,12 @@ export function LeaderboardWidget() {
     <div className="space-y-2">
       {[["Alice", 312, 4.9, 100], ["Eric", 276, 4.7, 88], ["Grace", 241, 4.6, 77]].map(([n, p, r, w], i) => (
         <div key={n as string} className="flex items-center gap-3">
-          <b className={`w-3 text-[13px] ${i === 0 ? "text-[#D9A441]" : "text-[var(--muted)]"}`}>{i + 1}</b>
+          <b className={`w-3 text-[13px] ${i === 0 ? "text-[#F2B33A]" : "text-[var(--muted)]"}`}>{i + 1}</b>
           <span className="w-12 text-[12.5px] font-bold">{n}</span>
           <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[var(--line)]">
-            <span className="sk-bar block h-full rounded-full" style={{ width: `${w}%`, background: i === 0 ? "#A64B31" : "var(--ink)", animationDelay: `${i * 0.15}s` }} />
+            <span className="sk-bar block h-full rounded-full" style={{ width: `${w}%`, background: i === 0 ? "#BF4A1A" : "var(--ink)", animationDelay: `${i * 0.15}s` }} />
           </span>
-          <span className="flex w-9 items-center gap-0.5 text-[11px] font-semibold text-[var(--muted)]"><Star size={10} className="fill-[#D9A441] text-[#D9A441]" />{r}</span>
+          <span className="flex w-9 items-center gap-0.5 text-[11px] font-semibold text-[var(--muted)]"><Star size={10} className="fill-[#F2B33A] text-[#F2B33A]" />{r}</span>
           <span className="w-12 text-right text-[12px] font-extrabold tabular-nums">{p} pts</span>
         </div>
       ))}
@@ -369,19 +369,19 @@ export function LeaderboardWidget() {
 export function MenuPhotoWidget() {
   return (
     <div className="flex items-center gap-3">
-      <div className="relative w-[44%] rotate-[-4deg] rounded-lg bg-[#fbf6ea] p-3 text-[#2B201B] shadow-md ring-1 ring-black/5">
+      <div className="relative w-[44%] rotate-[-4deg] rounded-lg bg-[#FAF8FC] p-3 text-[#231A2C] shadow-md ring-1 ring-black/5">
         <p className="text-center font-serif text-[11px] italic">— Menu —</p>
         {["Primus ....... 1500", "Mützig ....... 1800", "Brochette .... 3500", "Chips ........ 2000"].map((l) => (
-          <p key={l} className="mt-1 font-mono text-[8.5px] text-[#5C4D44]">{l}</p>
+          <p key={l} className="mt-1 font-mono text-[8.5px] text-[#554A60]">{l}</p>
         ))}
-        <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#2B201B] text-[#F4EDE3]"><Camera size={13} /></span>
+        <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#231A2C] text-[#F4F0F7]"><Camera size={13} /></span>
       </div>
-      <ArrowRight size={18} className="flex-shrink-0 text-[#A64B31]" />
+      <ArrowRight size={18} className="flex-shrink-0 text-[#BF4A1A]" />
       <div className="flex-1 space-y-1.5">
         {[["Primus", "1,500"], ["Mützig", "1,800"], ["Brochette", "3,500"]].map(([n, p]) => (
           <div key={n} className="flex justify-between rounded-lg bg-[var(--card)] px-2.5 py-1.5 text-[10.5px] ring-1 ring-[var(--line)]">
             <span className="font-bold">{n}</span>
-            <span className="font-semibold text-[#A64B31]">{p}</span>
+            <span className="font-semibold text-[#BF4A1A]">{p}</span>
           </div>
         ))}
       </div>
@@ -391,10 +391,10 @@ export function MenuPhotoWidget() {
 
 // Owner alerts that keep arriving: the "I know everything" feeling.
 const ALERTS: [typeof Bell, string, string, string][] = [
-  [Users, "Table 7", "Guests just sat down", "bg-[#F0E8DD] text-[#5C4D44]"],
+  [Users, "Table 7", "Guests just sat down", "bg-[#EFEBF2] text-[#554A60]"],
   [Wallet, "Table 4 paid", "7,300 RWF · on your MoMo", "bg-[#E4EADF] text-[#3F5A38]"],
-  [Bell, "Table 2 called Grace", "She's on her way", "bg-[#F5E6C4] text-[#7A5A16]"],
-  [Users, "Table 9", "Guests just sat down", "bg-[#F0E8DD] text-[#5C4D44]"],
+  [Bell, "Table 2 called Grace", "She's on her way", "bg-[#FFEDB8] text-[#7A5A16]"],
+  [Users, "Table 9", "Guests just sat down", "bg-[#EFEBF2] text-[#554A60]"],
   [Wallet, "Table 1 paid", "14,500 RWF · on your MoMo", "bg-[#E4EADF] text-[#3F5A38]"],
 ];
 export function AlertsWidget() {

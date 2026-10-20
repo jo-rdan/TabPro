@@ -2,8 +2,8 @@
   "name": "Skuzi",
   "short_name": "Skuzi",
   "description": "Order, pay, and enjoy at your table. Your waiter is just one tap away.",
-  "theme_color": "#2B201B",
-  "background_color": "#F4EDE3",
+  "theme_color": "#231A2C",
+  "background_color": "#F4F0F7",
   "display": "standalone",
   "start_url": "/",
   "icons": [

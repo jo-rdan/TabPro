@@ -32,7 +32,7 @@
 .money-area { animation: money-fill 1.2s .9s ease-out both; }
 .money-ring { transform-box: fill-box; transform-origin: center; animation: money-pulse 1.8s ease-out infinite; }
 .bar-grow { transform-origin: left center; animation: bar-grow 1.3s cubic-bezier(.2,.8,.2,1) both; }
-.cell-now { animation: cell-now 2.4s ease-in-out infinite; box-shadow: 0 0 0 2px #A64B31; }
+.cell-now { animation: cell-now 2.4s ease-in-out infinite; box-shadow: 0 0 0 2px #BF4A1A; }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) {

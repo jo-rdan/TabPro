@@ -26,11 +26,11 @@ export default function OpeningHours({ initial, onSave, onClose }: {
     try { await onSave(hours); } catch (e: any) { setError(e?.response?.data?.error || "Couldn't save. Check your connection."); setBusy(false); }
   };
 
-  const select = 'min-h-[40px] rounded-lg border border-gray-200 bg-white px-2 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:bg-[#1C1511] dark:text-white';
+  const select = 'min-h-[40px] rounded-lg border border-gray-200 bg-white px-2 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:bg-[#1B1524] dark:text-white';
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="hours-title">
-      <div className="absolute inset-0 bg-[#1C1511]/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] border border-gray-200 bg-white px-5 pb-6 pt-5 shadow-2xl dark:border-gray-800 dark:bg-[#2B201B] sm:max-w-lg sm:rounded-[28px]">
+      <div className="absolute inset-0 bg-[#1B1524]/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] border border-gray-200 bg-white px-5 pb-6 pt-5 shadow-2xl dark:border-gray-800 dark:bg-[#231A2C] sm:max-w-lg sm:rounded-[28px]">
         <div className="flex items-center justify-between">
           <h2 id="hours-title" className="font-display text-xl font-bold text-gray-900 dark:text-white">Opening hours</h2>
           <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"><X size={18} /></button>

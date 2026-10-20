@@ -74,14 +74,14 @@ export default function NightPicker({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="night-picker-title">
-      <div className="absolute inset-0 bg-[#1C1511]/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="night-pop relative w-full sm:max-w-[440px] max-h-[92vh] overflow-y-auto bg-white dark:bg-[#2B201B] rounded-t-[28px] sm:rounded-[28px] border border-gray-200 dark:border-gray-800 shadow-2xl">
+      <div className="absolute inset-0 bg-[#1B1524]/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="night-pop relative w-full sm:max-w-[440px] max-h-[92vh] overflow-y-auto bg-white dark:bg-[#231A2C] rounded-t-[28px] sm:rounded-[28px] border border-gray-200 dark:border-gray-800 shadow-2xl">
         {/* Header: the month, with a soft imigongo band */}
-        <div className="relative overflow-hidden px-5 pt-5 pb-4 bg-gray-900 dark:bg-[#1C1511] text-gray-50">
-          <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#D9A441]/25 blur-2xl" />
+        <div className="relative overflow-hidden px-5 pt-5 pb-4 bg-gray-900 dark:bg-[#1B1524] text-gray-50">
+          <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#F2B33A]/25 blur-2xl" />
           <div className="relative flex items-start justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D9A441]">Pick a night</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#F2B33A]">Pick a night</p>
               <h2 id="night-picker-title" className="mt-1 font-display text-2xl font-bold tracking-tight">{nightLabel(picked)}</h2>
               <p className="text-xs text-gray-300 mt-0.5">
                 {byNight.get(picked) ? `${byNight.get(picked)!.total.toLocaleString()} RWF · ${byNight.get(picked)!.bills} paid bills` : picked > today ? "" : "No paid bills"}
@@ -90,7 +90,7 @@ export default function NightPicker({
             <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg text-gray-300 hover:text-white"><X size={18} /></button>
           </div>
           <svg width="100%" height="10" aria-hidden="true" className="absolute bottom-0 left-0 opacity-80">
-            <defs><pattern id="imi-pick" width="16" height="10" patternUnits="userSpaceOnUse"><path d="M0 10L8 0L16 10Z" fill="#A64B31" /><path d="M4 10L8 5L12 10Z" fill="#2B201B" /></pattern></defs>
+            <defs><pattern id="imi-pick" width="16" height="10" patternUnits="userSpaceOnUse"><path d="M0 10L8 0L16 10Z" fill="#BF4A1A" /><path d="M4 10L8 5L12 10Z" fill="#231A2C" /></pattern></defs>
             <rect width="100%" height="10" fill="url(#imi-pick)" />
           </svg>
         </div>
@@ -106,11 +106,11 @@ export default function NightPicker({
                 className={`flex-shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
                   q.key === picked
                     ? "bg-gray-900 text-gray-50 dark:bg-gray-100 dark:text-gray-900"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#3A2D26] dark:text-gray-200"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#33293F] dark:text-gray-200"
                 }`}
                 title={q.icon && best ? `${best.total.toLocaleString()} RWF` : undefined}
               >
-                {q.icon && <Star size={11} className="fill-[#D9A441] text-[#D9A441]" />}
+                {q.icon && <Star size={11} className="fill-[#F2B33A] text-[#F2B33A]" />}
                 {q.label}
               </button>
             ))}
@@ -118,15 +118,15 @@ export default function NightPicker({
 
           {/* Month navigation */}
           <div className="mt-4 flex items-center justify-between">
-            <button onClick={() => stepMonth(-1)} aria-label="Previous month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#3A2D26]"><ChevronLeft size={16} /></button>
+            <button onClick={() => stepMonth(-1)} aria-label="Previous month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#33293F]"><ChevronLeft size={16} /></button>
             <p className="font-display text-base font-bold text-gray-900 dark:text-white">{monthLabel(month)}</p>
-            <button onClick={() => stepMonth(1)} disabled={month >= today.slice(0, 7)} aria-label="Next month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#3A2D26] disabled:opacity-30"><ChevronRight size={16} /></button>
+            <button onClick={() => stepMonth(1)} disabled={month >= today.slice(0, 7)} aria-label="Next month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#33293F] disabled:opacity-30"><ChevronRight size={16} /></button>
           </div>
 
           {/* Calendar = heat map */}
           <div className="mt-2 grid grid-cols-7 gap-1.5 text-center">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-              <span key={i} className={`text-[10px] font-bold ${i >= 4 ? "text-[#9A4129] dark:text-[#DCA088]" : "text-gray-400"}`}>{d}</span>
+              <span key={i} className={`text-[10px] font-bold ${i >= 4 ? "text-[#A63F15] dark:text-[#F29C6F]" : "text-gray-400"}`}>{d}</span>
             ))}
             {cells.map((key, i) => {
               if (!key) return <span key={`b${i}`} />;
@@ -144,12 +144,12 @@ export default function NightPicker({
                   style={{ animationDelay: `${i * 10}ms`, background: HEAT[level] }}
                   className={`night-cell relative aspect-square rounded-xl text-sm font-semibold transition-transform disabled:cursor-default ${
                     future ? "text-gray-300 dark:text-gray-600" : level >= 4 ? "text-white" : "text-gray-800 dark:text-gray-100"
-                  } ${!level && !future ? "bg-gray-50 dark:bg-[#231A16]" : ""} ${
-                    isPicked ? "ring-2 ring-offset-2 ring-gray-900 ring-offset-white dark:ring-gray-100 dark:ring-offset-[#2B201B] scale-105" : future ? "" : "hover:scale-105"
+                  } ${!level && !future ? "bg-gray-50 dark:bg-[#231A2C]" : ""} ${
+                    isPicked ? "ring-2 ring-offset-2 ring-gray-900 ring-offset-white dark:ring-gray-100 dark:ring-offset-[#231A2C] scale-105" : future ? "" : "hover:scale-105"
                   }`}
                 >
                   {Number(key.slice(8))}
-                  {isToday && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[#A64B31] dark:bg-[#D9A441]" />}
+                  {isToday && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[#BF4A1A] dark:bg-[#F2B33A]" />}
                   {best?.night === key && <Star size={9} className="absolute top-0.5 right-0.5 fill-[#FFF6DD] text-[#FFF6DD]" />}
                 </button>
               );
@@ -183,7 +183,7 @@ export default function NightPicker({
                 className={`flex flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-semibold transition-colors ${
                   draft.pay === value
                     ? "bg-brand-500 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-[#3A2D26] dark:text-gray-300"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-[#33293F] dark:text-gray-300"
                 }`}
               >
                 <Icon size={15} />
@@ -191,7 +191,7 @@ export default function NightPicker({
               </button>
             ))}
           </div>
-          <label className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-[#231A16] px-4 py-3 cursor-pointer">
+          <label className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-[#231A2C] px-4 py-3 cursor-pointer">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Only payouts still on the way</span>
             <input
               type="checkbox"
@@ -212,7 +212,7 @@ export default function NightPicker({
             </button>
             <button
               onClick={() => onApply(picked, draft)}
-              className="flex-1 rounded-full bg-gray-900 dark:bg-[#D9A441] text-gray-50 dark:text-[#2B201B] py-3 text-sm font-extrabold hover:opacity-90 transition-opacity"
+              className="flex-1 rounded-full bg-gray-900 dark:bg-[#F2B33A] text-gray-50 dark:text-[#231A2C] py-3 text-sm font-extrabold hover:opacity-90 transition-opacity"
             >
               Show {nightLabel(picked).toLowerCase() === "tonight" ? "tonight" : nightLabel(picked)}
             </button>
@@ -224,4 +224,4 @@ export default function NightPicker({
 }
 
 // Milk → honey → rust, the same scale as the busy-hours chart.
-const HEAT = ["transparent", "rgba(217,164,65,.22)", "rgba(217,164,65,.45)", "rgba(217,164,65,.8)", "#B8703F", "#A64B31"];
+const HEAT = ["transparent", "rgba(242,179,58,.22)", "rgba(242,179,58,.45)", "rgba(242,179,58,.8)", "#D0561F", "#BF4A1A"];

@@ -36,15 +36,15 @@ export default function ClaimSticker() {
 
   if (!code) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#1C1511] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#1B1524] px-4">
         <p className="text-sm text-gray-500 dark:text-gray-400">This link is missing a sticker code.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#1C1511] px-4">
-      <div className="w-full max-w-sm bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 text-center shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#1B1524] px-4">
+      <div className="w-full max-w-sm bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 text-center shadow-xl">
         {status === 'confirm' && (
           <>
             <div className="w-12 h-12 bg-brand-50 dark:bg-brand-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">

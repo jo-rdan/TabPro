@@ -20,9 +20,9 @@ const HAND = [
 ];
 
 export default function AnimatedLogo({ size = 64, on = 'light', bg, className = '' }: AnimatedLogoProps) {
-  const ink = on === 'light' ? '#2B201B' : '#F4EDE3';
-  const hand = on === 'light' ? '#A64B31' : '#D9A441';
-  const fill = bg ?? (on === 'light' ? '#F4EDE3' : '#2B201B');
+  const ink = on === 'light' ? '#231A2C' : '#F4F0F7';
+  const hand = on === 'light' ? '#BF4A1A' : '#F0763A';
+  const fill = bg ?? (on === 'light' ? '#F4F0F7' : '#231A2C');
   return (
     <span className={`sz-lock ${className}`} style={{ fontSize: size, color: ink }} role="img" aria-label="Skuzi">
       <span className="sz-hand-wrap">

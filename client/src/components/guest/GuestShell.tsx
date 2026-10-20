@@ -8,7 +8,7 @@ import { WavingHand } from "../Logo";
 type Tab = "explore" | "bookings" | "me";
 
 /** The Skuzi hand, motion lines included, at any size. */
-export function Hand({ className = "h-7 w-7", color = "#D9A441" }: { className?: string; color?: string }) {
+export function Hand({ className = "h-7 w-7", color = "#F0763A" }: { className?: string; color?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true"><WavingHand color={color} /></svg>
   );
@@ -24,7 +24,7 @@ export function GuestLogo({ night = false }: { night?: boolean }) {
   return (
     <Link to="/explore" aria-label="Skuzi Explore" className="inline-flex items-center gap-1.5">
       <Hand />
-      <span className={`font-display text-[22px] font-semibold tracking-[-0.04em] ${night ? "text-[#F4EDE3]" : "text-gray-900 dark:text-[#F4EDE3]"}`}>skuzi</span>
+      <span className={`font-display text-[22px] font-semibold tracking-[-0.04em] ${night ? "text-[#F4F0F7]" : "text-gray-900 dark:text-[#F4F0F7]"}`}>skuzi</span>
     </Link>
   );
 }
@@ -43,7 +43,7 @@ export default function GuestShell({
   // The guest tabs (Explore, Bookings, Me and the pages under them) share the
   // espresso "night" look, so moving between tabs never flips light/dark.
   const night = tone ? tone === "night" : !!tab;
-  const bg = night ? "bg-[#1C1511] text-[#F4EDE3]" : "bg-[#FFFCF7] text-gray-900 dark:bg-[#1C1511] dark:text-[#F4EDE3]";
+  const bg = night ? "bg-[#1B1524] text-[#F4F0F7]" : "bg-[#FDFCFE] text-gray-900 dark:bg-[#1B1524] dark:text-[#F4F0F7]";
   return (
     <div className={`min-h-screen ${bg} ${night ? "dark" : ""} font-sans [overflow-x:clip]`}>
       {header && (
@@ -58,8 +58,8 @@ export default function GuestShell({
                   aria-current={tab === id ? "page" : undefined}
                   className={`rounded-full px-4 py-2 text-sm font-bold transition ${
                     tab === id
-                      ? "bg-[#D9A441] text-[#2B201B]"
-                      : night ? "text-[#D8CBBF] hover:bg-white/10" : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
+                      ? "bg-[#F2B33A] text-[#231A2C]"
+                      : night ? "text-[#D3CADC] hover:bg-white/10" : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
                   }`}
                 >
                   {label}
@@ -73,7 +73,7 @@ export default function GuestShell({
       {tab && (
         <nav
           aria-label="Skuzi"
-          className={`fixed inset-x-0 bottom-0 z-30 border-t md:hidden ${night ? "border-[#3A2D26] bg-[#1C1511]/95" : "border-gray-200 bg-[#FFFCF7]/95 dark:border-[#3A2D26] dark:bg-[#1C1511]/95"} backdrop-blur`}
+          className={`fixed inset-x-0 bottom-0 z-30 border-t md:hidden ${night ? "border-[#33293F] bg-[#1B1524]/95" : "border-gray-200 bg-[#FDFCFE]/95 dark:border-[#33293F] dark:bg-[#1B1524]/95"} backdrop-blur`}
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <div className="mx-auto flex max-w-md justify-around px-3 pt-2 pb-2">
@@ -85,7 +85,7 @@ export default function GuestShell({
                   to={href}
                   aria-current={on ? "page" : undefined}
                   className={`flex min-h-[48px] min-w-[72px] flex-col items-center justify-center gap-0.5 text-[11.5px] font-bold ${
-                    on ? "text-[#D9A441]" : night ? "text-[#D8CBBF]" : "text-gray-500 dark:text-gray-300"
+                    on ? "text-[#F2B33A]" : night ? "text-[#D3CADC]" : "text-gray-500 dark:text-gray-300"
                   }`}
                 >
                   <Icon size={22} strokeWidth={on ? 2.4 : 2} />

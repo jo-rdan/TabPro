@@ -322,13 +322,13 @@ export default function ClockIn() {
   const selectedShift = shifts.find((s) => s.id === selectedShiftId);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
           <Logo />
         </div>
 
-        <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
 
           {screen === "resolving" && (
             <div className="text-center py-6">
@@ -379,7 +379,7 @@ export default function ClockIn() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. 0781234567"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-6"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1B1524] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-6"
               />
 
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">
@@ -443,7 +443,7 @@ export default function ClockIn() {
                 onChange={(e) => setJoinName(e.target.value)}
                 placeholder="e.g. Eric"
                 autoComplete="name"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1B1524] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
               />
 
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Phone number</label>
@@ -452,7 +452,7 @@ export default function ClockIn() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. 0781234567"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1B1524] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
               />
 
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
@@ -465,7 +465,7 @@ export default function ClockIn() {
                 value={joinPin}
                 onChange={(e) => { if (/^\d{0,4}$/.test(e.target.value)) setJoinPin(e.target.value); }}
                 placeholder="••••"
-                className="w-full px-4 py-2.5 text-center tracking-[0.6em] text-lg font-bold border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+                className="w-full px-4 py-2.5 text-center tracking-[0.6em] text-lg font-bold border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1B1524] text-gray-900 dark:text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
               />
 
               {error && <p className="text-xs text-red-500 mb-3 text-center">{error}</p>}

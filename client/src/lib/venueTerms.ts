@@ -7,10 +7,10 @@ export const TERMS_DATE = "October 2026";
 
 export const TERMS_SUMMARY: { icon: string; tint: string; title: string; text: string }[] = [
   { icon: "💰", tint: "#E4EADF", title: "You keep 92%", text: "of bills paid by MoMo through Skuzi, sent to your MoMo in seconds. Skuzi keeps 8%." },
-  { icon: "💵", tint: "#F5E6C4", title: "Cash is free.", text: "No setup fee, no monthly fee, no machine." },
-  { icon: "🧾", tint: "#F0E8DD", title: "Your sales, your receipts.", text: "You issue your own EBM receipts and handle your taxes." },
-  { icon: "📣", tint: "#F5E1D7", title: "Campaigns are free to send.", text: "You pay only when guests come: 15% (not 8%) on their Skuzi bills." },
-  { icon: "👋", tint: "#FBF1EC", title: "Stop anytime,", text: "with nothing to pay or return." },
+  { icon: "💵", tint: "#FFEDB8", title: "Cash is free.", text: "No setup fee, no monthly fee, no machine." },
+  { icon: "🧾", tint: "#EFEBF2", title: "Your sales, your receipts.", text: "You issue your own EBM receipts and handle your taxes." },
+  { icon: "📣", tint: "#FCE3D3", title: "Campaigns are free to send.", text: "You pay only when guests come: 15% (not 8%) on their Skuzi bills." },
+  { icon: "👋", tint: "#FEF3EC", title: "Stop anytime,", text: "with nothing to pay or return." },
 ];
 
 // Shown to owners who agreed to an earlier version: what changed in this one.

@@ -32,8 +32,8 @@ export default function TermsPrompt() {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="terms-prompt-title">
-      <div className="absolute inset-0 bg-[#1C1511]/60 backdrop-blur-sm" />
-      <div className="night-pop relative w-full sm:max-w-md bg-white dark:bg-[#2B201B] rounded-t-[28px] sm:rounded-[28px] border border-gray-200 dark:border-gray-800 px-5 pt-6 pb-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div className="absolute inset-0 bg-[#1B1524]/60 backdrop-blur-sm" />
+      <div className="night-pop relative w-full sm:max-w-md bg-white dark:bg-[#231A2C] rounded-t-[28px] sm:rounded-[28px] border border-gray-200 dark:border-gray-800 px-5 pt-6 pb-6 shadow-2xl max-h-[92vh] overflow-y-auto">
         <p className="text-[11.5px] font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-300">{isUpdate ? "Our terms changed" : "One quick thing"}</p>
         <h2 id="terms-prompt-title" className="mt-1 font-display text-2xl font-bold text-gray-900 dark:text-white">Our terms, in writing</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

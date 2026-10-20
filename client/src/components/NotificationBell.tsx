@@ -86,7 +86,7 @@ export default function NotificationBell({ notifications, onMarkAllRead }: Props
       {open && (
         // Phones: a full-width sheet under the header, never off-screen.
         // Larger screens: a dropdown under the bell.
-        <div className="fixed left-3 right-3 top-24 sm:absolute sm:left-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl z-40 overflow-hidden">
+        <div className="fixed left-3 right-3 top-24 sm:absolute sm:left-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl z-40 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">
               Notifications

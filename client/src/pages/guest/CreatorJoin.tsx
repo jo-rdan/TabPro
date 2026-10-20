@@ -28,8 +28,8 @@ export default function CreatorJoin() {
     }
   };
 
-  const field = "h-12 w-full rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 text-[15px] font-semibold text-gray-900 outline-none placeholder:font-medium placeholder:text-gray-400 focus:border-brand-500 dark:border-[#3A2D26] dark:bg-[#1C1511] dark:text-[#F4EDE3]";
-  const label = "text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#D9A441]";
+  const field = "h-12 w-full rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 text-[15px] font-semibold text-gray-900 outline-none placeholder:font-medium placeholder:text-gray-400 focus:border-brand-500 dark:border-[#33293F] dark:bg-[#1B1524] dark:text-[#F4F0F7]";
+  const label = "text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#F2B33A]";
 
   return (
     <GuestShell>
@@ -37,7 +37,7 @@ export default function CreatorJoin() {
         <section>
           <p className={label}>Skuzi Creators</p>
           <h1 className="mt-2 font-display text-[38px] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[56px]">
-            Earn from <span className="text-brand-500 dark:text-[#D9A441]">every new person</span> you bring.
+            Earn from <span className="text-brand-500 dark:text-[#F2B33A]">every new person</span> you bring.
           </h1>
           <p className="mt-3 max-w-md text-[16px] leading-relaxed text-gray-600 dark:text-gray-300">
             You already film where you eat and go out. Now every new follower who pays with Skuzi using your code pays you, and they get money back too.
@@ -51,25 +51,25 @@ export default function CreatorJoin() {
               { Icon: Wallet, title: "Paid to your MoMo, every month", text: "On the 1st, for everything the month before." },
             ].map(({ Icon, title, text }, i) => (
               <li key={title} className="flex gap-3.5">
-                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#2B201B] text-[#D9A441]"><Icon size={18} /></span>
+                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#231A2C] text-[#F2B33A]"><Icon size={18} /></span>
                 <div>
-                  <p className="font-bold"><span className="mr-1.5 text-brand-500 dark:text-[#D9A441]">{i + 1}.</span>{title}</p>
+                  <p className="font-bold"><span className="mr-1.5 text-brand-500 dark:text-[#F2B33A]">{i + 1}.</span>{title}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{text}</p>
                 </div>
               </li>
             ))}
           </ol>
 
-          <div className="mt-7 overflow-hidden rounded-[22px] bg-[#2B201B] text-[#F4EDE3]">
+          <div className="mt-7 overflow-hidden rounded-[22px] bg-[#231A2C] text-[#F4F0F7]">
             <div className="grid grid-cols-2 divide-x divide-white/10">
-              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 8,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">64 RWF</p></div>
-              <div className="p-4"><p className="text-xs text-[#D8CBBF]">Their bill 20,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#D9A441]">184 RWF</p></div>
+              <div className="p-4"><p className="text-xs text-[#D3CADC]">Their bill 8,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#F2B33A]">64 RWF</p></div>
+              <div className="p-4"><p className="text-xs text-[#D3CADC]">Their bill 20,000 RWF: you get</p><p className="font-display text-2xl font-extrabold text-[#F2B33A]">184 RWF</p></div>
             </div>
-            <p className="border-t border-white/10 px-4 py-3 text-sm text-[#D8CBBF]">10 new people a day for a month (8,000 RWF bills) bring you <b className="text-[#F4EDE3]">19,200 RWF</b>. No limit. Bigger bills, more money.</p>
+            <p className="border-t border-white/10 px-4 py-3 text-sm text-[#D3CADC]">10 new people a day for a month (8,000 RWF bills) bring you <b className="text-[#F4F0F7]">19,200 RWF</b>. No limit. Bigger bills, more money.</p>
           </div>
         </section>
 
-        <section className="rounded-[26px] border-[1.5px] border-gray-200 bg-white p-5 dark:border-[#3A2D26] dark:bg-[#2B201B] md:sticky md:top-6 md:p-7">
+        <section className="rounded-[26px] border-[1.5px] border-gray-200 bg-white p-5 dark:border-[#33293F] dark:bg-[#231A2C] md:sticky md:top-6 md:p-7">
           {done ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
               <Hand className="h-14 w-14" />

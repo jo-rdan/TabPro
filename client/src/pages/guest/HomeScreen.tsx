@@ -17,7 +17,7 @@ function useJoinManifest(code: string) {
     const manifest = {
       name: "Skuzi", short_name: "Skuzi", display: "standalone",
       start_url: `${window.location.origin}/join/${code}`, scope: `${window.location.origin}/`,
-      theme_color: "#1C1511", background_color: "#1C1511",
+      theme_color: "#1B1524", background_color: "#1B1524",
       icons: [
         { src: `${window.location.origin}/icon-192.png`, sizes: "192x192", type: "image/png" },
         { src: `${window.location.origin}/icon-512.png`, sizes: "512x512", type: "image/png" },
@@ -37,7 +37,7 @@ export function HomeScreenGuide() {
   return (
     <GuestShell tone="day">
       <div className="mx-auto max-w-md pt-8">
-        <p className="text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#D9A441]">One last step on iPhone</p>
+        <p className="text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#F2B33A]">One last step on iPhone</p>
         <h1 className="mt-1 font-display text-[30px] font-extrabold leading-tight tracking-[-0.02em]">
           Put Skuzi on your <span className="text-brand-500">Home Screen</span>
         </h1>
@@ -46,17 +46,17 @@ export function HomeScreenGuide() {
           {[
             { n: 1, text: <>Tap <b>Share</b> at the bottom of Safari</>, icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2B6CD8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v12" /><path d="M8 7l4-4 4 4" /><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1" /></svg> },
             { n: 2, text: <>Choose <b>Add to Home Screen</b></>, icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M12 8v8M8 12h8" /></svg> },
-            { n: 3, text: <>Open Skuzi from your Home Screen and tap <b>Allow</b></>, icon: <span className="flex h-full w-full items-center justify-center rounded-xl bg-[#2B201B]"><Hand className="h-7 w-7" /></span> },
+            { n: 3, text: <>Open Skuzi from your Home Screen and tap <b>Allow</b></>, icon: <span className="flex h-full w-full items-center justify-center rounded-xl bg-[#231A2C]"><Hand className="h-7 w-7" /></span> },
           ].map((s) => (
-            <li key={s.n} className="flex items-center gap-3.5 rounded-[18px] border-[1.5px] border-gray-200 bg-white px-4 py-3.5 dark:border-[#3A2D26] dark:bg-[#2B201B]">
-              <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gray-900 text-sm font-extrabold text-[#F4EDE3] dark:bg-[#D9A441] dark:text-[#2B201B]">{s.n}</span>
+            <li key={s.n} className="flex items-center gap-3.5 rounded-[18px] border-[1.5px] border-gray-200 bg-white px-4 py-3.5 dark:border-[#33293F] dark:bg-[#231A2C]">
+              <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gray-900 text-sm font-extrabold text-[#F4F0F7] dark:bg-[#F2B33A] dark:text-[#231A2C]">{s.n}</span>
               <span className="flex-1 text-[15px] leading-snug">{s.text}</span>
               <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-gray-100 dark:bg-white/10">{s.icon}</span>
             </li>
           ))}
         </ol>
-        <div className="mt-5 flex items-center gap-3 rounded-[20px] bg-[#2B201B] p-4 text-[#F4EDE3]">
-          <Gift size={22} className="flex-none text-[#D9A441]" />
+        <div className="mt-5 flex items-center gap-3 rounded-[20px] bg-[#231A2C] p-4 text-[#F4F0F7]">
+          <Gift size={22} className="flex-none text-[#F2B33A]" />
           <p className="text-sm leading-snug">You'll also find places to go tonight and book a table, right from the icon.</p>
         </div>
         <Link to="/explore" className="mt-6 flex min-h-[48px] items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400">Maybe later</Link>
@@ -90,20 +90,20 @@ export function Join() {
   };
 
   if (state === "error") {
-    return <GuestShell tone="night"><GuestState title="Almost there" text={`${error} You can still explore Skuzi.`} action={<Link to="/explore" className="mt-2 flex min-h-[44px] items-center rounded-full bg-[#D9A441] px-6 font-extrabold text-[#2B201B]">Explore Skuzi</Link>} /></GuestShell>;
+    return <GuestShell tone="night"><GuestState title="Almost there" text={`${error} You can still explore Skuzi.`} action={<Link to="/explore" className="mt-2 flex min-h-[44px] items-center rounded-full bg-[#F2B33A] px-6 font-extrabold text-[#231A2C]">Explore Skuzi</Link>} /></GuestShell>;
   }
   return (
     <GuestShell tone="night" header={false}>
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
         <Hand className="h-16 w-16" />
         <h1 className="font-display text-[30px] font-extrabold leading-tight tracking-[-0.02em]">
-          {state === "done" ? "You're all set!" : <>Welcome{name ? `, ${name}` : ""} to <span className="text-[#D9A441]">Skuzi</span></>}
+          {state === "done" ? "You're all set!" : <>Welcome{name ? `, ${name}` : ""} to <span className="text-[#F2B33A]">Skuzi</span></>}
         </h1>
-        <p className="max-w-xs text-[15px] text-[#D8CBBF]">{state === "done" ? "Your invites will arrive here." : "One tap so your invites and offers can reach you."}</p>
+        <p className="max-w-xs text-[15px] text-[#D3CADC]">{state === "done" ? "Your invites will arrive here." : "One tap so your invites and offers can reach you."}</p>
         {state === "ready" && (
-          <button onClick={allow} className="mt-2 min-h-[52px] rounded-full bg-[#D9A441] px-8 text-base font-extrabold text-[#2B201B]">Turn on invites</button>
+          <button onClick={allow} className="mt-2 min-h-[52px] rounded-full bg-[#F2B33A] px-8 text-base font-extrabold text-[#231A2C]">Turn on invites</button>
         )}
-        {state === "connecting" && <p className="text-sm text-[#D8CBBF]" aria-live="polite">Connecting…</p>}
+        {state === "connecting" && <p className="text-sm text-[#D3CADC]" aria-live="polite">Connecting…</p>}
       </div>
     </GuestShell>
   );

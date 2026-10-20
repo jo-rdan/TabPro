@@ -16,14 +16,14 @@ function getInitials(name: string) {
 // Deterministic color from venue name
 function getBgColor(name: string) {
   const colors = [
-    'bg-[#2B201B]',
+    'bg-[#231A2C]',
     'bg-brand-500',
     'bg-[#5E7A55]',
-    'bg-[#D9A441]',
-    'bg-[#B8703F]',
-    'bg-[#3A2D26]',
-    'bg-[#7D3421]',
-    'bg-[#5C4D44]',
+    'bg-[#F2B33A]',
+    'bg-[#D0561F]',
+    'bg-[#33293F]',
+    'bg-[#8A3412]',
+    'bg-[#554A60]',
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);

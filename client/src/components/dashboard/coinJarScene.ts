@@ -27,8 +27,8 @@ function label(text: string, color: string, size: number) {
 
 // Light theme: darker glass on a cream card. Dark theme: milky glass on espresso.
 const THEMES = {
-  light: { glass: 0x7a6a5f, glassOpacity: 0.14, rim: 0x7a6a5f, rimOpacity: 0.6, base: 0xe3d6c6, ground: 0xe3d6c6, ringLabel: '#9A4129', nowLabel: '#6B4E12' },
-  dark: { glass: 0xf4ede3, glassOpacity: 0.16, rim: 0xf4ede3, rimOpacity: 0.5, base: 0x3a2d26, ground: 0x2b201b, ringLabel: '#E08A6A', nowLabel: '#D9A441' },
+  light: { glass: 0x7a6a5f, glassOpacity: 0.14, rim: 0x7a6a5f, rimOpacity: 0.6, base: 0xe3d6c6, ground: 0xe3d6c6, ringLabel: '#A63F15', nowLabel: '#73500E' },
+  dark: { glass: 0xf4ede3, glassOpacity: 0.16, rim: 0xf4ede3, rimOpacity: 0.5, base: 0x3a2d26, ground: 0x2b201b, ringLabel: '#F0884F', nowLabel: '#F2B33A' },
 };
 
 export function createCoinJarScene(canvas: HTMLCanvasElement, initialDark: boolean) {
