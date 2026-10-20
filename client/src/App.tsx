@@ -1,3 +1,4 @@
+import { CLOCK_IN_ENABLED } from "./lib/features";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -78,7 +79,7 @@ export default function App() {
 
         {/* Waiter */}
         <Route path="/waiter" element={<WaiterLogin />} />
-        <Route path="/clock-in" element={<ClockIn />} />
+        <Route path="/clock-in" element={CLOCK_IN_ENABLED ? <ClockIn /> : <ClockInOff />} />
         <Route path="/waiter/orders" element={<WaiterOrders />} />
 
         {/* Receipt — accessible by cashier/owner, no strict auth gate needed */}
@@ -206,5 +207,17 @@ export default function App() {
       </Routes>
       )}
     </BrowserRouter>
+  );
+}
+
+// A printed staff sticker scanned while clock-in is switched off (lib/features.ts).
+function ClockInOff() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 text-center">
+      <p className="text-5xl" aria-hidden="true">🕒</p>
+      <h1 className="mt-4 font-display text-2xl font-bold text-gray-900 dark:text-white">Clock-in isn't switched on yet</h1>
+      <p className="mt-2 max-w-sm text-[15px] text-gray-500 dark:text-gray-400">Your orders are on the waiter screen. Ask your manager if you need to sign in.</p>
+      <a href="/waiter" className="mt-6 inline-flex h-12 items-center rounded-full bg-action px-6 font-extrabold text-action-ink">Open the waiter screen</a>
+    </div>
   );
 }
