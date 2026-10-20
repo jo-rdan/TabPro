@@ -10,8 +10,8 @@ interface WordmarkProps {
 }
 
 export default function Wordmark({ size = 28, on = 'light', className = '' }: WordmarkProps) {
-  const text = on === 'light' ? '#2B201B' : '#F4EDE3';
-  const hand = on === 'light' ? '#A64B31' : '#D9A441';
+  const text = on === 'light' ? '#231A2C' : '#F4F0F7';
+  const hand = on === 'light' ? '#BF4A1A' : '#F0763A';
   return (
     <span className={`inline-flex items-center ${className}`} style={{ gap: size * 0.14 }} aria-label="Skuzi" role="img">
       <svg width={size * 1.05} height={size * 1.05} viewBox="8 4 90 92" aria-hidden="true">

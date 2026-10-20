@@ -2,6 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Skuzi colours. Neutrals are deep ink with a touch of plum; buttons are ink in
+   light mode and tangerine in dark mode (the 2026-10-20 retheme mockup). */
+:root {
+    --gray-50: 247 245 249;
+    --gray-100: 239 235 242;
+    --gray-200: 226 220 232;
+    --gray-300: 200 191 210;
+    --gray-400: 156 144 168;
+    --gray-500: 111 99 121;
+    --gray-600: 85 74 96;
+    --gray-700: 65 53 78;
+    --gray-800: 51 41 63;
+    --gray-900: 35 26 44;
+    --gray-950: 27 21 36;
+    --action: 35 26 44;        /* #231A2C */
+    --action-hover: 58 45 72;
+    --action-ink: 255 255 255;
+    --g-text: #F4F0F7; --g-muted: #D3CADC; --g-hi: #FFD966;
+}
+/* Dark mode is plum, not black: black + orange is how Sinc looks (2026-10-20). */
+.dark {
+    --action: 226 96 42;       /* #E2602A */
+    --action-hover: 238 120 67;
+    --gray-300: 212 195 224;
+    --gray-400: 183 159 200;
+    --gray-500: 142 115 159;
+    --gray-600: 107 72 128;
+    --gray-700: 87 52 105;
+    --gray-800: 74 45 92;
+    --gray-900: 59 33 73;
+    --gray-950: 43 24 56;
+    --g-muted: #D9C6E6;
+}
+/* Guest pages (Explore, venue, bookings, Me) wear the orange skin in light mode
+   and stay deep ink in dark mode. Their own "dark" class keeps the dark: styles;
+   only the colours behind them change. */
+html:not(.dark) .guest-skin {
+    --gray-50: 255 255 255;
+    --gray-100: 255 241 232;
+    --gray-200: 255 227 211;
+    --gray-300: 255 211 188;
+    --gray-400: 255 201 173;
+    --gray-500: 247 181 150;
+    --gray-600: 232 154 116;
+    --gray-700: 216 122 74;
+    --gray-800: 203 101 52;
+    --gray-900: 189 81 36;
+    --gray-950: 174 66 23;
+    --action: 35 26 44;
+    --action-hover: 58 45 72;
+    --g-text: #FFFFFF; --g-muted: #FFE6D8; --g-hi: #FFD966;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -32,7 +85,7 @@
 .money-area { animation: money-fill 1.2s .9s ease-out both; }
 .money-ring { transform-box: fill-box; transform-origin: center; animation: money-pulse 1.8s ease-out infinite; }
 .bar-grow { transform-origin: left center; animation: bar-grow 1.3s cubic-bezier(.2,.8,.2,1) both; }
-.cell-now { animation: cell-now 2.4s ease-in-out infinite; box-shadow: 0 0 0 2px #A64B31; }
+.cell-now { animation: cell-now 2.4s ease-in-out infinite; box-shadow: 0 0 0 2px #BF4A1A; }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) {

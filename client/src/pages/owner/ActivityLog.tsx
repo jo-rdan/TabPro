@@ -105,7 +105,7 @@ export default function ActivityLog() {
 
       {/* Night picker: the last 7 nights, arrows, and a calendar for older ones */}
       <div className="mb-6 flex items-center gap-2">
-        <button onClick={() => shift(-1)} aria-label="Night before" className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2B201B] text-gray-600 dark:text-gray-300 flex items-center justify-center hover:text-gray-900 dark:hover:text-white">
+        <button onClick={() => shift(-1)} aria-label="Night before" className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#3B2149] text-gray-600 dark:text-gray-300 flex items-center justify-center hover:text-gray-900 dark:hover:text-white">
           <ChevronLeft size={16} />
         </button>
         <div className="no-scrollbar flex-1 min-w-0 flex gap-2 overflow-x-auto">
@@ -116,7 +116,7 @@ export default function ActivityLog() {
               className={`flex-shrink-0 px-3.5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
                 night === key
                   ? "bg-gray-900 text-gray-50 dark:bg-gray-100 dark:text-gray-900"
-                  : "bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  : "bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               {nightLabel(key)}
@@ -128,7 +128,7 @@ export default function ActivityLog() {
             </span>
           )}
         </div>
-        <button onClick={() => shift(1)} disabled={night === today} aria-label="Night after" className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2B201B] text-gray-600 dark:text-gray-300 flex items-center justify-center hover:text-gray-900 dark:hover:text-white disabled:opacity-40">
+        <button onClick={() => shift(1)} disabled={night === today} aria-label="Night after" className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#3B2149] text-gray-600 dark:text-gray-300 flex items-center justify-center hover:text-gray-900 dark:hover:text-white disabled:opacity-40">
           <ChevronRight size={16} />
         </button>
         <button
@@ -138,29 +138,29 @@ export default function ActivityLog() {
           aria-label="Open calendar and filters"
         >
           <CalendarDays size={16} />
-          {filterLabels.length > 0 && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#D9A441] ring-2 ring-gray-50 dark:ring-[#1C1511]" />}
+          {filterLabels.length > 0 && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#F2B33A] ring-2 ring-gray-50 dark:ring-[#2B1838]" />}
         </button>
       </div>
 
       {/* The night in numbers */}
       {!loading && !error && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
             <p className="text-xs text-gray-500 dark:text-gray-400">Total sales</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{total.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
             <p className="text-xs text-gray-400 mt-0.5">{paid.length} paid {paid.length === 1 ? "bill" : "bills"}{stillOpen ? ` · ${stillOpen} still open` : ""}</p>
           </div>
-          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><Smartphone size={12} /> Paid with MoMo</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{momoTotal.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
             <p className="text-xs text-gray-400 mt-0.5">{momo.length} {momo.length === 1 ? "bill" : "bills"} through Skuzi</p>
           </div>
-          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><Banknote size={12} /> Paid another way</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{otherTotal.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
             <p className="text-xs text-gray-400 mt-0.5">Cash or at the counter · no fee</p>
           </div>
-          <div className="bg-white dark:bg-[#2B201B] border border-green-300/70 dark:border-green-700/50 rounded-2xl px-4 py-3.5">
+          <div className="bg-white dark:bg-[#3B2149] border border-green-300/70 dark:border-green-700/50 rounded-2xl px-4 py-3.5">
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><CheckCircle2 size={12} className="text-green-600 dark:text-green-400" /> Received on your MoMo</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{received.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
             <p className={`text-xs mt-0.5 ${onTheWay ? "text-amber-700 dark:text-amber-300" : "text-green-600 dark:text-green-400"}`}>
@@ -193,9 +193,9 @@ export default function ActivityLog() {
       {!loading && (
         <div className="space-y-4">
           {filtered.map((tab) => (
-            <div key={tab.tabId} className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+            <div key={tab.tabId} className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               {/* Bill header */}
-              <div className="px-5 py-3 bg-gray-50 dark:bg-[#1C1511] flex flex-wrap items-center justify-between gap-2">
+              <div className="px-5 py-3 bg-gray-50 dark:bg-[#2B1838] flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">{tab.tableLabel}</span>
                   <PaidChip tab={tab} />
@@ -226,7 +226,7 @@ export default function ActivityLog() {
                         className={`flex-shrink-0 flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
                           order.source === "customer"
                             ? "bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400"
-                            : "bg-[#FBF3E2] text-[#7A5A16] dark:bg-[#D9A441]/10 dark:text-[#E9C77E]"
+                            : "bg-[#FFF7E0] text-[#7A5A16] dark:bg-[#F2B33A]/10 dark:text-[#FFD15C]"
                         }`}
                       >
                         {order.source === "customer" ? <User size={10} /> : <Users size={10} />}

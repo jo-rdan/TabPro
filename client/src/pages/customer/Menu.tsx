@@ -1,3 +1,4 @@
+import { ThemeCycleButton } from "../../components/ThemeSwitch";
 import { useState, useEffect, useRef } from "react";
 import GuestAlerts from "../../components/GuestAlerts";
 import { useParams } from "react-router-dom";
@@ -152,11 +153,11 @@ function MenuCard({
 
   return (
     <div
-      className={`flex items-center gap-3.5 p-3 rounded-[22px] bg-white dark:bg-[#2B201B] transition-all ${
+      className={`flex items-center gap-3.5 p-3 rounded-[22px] bg-white dark:bg-[#3B2149] transition-all ${
         qty > 0 ? "ring-2 ring-brand-400/70" : "ring-1 ring-gray-200/70 dark:ring-gray-800"
       } ${!item.isAvailable ? "opacity-60" : ""}`}
     >
-      <div className="relative w-[74px] h-[74px] rounded-2xl overflow-hidden flex-shrink-0 bg-[#EFD9C9] dark:bg-gray-800">
+      <div className="relative w-[74px] h-[74px] rounded-2xl overflow-hidden flex-shrink-0 bg-[#F8D9C6] dark:bg-gray-800">
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-3xl opacity-50 select-none">{emoji}</span>
         </div>
@@ -189,7 +190,7 @@ function MenuCard({
           <button
             onClick={onAdd}
             aria-label={`Add ${item.name}`}
-            className="w-11 h-11 rounded-full bg-brand-500 hover:bg-brand-600 flex items-center justify-center text-white flex-shrink-0 active:scale-90 transition-all"
+            className="w-11 h-11 rounded-full bg-action hover:bg-action-hover flex items-center justify-center text-white flex-shrink-0 active:scale-90 transition-all"
           >
             <Plus size={20} strokeWidth={3} />
           </button>
@@ -206,7 +207,7 @@ function MenuCard({
             <button
               onClick={onAdd}
               aria-label={`Add one more ${item.name}`}
-              className="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center active:scale-90 transition-all"
+              className="w-9 h-9 rounded-full bg-action text-white flex items-center justify-center active:scale-90 transition-all"
             >
               <Plus size={15} strokeWidth={3} />
             </button>
@@ -769,8 +770,8 @@ export default function CustomerMenu() {
   // Opening the table: the menu is on its way (or the sticker isn't set up).
   if (step === "identify") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-6 py-10 text-center">
-        <div className="w-20 h-20 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="w-20 h-20 rounded-3xl bg-action flex items-center justify-center mx-auto mb-5 shadow-xl shadow-action/30">
           <Logo size={44} />
         </div>
         {error ? (
@@ -780,7 +781,7 @@ export default function CustomerMenu() {
             <button
               onClick={loadPreview}
               disabled={loading}
-              className="mt-6 px-6 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-black disabled:opacity-50"
+              className="mt-6 px-6 py-3.5 rounded-2xl bg-action hover:bg-action-hover text-white font-black disabled:opacity-50"
             >
               {loading ? "Trying…" : "Try again"}
             </button>
@@ -798,8 +799,8 @@ export default function CustomerMenu() {
   // ─── BILL ─────────────────────────────────────────────────────────────────
   if (step === "bill") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511]">
-        <div className="bg-white dark:bg-[#2B201B] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838]">
+        <div className="bg-white dark:bg-[#3B2149] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
             <div>
@@ -826,14 +827,14 @@ export default function CustomerMenu() {
               style={{
                 height: 12,
                 backgroundImage:
-                  "radial-gradient(circle at 50% 0%, #f9f6e8 6px, transparent 6px)",
+                  "radial-gradient(circle at 50% 0%, #FAF8FC 6px, transparent 6px)",
                 backgroundSize: "12px 12px",
                 backgroundRepeat: "repeat-x",
                 backgroundColor: "#d1d5db",
               }}
             />
 
-            <div style={{ background: "#f9f6e8", padding: "0 20px" }}>
+            <div style={{ background: "#FAF8FC", padding: "0 20px" }}>
               {/* Header */}
               <div style={{ textAlign: "center", padding: "12px 0 8px" }}>
                 <p
@@ -1023,7 +1024,7 @@ export default function CustomerMenu() {
               style={{
                 height: 12,
                 backgroundImage:
-                  "radial-gradient(circle at 50% 100%, #f9f6e8 6px, transparent 6px)",
+                  "radial-gradient(circle at 50% 100%, #FAF8FC 6px, transparent 6px)",
                 backgroundSize: "12px 12px",
                 backgroundRepeat: "repeat-x",
                 backgroundColor: "#d1d5db",
@@ -1031,8 +1032,8 @@ export default function CustomerMenu() {
             />
           </div>
           {skuziOffer?.text && payStep === "idle" && (
-            <div className="mb-3 rounded-2xl bg-[#2B201B] px-4 py-3 text-[#F4EDE3]">
-              <p className="text-xs font-extrabold uppercase tracking-wider text-[#D9A441]">{skuziOffer.title ?? "Your offer"}</p>
+            <div className="mb-3 rounded-2xl bg-[#231A2C] px-4 py-3 text-[#F4F0F7]">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-[#F2B33A]">{skuziOffer.title ?? "Your offer"}</p>
               <p className="mt-0.5 text-sm font-bold">
                 {skuziOffer.offerType === "discount_10" && acceptsMobileMoney
                   ? <>10% off with Skuzi: pay {fmt(payTotal)} instead of {fmt(grandTotal)}</>
@@ -1047,7 +1048,7 @@ export default function CustomerMenu() {
                 setPayPhone(phone);
                 setPayStep("entering_phone");
               }}
-              className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-brand-500/30"
+              className="w-full flex items-center justify-center gap-2 bg-action hover:bg-action-hover text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-action/30"
             >
               <svg
                 width="20"
@@ -1067,7 +1068,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "idle" && !acceptsMobileMoney && (
-            <div className="bg-gray-50 dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
+            <div className="bg-gray-50 dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
               <p className="text-sm font-bold text-gray-800 dark:text-white">Please pay your waiter</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 In-app Mobile Money isn't available at this venue yet.
@@ -1076,7 +1077,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "entering_phone" && (
-            <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               {/* Header */}
               <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
                 <p className="text-sm font-black text-gray-900 dark:text-white">
@@ -1090,8 +1091,8 @@ export default function CustomerMenu() {
               </div>
               {/* Skuzi money (from a creator's welcome) comes off the bill */}
               {useWallet > 0 && (
-                <div className="px-5 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-[#FBF1DE] dark:bg-[#2E2416]">
-                  <p className="text-sm font-bold text-gray-800 dark:text-[#F4EDE3]">💰 Your Skuzi money</p>
+                <div className="px-5 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-[#FFF7E0] dark:bg-[#2A2035]">
+                  <p className="text-sm font-bold text-gray-800 dark:text-[#F4F0F7]">💰 Your Skuzi money</p>
                   <p className="text-sm font-black text-green-700 dark:text-green-400">−{fmt(useWallet)}</p>
                 </div>
               )}
@@ -1109,7 +1110,7 @@ export default function CustomerMenu() {
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
                   MTN MoMo or Airtel Money number
                 </p>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
                   <svg
                     width="16"
                     height="16"
@@ -1166,7 +1167,7 @@ export default function CustomerMenu() {
                     onBlur={() => checkCreatorCode(creatorCode)}
                     placeholder="e.g. ALINE"
                     maxLength={16}
-                    className="mt-2 w-full bg-gray-50 dark:bg-[#1C1511] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white focus:outline-none focus:border-brand-500"
+                    className="mt-2 w-full bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white focus:outline-none focus:border-brand-500"
                   />
                   {creatorCheck === "ok" && creatorName && <p className="text-xs text-green-600 dark:text-green-400 mt-2">✓ {creatorName}'s code. Thanks for coming!</p>}
                   {creatorCheck === "unknown" && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">We don't know this code. You can still pay.</p>}
@@ -1176,7 +1177,7 @@ export default function CustomerMenu() {
               <div className="px-5 py-4 flex flex-col gap-2">
                 <button
                   onClick={handleMomoPay}
-                  className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-colors"
+                  className="w-full bg-action hover:bg-action-hover text-white font-bold py-3 rounded-xl transition-colors"
                 >
                   Confirm & pay {fmt(toPay)}
                 </button>
@@ -1237,7 +1238,7 @@ export default function CustomerMenu() {
                 issued at the counter.
               </p>
               {welcomeRwf > 0 && (
-                <p className="mt-3 rounded-xl bg-[#FBF1DE] px-3 py-2 text-sm font-bold text-[#2B201B] dark:bg-[#2E2416] dark:text-[#F4EDE3]">
+                <p className="mt-3 rounded-xl bg-[#FFF7E0] px-3 py-2 text-sm font-bold text-[#231A2C] dark:bg-[#2A2035] dark:text-[#F4F0F7]">
                   🎉 You got {fmt(welcomeRwf)} Skuzi money for your next Skuzi bill!
                 </p>
               )}
@@ -1284,7 +1285,7 @@ export default function CustomerMenu() {
   // ─── RATING ───────────────────────────────────────────────────────────────
   if (step === "rating") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
             <div className="text-6xl mb-4">🌟</div>
@@ -1295,7 +1296,7 @@ export default function CustomerMenu() {
               {venueName} · {tableLabel}
             </p>
           </div>
-          <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
             <StarRow
               label="🍽 Food"
               value={foodScore}
@@ -1317,13 +1318,13 @@ export default function CustomerMenu() {
             onChange={(e) => setRatingComment(e.target.value)}
             placeholder="Leave a comment..."
             rows={3}
-            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
+            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
           />
           {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
           <button
             onClick={() => handleSubmitRating(false)}
             disabled={ratingLoading}
-            className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-brand-500/30 active:scale-95 transition-all"
+            className="w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-action/30 active:scale-95 transition-all"
           >
             {ratingLoading ? "Submitting..." : "Submit rating"}
           </button>
@@ -1341,8 +1342,8 @@ export default function CustomerMenu() {
   // ─── CLOSED ───────────────────────────────────────────────────────────────
   if (step === "closed") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 py-10">
-        <div className="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-24 h-24 rounded-full bg-action flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-action/40">
           <CheckCircle size={44} className="text-white" />
         </div>
         <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
@@ -1353,9 +1354,9 @@ export default function CustomerMenu() {
         </p>
         <p className="text-sm text-gray-400 mt-3 mb-8">See you next time 👋</p>
         {welcomeRwf > 0 && (
-          <div className="w-full max-w-sm mb-4 rounded-2xl border-[1.5px] border-[#E9D3A6] bg-[#FBF1DE] px-5 py-4 text-center dark:border-[#5A4423] dark:bg-[#2E2416]">
-            <p className="text-sm font-black text-[#2B201B] dark:text-[#F4EDE3]">🎉 {fmt(welcomeRwf)} Skuzi money is waiting for you</p>
-            <p className="mt-1 text-xs text-[#6B574A] dark:text-[#D8CBBF]">It comes off your next bill when you pay with Skuzi, at any Skuzi restaurant.</p>
+          <div className="w-full max-w-sm mb-4 rounded-2xl border-[1.5px] border-[#FFE08A] bg-[#FFF7E0] px-5 py-4 text-center dark:border-[#4A3A5C] dark:bg-[#2A2035]">
+            <p className="text-sm font-black text-[#231A2C] dark:text-[#F4F0F7]">🎉 {fmt(welcomeRwf)} Skuzi money is waiting for you</p>
+            <p className="mt-1 text-xs text-[#665A72] dark:text-[#D3CADC]">It comes off your next bill when you pay with Skuzi, at any Skuzi restaurant.</p>
           </div>
         )}
         {tabId && (
@@ -1379,7 +1380,7 @@ export default function CustomerMenu() {
 
   return (
     // Desktop: side-by-side. Mobile: stacked
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col md:flex-row">
       {/* Last step before the first order: the guest's MoMo number */}
       {askPhone && (
         <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center bg-black/50 px-0 md:px-4" onClick={() => !loading && setAskPhone(false)}>
@@ -1388,9 +1389,9 @@ export default function CustomerMenu() {
             aria-modal="true"
             aria-labelledby="ask-phone-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full md:max-w-sm bg-white dark:bg-[#2B201B] rounded-t-[28px] md:rounded-[28px] px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl"
+            className="w-full md:max-w-sm bg-white dark:bg-[#3B2149] rounded-t-[28px] md:rounded-[28px] px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl"
           >
-            <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#D9A441]">Last step</p>
+            <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F2B33A]">Last step</p>
             <h2 id="ask-phone-title" className="mt-1 text-2xl font-black text-gray-900 dark:text-white">Your MoMo number</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">So you can pay your bill from your phone when you're ready.</p>
             <input
@@ -1403,13 +1404,13 @@ export default function CustomerMenu() {
               placeholder="078 123 4567"
               autoFocus
               aria-label="Your MTN MoMo or Airtel Money number"
-              className="mt-4 w-full px-4 py-3.5 text-lg font-bold tracking-wide rounded-2xl bg-gray-50 dark:bg-[#1C1511] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
+              className="mt-4 w-full px-4 py-3.5 text-lg font-bold tracking-wide rounded-2xl bg-gray-50 dark:bg-[#2B1838] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
             />
             {error && <p role="alert" className="text-sm text-red-500 mt-2">{error}</p>}
             <button
               onClick={sendFirstOrder}
               disabled={loading || orderLoading}
-              className="mt-4 w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2"
+              className="mt-4 w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-action/30 flex items-center justify-center gap-2"
             >
               {loading || orderLoading ? <><Loader size={16} className="animate-spin" /> Sending…</> : <>Send my order · {fmt(cartTotal)}</>}
             </button>
@@ -1431,32 +1432,33 @@ export default function CustomerMenu() {
         style={{ paddingBottom: (cartCount > 0 ? 84 : 0) + (placedOrders.length > 0 ? 68 : 0) }}
       >
         {/* Header: espresso band with the venue, the table, the waiter and the categories */}
-        <div className="sticky top-0 z-10 bg-[#2B201B] dark:bg-[#2B201B] text-[#F4EDE3] rounded-b-[28px] shadow-lg shadow-black/10">
+        <div className="sticky top-0 z-10 dark guest-skin bg-gray-900 text-[color:var(--g-text)] rounded-b-[28px] shadow-lg shadow-black/10">
           <div className="px-5 pt-5 pb-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={44} />
                 <div className="min-w-0">
                   <h1 className="font-display font-bold text-[22px] leading-tight truncate">{venueName}</h1>
-                  <p className="text-[13px] text-[#D8CBBF] truncate">
+                  <p className="text-[13px] text-[color:var(--g-muted)] truncate">
                     {tableLabel}
                     {waiterName ? ` · ${waiterName} is your waiter` : ""}
                   </p>
                 </div>
               </div>
+              <ThemeCycleButton className="ml-auto flex-shrink-0 !text-[color:var(--g-muted)] hover:!bg-white/10" />
               {placedOrders.length > 0 && (
                 <div className="hidden md:flex gap-2 flex-shrink-0">
                   <button
                     onClick={handleNudge}
                     disabled={nudgeLoading || justNudged}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-[#D9A441] text-[#2B201B] disabled:opacity-70 transition-all"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-action text-action-ink disabled:opacity-70 transition-all"
                   >
                     {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
                   </button>
                   <button
                     onClick={handleRequestBill}
                     disabled={billLoading}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold border-2 border-[#F4EDE3]/80 text-[#F4EDE3] disabled:opacity-50 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold border-2 border-white/80 text-[color:var(--g-text)] disabled:opacity-50 transition-all"
                   >
                     <Receipt size={14} /> {billLoading ? "..." : "My bill"}
                   </button>
@@ -1466,7 +1468,7 @@ export default function CustomerMenu() {
 
             {(isDemo || isGroupTab) && (
               <div className="flex flex-wrap gap-2 mt-3">
-                {isDemo && <span className="inline-flex items-center rounded-full bg-[#D9A441] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#2B201B]">Demo · no real money</span>}
+                {isDemo && <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[color:var(--g-text)]">Demo · no real money</span>}
                 {isGroupTab && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/10 px-2.5 py-1 rounded-full">
                     <Users size={11} /> Group tab
@@ -1476,14 +1478,14 @@ export default function CustomerMenu() {
             )}
 
             <div className="relative mt-4">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#D8CBBF]" />
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--g-muted)]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search the menu"
                 aria-label="Search the menu"
-                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-2xl bg-white/10 border-0 text-[#F4EDE3] placeholder-[#D8CBBF]/70 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-2xl bg-white/10 border-0 text-[color:var(--g-text)] placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-[#F2B33A]"
               />
             </div>
 
@@ -1494,7 +1496,7 @@ export default function CustomerMenu() {
                     key={cat}
                     onClick={() => scrollToCategory(cat)}
                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all active:scale-95 ${
-                      activeCategory === cat ? "bg-brand-500 text-white font-extrabold" : "bg-white/10 text-[#F4EDE3] font-semibold"
+                      activeCategory === cat ? "bg-action text-white font-extrabold" : "bg-white/10 text-[color:var(--g-text)] font-semibold"
                     }`}
                   >
                     {cat}
@@ -1587,13 +1589,13 @@ export default function CustomerMenu() {
 
         {/* Mobile bottom: reach the waiter, see the bill, send the order */}
         {(placedOrders.length > 0 || cartCount > 0) && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(43,32,27,0.25)] flex flex-col gap-2.5">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(35,26,44,0.25)] flex flex-col gap-2.5">
             {placedOrders.length > 0 && (
               <div className="flex gap-2.5">
                 <button
                   onClick={handleNudge}
                   disabled={nudgeLoading || justNudged}
-                  className="flex-1 h-[54px] rounded-[18px] bg-[#D9A441] text-[#2B201B] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
+                  className="flex-1 h-[54px] rounded-[18px] bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
                 >
                   {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
                 </button>
@@ -1609,7 +1611,7 @@ export default function CustomerMenu() {
             {cartCount > 0 && (
               <button
                 onClick={() => setCartOpen(!cartOpen)}
-                className="h-[60px] rounded-[20px] bg-brand-500 text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-brand-500/25 active:scale-[0.98] transition-all"
+                className="h-[60px] rounded-[20px] bg-action text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-action/25 active:scale-[0.98] transition-all"
               >
                 <span className="flex items-center gap-2"><ShoppingBag size={18} /> Send order · {cartCount} {cartCount === 1 ? "item" : "items"}</span>
                 <span>{fmt(cartTotal)}</span>
@@ -1620,7 +1622,7 @@ export default function CustomerMenu() {
       </div>
 
       {/* ── RIGHT: Order summary sidebar (desktop only) ─────────────────────── */}
-      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#2B201B] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
+      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#3B2149] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
         <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-base font-black text-gray-900 dark:text-white">
             Order Summary
@@ -1694,7 +1696,7 @@ export default function CustomerMenu() {
                         </span>
                         <button
                           onClick={() => addToCart(item)}
-                          className="w-6 h-6 rounded-lg bg-brand-500 flex items-center justify-center text-white active:scale-90"
+                          className="w-6 h-6 rounded-lg bg-action flex items-center justify-center text-white active:scale-90"
                         >
                           <Plus size={11} />
                         </button>
@@ -1732,7 +1734,7 @@ export default function CustomerMenu() {
             <button
               onClick={confirmOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-action/30"
             >
               {orderLoading ? (
                 <>
@@ -1751,7 +1753,7 @@ export default function CustomerMenu() {
             <button
               onClick={handleNudge}
               disabled={nudgeLoading || justNudged}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#D9A441] text-[#2B201B] disabled:opacity-80 transition-all"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] disabled:opacity-80 transition-all"
             >
               {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
             </button>
@@ -1773,7 +1775,7 @@ export default function CustomerMenu() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setCartOpen(false)}
           />
-          <div className="relative bg-white dark:bg-[#2B201B] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-[#3B2149] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-black text-gray-900 dark:text-white">
                 Your order
@@ -1811,7 +1813,7 @@ export default function CustomerMenu() {
                       </span>
                       <button
                         onClick={() => addToCart(item)}
-                        className="w-7 h-7 rounded-xl bg-brand-500 flex items-center justify-center text-white active:scale-90"
+                        className="w-7 h-7 rounded-xl bg-action flex items-center justify-center text-white active:scale-90"
                       >
                         <Plus size={13} />
                       </button>
@@ -1835,7 +1837,7 @@ export default function CustomerMenu() {
             <button
               onClick={confirmOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-action/30"
             >
               {orderLoading ? (
                 <>

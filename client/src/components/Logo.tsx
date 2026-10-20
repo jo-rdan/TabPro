@@ -8,9 +8,9 @@ interface LogoProps {
 }
 
 const TONES = {
-  rust: { bg: '#A64B31', fg: '#F4EDE3' },
-  espresso: { bg: '#2B201B', fg: '#D9A441' },
-  milk: { bg: '#F4EDE3', fg: '#A64B31' },
+  rust: { bg: '#BF4A1A', fg: '#F4F0F7' },
+  espresso: { bg: '#231A2C', fg: '#F2B33A' },
+  milk: { bg: '#F4F0F7', fg: '#BF4A1A' },
 };
 
 export function WavingHand({ color, strokeWidth = 5.5 }: { color: string; strokeWidth?: number }) {

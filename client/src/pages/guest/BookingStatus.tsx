@@ -15,12 +15,12 @@ type Booking = {
 };
 
 const HERO: Record<Booking["status"], { title: (b: Booking) => string; text: (b: Booking) => string; tone: string; Icon: typeof Send }> = {
-  pending: { title: () => "Request sent!", text: (b) => `${b.venue.name} will confirm soon.`, tone: "bg-gray-100 text-brand-500 dark:bg-[#2B201B] dark:text-[#D9A441]", Icon: Send },
+  pending: { title: () => "Request sent!", text: (b) => `${b.venue.name} will confirm soon.`, tone: "bg-gray-100 text-brand-500 dark:bg-gray-900 dark:text-[color:var(--g-hi)]", Icon: Send },
   confirmed: { title: () => "You're booked!", text: (b) => `See you ${dayLabel(b.date).toLowerCase() === "today" ? "today" : dayLabel(b.date)} at ${b.time}.`, tone: "bg-green-500 text-white", Icon: CalendarCheck },
   seated: { title: () => "Enjoy your night!", text: (b) => `You're at ${b.venue.name}${b.table ? `, ${b.table}` : ""}.`, tone: "bg-green-500 text-white", Icon: Check },
-  declined: { title: () => "Not this time", text: (b) => `${b.venue.name} can't take this booking. Try another time or another place.`, tone: "bg-gray-100 text-gray-500 dark:bg-[#2B201B] dark:text-gray-300", Icon: CalendarX },
-  cancelled: { title: () => "Booking cancelled", text: () => "This booking is cancelled.", tone: "bg-gray-100 text-gray-500 dark:bg-[#2B201B] dark:text-gray-300", Icon: CalendarX },
-  expired: { title: () => "No answer in time", text: (b) => `${b.venue.name} didn't confirm before the time. Sorry! You can book again.`, tone: "bg-gray-100 text-gray-500 dark:bg-[#2B201B] dark:text-gray-300", Icon: Clock },
+  declined: { title: () => "Not this time", text: (b) => `${b.venue.name} can't take this booking. Try another time or another place.`, tone: "bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-300", Icon: CalendarX },
+  cancelled: { title: () => "Booking cancelled", text: () => "This booking is cancelled.", tone: "bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-300", Icon: CalendarX },
+  expired: { title: () => "No answer in time", text: (b) => `${b.venue.name} didn't confirm before the time. Sorry! You can book again.`, tone: "bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-300", Icon: Clock },
 };
 
 export default function BookingStatus() {
@@ -62,10 +62,10 @@ export default function BookingStatus() {
   };
 
   if (error === "missing") {
-    return <GuestShell tab="bookings"><GuestState title="We couldn't find this booking" text="The link may be incomplete. Open it again from where you saved it." action={<Link to="/me#bookings" className="mt-2 flex min-h-[44px] items-center rounded-full bg-brand-500 px-6 font-extrabold text-white">My bookings</Link>} /></GuestShell>;
+    return <GuestShell tab="bookings"><GuestState title="We couldn't find this booking" text="The link may be incomplete. Open it again from where you saved it." action={<Link to="/me#bookings" className="mt-2 flex min-h-[44px] items-center rounded-full bg-action px-6 font-extrabold text-white">My bookings</Link>} /></GuestShell>;
   }
   if (!b) {
-    return <GuestShell tab="bookings">{error ? <GuestState title="Couldn't load your booking" text={error} action={<button onClick={() => { setError(""); load(); }} className="mt-2 min-h-[44px] rounded-full bg-brand-500 px-6 font-extrabold text-white">Try again</button>} /> : <div className="mx-auto mt-16 h-40 max-w-md animate-pulse rounded-3xl bg-gray-100 dark:bg-[#2B201B]" />}</GuestShell>;
+    return <GuestShell tab="bookings">{error ? <GuestState title="Couldn't load your booking" text={error} action={<button onClick={() => { setError(""); load(); }} className="mt-2 min-h-[44px] rounded-full bg-action px-6 font-extrabold text-white">Try again</button>} /> : <div className="mx-auto mt-16 h-40 max-w-md animate-pulse rounded-3xl bg-gray-100 dark:bg-gray-900" />}</GuestShell>;
   }
 
   const hero = HERO[b.status];
@@ -81,16 +81,16 @@ export default function BookingStatus() {
           <p className="text-[15px] leading-relaxed text-gray-500 dark:text-gray-400" aria-live="polite">{hero.text(b)}</p>
         </div>
 
-        <div className="mt-6 rounded-[22px] bg-[#2B201B] p-5 text-[#F4EDE3]">
+        <div className="mt-6 rounded-[22px] bg-gray-900 p-5 text-[color:var(--g-text)]">
           <Link to={`/v/${b.venue.slug}`} className="font-display text-xl font-extrabold hover:underline">{b.venue.name}</Link>
-          {b.venue.location && <p className="text-sm text-[#D8CBBF]">{b.venue.location}</p>}
+          {b.venue.location && <p className="text-sm text-[color:var(--g-muted)]">{b.venue.location}</p>}
           <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-            <div><p className="text-xs text-[#D8CBBF]">Day</p><p className="font-extrabold">{dayLabel(b.date, true)}</p></div>
-            <div><p className="text-xs text-[#D8CBBF]">Time</p><p className="font-extrabold">{b.time}</p></div>
-            <div><p className="text-xs text-[#D8CBBF]">People</p><p className="flex items-center gap-1 font-extrabold"><Users size={14} />{b.partySize}</p></div>
+            <div><p className="text-xs text-[color:var(--g-muted)]">Day</p><p className="font-extrabold">{dayLabel(b.date, true)}</p></div>
+            <div><p className="text-xs text-[color:var(--g-muted)]">Time</p><p className="font-extrabold">{b.time}</p></div>
+            <div><p className="text-xs text-[color:var(--g-muted)]">People</p><p className="flex items-center gap-1 font-extrabold"><Users size={14} />{b.partySize}</p></div>
           </div>
           {b.table && <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm font-bold">Your table: {b.table}</p>}
-          {b.note && <p className="mt-3 text-sm text-[#D8CBBF]">"{b.note}"</p>}
+          {b.note && <p className="mt-3 text-sm text-[color:var(--g-muted)]">"{b.note}"</p>}
         </div>
 
         {active && future && (
@@ -102,8 +102,8 @@ export default function BookingStatus() {
             ].map((s, i, all) => (
               <li key={s.title} className="flex gap-3">
                 <div className="flex flex-col items-center">
-                  <span className={`flex h-6 w-6 items-center justify-center rounded-full ${s.done ? "bg-green-500 text-white" : "border-[2.5px] border-[#D9A441]"}`}>{s.done && <Check size={14} strokeWidth={3} />}</span>
-                  {i < all.length - 1 && <span className="h-7 w-0.5 bg-gray-200 dark:bg-[#3A2D26]" />}
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full ${s.done ? "bg-green-500 text-white" : "border-[2.5px] border-[color:var(--g-hi)]"}`}>{s.done && <Check size={14} strokeWidth={3} />}</span>
+                  {i < all.length - 1 && <span className="h-7 w-0.5 bg-gray-200 dark:bg-gray-800" />}
                 </div>
                 <div className="pb-2"><p className="font-bold leading-6">{s.title}</p><p className="text-xs text-gray-500 dark:text-gray-400">{s.text}</p></div>
               </li>
@@ -112,7 +112,7 @@ export default function BookingStatus() {
         )}
 
         {active && future && pushSupported() && (
-          <div className="mt-6 rounded-[20px] border-[1.5px] border-gray-200 p-4 dark:border-[#3A2D26]">
+          <div className="mt-6 rounded-[20px] border-[1.5px] border-gray-200 p-4 dark:border-gray-800">
             {notify === "on" ? (
               <p className="flex items-center gap-2 text-sm font-bold text-green-600 dark:text-green-400"><Check size={16} /> We'll notify you on this phone.</p>
             ) : notify === "home" ? (
@@ -120,7 +120,7 @@ export default function BookingStatus() {
             ) : notify === "off" ? (
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">Notifications are off. No problem: come back to this page to see the answer.</p>
             ) : (
-              <button onClick={turnOn} className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-gray-900 text-sm font-extrabold text-[#F4EDE3] dark:bg-[#D9A441] dark:text-[#2B201B]">
+              <button onClick={turnOn} className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-gray-900 text-sm font-extrabold text-[color:var(--g-text)] dark:bg-action dark:text-action-ink">
                 <Bell size={16} /> Notify me of the answer
               </button>
             )}
@@ -129,10 +129,10 @@ export default function BookingStatus() {
 
         <div className="mt-6 flex flex-col items-center gap-2">
           {(b.status === "declined" || b.status === "expired" || b.status === "cancelled") && (
-            <Link to={`/v/${b.venue.slug}/book`} className="flex min-h-[50px] w-full items-center justify-center rounded-full bg-brand-500 font-extrabold text-white">Book again</Link>
+            <Link to={`/v/${b.venue.slug}/book`} className="flex min-h-[50px] w-full items-center justify-center rounded-full bg-action font-extrabold text-white">Book again</Link>
           )}
           {active && future && (
-            <button onClick={() => setConfirm(true)} disabled={busy} className="min-h-[44px] px-4 text-sm font-bold text-brand-600 hover:underline dark:text-[#DCA088]">Cancel booking</button>
+            <button onClick={() => setConfirm(true)} disabled={busy} className="min-h-[44px] px-4 text-sm font-bold text-brand-600 hover:underline dark:text-[#F29C6F]">Cancel booking</button>
           )}
           <p className="text-center text-xs text-gray-500 dark:text-gray-400">This page is your booking. It's saved under Bookings on this phone.</p>
         </div>

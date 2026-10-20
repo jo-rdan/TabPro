@@ -65,8 +65,8 @@ export default function MoneyTonight({ hourly }: MoneyTonightProps) {
       >
         <defs>
           <linearGradient id="money-honey" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#D9A441" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#D9A441" stopOpacity="0" />
+            <stop offset="0%" stopColor="#F2B33A" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#F2B33A" stopOpacity="0" />
           </linearGradient>
         </defs>
         <g className="stroke-gray-100 dark:stroke-gray-800" strokeWidth="1.5">
@@ -75,9 +75,9 @@ export default function MoneyTonight({ hourly }: MoneyTonightProps) {
         {last && (
           <>
             <path key={`a${lastValue}`} className="money-area" d={`${line} L${last[0]} ${BOTTOM} L${left} ${BOTTOM} Z`} fill="url(#money-honey)" />
-            <path key={`l${lastValue}`} className="money-line" pathLength={1} d={line} fill="none" stroke="#A64B31" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-            <circle className="money-ring" cx={last[0]} cy={last[1]} r="8" fill="#A64B31" />
-            <circle cx={last[0]} cy={last[1]} r="5.5" fill="#A64B31" />
+            <path key={`l${lastValue}`} className="money-line" pathLength={1} d={line} fill="none" stroke="#BF4A1A" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+            <circle className="money-ring" cx={last[0]} cy={last[1]} r="8" fill="#BF4A1A" />
+            <circle cx={last[0]} cy={last[1]} r="5.5" fill="#BF4A1A" />
             {lastValue > 0 && (
               <text
                 x={valueOnLeft ? last[0] - 14 : last[0] + 14}

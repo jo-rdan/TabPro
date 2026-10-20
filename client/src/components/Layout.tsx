@@ -95,13 +95,13 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   const isMoreActive = MORE_NAV.some((item) => isActive(item.href));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] text-gray-900 dark:text-gray-100">
       {/* ── Side nav (desktop md+) ─────────────────────────────────────────── */}
       <aside
         className={`
         hidden md:flex flex-col
         fixed top-0 left-0 h-full
-        bg-white dark:bg-[#2B201B]
+        bg-white dark:bg-[#3B2149]
         border-r border-gray-200 dark:border-gray-800
         z-20 transition-[width] duration-300
         ${collapsed ? "w-[76px]" : "w-60"}
@@ -111,7 +111,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         <div className={`pt-6 pb-5 ${collapsed ? "px-0 flex justify-center" : "px-5"}`}>
           {collapsed ? (
             <svg width="34" height="34" viewBox="8 4 90 92" className="nav-wave" role="img" aria-label="Skuzi">
-              <WavingHand color={theme === "dark" ? "#D9A441" : "#A64B31"} strokeWidth={6.5} />
+              <WavingHand color={theme === "dark" ? "#F2B33A" : "#BF4A1A"} strokeWidth={6.5} />
             </svg>
           ) : (
             <>
@@ -129,7 +129,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expand menu" : "Collapse menu"}
           title={collapsed ? "Expand menu" : "Collapse menu"}
-          className="absolute -right-3.5 top-8 z-30 w-7 h-7 rounded-full bg-white dark:bg-[#3A2D26] border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white shadow-sm flex items-center justify-center"
+          className="absolute -right-3.5 top-8 z-30 w-7 h-7 rounded-full bg-white dark:bg-[#4A2D5C] border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white shadow-sm flex items-center justify-center"
         >
           {collapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
@@ -174,7 +174,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             >
               <span className="relative flex-shrink-0">
                 <Icon size={17} />
-                {collapsed && pendingBookings > 0 && href === "/bookings" && <span className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-[#2B201B]" />}
+                {collapsed && pendingBookings > 0 && href === "/bookings" && <span className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-[#3B2149]" />}
               </span>
               {!collapsed && <span className="flex-1 whitespace-nowrap">{label}</span>}
               {!collapsed && badge(href)}
@@ -224,7 +224,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       <header
         className="
         md:hidden fixed top-0 left-0 right-0 z-20
-        bg-white dark:bg-[#2B201B]
+        bg-white dark:bg-[#3B2149]
         border-b border-gray-200 dark:border-gray-800
         h-14 px-4 flex items-center justify-between
       "
@@ -234,8 +234,8 @@ export default function Layout({ children, wide = false }: LayoutProps) {
           <button onClick={() => setVenueSheet(true)} className="flex items-center gap-2.5 min-w-0 text-left" aria-label={`${venue.name}: venue card`}>
             <span className="relative flex-shrink-0">
               <VenueLogo logoUrl={venue.logoUrl} venueName={venue.name} size={36} />
-              <span className="absolute -bottom-1.5 -right-1.5 w-[22px] h-[22px] rounded-full bg-brand-500 ring-2 ring-white dark:ring-[#2B201B] flex items-center justify-center">
-                <svg width="15" height="15" viewBox="8 4 90 92" className="nav-wave" aria-hidden="true"><WavingHand color="#F4EDE3" strokeWidth={8} /></svg>
+              <span className="absolute -bottom-1.5 -right-1.5 w-[22px] h-[22px] rounded-full bg-brand-500 ring-2 ring-white dark:ring-[#3B2149] flex items-center justify-center">
+                <svg width="15" height="15" viewBox="8 4 90 92" className="nav-wave" aria-hidden="true"><WavingHand color="#F4F0F7" strokeWidth={8} /></svg>
               </span>
             </span>
             <span className="min-w-0">
@@ -278,7 +278,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       <nav
         className="
         md:hidden fixed bottom-0 left-0 right-0 z-20
-        bg-white dark:bg-[#2B201B]
+        bg-white dark:bg-[#3B2149]
         border-t border-gray-200 dark:border-gray-800
         h-16 flex items-stretch
       "
@@ -333,7 +333,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       {venueSheet && venue && (
         <div className="md:hidden fixed inset-0 z-30">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setVenueSheet(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#2B201B] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-5">
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#3B2149] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-5">
             <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-3" />
             <button onClick={() => setVenueSheet(false)} aria-label="Close" className="absolute right-4 top-4 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg">
               <X size={16} />
@@ -342,12 +342,12 @@ export default function Layout({ children, wide = false }: LayoutProps) {
               <LogoUploader venueName={venue.name} currentLogoUrl={venue.logoUrl} onUploaded={saveLogo} size={96} />
               <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{venue.name}</p>
               {venue.isDemo && (
-                <span className="mt-2 rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+                <span className="mt-2 rounded-full bg-brand-100 dark:bg-white/10 px-3 py-1 text-xs font-bold text-brand-700 dark:text-[#F59A63]">
                   Demo venue · payments are simulated
                 </span>
               )}
             </div>
-            <div className="mt-6 flex items-center justify-between rounded-2xl bg-gray-50 dark:bg-[#231A16] px-4 py-3">
+            <div className="mt-6 flex items-center justify-between rounded-2xl bg-gray-50 dark:bg-[#3B2149] px-4 py-3">
               <Wordmark size={18} on="light" className="nav-wave dark:hidden" />
               <Wordmark size={18} on="dark" className="nav-wave hidden dark:inline-flex" />
               <span className="text-xs italic font-semibold text-gray-500 dark:text-gray-400">Skuzi! Another round.</span>
@@ -363,7 +363,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#2B201B] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-4 max-h-[75vh] overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#3B2149] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-4 max-h-[75vh] overflow-y-auto">
             {/* Drag handle */}
             <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-4" />
 

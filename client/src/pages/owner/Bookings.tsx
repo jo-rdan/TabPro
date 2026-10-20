@@ -94,7 +94,7 @@ export default function Bookings() {
   const booked = (list ?? []).filter((b) => b.status === 'confirmed' || b.status === 'seated');
   const closed = (list ?? []).filter((b) => ['declined', 'cancelled', 'expired'].includes(b.status));
   const people = (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`;
-  const card = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#2B201B]';
+  const card = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#3B2149]';
 
   return (
     <Layout>
@@ -114,7 +114,7 @@ export default function Bookings() {
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="Day">
               {Array.from({ length: DAYS }, (_, i) => kigaliDay(i - 0.25)).map((k) => (
                 <button key={k} role="tab" aria-selected={day === k} onClick={() => setDay(k)}
-                  className={`min-h-[42px] flex-none rounded-full border px-4 text-sm font-bold transition ${day === k ? 'border-gray-900 bg-gray-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-gray-900' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-800 dark:bg-[#2B201B] dark:text-gray-200'}`}>
+                  className={`min-h-[42px] flex-none rounded-full border px-4 text-sm font-bold transition ${day === k ? 'border-gray-900 bg-gray-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-gray-900' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-800 dark:bg-[#3B2149] dark:text-gray-200'}`}>
                   {k === tonight ? 'Tonight' : dayLabel(k, true)}
                 </button>
               ))}
@@ -148,7 +148,7 @@ export default function Bookings() {
                             </div>
                           </div>
                           <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:items-center">
-                            <label className="col-span-2 flex min-h-[44px] items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-[#2B201B] dark:text-gray-200 sm:flex-1">
+                            <label className="col-span-2 flex min-h-[44px] items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-[#3B2149] dark:text-gray-200 sm:flex-1">
                               <span>Table</span>
                               <select value={pick[b.id] ?? ''} onChange={(e) => setPick((p) => ({ ...p, [b.id]: e.target.value }))} className="max-w-[60%] bg-transparent font-bold outline-none">
                                 <option value="">Decide later</option>
@@ -179,7 +179,7 @@ export default function Bookings() {
                           </div>
                           <div className="flex items-center gap-2 pl-[68px] sm:pl-0">
                             <select aria-label={`Table for ${b.name}`} value={b.table?.id ?? ''} disabled={busy === b.id || b.status === 'seated'} onChange={(e) => act(b, 'table', e.target.value || null)}
-                              className="min-h-[40px] flex-1 rounded-xl border border-gray-200 bg-white px-2 text-sm font-bold text-gray-800 dark:border-gray-700 dark:bg-[#2B201B] dark:text-gray-200 sm:flex-none">
+                              className="min-h-[40px] flex-1 rounded-xl border border-gray-200 bg-white px-2 text-sm font-bold text-gray-800 dark:border-gray-700 dark:bg-[#3B2149] dark:text-gray-200 sm:flex-none">
                               <option value="">No table yet</option>
                               {tables.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                             </select>
@@ -207,10 +207,10 @@ export default function Bookings() {
 
           {/* Your page + settings */}
           <aside className="space-y-4">
-            <div className="rounded-2xl bg-[#2B201B] p-5 text-[#F4EDE3]">
+            <div className="rounded-2xl bg-[#231A2C] p-5 text-[#F4F0F7]">
               <p className="text-xs font-bold uppercase tracking-wider text-amber-500">Your Skuzi page</p>
               <p className="mt-1 break-all text-sm font-bold">{pageUrl ? pageUrl.replace(/^https?:\/\//, '') : '…'}</p>
-              <p className="mt-1 text-xs text-[#D8CBBF]">Guests see your menu and book a table here.</p>
+              <p className="mt-1 text-xs text-[#D3CADC]">Guests see your menu and book a table here.</p>
               <div className="mt-3 flex gap-2">
                 <button onClick={copy} disabled={!pageUrl} className="flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/10 text-sm font-bold hover:bg-white/15">{copied ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy link</>}</button>
                 <a href={pageUrl || undefined} target="_blank" rel="noreferrer" className="flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 text-sm font-bold text-gray-900 hover:bg-amber-400"><ExternalLink size={15} /> Open</a>

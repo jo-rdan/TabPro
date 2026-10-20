@@ -32,8 +32,8 @@ function Reveal({ children, delay = 0, className = "" }: { children: ReactNode; 
 
 function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.16em] ${dark ? "bg-white/[0.06] text-[#E9C77E] ring-1 ring-white/10" : "bg-[var(--card)] text-[var(--rust-ink)] ring-1 ring-[var(--line)]"}`}>
-      <Hand size={13} color={dark ? "#D9A441" : "#A64B31"} />
+    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.16em] ${dark ? "bg-white/[0.06] text-[#FFD15C] ring-1 ring-white/10" : "bg-[var(--card)] text-[var(--rust-ink)] ring-1 ring-[var(--line)]"}`}>
+      <Hand size={13} color={dark ? "#F0763A" : "#BF4A1A"} />
       {children}
     </span>
   );
@@ -45,7 +45,7 @@ function Swoosh({ children }: { children: ReactNode }) {
     <span className="relative inline-block whitespace-nowrap">
       {children}
       <svg viewBox="0 0 300 24" preserveAspectRatio="none" className="sk-swoosh absolute -bottom-[0.12em] left-0 h-[0.32em] w-full" aria-hidden="true">
-        <path d="M4 16C60 6 140 4 296 12" fill="none" stroke="#D9A441" strokeWidth="8" strokeLinecap="round" pathLength={1} />
+        <path d="M4 16C60 6 140 4 296 12" fill="none" stroke="#F2B33A" strokeWidth="8" strokeLinecap="round" pathLength={1} />
       </svg>
     </span>
   );
@@ -56,8 +56,8 @@ function ImigongoBand() {
     <svg width="100%" height="22" aria-hidden="true" className="block">
       <defs>
         <pattern id="imi-band" width="30" height="22" patternUnits="userSpaceOnUse">
-          <path d="M0 22L15 0L30 22Z" fill="#A64B31" />
-          <path d="M8 22L15 11L22 22Z" fill="#2B201B" />
+          <path d="M0 22L15 0L30 22Z" fill="#BF4A1A" />
+          <path d="M8 22L15 11L22 22Z" fill="#231A2C" />
         </pattern>
       </defs>
       <rect width="100%" height="22" fill="url(#imi-band)" />
@@ -77,21 +77,21 @@ function Nav() {
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 bg-[var(--hero-bg)] transition-all duration-300 ${scrolled ? "py-3 shadow-[0_1px_0_var(--hero-ring)]" : "py-5"}`}>
+    <header className={`fixed inset-x-0 top-0 z-50 bg-[var(--paper)] transition-all duration-300 ${scrolled ? "py-3 shadow-[0_1px_0_var(--line)]" : "py-5"}`}>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8">
         <a href="/" aria-label="Skuzi home" className="flex items-center">
-          <AnimatedLogo size={28} on="light" bg="#FFFCF7" className="dark:hidden" />
-          <AnimatedLogo size={28} on="dark" bg="#1C1511" className="hidden dark:inline-flex" />
+          <AnimatedLogo size={28} on="light" bg="#FDFCFE" className="dark:hidden" />
+          <AnimatedLogo size={28} on="dark" bg="#1B1524" className="hidden dark:inline-flex" />
         </a>
-        <div className="hidden items-center gap-1 rounded-full bg-[var(--hero-chip)] p-1 ring-1 ring-[var(--hero-ring)] md:flex">
+        <div className="hidden items-center gap-1 rounded-full bg-[var(--bg)] p-1 ring-1 ring-[var(--line)] md:flex">
           {[["How it works", "#tour"], ["For owners", "#owners"], ["Questions", "#faq"]].map(([l, h]) => (
-            <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[var(--hero-body)] transition hover:bg-[var(--hero-chip)] hover:text-[var(--hero-ink)]">{l}</a>
+            <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[var(--body)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)]">{l}</a>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <span className="hidden xl:block"><ThemeSwitch /></span>
           <ThemeCycleButton className="xl:hidden" />
-          {!WAITLIST_MODE && <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--hero-body)] transition hover:text-[var(--hero-ink)] sm:block">
+          {!WAITLIST_MODE && <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--body)] transition hover:text-[var(--ink)] sm:block">
             {loggedIn ? "Dashboard" : "Log in"}
           </Link>}
           <button onClick={openBookDemo} className="rounded-full bg-[var(--cta-bg)] px-4 py-2 text-[13.5px] font-extrabold text-[var(--cta-ink)] transition hover:bg-[var(--cta-hover)]">
@@ -123,7 +123,7 @@ function Hero() {
         <div className="mx-auto max-w-4xl text-center">
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full bg-[var(--hero-chip)] py-1 pl-1 pr-3 text-[13px] text-[var(--hero-body)] ring-1 ring-[var(--hero-ring)]">
-              <span className="relative flex h-5 items-center rounded-full bg-[#5E7A55] px-2 text-[11px] font-bold text-[#F4EDE3]">
+              <span className="relative flex h-5 items-center rounded-full bg-[#5E7A55] px-2 text-[11px] font-bold text-[#F4F0F7]">
                 <span className="sk-ping absolute left-1.5 h-2 w-2 rounded-full bg-[#A9BE9F]" />
                 <span className="relative ml-3">Kigali</span>
               </span>
@@ -134,7 +134,7 @@ function Hero() {
             <h1 className="mt-7 font-display text-[46px] font-extrabold leading-[0.98] tracking-[-0.045em] text-balance sm:text-7xl lg:text-[92px]">
               <span className="inline-flex items-baseline">
                 Less waiting.
-                <span className="sk-wave ml-2 inline-block translate-y-[0.06em] text-[#D9A441]"><Hand size={64} color="currentColor" className="h-[0.8em] w-[0.8em]" /></span>
+                <span className="sk-wave ml-2 inline-block translate-y-[0.06em] text-[var(--hero-hand)]"><Hand size={64} color="currentColor" className="h-[0.8em] w-[0.8em]" /></span>
               </span>
               <br />
               <Swoosh><span className="text-[var(--hero-accent)]">More fun.</span></Swoosh>
@@ -270,8 +270,8 @@ function PainSwitch() {
           <div className="mt-8 flex flex-col items-center gap-2" aria-hidden="true">
             <div className="relative grid w-[300px] grid-cols-2 overflow-hidden rounded-full bg-[var(--card)] p-1.5 text-[14px] font-bold ring-1 ring-[var(--line)]">
               <span className="absolute inset-y-1.5 left-1.5 rounded-full bg-[#5E7A55] transition-[width] duration-500 ease-out" style={{ width: `calc((100% - 12px) * ${done / PAINS.length})` }} />
-              <span className={`relative z-10 py-2 text-center transition-colors ${done >= 2 ? "text-[#F4EDE3]" : "text-[var(--ink)]"}`}>Without Skuzi</span>
-              <span className={`relative z-10 py-2 text-center transition-colors ${all ? "text-[#F4EDE3]" : "text-[var(--muted)]"}`}>With Skuzi</span>
+              <span className={`relative z-10 py-2 text-center transition-colors ${done >= 2 ? "text-[#F4F0F7]" : "text-[var(--ink)]"}`}>Without Skuzi</span>
+              <span className={`relative z-10 py-2 text-center transition-colors ${all ? "text-[#F4F0F7]" : "text-[var(--muted)]"}`}>With Skuzi</span>
             </div>
             <p className={`text-[13px] font-semibold text-[var(--muted)] transition-opacity duration-500 ${done ? "opacity-0" : "opacity-100"}`}>
               Keep scrolling <span className="sk-bob inline-block">↓</span>
@@ -285,9 +285,9 @@ function PainSwitch() {
               style={{ left: `${handX * 100}%`, opacity: handVisible ? 1 : 0 }}
               aria-hidden="true"
             >
-              <span className="sk-wave inline-block drop-shadow-[0_10px_20px_rgba(217,164,65,0.45)]"><Hand size={56} color="#D9A441" /></span>
+              <span className="sk-wave inline-block drop-shadow-[0_10px_20px_rgba(242,179,58,0.45)]"><Hand size={56} color="#F0763A" /></span>
             </div>
-            <div className="pointer-events-none absolute -top-2 left-0 z-10 hidden h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#D9A441] to-[#D9A441] lg:block" style={{ width: `${Math.max(0, handX) * 100}%`, opacity: handVisible || all ? 0.8 : 0, transition: "opacity .3s" }} />
+            <div className="pointer-events-none absolute -top-2 left-0 z-10 hidden h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#F2B33A] to-[#F2B33A] lg:block" style={{ width: `${Math.max(0, handX) * 100}%`, opacity: handVisible || all ? 0.8 : 0, transition: "opacity .3s" }} />
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {PAINS.map(({ pain, fix }, i) => (
@@ -314,13 +314,13 @@ const FLIP_AT = [0.22, 0.38, 0.54, 0.7];
 function FaceCard({ side, fixed = false }: { side: { icon: typeof Zap; title: string; text: string }; fixed?: boolean }) {
   const Icon = side.icon;
   return (
-    <div className={`sk-face h-full rounded-[28px] p-7 ${fixed ? "sk-face-back bg-[#2B201B] text-[#F4EDE3] shadow-[0_30px_60px_-30px_rgba(43,32,27,0.6)]" : "bg-[var(--card)] ring-1 ring-[var(--line)]"}`}>
-      <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${fixed ? "bg-[#D9A441] text-[#2B201B]" : "bg-[var(--bg)] text-[var(--muted)]"}`}>
+    <div className={`sk-face h-full rounded-[28px] p-7 ${fixed ? "sk-face-back bg-[#231A2C] text-[#F4F0F7] shadow-[0_30px_60px_-30px_rgba(35,26,44,0.6)]" : "bg-[var(--card)] ring-1 ring-[var(--line)]"}`}>
+      <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${fixed ? "bg-[#F2B33A] text-[#231A2C]" : "bg-[var(--bg)] text-[var(--muted)]"}`}>
         <Icon size={22} />
       </span>
       <p className={`mt-5 text-[11px] font-extrabold uppercase tracking-[0.16em] ${fixed ? "text-[#A9BE9F]" : "text-[var(--rust-ink)]"}`}>{fixed ? "With Skuzi" : "Without Skuzi"}</p>
       <h3 className="mt-1.5 font-display text-[22px] font-bold leading-tight">{side.title}</h3>
-      <p className={`mt-2.5 text-[15px] leading-relaxed ${fixed ? "text-[#D8CBBF]" : "text-[var(--body)]"}`}>{side.text}</p>
+      <p className={`mt-2.5 text-[15px] leading-relaxed ${fixed ? "text-[#D3CADC]" : "text-[var(--body)]"}`}>{side.text}</p>
     </div>
   );
 }
@@ -365,10 +365,10 @@ function Tour() {
               <button
                 key={title}
                 onClick={() => { setActive(i); setPaused(true); }}
-                className={`group relative w-full overflow-hidden rounded-3xl p-6 text-left transition-all duration-300 ${on ? "bg-[var(--card)] shadow-[0_24px_50px_-30px_rgba(43,32,27,0.45)] ring-1 ring-[var(--line)]" : "hover:bg-[var(--card)]"}`}
+                className={`group relative w-full overflow-hidden rounded-3xl p-6 text-left transition-all duration-300 ${on ? "bg-[var(--card)] shadow-[0_24px_50px_-30px_rgba(35,26,44,0.45)] ring-1 ring-[var(--line)]" : "hover:bg-[var(--card)]"}`}
               >
                 <div className="flex items-start gap-5">
-                  <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition ${on ? "bg-[#D9A441] text-[#2B201B]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--line)]"}`}>
+                  <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl transition ${on ? "bg-[#F2B33A] text-[#231A2C]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--line)]"}`}>
                     <Icon size={21} />
                   </span>
                   <div>
@@ -380,7 +380,7 @@ function Tour() {
                     </div>
                   </div>
                 </div>
-                {on && !paused && inView && <span key={active} className="sk-progress absolute bottom-0 left-0 h-[3px] bg-[#D9A441]" />}
+                {on && !paused && inView && <span key={active} className="sk-progress absolute bottom-0 left-0 h-[3px] bg-[#F2B33A]" />}
               </button>
             );
           })}
@@ -410,7 +410,7 @@ function Slider({ label, value, min, max, step, onChange, format }: { label: str
         type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="sk-range mt-3 w-full"
-        style={{ background: `linear-gradient(90deg, #A64B31 ${pct}%, var(--line) ${pct}%)` }}
+        style={{ background: `linear-gradient(90deg, #BF4A1A ${pct}%, var(--line) ${pct}%)` }}
       />
     </label>
   );
@@ -423,7 +423,7 @@ function OneMoreRound() {
   const extra = tables * round * nights;
   return (
     <section className="relative overflow-hidden bg-[var(--paper)] py-24 sm:py-28">
-      <div className="pointer-events-none absolute -left-32 top-10 h-96 w-96 rounded-full bg-[#D9A441]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -left-32 top-10 h-96 w-96 rounded-full bg-[#F2B33A]/20 blur-3xl" />
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2">
         <Reveal>
           <Eyebrow>The hidden cost</Eyebrow>
@@ -435,19 +435,19 @@ function OneMoreRound() {
           </p>
         </Reveal>
         <Reveal delay={120}>
-          <div className="rounded-[32px] bg-[var(--card)] p-7 shadow-[0_40px_80px_-40px_rgba(43,32,27,0.45)] ring-1 ring-[var(--line)] sm:p-9">
+          <div className="rounded-[32px] bg-[var(--card)] p-7 shadow-[0_40px_80px_-40px_rgba(35,26,44,0.45)] ring-1 ring-[var(--line)] sm:p-9">
             <div className="space-y-7">
               <Slider label="Tables with guests on a normal night" value={tables} min={3} max={60} step={1} onChange={setTables} format={(v) => `${v}`} />
               <Slider label="Price of one round" value={round} min={1000} max={20000} step={500} onChange={setRound} format={(v) => `${fmt(v)} RWF`} />
               <Slider label="Nights open each month" value={nights} min={4} max={30} step={1} onChange={setNights} format={(v) => `${v}`} />
             </div>
-            <div className="mt-8 rounded-[24px] bg-[#2B201B] p-6 text-[#F4EDE3] dark:bg-[#1C1511]">
-              <p className="text-[14px] text-[#D8CBBF]">If each table misses just <b className="text-[#F4EDE3]">one round</b> a night, you lose</p>
-              <p className="mt-1 font-display text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#E08A6A] sm:text-[52px]">
-                −{fmt(extra)} <span className="text-[18px] text-[#D8CBBF]">RWF a month</span>
+            <div className="mt-8 rounded-[24px] bg-[#231A2C] p-6 text-[#F4F0F7] dark:bg-[#2B1838]">
+              <p className="text-[14px] text-[#D3CADC]">If each table misses just <b className="text-[#F4F0F7]">one round</b> a night, you lose</p>
+              <p className="mt-1 font-display text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#F0884F] sm:text-[52px]">
+                −{fmt(extra)} <span className="text-[18px] text-[#D3CADC]">RWF a month</span>
               </p>
-              <p className="mt-3 border-t border-white/10 pt-3 text-[14px] text-[#D8CBBF]">
-                That's <b className="text-[#F4EDE3] tabular-nums">{fmt(extra * 12)} RWF</b> a year your guests wanted to spend.
+              <p className="mt-3 border-t border-white/10 pt-3 text-[14px] text-[#D3CADC]">
+                That's <b className="text-[#F4F0F7] tabular-nums">{fmt(extra * 12)} RWF</b> a year your guests wanted to spend.
               </p>
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -467,7 +467,7 @@ function OneMoreRound() {
 
 function Card({ children, className = "", dark = false }: { children: ReactNode; className?: string; dark?: boolean }) {
   return (
-    <div className={`group relative h-full overflow-hidden rounded-[28px] p-7 transition duration-500 hover:-translate-y-1 ${dark ? "bg-[#2B201B] text-[#F4EDE3] ring-1 ring-white/10" : "bg-[var(--card)] ring-1 ring-[var(--line)] hover:shadow-[0_30px_60px_-30px_rgba(43,32,27,0.35)]"} ${className}`}>
+    <div className={`group relative h-full overflow-hidden rounded-[28px] p-7 transition duration-500 hover:-translate-y-1 ${dark ? "bg-[#231A2C] text-[#F4F0F7] ring-1 ring-white/10" : "bg-[var(--card)] ring-1 ring-[var(--line)] hover:shadow-[0_30px_60px_-30px_rgba(35,26,44,0.35)]"} ${className}`}>
       {children}
     </div>
   );
@@ -477,7 +477,7 @@ function CardTitle({ title, text, dark = false }: { title: string; text: string;
   return (
     <div className="mt-6">
       <h3 className="font-display text-[21px] font-bold tracking-tight">{title}</h3>
-      <p className={`mt-1.5 text-[15px] leading-relaxed ${dark ? "text-[#D8CBBF]" : "text-[var(--body)]"}`}>{text}</p>
+      <p className={`mt-1.5 text-[15px] leading-relaxed ${dark ? "text-[#D3CADC]" : "text-[var(--body)]"}`}>{text}</p>
     </div>
   );
 }
@@ -528,16 +528,16 @@ function Owners() {
             </Card>
           </Reveal>
           <Reveal className="md:col-span-6">
-            <div className="relative overflow-hidden rounded-[28px] bg-[#D9A441] p-7 text-[#2B201B] sm:p-10">
+            <div className="relative overflow-hidden rounded-[28px] bg-[#F2B33A] p-7 text-[#231A2C] sm:p-10">
               <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/20" />
               <div className="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/10" />
               <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="max-w-xl">
-                  <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#2B201B]/70">And there's more inside</p>
+                  <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#231A2C]/70">And there's more inside</p>
                   <h3 className="mt-2 font-display text-[30px] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">The rest, we show you in person.</h3>
-                  <p className="mt-3 text-[16px] leading-relaxed text-[#2B201B]/80">Tools to fill your quiet nights, bring guests back and keep your team sharp. Five minutes, at your restaurant, on your own phone.</p>
+                  <p className="mt-3 text-[16px] leading-relaxed text-[#231A2C]/80">Tools to fill your quiet nights, bring guests back and keep your team sharp. Five minutes, at your restaurant, on your own phone.</p>
                 </div>
-                <button onClick={openBookDemo} className="group inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-full bg-[#2B201B] px-7 py-4 text-[16px] font-extrabold text-[#F4EDE3] transition hover:bg-black">
+                <button onClick={openBookDemo} className="group inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-full bg-[#231A2C] px-7 py-4 text-[16px] font-extrabold text-[#F4F0F7] transition hover:bg-black">
                   {cta("Book a demo")} <ArrowRight size={18} className="transition group-hover:translate-x-0.5" />
                 </button>
               </div>
@@ -573,7 +573,7 @@ function Faq() {
           </h2>
           <p className="mt-5 max-w-sm text-[16px] leading-relaxed text-[var(--body)]">
             Something else on your mind?{" "}
-            <button onClick={openBookDemo} className="font-bold text-[var(--rust-ink)] underline decoration-[#D9A441] decoration-2 underline-offset-4">{WAITLIST_MODE ? "Join the waitlist and ask us" : "Ask us during a free demo"}</button>.
+            <button onClick={openBookDemo} className="font-bold text-[var(--rust-ink)] underline decoration-[#F2B33A] decoration-2 underline-offset-4">{WAITLIST_MODE ? "Join the waitlist and ask us" : "Ask us during a free demo"}</button>.
           </p>
         </Reveal>
         <Reveal delay={100}>
@@ -584,7 +584,7 @@ function Faq() {
                 <div key={f.q}>
                   <button onClick={() => setOpen(on ? null : i)} className="flex w-full items-center justify-between gap-6 py-6 text-left">
                     <span className="text-[17px] font-bold">{f.q}</span>
-                    <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition ${on ? "bg-[#A64B31] text-[#F4EDE3]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--line)]"}`}>
+                    <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition ${on ? "bg-[#BF4A1A] text-[#F4F0F7]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--line)]"}`}>
                       {on ? <Minus size={15} /> : <Plus size={15} />}
                     </span>
                   </button>
@@ -607,20 +607,20 @@ function FinalCta() {
   return (
     <section className="bg-[var(--paper)] px-5 pb-24 sm:px-8">
       <Reveal>
-        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[40px] bg-[#A64B31] px-6 py-20 text-center text-[#F4EDE3] sm:py-28">
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[40px] bg-[#BF4A1A] px-6 py-20 text-center text-[#F4F0F7] sm:py-28">
           <div className="sk-pattern-dark pointer-events-none absolute inset-0 opacity-[0.12]" />
-          <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 rounded-full bg-[#D9A441]/30 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-16 h-96 w-96 rounded-full bg-[#2B201B]/40 blur-3xl" />
+          <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 rounded-full bg-[#F2B33A]/30 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-16 h-96 w-96 rounded-full bg-[#231A2C]/40 blur-3xl" />
           <div className="relative">
-            <span className="sk-wave inline-block"><Hand size={56} color="#F4EDE3" /></span>
+            <span className="sk-wave inline-block"><Hand size={56} color="#F4F0F7" /></span>
             <h2 className="mx-auto mt-6 max-w-3xl font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.04em] text-balance sm:text-7xl">
               Make this Friday the easy one.
             </h2>
-            <p className="mx-auto mt-6 max-w-lg text-[18px] leading-relaxed text-[#F5E1D7]">
+            <p className="mx-auto mt-6 max-w-lg text-[18px] leading-relaxed text-[#FCE3D3]">
               Tell us about your place. We'll come over and set up your menu, tables and team with you, free.
             </p>
             <div className="mt-10 flex justify-center">
-              <button onClick={openBookDemo} className="sk-shine group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#2B201B] px-8 py-4 text-[16px] font-extrabold text-[#F4EDE3] transition hover:bg-black">
+              <button onClick={openBookDemo} className="sk-shine group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#231A2C] px-8 py-4 text-[16px] font-extrabold text-[#F4F0F7] transition hover:bg-black">
                 {cta("Book a free demo")} <ArrowRight size={18} className="transition group-hover:translate-x-1" />
               </button>
             </div>
@@ -635,7 +635,7 @@ function FinalCta() {
 
 function Footer() {
   return (
-    <footer className="bg-[#1C1511] text-[#F4EDE3]">
+    <footer className="bg-[#1B1524] text-[#F4F0F7]">
       <ImigongoBand />
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 border-b border-white/[0.06] px-5 py-16 sm:px-8 md:flex-row md:items-center">
         <div>
@@ -647,7 +647,7 @@ function Footer() {
             {WAITLIST_MODE ? "Coming soon to Kigali" : "Now setting up venues in Kigali"}
           </p>
           <h2 className="mt-4 font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.045em] sm:text-7xl">
-            Ready when <span className="text-[#D9A441]">you are.</span>
+            Ready when <span className="text-[#F2B33A]">you are.</span>
           </h2>
         </div>
         <button onClick={openBookDemo} aria-label={cta("Book a demo")} className="group relative h-36 w-36 flex-shrink-0 rounded-full sm:h-40 sm:w-40">
@@ -658,7 +658,7 @@ function Footer() {
               <textPath href="#sk-ring" textLength="488" lengthAdjust="spacing">{WAITLIST_MODE ? "JOIN THE WAITLIST · FIRST VENUES · JOIN THE WAITLIST · " : "BOOK A DEMO · FREE SETUP · BOOK A DEMO · FREE SETUP ·"}</textPath>
             </text>
           </svg>
-          <span className="absolute inset-[30%] flex items-center justify-center rounded-full bg-[#D9A441] text-[#2B201B] shadow-[0_10px_40px_-6px_rgba(217,164,65,0.7)] transition duration-300 group-hover:scale-110">
+          <span className="absolute inset-[30%] flex items-center justify-center rounded-full bg-[#F2B33A] text-[#231A2C] shadow-[0_10px_40px_-6px_rgba(242,179,58,0.7)] transition duration-300 group-hover:scale-110">
             <ArrowUpRight size={26} strokeWidth={2.5} className="transition duration-300 group-hover:rotate-45" />
           </span>
         </button>
@@ -667,26 +667,26 @@ function Footer() {
       <div className="mx-auto grid max-w-7xl gap-12 px-5 py-14 sm:px-8 md:grid-cols-[2fr_1fr]">
         <div>
           <Wordmark size={30} on="dark" />
-          <p className="mt-5 max-w-sm text-[14px] leading-relaxed text-[#A39282]">
-            Skuzi is a product of <span className="font-semibold text-[#D8CBBF]">{COMPANY.legalName}</span>, a company registered in Rwanda.
+          <p className="mt-5 max-w-sm text-[14px] leading-relaxed text-[#9C90A8]">
+            Skuzi is a product of <span className="font-semibold text-[#D3CADC]">{COMPANY.legalName}</span>, a company registered in Rwanda.
           </p>
         </div>
         <div>
-          <p className="text-[13px] font-bold uppercase tracking-[0.15em] text-[#A39282]">Legal & access</p>
-          <ul className="mt-5 space-y-3 text-[14px] text-[#D8CBBF]">
-            <li><a className="hover:text-[#D9A441]" href="/terms.html">Terms & Conditions</a></li>
-            <li><a className="hover:text-[#D9A441]" href="/privacy.html">Privacy Policy</a></li>
+          <p className="text-[13px] font-bold uppercase tracking-[0.15em] text-[#9C90A8]">Legal & access</p>
+          <ul className="mt-5 space-y-3 text-[14px] text-[#D3CADC]">
+            <li><a className="hover:text-[#F2B33A]" href="/terms.html">Terms & Conditions</a></li>
+            <li><a className="hover:text-[#F2B33A]" href="/privacy.html">Privacy Policy</a></li>
             {WAITLIST_MODE ? (
-              <li><Link className="hover:text-[#D9A441]" to="/waitlist">Join the waitlist</Link></li>
+              <li><Link className="hover:text-[#F2B33A]" to="/waitlist">Join the waitlist</Link></li>
             ) : (<>
-              <li><Link className="hover:text-[#D9A441]" to="/login">Owner login</Link></li>
-              <li><Link className="hover:text-[#D9A441]" to="/waiter">Waiter login</Link></li>
+              <li><Link className="hover:text-[#F2B33A]" to="/login">Owner login</Link></li>
+              <li><Link className="hover:text-[#F2B33A]" to="/waiter">Waiter login</Link></li>
             </>)}
           </ul>
         </div>
       </div>
       <div className="border-t border-white/[0.06]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-[12.5px] text-[#7A6A5F] sm:flex-row sm:justify-between sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-[12.5px] text-[#6F6379] sm:flex-row sm:justify-between sm:px-8">
           <span>© {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</span>
           <span>Made in Kigali.</span>
         </div>
@@ -699,12 +699,14 @@ function Footer() {
 
 // Coffee & imigongo, with light sections that follow the visitor's theme.
 const STYLES = `
-.sk-site { --hero-bg:#FFFCF7; --hero-ink:#2B201B; --hero-body:#5C4D44; --hero-muted:#7A6A5F; --hero-accent:#A64B31; --hero-chip:rgba(43,32,27,.04); --hero-ring:rgba(43,32,27,.12); --hero-glow:.4; --cta-bg:#A64B31; --cta-ink:#F4EDE3; --cta-hover:#933F28; --cta-glow:rgba(166,75,49,.45); --bg:#F4EDE3; --paper:#FFFFFF; --card:#FFFCF7; --ink:#2B201B; --body:#5C4D44; --muted:#7A6A5F; --line:#E3D6C6; --rust-ink:#9A4129; }
-.dark .sk-site { --hero-bg:#1C1511; --hero-ink:#F4EDE3; --hero-body:#D8CBBF; --hero-muted:#A39282; --hero-accent:#D9A441; --hero-chip:rgba(255,255,255,.05); --hero-ring:rgba(255,255,255,.10); --hero-glow:1; --cta-bg:#D9A441; --cta-ink:#2B201B; --cta-hover:#E2BC6E; --cta-glow:rgba(217,164,65,.7); --bg:#211915; --paper:#1C1511; --card:#2B201B; --ink:#F4EDE3; --body:#D8CBBF; --muted:#A39282; --line:#463A32; --rust-ink:#DCA088; }
+.sk-site { --hero-bg:#AE4217; --hero-hand:#FFFFFF; --hero-ink:#FFFFFF; --hero-body:#FFE6D8; --hero-muted:#FFD3BC; --hero-accent:#FFD966; --hero-chip:rgba(255,255,255,.12); --hero-ring:rgba(255,255,255,.30); --hero-glow:0; --cta-bg:#231A2C; --cta-ink:#FFFFFF; --cta-hover:#3A2D48; --cta-glow:rgba(35,26,44,.35); --bg:#F4F0F7; --paper:#FFFFFF; --card:#FDFCFE; --ink:#231A2C; --body:#554A60; --muted:#6F6379; --line:#E2DCE8; --rust-ink:#A63F15; }
+.dark .sk-site { --hero-bg:#2B1838; --hero-hand:#F0763A; --hero-ink:#F4F0F7; --hero-body:#D9C6E6; --hero-muted:#C4AED3; --hero-accent:#F2B33A; --hero-chip:rgba(255,255,255,.05); --hero-ring:rgba(255,255,255,.10); --hero-glow:0; --cta-bg:#E2602A; --cta-ink:#FFFFFF; --cta-hover:#EE7843; --cta-glow:rgba(226,96,42,.6); --bg:#2E1A3C; --paper:#2B1838; --card:#3B2149; --ink:#F4F0F7; --body:#D9C6E6; --muted:#C4AED3; --line:#573469; --rust-ink:#F29C6F; }
 .sk-reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
 .sk-reveal.is-in { opacity: 1; transform: none; }
-.sk-glow { background: radial-gradient(closest-side, rgba(166,75,49,.55), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(217,164,65,.28), transparent 70%); filter: blur(40px); }
-.sk-glow-sm { background: radial-gradient(closest-side, rgba(217,164,65,.30), transparent 70%); filter: blur(30px); }
+.sk-glow { background: radial-gradient(closest-side, rgba(191,74,26,.55), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(242,179,58,.28), transparent 70%); filter: blur(40px); }
+.sk-glow-sm { background: radial-gradient(closest-side, rgba(242,179,58,.30), transparent 70%); filter: blur(30px); }
+/* Flat colours, like the 2026-10-20 mockup: no glows. */
+.sk-glow, .sk-glow-sm { display: none; }
 /* Imigongo: soft diamonds, like the cow-dung art of eastern Rwanda */
 .sk-pattern { opacity: .07; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M28 4L52 28L28 52L4 28Z' fill='none' stroke='%23F4EDE3' stroke-width='2'/%3E%3Cpath d='M28 16L40 28L28 40L16 28Z' fill='%23F4EDE3'/%3E%3C/svg%3E"); mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); }
 .sk-pattern-mask { mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); }
@@ -739,13 +741,13 @@ const STYLES = `
 @keyframes sk-bar { from { transform: scaleX(0) } to { transform: scaleX(1) } }
 .sk-bar { transform-origin: left center; animation: sk-bar 1.3s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes sk-cell { 0%,100% { filter: none } 50% { filter: brightness(1.15) } }
-.sk-cell-now { animation: sk-cell 2.2s ease-in-out infinite; box-shadow: 0 0 0 2px #2B201B; }
+.sk-cell-now { animation: sk-cell 2.2s ease-in-out infinite; box-shadow: 0 0 0 2px #231A2C; }
 .sk-shine::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.45) 50%, transparent 65%); transform: translateX(-120%); animation: sk-shine 4.5s ease-in-out infinite; }
 @keyframes sk-shine { 0%, 60% { transform: translateX(-120%) } 100% { transform: translateX(120%) } }
 .sk-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; outline: none; }
-.sk-range::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #A64B31; border: 4px solid #FFFCF7; box-shadow: 0 4px 12px rgba(43,32,27,.35); cursor: pointer; }
-.sk-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #A64B31; border: 4px solid #FFFCF7; cursor: pointer; }
-.sk-range-dark::-webkit-slider-thumb { background: #D9A441; border-color: #2B201B; }
+.sk-range::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #BF4A1A; border: 4px solid #FDFCFE; box-shadow: 0 4px 12px rgba(35,26,44,.35); cursor: pointer; }
+.sk-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #BF4A1A; border: 4px solid #FDFCFE; cursor: pointer; }
+.sk-range-dark::-webkit-slider-thumb { background: #F2B33A; border-color: #231A2C; }
 @keyframes sk-spin { to { transform: rotate(360deg) } }
 .sk-spin { animation: sk-spin 18s linear infinite; transform-origin: 50% 50%; }
 button:hover > .sk-spin { animation-duration: 6s; }
@@ -776,7 +778,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="sk-site min-h-screen [overflow-x:clip] bg-[var(--bg)] font-sans text-[var(--ink)] antialiased selection:bg-[#D9A441] selection:text-[#2B201B]">
+    <div className="sk-site min-h-screen [overflow-x:clip] bg-[var(--bg)] font-sans text-[var(--ink)] antialiased selection:bg-[#F2B33A] selection:text-[#231A2C]">
       <style>{STYLES}</style>
       <Nav />
       <main>

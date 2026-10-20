@@ -7,14 +7,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1C1511] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Card */}
       <div className="relative w-full max-w-sm">
         {/* Logo + wordmark */}
         <div className="flex flex-col items-center mb-8">
           <h1 className="mb-2">
-            <AnimatedLogo size={48} on="light" bg="#F8F3EC" className="dark:hidden" />
-            <AnimatedLogo size={48} on="dark" bg="#1C1511" className="hidden dark:inline-flex" />
+            <AnimatedLogo size={48} on="light" bg="#F7F5F9" className="dark:hidden" />
+            <AnimatedLogo size={48} on="dark" bg="#1B1524" className="hidden dark:inline-flex" />
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Less waiting. More fun.
@@ -24,7 +24,7 @@ export default function Login() {
         {/* Login card */}
         <div
           className="
-          bg-white dark:bg-[#2B201B]
+          bg-white dark:bg-[#3B2149]
           border border-gray-200 dark:border-gray-800
           rounded-2xl shadow-sm
           p-8
@@ -41,16 +41,16 @@ export default function Login() {
             onClick={handleGoogleLogin}
             className="
               w-full flex items-center justify-center gap-3
-              bg-white dark:bg-[#3A2D26]
+              bg-white dark:bg-[#4A2D5C]
               border border-gray-200 dark:border-gray-700
-              hover:bg-gray-50 dark:hover:bg-[#463A32]
+              hover:bg-gray-50 dark:hover:bg-[#573469]
               text-gray-800 dark:text-gray-200
               text-sm font-medium
               rounded-xl px-4 py-3
               transition-colors duration-150
               shadow-sm
               focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
-              dark:focus:ring-offset-[#2B201B]
+              dark:focus:ring-offset-[#231A2C]
             "
           >
             <GoogleIcon size={18} />

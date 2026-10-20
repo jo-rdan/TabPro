@@ -40,7 +40,7 @@ export default function GuestAlerts({ tabId }: { tabId: string }) {
 
   return (
     <div className="fixed inset-x-0 bottom-[10.5rem] md:bottom-6 z-30 px-4 flex justify-center pointer-events-none">
-      <div className="pointer-events-auto w-full max-w-md flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl bg-white dark:bg-[#2B201B] border-gray-200 dark:border-gray-800">
+      <div className="pointer-events-auto w-full max-w-md flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl bg-white dark:bg-[#3B2149] border-gray-200 dark:border-gray-800">
         <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center flex-shrink-0">
           {state === "on" ? <Check size={18} className="text-brand-500" /> : <BellRing size={18} className="text-brand-500" />}
         </div>

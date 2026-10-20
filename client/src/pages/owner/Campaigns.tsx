@@ -40,17 +40,17 @@ function useAudience(venueId?: string) {
 
 function AudienceCard({ a }: { a: Audience | null }) {
   return (
-    <div className="rounded-2xl bg-[#2B201B] p-5 text-[#F4EDE3]">
+    <div className="rounded-2xl bg-[#231A2C] p-5 text-[#F4F0F7]">
       <p className="text-xs font-bold uppercase tracking-wider text-amber-500">Your audience</p>
       {a === null ? <div className="mt-2 h-10 animate-pulse rounded-lg bg-white/10" /> : a.total === 0 ? (
         <>
-          <p className="mt-1 font-display text-3xl font-extrabold">0 <span className="text-base font-bold text-[#D8CBBF]">for now</span></p>
-          <p className="mt-1 text-sm text-[#D8CBBF]">It builds up every time a guest pays with Skuzi and says yes to invites. Campaigns still show on Explore and your Skuzi page.</p>
+          <p className="mt-1 font-display text-3xl font-extrabold">0 <span className="text-base font-bold text-[#D3CADC]">for now</span></p>
+          <p className="mt-1 text-sm text-[#D3CADC]">It builds up every time a guest pays with Skuzi and says yes to invites. Campaigns still show on Explore and your Skuzi page.</p>
         </>
       ) : (
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-white/10 px-3 py-2"><p className="font-display text-2xl font-extrabold">{a.regulars.toLocaleString()}</p><p className="text-xs text-[#D8CBBF]">Your regulars</p></div>
-          <div className="rounded-xl bg-white/10 px-3 py-2"><p className="font-display text-2xl font-extrabold">{a.others.toLocaleString()}</p><p className="text-xs text-[#D8CBBF]">Other Skuzi guests</p></div>
+          <div className="rounded-xl bg-white/10 px-3 py-2"><p className="font-display text-2xl font-extrabold">{a.regulars.toLocaleString()}</p><p className="text-xs text-[#D3CADC]">Your regulars</p></div>
+          <div className="rounded-xl bg-white/10 px-3 py-2"><p className="font-display text-2xl font-extrabold">{a.others.toLocaleString()}</p><p className="text-xs text-[#D3CADC]">Other Skuzi guests</p></div>
         </div>
       )}
       <p className="mt-3 flex items-center gap-1.5 text-xs text-[#86A27B]"><Lock size={12} /> Their numbers stay private. Skuzi sends it for you.</p>
@@ -60,7 +60,7 @@ function AudienceCard({ a }: { a: Audience | null }) {
 
 function FreeBox() {
   return (
-    <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#2B201B]">
+    <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#3B2149]">
       <Gift size={22} className="flex-none text-amber-500" />
       <p className="text-sm text-gray-700 dark:text-gray-300"><b className="text-gray-900 dark:text-white">Sending is free.</b> You only pay when guests come: 15% on their Skuzi bills, instead of 8%. Max 2 campaigns a week, so invites stay special.</p>
     </div>
@@ -99,7 +99,7 @@ export default function Campaigns() {
               <ul className="space-y-2">
                 {list.map((c) => (
                   <li key={c.id}>
-                    <Link to={`/campaigns/${c.id}`} className={`flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 dark:border-gray-800 dark:bg-[#2B201B] ${c.status === 'cancelled' ? 'opacity-60' : ''}`}>
+                    <Link to={`/campaigns/${c.id}`} className={`flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 dark:border-gray-800 dark:bg-[#3B2149] ${c.status === 'cancelled' ? 'opacity-60' : ''}`}>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-bold text-gray-900 dark:text-white">{c.title}</p>
                         <p className="truncate text-xs text-gray-500 dark:text-gray-400">{statusLine(c)}{c.offerText ? ` · ${c.offerText}` : ''}</p>
@@ -174,8 +174,8 @@ export function CampaignNew() {
   const onSend = () => { const v = validate(); if (v) { setError(v); return; } setError(''); later ? submit() : setConfirm(true); };
 
   const label = 'text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300';
-  const input = 'min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#1C1511] dark:text-white';
-  const pickSel = 'min-h-[46px] rounded-xl border border-gray-200 bg-white px-3 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#1C1511] dark:text-white';
+  const input = 'min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#2B1838] dark:text-white';
+  const pickSel = 'min-h-[46px] rounded-xl border border-gray-200 bg-white px-3 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#2B1838] dark:text-white';
   const chip = (on: boolean) => `min-h-[40px] rounded-full border px-4 text-sm font-bold ${on ? 'border-gray-900 bg-gray-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-gray-900' : 'border-gray-200 bg-white text-gray-800 dark:border-gray-700 dark:bg-transparent dark:text-gray-200'}`;
   const days = Array.from({ length: 14 }, (_, i) => kigaliDay(i));
 
@@ -266,9 +266,9 @@ export function CampaignNew() {
           <aside className="space-y-4">
             <div>
               <p className={label}>What guests see</p>
-              <div className="mt-2 rounded-2xl bg-[radial-gradient(120%_70%_at_30%_0%,#5C3A2C,#1C1511_70%)] p-4">
-                <div className="flex gap-3 rounded-2xl bg-[#FFFCF7]/95 p-3 text-gray-900 shadow-lg">
-                  <div className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-[#2B201B] text-amber-500"><Megaphone size={16} /></div>
+              <div className="mt-2 rounded-2xl bg-[radial-gradient(120%_70%_at_30%_0%,#5A2A1A,#1B1524_70%)] p-4">
+                <div className="flex gap-3 rounded-2xl bg-[#FDFCFE]/95 p-3 text-gray-900 shadow-lg">
+                  <div className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-[#231A2C] text-amber-500"><Megaphone size={16} /></div>
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold text-gray-500">SKUZI · now</p>
                     <p className="text-sm font-extrabold leading-snug">{title.trim() || 'Karaoke Friday'} at {venue?.name ?? 'your venue'}</p>
@@ -324,15 +324,15 @@ export function CampaignDetail() {
 
             {c.status === 'sent' && (
               <>
-                <div className="mt-6 rounded-2xl bg-[#2B201B] p-6 text-[#F4EDE3]">
-                  <p className="text-sm text-[#D8CBBF]">Guests who came because of it</p>
+                <div className="mt-6 rounded-2xl bg-[#231A2C] p-6 text-[#F4F0F7]">
+                  <p className="text-sm text-[#D3CADC]">Guests who came because of it</p>
                   <p className="font-display text-6xl font-extrabold leading-none text-amber-500">{c.results.came}</p>
                   <div className="mt-4 grid grid-cols-2 gap-2">
-                    <div className="rounded-xl bg-white/10 px-3 py-2"><p className="text-lg font-extrabold">{c.results.regulars}</p><p className="text-xs text-[#D8CBBF]">Your regulars</p></div>
-                    <div className="rounded-xl bg-white/10 px-3 py-2"><p className="text-lg font-extrabold">{c.results.newFaces}</p><p className="text-xs text-[#D8CBBF]">New faces</p></div>
+                    <div className="rounded-xl bg-white/10 px-3 py-2"><p className="text-lg font-extrabold">{c.results.regulars}</p><p className="text-xs text-[#D3CADC]">Your regulars</p></div>
+                    <div className="rounded-xl bg-white/10 px-3 py-2"><p className="text-lg font-extrabold">{c.results.newFaces}</p><p className="text-xs text-[#D3CADC]">New faces</p></div>
                   </div>
                 </div>
-                <dl className="mt-4 divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-[#2B201B]">
+                <dl className="mt-4 divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-[#3B2149]">
                   {[
                     ['Reached', `${c.recipientCount} ${c.recipientCount === 1 ? 'guest' : 'guests'}`],
                     ['They spent', rwf(c.results.spentRwf)],

@@ -34,18 +34,18 @@ export default function MyBookings() {
       <div className="mx-auto max-w-xl pt-6">
         <h1 className="flex items-center gap-2 font-display text-[30px] font-extrabold tracking-[-0.02em]"><CalendarDays size={26} /> Bookings</h1>
         {bookings === null ? (
-          <div className="mt-4 h-20 animate-pulse rounded-2xl bg-gray-100 dark:bg-[#2B201B]" />
+          <div className="mt-4 h-20 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-900" />
         ) : bookings.length === 0 ? (
-          <div className="mt-4 rounded-2xl border-[1.5px] border-dashed border-gray-200 p-6 text-center dark:border-[#3A2D26]">
+          <div className="mt-4 rounded-2xl border-[1.5px] border-dashed border-gray-200 p-6 text-center dark:border-gray-800">
             <p className="font-bold">No bookings on this phone yet</p>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Find a place you like and book a table in a few taps.</p>
-            <Link to="/explore" className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-brand-500 px-5 text-sm font-extrabold text-white">Find a place on Explore</Link>
+            <Link to="/explore" className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-action px-5 text-sm font-extrabold text-white">Find a place on Explore</Link>
           </div>
         ) : (
           <div className="mt-4 flex flex-col gap-2">
             {[...upcoming, ...past].map((b) => (
               <Link key={b.id} to={`/booking/${b.id}?t=${encodeURIComponent(b.token)}`}
-                className={`flex items-center gap-3 rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 py-3 hover:border-gray-300 dark:border-[#3A2D26] dark:bg-[#2B201B] ${past.includes(b) ? "opacity-70" : ""}`}>
+                className={`flex items-center gap-3 rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 py-3 hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 ${past.includes(b) ? "opacity-70" : ""}`}>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{b.venue.name}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{dayLabel(b.date, true)} · {b.time} · {b.partySize} {b.partySize === 1 ? "person" : "people"}</p>

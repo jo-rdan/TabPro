@@ -59,11 +59,11 @@ export default function BookDemo() {
   };
 
   const input =
-    "w-full rounded-2xl bg-[var(--bg)] px-4 py-3.5 text-[15px] text-[var(--ink)] placeholder-[var(--muted)] ring-1 ring-[var(--line)] outline-none transition focus:ring-2 focus:ring-[#A64B31]";
+    "w-full rounded-2xl bg-[var(--bg)] px-4 py-3.5 text-[15px] text-[var(--ink)] placeholder-[var(--muted)] ring-1 ring-[var(--line)] outline-none transition focus:ring-2 focus:ring-[#BF4A1A]";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="book-demo-title">
-      <div className="absolute inset-0 bg-[#1C1511]/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      <div className="absolute inset-0 bg-[#1B1524]/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
       <div className="relative w-full max-w-md overflow-hidden rounded-t-[2rem] bg-[var(--card)] px-6 pb-8 pt-7 text-[var(--ink)] ring-1 ring-[var(--line)] sm:rounded-[2rem] sm:px-8">
         <button onClick={() => setOpen(false)} aria-label="Close" className="absolute right-4 top-4 rounded-full p-2 text-[var(--muted)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)]">
           <X size={18} />
@@ -71,7 +71,7 @@ export default function BookDemo() {
 
         {sent ? (
           <div className="relative py-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#5E7A55] text-[#F4EDE3]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#5E7A55] text-[#F4F0F7]">
               <Check size={26} strokeWidth={3} />
             </div>
             <h2 className="mt-5 text-2xl font-extrabold tracking-tight">Thanks, {form.name.split(" ")[0]}!</h2>
@@ -104,7 +104,7 @@ export default function BookDemo() {
                       type="button"
                       onClick={() => setForm({ ...form, bestTime: t })}
                       className={`rounded-xl py-2.5 text-[13px] font-semibold transition ${
-                        form.bestTime === t ? "bg-[#D9A441] text-[#2B201B]" : "bg-[var(--bg)] text-[var(--body)] ring-1 ring-[var(--line)] hover:ring-[var(--muted)]"
+                        form.bestTime === t ? "bg-[#F2B33A] text-[#231A2C]" : "bg-[var(--bg)] text-[var(--body)] ring-1 ring-[var(--line)] hover:ring-[var(--muted)]"
                       }`}
                     >
                       {t}
@@ -114,12 +114,12 @@ export default function BookDemo() {
               </div>
             </div>
 
-            {error && <p className="mt-4 text-[13px] font-semibold text-[#A64B31] dark:text-[#DCA088]">{error}</p>}
+            {error && <p className="mt-4 text-[13px] font-semibold text-[#BF4A1A] dark:text-[#F29C6F]">{error}</p>}
 
             <button
               type="submit"
               disabled={busy}
-              className="group relative mt-6 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[#A64B31] px-7 py-4 text-[15px] font-bold text-[#F4EDE3] transition hover:bg-[#933F28] disabled:opacity-60"
+              className="group relative mt-6 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[#BF4A1A] px-7 py-4 text-[15px] font-bold text-[#F4F0F7] transition hover:bg-[#A63F15] disabled:opacity-60"
             >
               {busy ? "Sending…" : "Book my free demo"}
               {!busy && <ArrowRight size={17} className="transition group-hover:translate-x-1" />}

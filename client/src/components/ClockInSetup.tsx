@@ -74,7 +74,7 @@ export default function ClockInSetup({ venueId, onToast }: { venueId: string; on
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-      <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex flex-col">
+      <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex flex-col">
         <div className="flex items-center gap-2 mb-3">
           <QrCode size={16} className="text-brand-500" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">Staff sticker</h3>
@@ -99,7 +99,7 @@ export default function ClockInSetup({ venueId, onToast }: { venueId: string; on
                 value={claimInput}
                 onChange={(e) => setClaimInput(e.target.value.toUpperCase())}
                 placeholder="e.g. AB3X9K"
-                className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#1C1511] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-[#2B1838] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               <button
                 onClick={handleClaimSticker}
@@ -115,7 +115,7 @@ export default function ClockInSetup({ venueId, onToast }: { venueId: string; on
         )}
       </div>
 
-      <div className="bg-white dark:bg-[#2B201B] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-3">
           <KeyRound size={16} className="text-brand-500" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">Venue PIN</h3>

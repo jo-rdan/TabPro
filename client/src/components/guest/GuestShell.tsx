@@ -1,3 +1,4 @@
+import { ThemeCycleButton } from "../ThemeSwitch";
 import { Link } from "react-router-dom";
 import { Compass, CalendarDays, UserRound } from "lucide-react";
 import { WavingHand } from "../Logo";
@@ -8,7 +9,7 @@ import { WavingHand } from "../Logo";
 type Tab = "explore" | "bookings" | "me";
 
 /** The Skuzi hand, motion lines included, at any size. */
-export function Hand({ className = "h-7 w-7", color = "#D9A441" }: { className?: string; color?: string }) {
+export function Hand({ className = "h-7 w-7", color = "#F0763A" }: { className?: string; color?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true"><WavingHand color={color} /></svg>
   );
@@ -24,7 +25,7 @@ export function GuestLogo({ night = false }: { night?: boolean }) {
   return (
     <Link to="/explore" aria-label="Skuzi Explore" className="inline-flex items-center gap-1.5">
       <Hand />
-      <span className={`font-display text-[22px] font-semibold tracking-[-0.04em] ${night ? "text-[#F4EDE3]" : "text-gray-900 dark:text-[#F4EDE3]"}`}>skuzi</span>
+      <span className={`font-display text-[22px] font-semibold tracking-[-0.04em] ${night ? "text-[color:var(--g-text)]" : "text-gray-900 dark:text-[color:var(--g-text)]"}`}>skuzi</span>
     </Link>
   );
 }
@@ -43,37 +44,40 @@ export default function GuestShell({
   // The guest tabs (Explore, Bookings, Me and the pages under them) share the
   // espresso "night" look, so moving between tabs never flips light/dark.
   const night = tone ? tone === "night" : !!tab;
-  const bg = night ? "bg-[#1C1511] text-[#F4EDE3]" : "bg-[#FFFCF7] text-gray-900 dark:bg-[#1C1511] dark:text-[#F4EDE3]";
+  const bg = night ? "bg-gray-950 text-[color:var(--g-text)]" : "bg-[#FDFCFE] text-gray-900 dark:bg-gray-950 dark:text-[color:var(--g-text)]";
   return (
-    <div className={`min-h-screen ${bg} ${night ? "dark" : ""} font-sans [overflow-x:clip]`}>
+    <div className={`min-h-screen ${bg} ${night ? "dark guest-skin" : ""} font-sans [overflow-x:clip]`}>
       {header && (
         <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-5 md:px-8">
           <GuestLogo night={night} />
+          <div className="flex items-center gap-1">
           {tab && (
-            <nav aria-label="Skuzi" className="hidden items-center gap-1 md:flex">
-              {TABS.map(({ id, label, href }) => (
-                <Link
-                  key={id}
-                  to={href}
-                  aria-current={tab === id ? "page" : undefined}
-                  className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                    tab === id
-                      ? "bg-[#D9A441] text-[#2B201B]"
-                      : night ? "text-[#D8CBBF] hover:bg-white/10" : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          )}
+              <nav aria-label="Skuzi" className="hidden items-center gap-1 md:flex">
+                {TABS.map(({ id, label, href }) => (
+                  <Link
+                    key={id}
+                    to={href}
+                    aria-current={tab === id ? "page" : undefined}
+                    className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                      tab === id
+                        ? "bg-action text-action-ink"
+                        : night ? "text-[color:var(--g-muted)] hover:bg-white/10" : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            )}
+            <ThemeCycleButton className={night ? "!text-[color:var(--g-muted)] hover:!bg-white/10" : ""} />
+          </div>
         </header>
       )}
       <main className={`mx-auto max-w-5xl px-5 md:px-8 ${tab ? "pb-28 md:pb-12" : "pb-12"}`}>{children}</main>
       {tab && (
         <nav
           aria-label="Skuzi"
-          className={`fixed inset-x-0 bottom-0 z-30 border-t md:hidden ${night ? "border-[#3A2D26] bg-[#1C1511]/95" : "border-gray-200 bg-[#FFFCF7]/95 dark:border-[#3A2D26] dark:bg-[#1C1511]/95"} backdrop-blur`}
+          className={`fixed inset-x-0 bottom-0 z-30 border-t md:hidden ${night ? "border-gray-800 bg-gray-950/95" : "border-gray-200 bg-[#FDFCFE]/95 dark:border-gray-800 dark:bg-gray-950/95"} backdrop-blur`}
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <div className="mx-auto flex max-w-md justify-around px-3 pt-2 pb-2">
@@ -85,7 +89,7 @@ export default function GuestShell({
                   to={href}
                   aria-current={on ? "page" : undefined}
                   className={`flex min-h-[48px] min-w-[72px] flex-col items-center justify-center gap-0.5 text-[11.5px] font-bold ${
-                    on ? "text-[#D9A441]" : night ? "text-[#D8CBBF]" : "text-gray-500 dark:text-gray-300"
+                    on ? "text-[color:var(--g-hi)]" : night ? "text-[color:var(--g-muted)]" : "text-gray-500 dark:text-gray-300"
                   }`}
                 >
                   <Icon size={22} strokeWidth={on ? 2.4 : 2} />
