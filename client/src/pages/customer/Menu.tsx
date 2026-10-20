@@ -1621,23 +1621,8 @@ export default function CustomerMenu() {
           )}
 
           {/* Mobile bottom spacer */}
-          <div className="h-4 md:h-8" />
+          <div className="h-44 md:h-8" />
         </div>
-
-        {/* Phone: the waiter's notepad. Shows every order placed on this table,
-            like a cart button in an online shop (the desktop has a sidebar). */}
-        {placedOrders.length > 0 && !ordersOpen && (
-          <button
-            onClick={() => setOrdersOpen(true)}
-            aria-label={`Your orders (${placedOrders.length})`}
-            className={`md:hidden fixed right-4 z-30 h-14 w-14 rounded-full bg-action text-action-ink shadow-xl shadow-black/25 flex items-center justify-center active:scale-95 transition-all ${cartCount > 0 ? "bottom-[172px]" : "bottom-[100px]"}`}
-          >
-            <NotebookPen size={24} strokeWidth={2.2} />
-            <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#FFD966] text-[#231A2C] text-xs font-black flex items-center justify-center">
-              {placedOrders.length}
-            </span>
-          </button>
-        )}
 
         {ordersOpen && (
           <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end" role="dialog" aria-modal="true" aria-label="Your orders">
@@ -1686,36 +1671,50 @@ export default function CustomerMenu() {
           </div>
         )}
 
-        {/* Mobile bottom: reach the waiter, see the bill, send the order */}
-        {(placedOrders.length > 0 || cartCount > 0) && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(35,26,44,0.25)] flex flex-col gap-2.5">
-            {placedOrders.length > 0 && (
-              <div className="flex gap-2.5">
-                <button
-                  onClick={handleNudge}
-                  disabled={nudgeLoading || justNudged}
-                  className={`flex-1 h-[54px] rounded-[18px] bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10  active:scale-[0.98] transition-all ${justNudged ? "skuzi-bounce" : ""}`}
-                >
-                  {justNudged ? <Check size={20} strokeWidth={3} /> : <WaveIcon />} Skuzi!
-                </button>
-                <button
-                  onClick={handleRequestBill}
-                  disabled={billLoading}
-                  className="flex-1 h-[54px] rounded-[18px] border-2 border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-50/80 dark:bg-transparent text-base font-bold disabled:opacity-50 active:scale-[0.98] transition-all"
-                >
-                  {billLoading ? "..." : "My bill"}
-                </button>
-              </div>
-            )}
-            {cartCount > 0 && (
-              <button
+        {/* Phone: Skuzi!, My bill and the orders notepad float on the left, away
+            from the "+" buttons on the right of every dish. */}
+        {placedOrders.length > 0 && !ordersOpen && (
+          <div
+            className={`md:hidden fixed left-4 z-30 flex flex-col items-start gap-2.5 transition-all ${cartCount > 0 ? "bottom-[96px]" : "bottom-5"}`}
+            style={{ marginBottom: "env(safe-area-inset-bottom)" }}
+          >
+            <button
+              onClick={() => setOrdersOpen(true)}
+              aria-label={`Your orders (${placedOrders.length})`}
+              className="relative h-12 w-12 rounded-full bg-white dark:bg-gray-600 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-500 shadow-lg shadow-black/25 flex items-center justify-center active:scale-95 transition-all"
+            >
+              <NotebookPen size={21} strokeWidth={2.2} />
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#FFD966] text-[#231A2C] text-[11px] font-black flex items-center justify-center">
+                {placedOrders.length}
+              </span>
+            </button>
+            <button
+              onClick={handleRequestBill}
+              disabled={billLoading}
+              className="h-12 pl-3.5 pr-4 rounded-full bg-white dark:bg-gray-600 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-500 shadow-lg shadow-black/25 flex items-center gap-2 text-[15px] font-bold disabled:opacity-60 active:scale-95 transition-all"
+            >
+              <Receipt size={18} /> {billLoading ? "..." : "My bill"}
+            </button>
+            <button
+              onClick={handleNudge}
+              disabled={nudgeLoading || justNudged}
+              className={`h-14 pl-4 pr-5 rounded-full bg-[#C9501E] dark:bg-[#E2602A] text-white shadow-xl shadow-black/25 flex items-center gap-2 text-[17px] font-extrabold active:scale-95 transition-all ${justNudged ? "skuzi-bounce" : ""}`}
+            >
+              {justNudged ? <Check size={20} strokeWidth={3} /> : <WaveIcon />} Skuzi!
+            </button>
+          </div>
+        )}
+
+        {/* Phone: send the order */}
+        {cartCount > 0 && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(35,26,44,0.25)]">
+            <button
                 onClick={() => setCartOpen(!cartOpen)}
-                className="h-[60px] rounded-[20px] bg-action text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-action/25 active:scale-[0.98] transition-all"
+                className="w-full h-[60px] rounded-[20px] bg-action text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-action/25 active:scale-[0.98] transition-all"
               >
                 <span className="flex items-center gap-2"><ShoppingBag size={18} /> Send order · {cartCount} {cartCount === 1 ? "item" : "items"}</span>
                 <span>{fmt(cartTotal)}</span>
               </button>
-            )}
           </div>
         )}
       </div>
