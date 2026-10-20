@@ -314,6 +314,7 @@ export default function CustomerMenu() {
   const [placedOrders, setPlacedOrders] = useState<PlacedOrder[]>([]);
   const [orderLoading, setOrderLoading] = useState(false);
   const [justOrdered, setJustOrdered] = useState(false);
+  const [nudgeToast, setNudgeToast] = useState(false);
   const [nudgeLoading, setNudgeLoading] = useState(false);
   const [justNudged, setJustNudged] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
@@ -631,6 +632,8 @@ export default function CustomerMenu() {
       await apiFetch(tabId ? `/tabs/${tabId}/nudge` : `/tabs/preview/${qrCode}/nudge`, { method: "POST" });
       setJustNudged(true);
       setTimeout(() => setJustNudged(false), 10000);
+      setNudgeToast(true);
+      setTimeout(() => setNudgeToast(false), 3000);
     } catch {
     } finally {
       setNudgeLoading(false);
@@ -1956,6 +1959,13 @@ export default function CustomerMenu() {
       )}
 
       {tabId && placedOrders.length > 0 && tabStatus !== "closed" && !cartOpen && <GuestAlerts tabId={tabId} />}
+
+      {/* Skuzi! toast: same pill as "Order placed!" */}
+      {nudgeToast && !justOrdered && (
+        <div role="status" className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-black px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl whitespace-nowrap">
+          <CheckCircle size={16} className="text-brand-400 dark:text-brand-600" /> Your waiter has been notified 👋
+        </div>
+      )}
 
       {/* Order placed toast */}
       {justOrdered && (
