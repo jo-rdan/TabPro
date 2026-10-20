@@ -19,12 +19,12 @@ export default function ThemeSwitch({ layout = 'row' }: { layout?: 'row' | 'colu
     <div
       role="radiogroup"
       aria-label="Theme"
-      className={`relative inline-flex ${vertical ? 'flex-col' : 'flex-row'} ${layout === 'labels' ? 'w-full' : ''} rounded-full bg-gray-100 dark:bg-[#1B1524] p-1 ring-1 ring-gray-200 dark:ring-gray-800`}
+      className={`relative inline-flex ${vertical ? 'flex-col' : 'flex-row'} ${layout === 'labels' ? 'w-full' : ''} rounded-full bg-gray-100 dark:bg-[#2B1838] p-1 ring-1 ring-gray-200 dark:ring-gray-800`}
     >
       {/* sliding marker */}
       <span
         aria-hidden="true"
-        className={`absolute rounded-full bg-white dark:bg-[#33293F] shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 transition-transform duration-300 ease-out ${
+        className={`absolute rounded-full bg-white dark:bg-[#4A2D5C] shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 transition-transform duration-300 ease-out ${
           vertical ? 'left-1 top-1 w-8 h-8' : layout === 'labels' ? 'top-1 left-1 h-10 w-[calc((100%-8px)/3)]' : 'top-1 left-1 w-8 h-8'
         }`}
         style={{ transform: vertical ? `translateY(${index * 100}%)` : `translateX(${index * 100}%)` }}

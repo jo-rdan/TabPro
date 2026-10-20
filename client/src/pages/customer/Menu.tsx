@@ -152,7 +152,7 @@ function MenuCard({
 
   return (
     <div
-      className={`flex items-center gap-3.5 p-3 rounded-[22px] bg-white dark:bg-[#231A2C] transition-all ${
+      className={`flex items-center gap-3.5 p-3 rounded-[22px] bg-white dark:bg-[#3B2149] transition-all ${
         qty > 0 ? "ring-2 ring-brand-400/70" : "ring-1 ring-gray-200/70 dark:ring-gray-800"
       } ${!item.isAvailable ? "opacity-60" : ""}`}
     >
@@ -769,7 +769,7 @@ export default function CustomerMenu() {
   // Opening the table: the menu is on its way (or the sticker isn't set up).
   if (step === "identify") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-6 py-10 text-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-6 py-10 text-center">
         <div className="w-20 h-20 rounded-3xl bg-action flex items-center justify-center mx-auto mb-5 shadow-xl shadow-action/30">
           <Logo size={44} />
         </div>
@@ -798,8 +798,8 @@ export default function CustomerMenu() {
   // ─── BILL ─────────────────────────────────────────────────────────────────
   if (step === "bill") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524]">
-        <div className="bg-white dark:bg-[#231A2C] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838]">
+        <div className="bg-white dark:bg-[#3B2149] border-b border-gray-200 dark:border-gray-800 px-5 py-4 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={36} />
             <div>
@@ -1067,7 +1067,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "idle" && !acceptsMobileMoney && (
-            <div className="bg-gray-50 dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
+            <div className="bg-gray-50 dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
               <p className="text-sm font-bold text-gray-800 dark:text-white">Please pay your waiter</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 In-app Mobile Money isn't available at this venue yet.
@@ -1076,7 +1076,7 @@ export default function CustomerMenu() {
           )}
 
           {payStep === "entering_phone" && (
-            <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               {/* Header */}
               <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
                 <p className="text-sm font-black text-gray-900 dark:text-white">
@@ -1109,7 +1109,7 @@ export default function CustomerMenu() {
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
                   MTN MoMo or Airtel Money number
                 </p>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1B1524] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
                   <svg
                     width="16"
                     height="16"
@@ -1166,7 +1166,7 @@ export default function CustomerMenu() {
                     onBlur={() => checkCreatorCode(creatorCode)}
                     placeholder="e.g. ALINE"
                     maxLength={16}
-                    className="mt-2 w-full bg-gray-50 dark:bg-[#1B1524] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white focus:outline-none focus:border-brand-500"
+                    className="mt-2 w-full bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white focus:outline-none focus:border-brand-500"
                   />
                   {creatorCheck === "ok" && creatorName && <p className="text-xs text-green-600 dark:text-green-400 mt-2">✓ {creatorName}'s code. Thanks for coming!</p>}
                   {creatorCheck === "unknown" && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">We don't know this code. You can still pay.</p>}
@@ -1284,7 +1284,7 @@ export default function CustomerMenu() {
   // ─── RATING ───────────────────────────────────────────────────────────────
   if (step === "rating") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
             <div className="text-6xl mb-4">🌟</div>
@@ -1295,7 +1295,7 @@ export default function CustomerMenu() {
               {venueName} · {tableLabel}
             </p>
           </div>
-          <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-3xl px-6 py-2 mb-4 shadow-sm">
             <StarRow
               label="🍽 Food"
               value={foodScore}
@@ -1317,7 +1317,7 @@ export default function CustomerMenu() {
             onChange={(e) => setRatingComment(e.target.value)}
             placeholder="Leave a comment..."
             rows={3}
-            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
+            className="w-full px-4 py-3 text-sm rounded-2xl bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500 resize-none mb-3 shadow-sm"
           />
           {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
           <button
@@ -1341,7 +1341,7 @@ export default function CustomerMenu() {
   // ─── CLOSED ───────────────────────────────────────────────────────────────
   if (step === "closed") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-4 py-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4 py-10">
         <div className="w-24 h-24 rounded-full bg-action flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-action/40">
           <CheckCircle size={44} className="text-white" />
         </div>
@@ -1379,7 +1379,7 @@ export default function CustomerMenu() {
 
   return (
     // Desktop: side-by-side. Mobile: stacked
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col md:flex-row">
       {/* Last step before the first order: the guest's MoMo number */}
       {askPhone && (
         <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center bg-black/50 px-0 md:px-4" onClick={() => !loading && setAskPhone(false)}>
@@ -1388,7 +1388,7 @@ export default function CustomerMenu() {
             aria-modal="true"
             aria-labelledby="ask-phone-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full md:max-w-sm bg-white dark:bg-[#231A2C] rounded-t-[28px] md:rounded-[28px] px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl"
+            className="w-full md:max-w-sm bg-white dark:bg-[#3B2149] rounded-t-[28px] md:rounded-[28px] px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl"
           >
             <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F2B33A]">Last step</p>
             <h2 id="ask-phone-title" className="mt-1 text-2xl font-black text-gray-900 dark:text-white">Your MoMo number</h2>
@@ -1403,7 +1403,7 @@ export default function CustomerMenu() {
               placeholder="078 123 4567"
               autoFocus
               aria-label="Your MTN MoMo or Airtel Money number"
-              className="mt-4 w-full px-4 py-3.5 text-lg font-bold tracking-wide rounded-2xl bg-gray-50 dark:bg-[#1B1524] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
+              className="mt-4 w-full px-4 py-3.5 text-lg font-bold tracking-wide rounded-2xl bg-gray-50 dark:bg-[#2B1838] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors"
             />
             {error && <p role="alert" className="text-sm text-red-500 mt-2">{error}</p>}
             <button
@@ -1620,7 +1620,7 @@ export default function CustomerMenu() {
       </div>
 
       {/* ── RIGHT: Order summary sidebar (desktop only) ─────────────────────── */}
-      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#231A2C] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
+      <div className="hidden md:flex flex-col w-80 xl:w-96 bg-white dark:bg-[#3B2149] border-l border-gray-200 dark:border-gray-800 sticky top-0 h-screen overflow-hidden flex-shrink-0">
         <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-base font-black text-gray-900 dark:text-white">
             Order Summary
@@ -1773,7 +1773,7 @@ export default function CustomerMenu() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setCartOpen(false)}
           />
-          <div className="relative bg-white dark:bg-[#231A2C] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-[#3B2149] rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-black text-gray-900 dark:text-white">
                 Your order

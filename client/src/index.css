@@ -21,9 +21,19 @@
     --action-ink: 255 255 255;
     --g-text: #F4F0F7; --g-muted: #D3CADC; --g-hi: #FFD966;
 }
+/* Dark mode is plum, not black: black + orange is how Sinc looks (2026-10-20). */
 .dark {
     --action: 226 96 42;       /* #E2602A */
     --action-hover: 238 120 67;
+    --gray-300: 212 195 224;
+    --gray-400: 183 159 200;
+    --gray-500: 142 115 159;
+    --gray-600: 107 72 128;
+    --gray-700: 87 52 105;
+    --gray-800: 74 45 92;
+    --gray-900: 59 33 73;
+    --gray-950: 43 24 56;
+    --g-muted: #D9C6E6;
 }
 /* Guest pages (Explore, venue, bookings, Me) wear the orange skin in light mode
    and stay deep ink in dark mode. Their own "dark" class keeps the dark: styles;

@@ -740,7 +740,7 @@ export default function WaiterOrders() {
   // ── PIN lock screen ────────────────────────────────────────────────────────
   if (staffToken && !pinUnlocked) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-xs text-center">
           <div className="text-4xl mb-4">🔐</div>
           <h1 className="text-xl font-black text-gray-900 dark:text-white mb-1">
@@ -787,9 +787,9 @@ export default function WaiterOrders() {
   const deliveredOrders = orders.filter((o) => o.status === "delivered");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] md:ml-60">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] md:ml-60">
       {/* ── Side nav (desktop md+) — mirrors the owner dashboard's sidebar ──── */}
-      <aside className="hidden md:flex flex-col fixed top-0 left-0 h-full w-60 bg-white dark:bg-[#231A2C] border-r border-gray-200 dark:border-gray-800 z-20">
+      <aside className="hidden md:flex flex-col fixed top-0 left-0 h-full w-60 bg-white dark:bg-[#3B2149] border-r border-gray-200 dark:border-gray-800 z-20">
         <div className="px-5 py-5 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
           <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={34} />
           <div className="min-w-0">
@@ -1117,7 +1117,7 @@ export default function WaiterOrders() {
                 {deliveredOrders.map((order) => (
                   <div
                     key={order.orderId}
-                    className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 flex items-center justify-between"
+                    className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 flex items-center justify-between"
                   >
                     <span className="text-xs text-gray-500">
                       {order.tableLabel} —{" "}
@@ -1199,7 +1199,7 @@ export default function WaiterOrders() {
                 {myTables.map((table) => (
                   <div
                     key={table.tableId}
-                    className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2"
+                    className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2"
                   >
                     <div className="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center">
                       <MapPin size={18} className="text-brand-500" />
@@ -1275,7 +1275,7 @@ export default function WaiterOrders() {
 
               {/* Stats row */}
               <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
+                <div className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <Star size={14} className="text-amber-400 fill-amber-400" />
                     <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
@@ -1291,7 +1291,7 @@ export default function WaiterOrders() {
                     {myPoints.ratingCount} reviews
                   </p>
                 </div>
-                <div className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
+                <div className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp size={14} className="text-green-500" />
                     <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
@@ -1320,7 +1320,7 @@ export default function WaiterOrders() {
                   {myPoints.history.map((entry) => (
                     <div
                       key={entry.id}
-                      className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between"
+                      className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between"
                     >
                       <div className="flex-1 min-w-0 mr-3">
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
@@ -1377,7 +1377,7 @@ export default function WaiterOrders() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setManualOpen(false)}
           />
-          <div className="relative bg-white dark:bg-[#231A2C] rounded-t-3xl flex flex-col max-h-[90vh]">
+          <div className="relative bg-white dark:bg-[#3B2149] rounded-t-3xl flex flex-col max-h-[90vh]">
             {/* Sheet header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
               <div>

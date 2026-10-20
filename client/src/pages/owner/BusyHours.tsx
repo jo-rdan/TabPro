@@ -117,22 +117,22 @@ export default function BusyHours() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-400 mb-1">Busiest day</p>
           <p className="text-xl font-black text-gray-900 dark:text-white">{data.busiestDay ?? '—'}</p>
         </div>
-        <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-400 mb-1">Peak hour</p>
           <p className="text-xl font-black text-gray-900 dark:text-white">{data.peakHourLabel ?? '—'}</p>
         </div>
-        <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-400 mb-1">Avg orders/hr</p>
           <p className="text-xl font-black text-gray-900 dark:text-white">{data.avgOrdersPerHour}</p>
         </div>
       </div>
 
       {/* Heatmap */}
-      <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4 overflow-x-auto">
+      <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4 overflow-x-auto">
         <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
           Orders by Day &amp; Hour
         </p>
@@ -183,7 +183,7 @@ export default function BusyHours() {
 
       {/* Peak days ranked */}
       {data.peakDays.length > 0 && (
-        <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
+        <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
           <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
             Peak Days by Orders
           </p>

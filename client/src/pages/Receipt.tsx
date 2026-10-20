@@ -122,7 +122,7 @@ export default function Receipt() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#1B1524]">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#2B1838]">
         <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -130,7 +130,7 @@ export default function Receipt() {
 
   if (error || !bill) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#1B1524]">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#2B1838]">
         <p className="text-sm text-red-500">{error || "Receipt not found."}</p>
       </div>
     );
@@ -141,7 +141,7 @@ export default function Receipt() {
   const vatAmount = bill.grandTotal - grandTotalBeforeVAT;
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#1B1524] flex flex-col items-center py-10 px-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#2B1838] flex flex-col items-center py-10 px-4">
       {/* Print button */}
       <div className="w-full max-w-sm mb-4 flex justify-end print:hidden">
         <button
@@ -156,7 +156,7 @@ export default function Receipt() {
       {/* Receipt card */}
       <div
         id="receipt"
-        className="w-full max-w-sm bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:border print:rounded-none"
+        className="w-full max-w-sm bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:border print:rounded-none"
       >
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800 text-center">
@@ -251,7 +251,7 @@ export default function Receipt() {
               placeholder="e.g. 0781234567"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-[#1B1524] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-[#2B1838] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
             <button

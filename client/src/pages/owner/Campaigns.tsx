@@ -60,7 +60,7 @@ function AudienceCard({ a }: { a: Audience | null }) {
 
 function FreeBox() {
   return (
-    <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#231A2C]">
+    <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#3B2149]">
       <Gift size={22} className="flex-none text-amber-500" />
       <p className="text-sm text-gray-700 dark:text-gray-300"><b className="text-gray-900 dark:text-white">Sending is free.</b> You only pay when guests come: 15% on their Skuzi bills, instead of 8%. Max 2 campaigns a week, so invites stay special.</p>
     </div>
@@ -99,7 +99,7 @@ export default function Campaigns() {
               <ul className="space-y-2">
                 {list.map((c) => (
                   <li key={c.id}>
-                    <Link to={`/campaigns/${c.id}`} className={`flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 dark:border-gray-800 dark:bg-[#231A2C] ${c.status === 'cancelled' ? 'opacity-60' : ''}`}>
+                    <Link to={`/campaigns/${c.id}`} className={`flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 dark:border-gray-800 dark:bg-[#3B2149] ${c.status === 'cancelled' ? 'opacity-60' : ''}`}>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-bold text-gray-900 dark:text-white">{c.title}</p>
                         <p className="truncate text-xs text-gray-500 dark:text-gray-400">{statusLine(c)}{c.offerText ? ` · ${c.offerText}` : ''}</p>
@@ -174,8 +174,8 @@ export function CampaignNew() {
   const onSend = () => { const v = validate(); if (v) { setError(v); return; } setError(''); later ? submit() : setConfirm(true); };
 
   const label = 'text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300';
-  const input = 'min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#1B1524] dark:text-white';
-  const pickSel = 'min-h-[46px] rounded-xl border border-gray-200 bg-white px-3 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#1B1524] dark:text-white';
+  const input = 'min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#2B1838] dark:text-white';
+  const pickSel = 'min-h-[46px] rounded-xl border border-gray-200 bg-white px-3 text-[15px] font-semibold text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-[#2B1838] dark:text-white';
   const chip = (on: boolean) => `min-h-[40px] rounded-full border px-4 text-sm font-bold ${on ? 'border-gray-900 bg-gray-900 text-white dark:border-amber-500 dark:bg-amber-500 dark:text-gray-900' : 'border-gray-200 bg-white text-gray-800 dark:border-gray-700 dark:bg-transparent dark:text-gray-200'}`;
   const days = Array.from({ length: 14 }, (_, i) => kigaliDay(i));
 
@@ -332,7 +332,7 @@ export function CampaignDetail() {
                     <div className="rounded-xl bg-white/10 px-3 py-2"><p className="text-lg font-extrabold">{c.results.newFaces}</p><p className="text-xs text-[#D3CADC]">New faces</p></div>
                   </div>
                 </div>
-                <dl className="mt-4 divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-[#231A2C]">
+                <dl className="mt-4 divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-[#3B2149]">
                   {[
                     ['Reached', `${c.recipientCount} ${c.recipientCount === 1 ? 'guest' : 'guests'}`],
                     ['They spent', rwf(c.results.spentRwf)],

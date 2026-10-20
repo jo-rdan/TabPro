@@ -75,9 +75,9 @@ export default function NightPicker({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="night-picker-title">
       <div className="absolute inset-0 bg-[#1B1524]/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="night-pop relative w-full sm:max-w-[440px] max-h-[92vh] overflow-y-auto bg-white dark:bg-[#231A2C] rounded-t-[28px] sm:rounded-[28px] border border-gray-200 dark:border-gray-800 shadow-2xl">
+      <div className="night-pop relative w-full sm:max-w-[440px] max-h-[92vh] overflow-y-auto bg-white dark:bg-[#3B2149] rounded-t-[28px] sm:rounded-[28px] border border-gray-200 dark:border-gray-800 shadow-2xl">
         {/* Header: the month, with a soft imigongo band */}
-        <div className="relative overflow-hidden px-5 pt-5 pb-4 bg-gray-900 dark:bg-[#1B1524] text-gray-50">
+        <div className="relative overflow-hidden px-5 pt-5 pb-4 bg-gray-900 dark:bg-[#2B1838] text-gray-50">
           <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#F2B33A]/25 blur-2xl" />
           <div className="relative flex items-start justify-between">
             <div>
@@ -106,7 +106,7 @@ export default function NightPicker({
                 className={`flex-shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
                   q.key === picked
                     ? "bg-gray-900 text-gray-50 dark:bg-gray-100 dark:text-gray-900"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#33293F] dark:text-gray-200"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#4A2D5C] dark:text-gray-200"
                 }`}
                 title={q.icon && best ? `${best.total.toLocaleString()} RWF` : undefined}
               >
@@ -118,9 +118,9 @@ export default function NightPicker({
 
           {/* Month navigation */}
           <div className="mt-4 flex items-center justify-between">
-            <button onClick={() => stepMonth(-1)} aria-label="Previous month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#33293F]"><ChevronLeft size={16} /></button>
+            <button onClick={() => stepMonth(-1)} aria-label="Previous month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#4A2D5C]"><ChevronLeft size={16} /></button>
             <p className="font-display text-base font-bold text-gray-900 dark:text-white">{monthLabel(month)}</p>
-            <button onClick={() => stepMonth(1)} disabled={month >= today.slice(0, 7)} aria-label="Next month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#33293F] disabled:opacity-30"><ChevronRight size={16} /></button>
+            <button onClick={() => stepMonth(1)} disabled={month >= today.slice(0, 7)} aria-label="Next month" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-[#4A2D5C] disabled:opacity-30"><ChevronRight size={16} /></button>
           </div>
 
           {/* Calendar = heat map */}
@@ -144,7 +144,7 @@ export default function NightPicker({
                   style={{ animationDelay: `${i * 10}ms`, background: HEAT[level] }}
                   className={`night-cell relative aspect-square rounded-xl text-sm font-semibold transition-transform disabled:cursor-default ${
                     future ? "text-gray-300 dark:text-gray-600" : level >= 4 ? "text-white" : "text-gray-800 dark:text-gray-100"
-                  } ${!level && !future ? "bg-gray-50 dark:bg-[#231A2C]" : ""} ${
+                  } ${!level && !future ? "bg-gray-50 dark:bg-[#3B2149]" : ""} ${
                     isPicked ? "ring-2 ring-offset-2 ring-gray-900 ring-offset-white dark:ring-gray-100 dark:ring-offset-[#231A2C] scale-105" : future ? "" : "hover:scale-105"
                   }`}
                 >
@@ -183,7 +183,7 @@ export default function NightPicker({
                 className={`flex flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-semibold transition-colors ${
                   draft.pay === value
                     ? "bg-brand-500 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-[#33293F] dark:text-gray-300"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-[#4A2D5C] dark:text-gray-300"
                 }`}
               >
                 <Icon size={15} />
@@ -191,7 +191,7 @@ export default function NightPicker({
               </button>
             ))}
           </div>
-          <label className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-[#231A2C] px-4 py-3 cursor-pointer">
+          <label className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-[#3B2149] px-4 py-3 cursor-pointer">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Only payouts still on the way</span>
             <input
               type="checkbox"

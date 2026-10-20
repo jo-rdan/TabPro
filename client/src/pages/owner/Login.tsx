@@ -7,7 +7,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Card */}
       <div className="relative w-full max-w-sm">
         {/* Logo + wordmark */}
@@ -24,7 +24,7 @@ export default function Login() {
         {/* Login card */}
         <div
           className="
-          bg-white dark:bg-[#231A2C]
+          bg-white dark:bg-[#3B2149]
           border border-gray-200 dark:border-gray-800
           rounded-2xl shadow-sm
           p-8
@@ -41,9 +41,9 @@ export default function Login() {
             onClick={handleGoogleLogin}
             className="
               w-full flex items-center justify-center gap-3
-              bg-white dark:bg-[#33293F]
+              bg-white dark:bg-[#4A2D5C]
               border border-gray-200 dark:border-gray-700
-              hover:bg-gray-50 dark:hover:bg-[#41354E]
+              hover:bg-gray-50 dark:hover:bg-[#573469]
               text-gray-800 dark:text-gray-200
               text-sm font-medium
               rounded-xl px-4 py-3

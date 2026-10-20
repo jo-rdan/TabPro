@@ -5,7 +5,7 @@ import { TERMS_SUMMARY } from "../lib/venueTerms";
 // and in the one-time prompt for owners who joined before.
 export function TermsSummary({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="rounded-2xl bg-gray-100 dark:bg-[#231A2C] p-4">
+    <div className="rounded-2xl bg-gray-100 dark:bg-[#3B2149] p-4">
       {!compact && <h3 className="font-display text-[15px] font-bold text-gray-900 dark:text-white mb-1">How Skuzi works with you</h3>}
       {TERMS_SUMMARY.map((p) => (
         <div key={p.title} className="mt-2.5 flex items-start gap-2.5 text-[13.5px] leading-snug text-gray-700 dark:text-gray-300">

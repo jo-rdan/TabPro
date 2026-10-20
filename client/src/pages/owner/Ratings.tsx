@@ -123,7 +123,7 @@ export default function Ratings() {
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all ${
               activeTab === tab
-                ? 'bg-white dark:bg-[#231A2C] text-gray-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#3B2149] text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
@@ -163,7 +163,7 @@ export default function Ratings() {
               { label: 'Service', score: data.totals.waiter, color: 'text-skuzi-honey' },
               { label: 'Overall', score: data.totals.overall, color: 'text-brand-500' },
             ].map(({ label, score, color }) => (
-              <div key={label} className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
+              <div key={label} className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
                 <p className="text-xs font-semibold text-gray-400 mb-2">{label}</p>
                 <p className={`text-3xl font-black ${color}`}>{score?.toFixed(1) ?? '—'}</p>
                 <p className="text-xs text-gray-400 mt-1">out of 5</p>
@@ -172,14 +172,14 @@ export default function Ratings() {
           </div>
 
           {/* Score bars */}
-          <div className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl p-5 space-y-4">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl p-5 space-y-4">
             <ScoreBar label="Food quality" score={data.totals.food} color="bg-orange-400" />
             <ScoreBar label="Waiter service" score={data.totals.waiter} color="bg-skuzi-honey" />
             <ScoreBar label="Overall experience" score={data.totals.overall} color="bg-brand-500" />
           </div>
 
           {/* Weekly trend */}
-          <div className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl p-5">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={15} className="text-brand-500" />
               <p className="text-sm font-bold text-gray-900 dark:text-white">8-week trend</p>
@@ -214,7 +214,7 @@ export default function Ratings() {
           {data.byWaiter.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-10">No waiter-linked ratings yet.</p>
           ) : data.byWaiter.map((w) => (
-            <div key={w.staffId} className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl p-5">
+            <div key={w.staffId} className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center flex-shrink-0">
@@ -246,7 +246,7 @@ export default function Ratings() {
               <p className="text-sm text-gray-400">No written comments yet.</p>
             </div>
           ) : data.comments.map((c) => (
-            <div key={c.id} className="bg-white dark:bg-[#231A2C] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
+            <div key={c.id} className="bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 rounded-2xl p-4">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">{c.comment}</p>
                 <div className="flex items-center gap-0.5 flex-shrink-0">

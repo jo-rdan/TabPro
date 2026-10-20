@@ -54,7 +54,7 @@ export default function VenueSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#1B1524] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-[#2B1838] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       <div className="absolute inset-0 dot-grid opacity-60 dark:opacity-100" />
       <div className="absolute inset-0 bg-radial-fade pointer-events-none" />
       <div className="relative w-full max-w-sm">
@@ -65,7 +65,7 @@ export default function VenueSetup() {
             Takes 30 seconds. You can update everything later.
           </p>
         </div>
-        <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-8">
+        <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-8">
           {/* Logo upload */}
           <div className="flex justify-center mb-6">
             <LogoUploader
@@ -83,7 +83,7 @@ export default function VenueSetup() {
               <input type="text" value={name} onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                 placeholder="e.g. Chez Willy"
-                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1B1524] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function VenueSetup() {
               <input type="text" value={location} onChange={(e) => setLocation(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                 placeholder="e.g. KG 7 Ave, Kigali"
-                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1B1524] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function VenueSetup() {
               <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input type="tel" value={momoPhone} onChange={(e) => setMomoPhone(e.target.value)}
                 placeholder="e.g. 0788123456"
-                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#1B1524] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <p className="text-xs text-gray-400 mt-1.5">MTN MoMo or Airtel Money. Skuzi sends your share here when customers pay through the app.</p>

@@ -83,7 +83,7 @@ const HEAT = [
 ];
 const BAR_COLOURS = ['bg-gray-900 dark:bg-gray-100', 'bg-brand-500', 'bg-skuzi-honey'];
 const slideClass =
-  'snap-start flex-[0_0_88%] sm:flex-[0_0_82%] min-w-0 bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-[22px] px-5 py-4 flex flex-col gap-3 min-h-[232px]';
+  'snap-start flex-[0_0_88%] sm:flex-[0_0_82%] min-w-0 bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-[22px] px-5 py-4 flex flex-col gap-3 min-h-[232px]';
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function shortRwf(n: number) {
@@ -420,7 +420,7 @@ export default function Dashboard() {
             {owner ? `Welcome back, ${owner.name.split(' ')[0]}` : 'Welcome back'}
           </h1>
           {venue?.isDemo && (
-            <span className="md:hidden mt-2 self-start inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+            <span className="md:hidden mt-2 self-start inline-flex items-center rounded-full bg-brand-100 dark:bg-white/10 px-3 py-1 text-xs font-bold text-brand-700 dark:text-[#F59A63]">
               Demo venue · payments are simulated
             </span>
           )}
@@ -483,9 +483,9 @@ export default function Dashboard() {
                 alert.type === 'bill'
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200/70 dark:border-green-700/40'
                   : alert.type === 'seated'
-                  ? 'bg-white dark:bg-[#231A2C] border-gray-200 dark:border-gray-800'
+                  ? 'bg-white dark:bg-[#3B2149] border-gray-200 dark:border-gray-800'
                   : alert.type === 'away'
-                  ? 'bg-white dark:bg-[#231A2C] border-gray-200 dark:border-gray-800'
+                  ? 'bg-white dark:bg-[#3B2149] border-gray-200 dark:border-gray-800'
                   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200/70 dark:border-amber-700/40'
               }`}
             >
@@ -554,7 +554,7 @@ export default function Dashboard() {
             <Fragment key={card.label}>
             {/* Bills left open comes right after the money */}
             {i === 1 && venue && <OpenBills venueId={venue.id} />}
-            <div className={`bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5 ${i === statCards.length - 1 ? 'col-span-2 lg:col-span-1' : ''}`}>
+            <div className={`bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5 ${i === statCards.length - 1 ? 'col-span-2 lg:col-span-1' : ''}`}>
               <div className="flex items-center justify-between">
                 <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
                 <Icon size={15} className={card.color} />
@@ -572,7 +572,7 @@ export default function Dashboard() {
 
       {/* Money tonight + coin jar */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
-        <div className="lg:col-span-3 bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-[22px] px-5 pt-4 pb-3">
+        <div className="lg:col-span-3 bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-[22px] px-5 pt-4 pb-3">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">Money tonight</h2>
             {comparison && (
@@ -604,7 +604,7 @@ export default function Dashboard() {
       {/* Live orders + swipe cards */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4">
 
-        <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-[22px] flex flex-col min-h-0">
+        <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-[22px] flex flex-col min-h-0">
           <div className="px-5 pt-4 pb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">Live orders</h2>
             <div className="flex items-center gap-1.5 text-xs font-bold text-green-500 dark:text-green-400">
@@ -658,7 +658,7 @@ export default function Dashboard() {
               <button
                 onClick={() => goToSlide(Math.max(0, slide - 1))}
                 aria-label="Previous card"
-                className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#231A2C] text-gray-900 dark:text-white flex items-center justify-center disabled:opacity-40"
+                className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#3B2149] text-gray-900 dark:text-white flex items-center justify-center disabled:opacity-40"
                 disabled={slide === 0}
               >
                 <ChevronLeft size={16} />

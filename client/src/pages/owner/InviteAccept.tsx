@@ -179,7 +179,7 @@ export default function InviteAccept() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm text-center">
         <Logo size={48} className="mx-auto mb-6" />
 
@@ -194,7 +194,7 @@ export default function InviteAccept() {
 
         {status === "set-pin" && (
           <>
-            <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
+            <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
               <div className="text-4xl mb-3">🔐</div>
               <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                 Welcome, {staffName}!
@@ -277,7 +277,7 @@ export default function InviteAccept() {
         )}
 
         {status === "success" && (
-          <div className="bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
+          <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
             <div className="text-4xl mb-4">✅</div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
               PIN set!
@@ -290,7 +290,7 @@ export default function InviteAccept() {
         )}
 
         {status === "error" && (
-          <div className="bg-white dark:bg-[#231A2C] border border-red-200/70 dark:border-red-700/40 rounded-2xl p-8">
+          <div className="bg-white dark:bg-[#3B2149] border border-red-200/70 dark:border-red-700/40 rounded-2xl p-8">
             <div className="text-4xl mb-4">❌</div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
               Invite not valid

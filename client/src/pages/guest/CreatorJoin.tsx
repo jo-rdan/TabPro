@@ -28,7 +28,7 @@ export default function CreatorJoin() {
     }
   };
 
-  const field = "h-12 w-full rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 text-[15px] font-semibold text-gray-900 outline-none placeholder:font-medium placeholder:text-gray-400 focus:border-brand-500 dark:border-[#33293F] dark:bg-[#1B1524] dark:text-[#F4F0F7]";
+  const field = "h-12 w-full rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 text-[15px] font-semibold text-gray-900 outline-none placeholder:font-medium placeholder:text-gray-400 focus:border-brand-500 dark:border-[#4A2D5C] dark:bg-[#2B1838] dark:text-[#F4F0F7]";
   const label = "text-xs font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[#F2B33A]";
 
   return (
@@ -69,7 +69,7 @@ export default function CreatorJoin() {
           </div>
         </section>
 
-        <section className="rounded-[26px] border-[1.5px] border-gray-200 bg-white p-5 dark:border-[#33293F] dark:bg-[#231A2C] md:sticky md:top-6 md:p-7">
+        <section className="rounded-[26px] border-[1.5px] border-gray-200 bg-white p-5 dark:border-[#4A2D5C] dark:bg-[#3B2149] md:sticky md:top-6 md:p-7">
           {done ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
               <Hand className="h-14 w-14" />

@@ -441,7 +441,7 @@ function OneMoreRound() {
               <Slider label="Price of one round" value={round} min={1000} max={20000} step={500} onChange={setRound} format={(v) => `${fmt(v)} RWF`} />
               <Slider label="Nights open each month" value={nights} min={4} max={30} step={1} onChange={setNights} format={(v) => `${v}`} />
             </div>
-            <div className="mt-8 rounded-[24px] bg-[#231A2C] p-6 text-[#F4F0F7] dark:bg-[#1B1524]">
+            <div className="mt-8 rounded-[24px] bg-[#231A2C] p-6 text-[#F4F0F7] dark:bg-[#2B1838]">
               <p className="text-[14px] text-[#D3CADC]">If each table misses just <b className="text-[#F4F0F7]">one round</b> a night, you lose</p>
               <p className="mt-1 font-display text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#F0884F] sm:text-[52px]">
                 −{fmt(extra)} <span className="text-[18px] text-[#D3CADC]">RWF a month</span>
@@ -700,7 +700,7 @@ function Footer() {
 // Coffee & imigongo, with light sections that follow the visitor's theme.
 const STYLES = `
 .sk-site { --hero-bg:#AE4217; --hero-hand:#FFFFFF; --hero-ink:#FFFFFF; --hero-body:#FFE6D8; --hero-muted:#FFD3BC; --hero-accent:#FFD966; --hero-chip:rgba(255,255,255,.12); --hero-ring:rgba(255,255,255,.30); --hero-glow:0; --cta-bg:#231A2C; --cta-ink:#FFFFFF; --cta-hover:#3A2D48; --cta-glow:rgba(35,26,44,.35); --bg:#F4F0F7; --paper:#FFFFFF; --card:#FDFCFE; --ink:#231A2C; --body:#554A60; --muted:#6F6379; --line:#E2DCE8; --rust-ink:#A63F15; }
-.dark .sk-site { --hero-bg:#1B1524; --hero-hand:#F0763A; --hero-ink:#F4F0F7; --hero-body:#D3CADC; --hero-muted:#9C90A8; --hero-accent:#F2B33A; --hero-chip:rgba(255,255,255,.05); --hero-ring:rgba(255,255,255,.10); --hero-glow:0; --cta-bg:#E2602A; --cta-ink:#FFFFFF; --cta-hover:#EE7843; --cta-glow:rgba(226,96,42,.6); --bg:#1E1727; --paper:#1B1524; --card:#231A2C; --ink:#F4F0F7; --body:#D3CADC; --muted:#9C90A8; --line:#41354E; --rust-ink:#F29C6F; }
+.dark .sk-site { --hero-bg:#2B1838; --hero-hand:#F0763A; --hero-ink:#F4F0F7; --hero-body:#D9C6E6; --hero-muted:#C4AED3; --hero-accent:#F2B33A; --hero-chip:rgba(255,255,255,.05); --hero-ring:rgba(255,255,255,.10); --hero-glow:0; --cta-bg:#E2602A; --cta-ink:#FFFFFF; --cta-hover:#EE7843; --cta-glow:rgba(226,96,42,.6); --bg:#2E1A3C; --paper:#2B1838; --card:#3B2149; --ink:#F4F0F7; --body:#D9C6E6; --muted:#C4AED3; --line:#573469; --rust-ink:#F29C6F; }
 .sk-reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
 .sk-reveal.is-in { opacity: 1; transform: none; }
 .sk-glow { background: radial-gradient(closest-side, rgba(191,74,26,.55), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(242,179,58,.28), transparent 70%); filter: blur(40px); }

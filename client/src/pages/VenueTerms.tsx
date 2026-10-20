@@ -15,9 +15,9 @@ export default function VenueTerms() {
   const agreed = venue?.termsVersion && venue.termsAcceptedAt ? venue : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] px-4 py-8 sm:py-12 print:bg-white print:p-0">
-      <div className="mx-auto max-w-2xl overflow-hidden rounded-[28px] bg-white dark:bg-[#231A2C] border border-gray-200 dark:border-gray-800 shadow-sm print:border-0 print:shadow-none print:rounded-none">
-        <div className="relative bg-[#231A2C] dark:bg-[#1B1524] px-6 pb-7 pt-6 text-[#F4F0F7] sm:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] px-4 py-8 sm:py-12 print:bg-white print:p-0">
+      <div className="mx-auto max-w-2xl overflow-hidden rounded-[28px] bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 shadow-sm print:border-0 print:shadow-none print:rounded-none">
+        <div className="relative bg-[#231A2C] dark:bg-[#2B1838] px-6 pb-7 pt-6 text-[#F4F0F7] sm:px-8">
           <div className="flex items-start justify-between gap-4">
             <Wordmark size={22} on="dark" />
             <button onClick={() => window.print()} className="print:hidden inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-[#F4F0F7] hover:bg-white/15">
@@ -33,7 +33,7 @@ export default function VenueTerms() {
         </div>
 
         <div className="px-6 py-6 sm:px-8">
-          <div className="flex flex-col gap-2 rounded-2xl bg-gray-100 dark:bg-[#231A2C] px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-col gap-2 rounded-2xl bg-gray-100 dark:bg-[#3B2149] px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4">
             <span className="font-display text-3xl font-bold text-brand-500 whitespace-nowrap">92 / 8</span>
             <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
               When a guest pays a bill through Skuzi by Mobile Money, your venue receives <b className="text-gray-900 dark:text-white">92%</b> on its MoMo straight away and Skuzi keeps <b className="text-gray-900 dark:text-white">8%</b>. Cash and other payments cost nothing. There is no monthly fee. For guests a campaign brings, Skuzi keeps <b className="text-gray-900 dark:text-white">15%</b> on their Skuzi bills (see Campaigns).

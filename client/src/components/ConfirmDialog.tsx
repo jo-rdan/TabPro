@@ -27,7 +27,7 @@ export default function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="bg-white dark:bg-[#231A2C] rounded-2xl w-full max-w-sm p-5"
+        className="bg-white dark:bg-[#3B2149] rounded-2xl w-full max-w-sm p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3 mb-4">
