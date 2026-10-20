@@ -18,6 +18,7 @@ import api from "../../lib/api";
 import JoinRequests from "../../components/JoinRequests";
 import Toast from "../../components/Toast";
 import ClockInSetup from "../../components/ClockInSetup";
+import { CLOCK_IN_ENABLED } from "../../lib/features";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import type { WsEvent } from "@tabpro/shared";
 
@@ -670,7 +671,7 @@ export default function Staff() {
         </div>
       )}
       {/* How new waiters join and clock in (moved here from Shifts) */}
-      {venue && (
+      {venue && CLOCK_IN_ENABLED && (
         <div className="mt-8">
           <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Joining &amp; clock-in</h2>
           <ClockInSetup venueId={venue.id} onToast={setToast} />

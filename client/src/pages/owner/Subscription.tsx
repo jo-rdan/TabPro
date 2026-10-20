@@ -111,7 +111,6 @@ export default function Subscription() {
               "Customer ratings & feedback",
               "Staff points & leaderboard",
               "Busy hours heatmap",
-              "Shift management & clock-in",
               "Activity log & live dashboard",
               "Marketing campaigns",
             ].map((f) => (
