@@ -269,6 +269,41 @@ export async function nudgeWaiter(tabId: string) {
   return { tabId, tableLabel: tab.table.label };
 }
 
+// Skuzi! before the guest has ordered: there's no tab yet, so alert the
+// table's waiter straight from the sticker. Once a tab is open it goes through
+// nudgeWaiter like any other call. One call per table every 30 seconds, so a
+// photo of a sticker can't be used to spam the staff.
+const lastTableNudge = new Map<string, number>();
+const TABLE_NUDGE_GAP_MS = 30_000;
+
+export async function nudgeTable(qrCode: string) {
+  const table = await getTableByQrCode(qrCode);
+  if (!table || !table.venue) throw new Error('Table not found');
+  const openTab = await findUnsettledTab(table.id);
+  if (openTab && openTab.status === 'open') return nudgeWaiter(openTab.id);
+
+  const last = lastTableNudge.get(table.id) ?? 0;
+  if (Date.now() - last < TABLE_NUDGE_GAP_MS) return { tabId: null, tableLabel: table.label };
+  lastTableNudge.set(table.id, Date.now());
+
+  broadcastToVenue(table.venue.id, {
+    type: 'new_nudge',
+    payload: { tabId: null, tableId: table.id, tableLabel: table.label },
+    venueId: table.venue.id,
+    tableId: table.id,
+    timestamp: new Date().toISOString(),
+  });
+  const assignment = await db.query.tableAssignments.findFirst({ where: eq(tableAssignments.tableId, table.id) });
+  await notifyTable(
+    table.venue.id,
+    table.id,
+    assignment?.staffId ?? null,
+    { title: `👋 ${table.label} needs you`, body: 'A guest would love a hand 👋' },
+    { title: `👋 ${table.label} called a waiter`, body: 'Their waiter has been notified' },
+  );
+  return { tabId: null, tableLabel: table.label };
+}
+
 export async function requestBill(tabId: string) {
   const tab = await db.query.tabs.findFirst({
     where: eq(tabs.id, tabId),
