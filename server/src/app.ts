@@ -13,6 +13,9 @@ import routes from './routes/index';
 import { errorMiddleware } from './middleware/error.middleware';
 import { logError } from './lib/errorLog';
 import { allowedOrigins } from './lib/origins';
+import { markActive } from './lib/activity';
+import { db } from './lib/db';
+import { sql } from 'drizzle-orm';
 
 dotenv.config();
 
@@ -38,11 +41,32 @@ app.use(passport.initialize());
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
+// A real request means Skuzi is in use, so the background timers may query
+// again (lib/activity.ts). Mounted before the routes and only on /api, so the
+// keep-alive ping and Render's own /health check never wake the database.
+app.use('/api', (_req, _res, next) => { markActive(); next(); });
+
 app.use('/api', routes);
 
-// Health check
+// Health check: the server is up. Deliberately does NOT touch the database —
+// Render polls this and our keep-alive pings it every 10 minutes, and on
+// Neon's free plan every query keeps the database awake and burns the monthly
+// compute allowance.
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// The database is up too. This one DOES query, so the watchdog must call it
+// sparingly (see .github/workflows/watchdog.yml). On 2026-10-19 the database
+// was out of compute for hours while /health happily answered "ok", so the
+// watchdog saw nothing and Jordan found out from a restaurant manager.
+app.get('/health/db', async (_req, res) => {
+  try {
+    await db.execute(sql`select 1`);
+    res.json({ status: 'ok', db: 'ok', timestamp: new Date().toISOString() });
+  } catch (err: any) {
+    res.status(503).json({ status: 'degraded', db: 'down', error: err?.message ?? 'unreachable' });
+  }
 });
 
 // ─── Error handler ────────────────────────────────────────────────────────────

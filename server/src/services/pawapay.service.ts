@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "../lib/db";
 import { momoPayments, venues, tabs } from "../models/schema";
 import { eq, and, isNull, or, lt, desc } from "drizzle-orm";
+import { startPolling } from "../lib/activity";
 import { getTabBill, closeTab } from "./tab.service";
 import { notifyTable, notifyGuest, sendPushToOwner } from "./push.service";
 import { broadcastToVenue } from "../lib/websocket";
@@ -414,6 +415,8 @@ export async function reconcileTabPayments() {
   }
 }
 
+// A payment only exists while a guest is paying, so this pauses while nobody
+// is using Skuzi and the database is allowed to sleep (see lib/activity.ts).
 export function startPaymentReconciler() {
-  setInterval(() => reconcileTabPayments().catch((err) => console.error("[reconcile]", err)), 60_000);
+  startPolling("reconcile", 60_000, reconcileTabPayments);
 }

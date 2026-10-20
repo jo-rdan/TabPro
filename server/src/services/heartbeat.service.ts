@@ -2,6 +2,7 @@ import { db } from '../lib/db';
 import { tabs, orders, tables } from '../models/schema';
 import { eq, and, lt, inArray, isNull } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
+import { startPolling } from '../lib/activity';
 import { notifyTable } from './push.service';
 
 // A locked phone stops pinging, so silence alone is normal at a bar. Flag a
@@ -143,8 +144,10 @@ export async function checkWaitingOrders() {
 }
 
 // ─── Start the background checker ────────────────────────────────────────────
+// Both checks are about live tabs, so they pause while nobody is using Skuzi
+// and the database is allowed to sleep (see lib/activity.ts).
 export function startHeartbeatChecker() {
-  setInterval(() => checkAbandonedTabs().catch((err) => console.error('[heartbeat]', err)), 30_000);
-  setInterval(() => checkWaitingOrders().catch((err) => console.error('[order-wait]', err)), 60_000);
+  startPolling('heartbeat', 30_000, checkAbandonedTabs);
+  startPolling('order-wait', 60_000, checkWaitingOrders);
   console.log('[heartbeat] Abandoned tab checker started');
 }

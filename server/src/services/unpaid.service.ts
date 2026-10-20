@@ -1,6 +1,7 @@
 import { db } from '../lib/db';
 import { tabs, tables } from '../models/schema';
 import { and, eq, inArray } from 'drizzle-orm';
+import { startPolling } from '../lib/activity';
 import { sendPushToOwner } from './push.service';
 
 // A bill counts as "left open" once nobody has touched it for a long while,
@@ -64,7 +65,9 @@ export async function sendUnpaidSummaries() {
   }
 }
 
+// Only about bills that are already open, so it pauses while nobody is using
+// Skuzi and the database is allowed to sleep (see lib/activity.ts).
 export function startUnpaidBillsChecker() {
-  setInterval(() => checkUnpaidBills().catch((err) => console.error('[unpaid]', err)), 10 * 60_000);
+  startPolling('unpaid', 10 * 60_000, checkUnpaidBills);
 }
 
