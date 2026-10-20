@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   handleOpenTab,
   handlePreviewTable,
+  handleNudgeTable,
   handleStaffOpenTab,
   handleGetTab,
   handleNudgeWaiter,
@@ -22,6 +23,7 @@ const router = Router();
 router.post('/open', handleOpenTab);
 // Menu first: what the guest sees before giving their number
 router.get('/preview/:qrCode', handlePreviewTable);
+router.post('/preview/:qrCode/nudge', handleNudgeTable);
 // Waiter: open a tab by tableId for walk-in customers
 router.post('/staff-open', venueMember(venueOfTable((req) => req.body?.tableId)), handleStaffOpenTab);
 router.get('/:tabId', handleGetTab);

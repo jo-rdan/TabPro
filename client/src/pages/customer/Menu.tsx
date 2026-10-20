@@ -623,10 +623,12 @@ export default function CustomerMenu() {
   };
 
   const handleNudge = async () => {
-    if (!tabId || nudgeLoading || justNudged) return;
+    if (nudgeLoading || justNudged) return;
+    if (!tabId && !qrCode) return;
     setNudgeLoading(true);
     try {
-      await apiFetch(`/tabs/${tabId}/nudge`, { method: "POST" });
+      // Before the first order there's no tab yet: alert the table from its sticker.
+      await apiFetch(tabId ? `/tabs/${tabId}/nudge` : `/tabs/preview/${qrCode}/nudge`, { method: "POST" });
       setJustNudged(true);
       setTimeout(() => setJustNudged(false), 10000);
     } catch {
@@ -1673,28 +1675,32 @@ export default function CustomerMenu() {
 
         {/* Phone: Skuzi!, My bill and the orders notepad float on the left, away
             from the "+" buttons on the right of every dish. */}
-        {placedOrders.length > 0 && !ordersOpen && (
+        {step === "menu" && !ordersOpen && (
           <div
             className={`md:hidden fixed left-4 z-30 flex flex-col items-start gap-2.5 transition-all ${cartCount > 0 ? "bottom-[96px]" : "bottom-5"}`}
             style={{ marginBottom: "env(safe-area-inset-bottom)" }}
           >
-            <button
-              onClick={() => setOrdersOpen(true)}
-              aria-label={`Your orders (${placedOrders.length})`}
-              className="relative h-12 w-12 rounded-full bg-white dark:bg-gray-600 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-500 shadow-lg shadow-black/25 flex items-center justify-center active:scale-95 transition-all"
-            >
-              <NotebookPen size={21} strokeWidth={2.2} />
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#FFD966] text-[#231A2C] text-[11px] font-black flex items-center justify-center">
-                {placedOrders.length}
-              </span>
-            </button>
-            <button
-              onClick={handleRequestBill}
-              disabled={billLoading}
-              className="h-12 pl-3.5 pr-4 rounded-full bg-white dark:bg-gray-600 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-500 shadow-lg shadow-black/25 flex items-center gap-2 text-[15px] font-bold disabled:opacity-60 active:scale-95 transition-all"
-            >
-              <Receipt size={18} /> {billLoading ? "..." : "My bill"}
-            </button>
+            {placedOrders.length > 0 && (
+              <>
+              <button
+                onClick={() => setOrdersOpen(true)}
+                aria-label={`Your orders (${placedOrders.length})`}
+                className="relative h-12 w-12 rounded-full bg-white dark:bg-gray-600 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-500 shadow-lg shadow-black/25 flex items-center justify-center active:scale-95 transition-all"
+              >
+                <NotebookPen size={21} strokeWidth={2.2} />
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#FFD966] text-[#231A2C] text-[11px] font-black flex items-center justify-center">
+                  {placedOrders.length}
+                </span>
+              </button>
+              <button
+                onClick={handleRequestBill}
+                disabled={billLoading}
+                className="h-12 pl-3.5 pr-4 rounded-full bg-white dark:bg-gray-600 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-500 shadow-lg shadow-black/25 flex items-center gap-2 text-[15px] font-bold disabled:opacity-60 active:scale-95 transition-all"
+              >
+                <Receipt size={18} /> {billLoading ? "..." : "My bill"}
+              </button>
+              </>
+            )}
             <button
               onClick={handleNudge}
               disabled={nudgeLoading || justNudged}
