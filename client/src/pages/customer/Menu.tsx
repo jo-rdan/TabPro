@@ -306,6 +306,7 @@ export default function CustomerMenu() {
   const [activeCategory, setActiveCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const catRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const menuHeaderRef = useRef<HTMLDivElement>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [placedOrders, setPlacedOrders] = useState<PlacedOrder[]>([]);
@@ -758,12 +759,14 @@ export default function CustomerMenu() {
     }
   };
 
+  // Scroll so the section's title lands just below the sticky header. A plain
+  // scrollIntoView put it behind the header, so guests saw the next section.
   const scrollToCategory = (cat: string) => {
     setActiveCategory(cat);
-    catRefs.current[cat]?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    const el = catRefs.current[cat];
+    if (!el) return;
+    const headerHeight = menuHeaderRef.current?.getBoundingClientRect().height ?? 0;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - headerHeight - 12, behavior: "smooth" });
   };
 
   // ─── IDENTIFY ─────────────────────────────────────────────────────────────
@@ -1432,7 +1435,7 @@ export default function CustomerMenu() {
         style={{ paddingBottom: (cartCount > 0 ? 84 : 0) + (placedOrders.length > 0 ? 68 : 0) }}
       >
         {/* Header: espresso band with the venue, the table, the waiter and the categories */}
-        <div className="sticky top-0 z-10 dark guest-skin bg-gray-900 text-[color:var(--g-text)] rounded-b-[28px] shadow-lg shadow-black/10">
+        <div ref={menuHeaderRef} className="sticky top-0 z-10 dark guest-skin bg-gray-900 text-[color:var(--g-text)] rounded-b-[28px] shadow-lg shadow-black/10">
           <div className="px-5 pt-5 pb-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
