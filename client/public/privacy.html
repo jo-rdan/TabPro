@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — Skuzi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #0F1419;
-    --ink-soft: #4A5568;
-    --ink-muted: #718096;
-    --line: #E2E8F0;
-    --accent: #0A5C3F;
-    --accent-light: #EBF5F0;
-    --bg: #FAFAF8;
+    --ink: #231A2C;
+    --ink-soft: #554A60;
+    --ink-muted: #6F6379;
+    --line: #E2DCE8;
+    --accent: #AE4217;
+    --accent-light: #FCE3D3;
+    --bg: #FDFCFE;
     --white: #FFFFFF;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Figtree', system-ui, sans-serif;
     background: var(--bg);
     color: var(--ink);
     font-size: 15px;
@@ -45,7 +45,7 @@
     justify-content: space-between;
   }
   .logo {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Figtree', system-ui, sans-serif;
     font-size: 16px;
     font-weight: 400;
     color: var(--accent);
@@ -67,7 +67,7 @@
     text-align: center;
   }
   .hero-eyebrow {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Figtree', system-ui, sans-serif;
     font-size: 11px;
     letter-spacing: .14em;
     text-transform: uppercase;
@@ -75,7 +75,7 @@
     margin-bottom: 14px;
   }
   .hero h1 {
-    font-family: 'IBM Plex Serif', serif;
+    font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
     font-size: clamp(28px, 4vw, 40px);
     font-weight: 600;
     color: #fff;
@@ -85,7 +85,7 @@
   .hero-meta {
     font-size: 13px;
     color: rgba(255,255,255,.65);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Figtree', system-ui, sans-serif;
   }
 
   /* ── Layout ── */
@@ -136,7 +136,7 @@
   .section:last-child { border-bottom: none; }
 
   .section-num {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Figtree', system-ui, sans-serif;
     font-size: 10px;
     color: var(--accent);
     letter-spacing: .1em;
@@ -144,7 +144,7 @@
     margin-bottom: 6px;
   }
   h2 {
-    font-family: 'IBM Plex Serif', serif;
+    font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
     font-size: 20px;
     font-weight: 600;
     color: var(--ink);
@@ -224,7 +224,7 @@
     justify-content: space-between;
     font-size: 12px;
     color: var(--ink-muted);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Figtree', system-ui, sans-serif;
   }
 
   @media (max-width: 680px) {
@@ -247,7 +247,7 @@
 <div class="hero">
   <div class="hero-eyebrow">Legal Document · VNT250 Ltd</div>
   <h1>Privacy Policy</h1>
-  <div class="hero-meta">Effective date: July 2026 &nbsp;·&nbsp; Last updated: July 2026</div>
+  <div class="hero-meta">Effective date: July 2026 &nbsp;·&nbsp; Last updated: 20 October 2026</div>
 </div>
 
 <div class="layout">
@@ -287,7 +287,7 @@
         <p><strong>Legal name:</strong> VNT250 Ltd</p>
         <p><strong>Product:</strong> Skuzi</p>
         <p><strong>Country:</strong> Republic of Rwanda</p>
-        <p><strong>Data Protection Contact:</strong> iga.enterprise.ltd@gmail.com</p>
+        <p><strong>Data Protection Contact:</strong> info@skuzi.xyz</p>
       </div>
     </div>
 
@@ -317,10 +317,11 @@
         <tbody>
           <tr><td>Full name</td><td>Account identification</td><td>Google OAuth / direct input</td></tr>
           <tr><td>Email address</td><td>Account creation and communication</td><td>Google OAuth</td></tr>
-          <tr><td>Phone number</td><td>Billing and support contact</td><td>Direct input (optional)</td></tr>
+          <tr><td>Phone number</td><td>Support contact</td><td>Direct input (optional)</td></tr>
           <tr><td>Venue name and location</td><td>Platform configuration</td><td>Direct input</td></tr>
           <tr><td>Logo / branding images</td><td>Menu and profile display</td><td>Direct upload</td></tr>
-          <tr><td>Subscription and payment records</td><td>Billing management</td><td>Payment processor</td></tr>
+          <tr><td>Venue Mobile Money number</td><td>Sending the venue its share of bills paid through Skuzi</td><td>Direct input</td></tr>
+          <tr><td>Payment and payout records</td><td>Accounting and payout status</td><td>System-generated / payment partner</td></tr>
         </tbody>
       </table>
 
@@ -345,15 +346,28 @@
           <tr><th>Data</th><th>Purpose</th><th>Source</th></tr>
         </thead>
         <tbody>
-          <tr><td>Phone number</td><td>Tab creation, and shown to the venue only if a bill is left unpaid — not used for marketing</td><td>Direct input (required to open a tab)</td></tr>
+          <tr><td>Phone number</td><td>Placing orders and paying by Mobile Money; shown to the venue only if a bill is left unpaid. Used for invitations only if you say yes to them</td><td>Direct input (required to send an order)</td></tr>
           <tr><td>Name</td><td>Personalisation (optional)</td><td>Direct input</td></tr>
           <tr><td>Order history</td><td>Service fulfilment and analytics</td><td>System-generated</td></tr>
           <tr><td>Tab and payment records</td><td>Transaction records</td><td>System-generated</td></tr>
           <tr><td>Ratings and comments</td><td>Quality improvement</td><td>Direct input (voluntary)</td></tr>
+          <tr><td>Table bookings (date, time, party size, name)</td><td>Holding a table for you and letting the venue confirm it</td><td>Direct input</td></tr>
+          <tr><td>Notification permission</td><td>Order updates, booking updates, and invitations you opted in to</td><td>Your browser (only if you allow it)</td></tr>
+          <tr><td>Skuzi money balance</td><td>Money back you can use on your next Skuzi bill</td><td>System-generated</td></tr>
         </tbody>
       </table>
 
-      <h3>3.4 — Passively Collected Technical Data</h3>
+      <h3>3.4 — Skuzi Creators</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Data</th><th>Purpose</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td>Name and social media handle</td><td>Reviewing the application and identifying the creator</td><td>Direct input</td></tr>
+          <tr><td>Mobile Money number</td><td>Paying the creator their earnings</td><td>Direct input</td></tr>
+          <tr><td>Creator code, guests brought and earnings</td><td>Calculating and showing earnings</td><td>System-generated</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>3.5 — Passively Collected Technical Data</h3>
       <p>Like all web servers, our infrastructure passively records standard technical information generated by your device when you access the platform — such as IP address, browser type, and request timestamps. This happens as a natural function of how the internet works, not through any tracking technology we have built. This data is used solely for security monitoring and debugging and is not linked to individual user profiles.</p>
     </div>
 
@@ -363,7 +377,7 @@
       <p>In accordance with Article 9 of Law No. 058/2021, we rely on the following legal grounds to process personal data:</p>
       <ul>
         <li><strong>Contractual necessity:</strong> Processing required to perform the Skuzi service you have registered for or interact with, including order management, billing, and account administration.</li>
-        <li><strong>Consent:</strong> Where you have freely and explicitly provided consent, such as when a customer voluntarily enters their phone number to open a tab, or when you opt in to push notifications.</li>
+        <li><strong>Consent:</strong> Where you have freely and explicitly provided consent, such as when a customer voluntarily enters their phone number to send an order, opts in to push notifications, or says yes to invitations from venues.</li>
         <li><strong>Legitimate interests:</strong> For analytics, platform security, fraud prevention, and service improvement, where those interests are not overridden by your fundamental rights.</li>
         <li><strong>Legal obligation:</strong> Where we are required to retain or disclose data to comply with applicable Rwandan law, including tax, financial records, and law enforcement requirements.</li>
       </ul>
@@ -378,7 +392,8 @@
         <li>To process orders, payments, and tab transactions;</li>
         <li>To deliver shift schedules, attendance records, and performance reports to venue owners;</li>
         <li>To send transactional notifications, including order status updates and clock-in confirmations, via push notification, SMS, or WhatsApp;</li>
-        <li>To process billing and manage subscriptions;</li>
+        <li>To collect payments from Customers and send venues and creators their share;</li>
+        <li>To send invitations to venue events and offers, only to Customers who opted in;</li>
         <li>To monitor and improve platform security and performance;</li>
         <li>To comply with legal and regulatory obligations;</li>
         <li>To respond to support inquiries and resolve disputes.</li>
@@ -397,8 +412,9 @@
         <li><strong>Cloud hosting:</strong> Render (server hosting and static site deployment);</li>
         <li><strong>Database:</strong> Neon (PostgreSQL cloud database);</li>
         <li><strong>Media storage:</strong> Cloudinary (image uploads);</li>
-        <li><strong>Payment processing:</strong> MTN Mobile Money (MoMo) for subscription billing;</li>
-        <li><strong>Messaging:</strong> Africa's Talking or equivalent provider for SMS/WhatsApp staff invitations.</li>
+        <li><strong>Payment processing:</strong> pawaPay, our licensed payment partner, with MTN Mobile Money and Airtel Money, for collecting bills and sending payouts;</li>
+        <li><strong>Google:</strong> sign-in for venue owners, and Gemini, which reads the menu photos venue owners choose to upload;</li>
+        <li><strong>Messaging:</strong> Africa's Talking or an equivalent provider, for SMS staff invitations where used.</li>
       </ul>
 
       <h3>6.2 — Venue Owners</h3>
@@ -420,7 +436,7 @@
           <tr><th>Category</th><th>Retention Period</th></tr>
         </thead>
         <tbody>
-          <tr><td>Venue owner account data</td><td>Duration of subscription + 5 years</td></tr>
+          <tr><td>Venue owner account data</td><td>While the account is active + 5 years</td></tr>
           <tr><td>Staff records and shift logs</td><td>3 years from date of creation</td></tr>
           <tr><td>Customer phone numbers and order history</td><td>2 years from last interaction</td></tr>
           <tr><td>Payment and billing records</td><td>7 years (Rwandan tax and accounting obligations)</td></tr>
@@ -434,7 +450,7 @@
     <div class="section" id="s8">
       <div class="section-num">Article 08</div>
       <h2>Your Rights as a Data Subject</h2>
-      <p>Under Law No. 058/2021, you have the following rights in respect of your personal data. To exercise any of these rights, please contact us at <strong>iga.enterprise.ltd@gmail.com</strong>.</p>
+      <p>Under Law No. 058/2021, you have the following rights in respect of your personal data. To exercise any of these rights, please contact us at <strong>info@skuzi.xyz</strong>.</p>
       <ul>
         <li><strong>Right of access:</strong> You may request a copy of the personal data we hold about you;</li>
         <li><strong>Right to rectification:</strong> You may request correction of inaccurate or incomplete data;</li>
@@ -472,7 +488,7 @@
     <div class="section" id="s11">
       <div class="section-num">Article 11</div>
       <h2>Children's Data</h2>
-      <p>The Skuzi platform is not directed at children under the age of 16. We do not knowingly collect personal data from individuals under 16. If you believe we have inadvertently collected such data, please contact us immediately at <strong>iga.enterprise.ltd@gmail.com</strong> and we will delete it promptly.</p>
+      <p>The Skuzi platform is not directed at children under the age of 16. We do not knowingly collect personal data from individuals under 16. If you believe we have inadvertently collected such data, please contact us immediately at <strong>info@skuzi.xyz</strong> and we will delete it promptly.</p>
     </div>
 
     <div class="section" id="s12">
@@ -494,11 +510,11 @@
       <p>If you have any questions, concerns, or requests regarding this Privacy Policy or the processing of your personal data, please contact us:</p>
       <div class="contact-box">
         <p><strong>VNT250 Ltd — Data Protection</strong></p>
-        <p>Email: <strong>iga.enterprise.ltd@gmail.com</strong></p>
-        <p>Platform: <strong>tabpro.onrender.com</strong></p>
+        <p>Email: <strong>info@skuzi.xyz</strong></p>
+        <p>Platform: <strong>skuzi.xyz</strong></p>
         <p>Country: <strong>Republic of Rwanda</strong></p>
-        <p style="margin-top:12px; font-size:13px; color:#718096;">You also have the right to lodge a complaint directly with the <strong>Rwanda Data Protection Authority (RPDA)</strong> at <strong>www.rpda.rw</strong> if you believe your data protection rights have been infringed.</p>
-        <p style="margin-top:8px; font-size:13px; color:#718096;">All data protection, legal, and support enquiries can be directed to: <strong>iga.enterprise.ltd@gmail.com</strong></p>
+        <p style="margin-top:12px; font-size:13px; color:#6F6379;">You also have the right to lodge a complaint directly with the <strong>Rwanda Data Protection Authority (RPDA)</strong> at <strong>www.rpda.rw</strong> if you believe your data protection rights have been infringed.</p>
+        <p style="margin-top:8px; font-size:13px; color:#6F6379;">All data protection, legal, and support enquiries can be directed to: <strong>info@skuzi.xyz</strong></p>
       </div>
     </div>
 
