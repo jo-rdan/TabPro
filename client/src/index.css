@@ -165,3 +165,14 @@ html:not(.dark) .guest-skin {
 .night-pop { animation: night-pop .35s cubic-bezier(.2,.8,.2,1) both; }
 .night-cell { animation: night-cell .35s cubic-bezier(.2,.8,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .night-pop, .night-cell { animation: none; } }
+
+/* Guest menu: the Skuzi! button bounces once when the waiter has been told. */
+@keyframes skuzi-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  20% { transform: translateY(-9px) scale(1.04); }
+  40% { transform: translateY(0) scale(1); }
+  60% { transform: translateY(-4px) scale(1.02); }
+  80% { transform: translateY(0) scale(1); }
+}
+.skuzi-bounce { animation: skuzi-bounce 0.9s ease-out; }
+@media (prefers-reduced-motion: reduce) { .skuzi-bounce { animation: none; } }
