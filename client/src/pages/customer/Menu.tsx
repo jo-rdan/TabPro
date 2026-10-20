@@ -1,3 +1,4 @@
+import { ThemeCycleButton } from "../../components/ThemeSwitch";
 import { useState, useEffect, useRef } from "react";
 import GuestAlerts from "../../components/GuestAlerts";
 import { useParams } from "react-router-dom";
@@ -1444,6 +1445,7 @@ export default function CustomerMenu() {
                   </p>
                 </div>
               </div>
+              <ThemeCycleButton className="ml-auto flex-shrink-0 !text-[color:var(--g-muted)] hover:!bg-white/10" />
               {placedOrders.length > 0 && (
                 <div className="hidden md:flex gap-2 flex-shrink-0">
                   <button

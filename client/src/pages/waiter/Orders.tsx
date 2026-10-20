@@ -1,3 +1,4 @@
+import { ThemeCycleButton } from "../../components/ThemeSwitch";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import {
@@ -887,6 +888,7 @@ export default function WaiterOrders() {
           >
             Sign out
           </button>
+          <ThemeCycleButton />
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
         </div>
       </div>

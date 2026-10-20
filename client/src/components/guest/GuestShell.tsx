@@ -1,3 +1,4 @@
+import { ThemeCycleButton } from "../ThemeSwitch";
 import { Link } from "react-router-dom";
 import { Compass, CalendarDays, UserRound } from "lucide-react";
 import { WavingHand } from "../Logo";
@@ -49,24 +50,27 @@ export default function GuestShell({
       {header && (
         <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-5 md:px-8">
           <GuestLogo night={night} />
+          <div className="flex items-center gap-1">
           {tab && (
-            <nav aria-label="Skuzi" className="hidden items-center gap-1 md:flex">
-              {TABS.map(({ id, label, href }) => (
-                <Link
-                  key={id}
-                  to={href}
-                  aria-current={tab === id ? "page" : undefined}
-                  className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                    tab === id
-                      ? "bg-action text-action-ink"
-                      : night ? "text-[color:var(--g-muted)] hover:bg-white/10" : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          )}
+              <nav aria-label="Skuzi" className="hidden items-center gap-1 md:flex">
+                {TABS.map(({ id, label, href }) => (
+                  <Link
+                    key={id}
+                    to={href}
+                    aria-current={tab === id ? "page" : undefined}
+                    className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                      tab === id
+                        ? "bg-action text-action-ink"
+                        : night ? "text-[color:var(--g-muted)] hover:bg-white/10" : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            )}
+            <ThemeCycleButton className={night ? "!text-[color:var(--g-muted)] hover:!bg-white/10" : ""} />
+          </div>
         </header>
       )}
       <main className={`mx-auto max-w-5xl px-5 md:px-8 ${tab ? "pb-28 md:pb-12" : "pb-12"}`}>{children}</main>
