@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      SITE: https://tabpro.lol
+      SITE: https://skuzi.xyz
       API: https://tabpro-backend.onrender.com
-      DEMO_VENUE: e0df2a3d-d303-4a77-8115-0a76ade35d85
+      DEMO_VENUE: bcb1113e-15d8-433e-88a0-5ecfbb3e3e0d
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check the live site
@@ -28,10 +28,20 @@ jobs:
           fail=""
           # The free server can take ~1 min to wake up, so retry before calling it down.
           try() { for i in 1 2 3; do out=$(curl -s -m 60 "$1") && echo "$out" | grep -q "$2" && return 0; sleep 20; done; return 1; }
+          # Cheap checks, every run: these never touch the database.
           try "$API/health" '"status":"ok"'                      || fail="$fail\n- Server health check failed ($API/health)"
           try "$SITE/" '<div id="root">'                          || fail="$fail\n- Website did not load ($SITE)"
-          try "$SITE/t/5e5aec0c2f" '<div id="root">'              || fail="$fail\n- Table QR link did not load"
-          try "$API/api/menu/$DEMO_VENUE" '"priceRwf"'            || fail="$fail\n- Demo Lounge menu did not load"
+
+          # Database checks, every 2 hours only. On Neon's free plan every
+          # query keeps the database awake for its 5-minute suspend window, so
+          # probing each half hour would burn ~30 CU-hours a month on its own.
+          # Twice an hour was also not what we lacked on 2026-10-19: the
+          # database was down for hours and the watchdog never looked at it,
+          # because /health answers "ok" without a database.
+          if [ "$(( $(date -u +%H) % 2 ))" = "0" ] && [ "$(date -u +%M)" -lt 30 ]; then
+            try "$API/health/db" '"db":"ok"'                      || fail="$fail\n- DATABASE unreachable ($API/health/db) — check the Neon compute allowance"
+            try "$API/api/tabs/preview/5e5aec0c2f" '"venue"'      || fail="$fail\n- Scanning the demo table sticker failed (guests would see 'Hmm, that didn't work')"
+          fi
           printf "%b" "$fail" > problems.txt
           cat problems.txt
           [ -z "$fail" ] && echo "healthy=true" >> "$GITHUB_OUTPUT" || echo "healthy=false" >> "$GITHUB_OUTPUT"

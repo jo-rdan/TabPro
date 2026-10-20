@@ -1,6 +1,7 @@
 import { sendDueCampaigns } from '../services/campaign.service';
 import { runBookingJobs } from '../services/booking.service';
 import { ensureVenueSlugs } from '../services/venue.service';
+import { startPolling } from './activity';
 
 // Every minute: send scheduled campaigns, expire unanswered booking requests,
 // remind guests 2 hours before. A failure is logged and retried next minute.
@@ -18,8 +19,13 @@ async function tick() {
   }
 }
 
+// Unlike the other timers this one is due at a wall-clock time whether or not
+// anyone is using Skuzi (a campaign scheduled for 20:00 must go out at 20:00),
+// so it keeps running when idle — just every half hour instead of every
+// minute, which lets the database sleep most of a quiet night. A scheduled
+// campaign can therefore go out up to 30 minutes late on a dead-quiet day.
 export function startScheduler() {
   ensureVenueSlugs().catch((err) => console.error('[slugs]', err.message));
-  setInterval(tick, 60_000);
+  startPolling('scheduler', 60_000, tick, { whenIdleEveryMs: 30 * 60_000 });
   setTimeout(tick, 5_000);
 }
