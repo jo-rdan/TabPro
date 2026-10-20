@@ -13,6 +13,8 @@ import {
   Plus,
   Minus,
   Search,
+  NotebookPen,
+  Check,
 } from "lucide-react";
 import Logo, { WavingHand } from "../../components/Logo";
 import VenueLogo from "../../components/VenueLogo";
@@ -314,6 +316,7 @@ export default function CustomerMenu() {
   const [justOrdered, setJustOrdered] = useState(false);
   const [nudgeLoading, setNudgeLoading] = useState(false);
   const [justNudged, setJustNudged] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
   const [billLoading, setBillLoading] = useState(false);
   const [billLines, setBillLines] = useState<BillLine[]>([]);
   const [grandTotal, setGrandTotal] = useState(0);
@@ -385,6 +388,7 @@ export default function CustomerMenu() {
       setStep(s.ratingSubmitted ? "closed" : "rating");
     } else {
       setStep("menu");
+      loadOrders(s.tabId);
     }
   }, [qrCode]);
 
@@ -424,6 +428,36 @@ export default function CustomerMenu() {
       }
     },
   });
+
+  // After a refresh the page only remembers the tab, not what was ordered on it,
+  // so the Skuzi! / My bill buttons and the orders list vanished. Fetch them back.
+  const loadOrders = async (id: string) => {
+    try {
+      const res = await apiFetch(`/tabs/${id}`);
+      const data = await res.json();
+      if (!data.success) return;
+      const orders = [...(data.data.orders ?? [])].sort(
+        (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+      setPlacedOrders(
+        orders.map((o: any) => {
+          const items = (o.items ?? []).map((i: any) => ({
+            name: i.menuItem?.name ?? "Item",
+            quantity: i.quantity,
+            unitPriceRwf: i.unitPriceRwf,
+          }));
+          return {
+            orderId: o.id,
+            items,
+            status: o.status,
+            total: items.reduce((n: number, i: { quantity: number; unitPriceRwf: number }) => n + i.quantity * i.unitPriceRwf, 0),
+          };
+        }),
+      );
+    } catch {
+      /* the list comes back with the next order */
+    }
+  };
 
   // What the guest sees right after scanning: the venue and the menu. No tab yet.
   const loadPreview = async () => {
@@ -1454,9 +1488,9 @@ export default function CustomerMenu() {
                   <button
                     onClick={handleNudge}
                     disabled={nudgeLoading || justNudged}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-action text-action-ink disabled:opacity-70 transition-all"
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-action text-action-ink  transition-all ${justNudged ? "skuzi-bounce" : ""}`}
                   >
-                    {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
+                    {justNudged ? <Check size={20} strokeWidth={3} /> : <WaveIcon />} Skuzi!
                   </button>
                   <button
                     onClick={handleRequestBill}
@@ -1590,6 +1624,68 @@ export default function CustomerMenu() {
           <div className="h-4 md:h-8" />
         </div>
 
+        {/* Phone: the waiter's notepad. Shows every order placed on this table,
+            like a cart button in an online shop (the desktop has a sidebar). */}
+        {placedOrders.length > 0 && !ordersOpen && (
+          <button
+            onClick={() => setOrdersOpen(true)}
+            aria-label={`Your orders (${placedOrders.length})`}
+            className={`md:hidden fixed right-4 z-30 h-14 w-14 rounded-full bg-action text-action-ink shadow-xl shadow-black/25 flex items-center justify-center active:scale-95 transition-all ${cartCount > 0 ? "bottom-[172px]" : "bottom-[100px]"}`}
+          >
+            <NotebookPen size={24} strokeWidth={2.2} />
+            <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#FFD966] text-[#231A2C] text-xs font-black flex items-center justify-center">
+              {placedOrders.length}
+            </span>
+          </button>
+        )}
+
+        {ordersOpen && (
+          <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end" role="dialog" aria-modal="true" aria-label="Your orders">
+            <button className="absolute inset-0 bg-black/45" aria-label="Close" onClick={() => setOrdersOpen(false)} />
+            <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl max-h-[80vh] flex flex-col">
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-10 w-10 rounded-full bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] flex items-center justify-center"><NotebookPen size={20} /></span>
+                  <div>
+                    <h2 className="text-lg font-black text-gray-900 dark:text-white leading-tight">Your orders</h2>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{tableLabel} · {placedOrders.length} {placedOrders.length === 1 ? "order" : "orders"}</p>
+                  </div>
+                </div>
+                <button onClick={() => setOrdersOpen(false)} aria-label="Close" className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300"><X size={18} /></button>
+              </div>
+              <div className="overflow-y-auto px-5 pb-3 space-y-2.5">
+                {placedOrders.map((order, n) => (
+                  <div key={order.orderId} className="rounded-2xl border border-gray-200 dark:border-gray-800 px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-gray-400">Order {n + 1}</span>
+                      <StatusBadge status={order.status} />
+                    </div>
+                    {order.items.map((i, k) => (
+                      <div key={k} className="flex justify-between gap-3 text-sm py-0.5">
+                        <span className="text-gray-800 dark:text-gray-100 min-w-0 truncate">{i.quantity} × {i.name}</span>
+                        <span className="text-gray-500 dark:text-gray-400 tabular-nums flex-shrink-0">{fmt(i.quantity * i.unitPriceRwf)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 pt-3 pb-5 border-t border-gray-100 dark:border-gray-800" style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-bold text-gray-500 dark:text-gray-400">Total so far</span>
+                  <span className="text-xl font-black text-gray-900 dark:text-white tabular-nums">{fmt(placedOrders.reduce((n, o) => n + o.total, 0))}</span>
+                </div>
+                <button
+                  onClick={() => { setOrdersOpen(false); handleRequestBill(); }}
+                  disabled={billLoading}
+                  className="w-full h-[54px] rounded-[18px] bg-action hover:bg-action-hover text-action-ink text-base font-extrabold disabled:opacity-50 active:scale-[0.98] transition-all"
+                >
+                  {billLoading ? "..." : "My bill"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Mobile bottom: reach the waiter, see the bill, send the order */}
         {(placedOrders.length > 0 || cartCount > 0) && (
           <div className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-4 pt-3 z-20 bg-gray-50 dark:bg-gray-950 rounded-t-[26px] shadow-[0_-12px_30px_-12px_rgba(35,26,44,0.25)] flex flex-col gap-2.5">
@@ -1598,9 +1694,9 @@ export default function CustomerMenu() {
                 <button
                   onClick={handleNudge}
                   disabled={nudgeLoading || justNudged}
-                  className="flex-1 h-[54px] rounded-[18px] bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
+                  className={`flex-1 h-[54px] rounded-[18px] bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10  active:scale-[0.98] transition-all ${justNudged ? "skuzi-bounce" : ""}`}
                 >
-                  {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
+                  {justNudged ? <Check size={20} strokeWidth={3} /> : <WaveIcon />} Skuzi!
                 </button>
                 <button
                   onClick={handleRequestBill}
@@ -1756,9 +1852,9 @@ export default function CustomerMenu() {
             <button
               onClick={handleNudge}
               disabled={nudgeLoading || justNudged}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] disabled:opacity-80 transition-all"
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A]  transition-all ${justNudged ? "skuzi-bounce" : ""}`}
             >
-              {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
+              {justNudged ? <Check size={20} strokeWidth={3} /> : <WaveIcon />} Skuzi!
             </button>
             <button
               onClick={handleRequestBill}
