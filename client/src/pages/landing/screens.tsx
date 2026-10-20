@@ -62,7 +62,7 @@ function VenueHeader({ waiter = "Eric" }: { waiter?: string }) {
     <div className="rounded-b-[22px] bg-[#231A2C] px-4 pb-4 pt-9 text-[#F4F0F7]">
       <div className="flex items-center justify-between">
         <p className="font-display text-[16px] font-bold leading-tight">Your Place</p>
-        <span className="rounded-full bg-[#F2B33A] px-2 py-0.5 text-[9px] font-extrabold text-[#231A2C]">Table 4</span>
+        <span className="rounded-full bg-[#E2602A] px-2 py-0.5 text-[9px] font-extrabold text-white">Table 4</span>
       </div>
       <p className="mt-0.5 text-[10.5px] text-[#D3CADC]">{waiter} is your waiter</p>
     </div>
@@ -84,7 +84,7 @@ export function ScreenScan() {
           <Hand size={46} color="#F4F0F7" />
           <span className="font-display text-[13px] font-bold text-[#F4F0F7]">Scan me</span>
         </div>
-        <span className="sk-scanline absolute inset-x-3 h-0.5 rounded-full bg-[#F2B33A] shadow-[0_0_16px_4px_rgba(242,179,58,0.7)]" />
+        <span className="sk-scanline absolute inset-x-3 h-0.5 rounded-full bg-[#E2602A] shadow-[0_0_16px_4px_rgba(242,179,58,0.7)]" />
       </div>
       <p className="relative mt-8 text-[12.5px] font-semibold text-[#F4F0F7]">Point your camera at the sticker</p>
       <p className="relative mt-1 text-[10.5px] text-[#9C90A8]">No app to download</p>
@@ -135,7 +135,7 @@ export function ScreenMenu({ onCall, called = false, compact = false }: { onCall
         <button
           type="button"
           onClick={onCall}
-          className={`relative flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-[13px] font-extrabold transition active:scale-[0.98] ${called ? "bg-[#5E7A55] text-[#F4F0F7]" : "bg-[#F2B33A] text-[#231A2C]"}`}
+          className={`relative flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-[13px] font-extrabold transition active:scale-[0.98] ${called ? "bg-[#5E7A55] text-[#F4F0F7]" : "bg-[#E2602A] text-white"}`}
         >
           {called ? <><Check size={15} strokeWidth={3} /> Eric is on his way</> : <><Hand size={17} color="#231A2C" /> Skuzi!</>}
           {onCall && !called && <span className="sk-tapme absolute -right-1 -top-2 rounded-full bg-[#BF4A1A] px-2 py-0.5 text-[9px] font-extrabold text-[#F4F0F7]">Tap me</span>}
@@ -164,7 +164,7 @@ export function ScreenCall() {
             <span className={`rounded-full px-2 py-0.5 text-[9.5px] font-bold ${c}`}>{s}</span>
           </div>
         ))}
-        <div className="sk-toast mx-1 mt-5 flex flex-col items-center rounded-3xl bg-[#F2B33A] px-4 py-5 text-center text-[#231A2C]">
+        <div className="sk-toast mx-1 mt-5 flex flex-col items-center rounded-3xl bg-[#E2602A] px-4 py-5 text-center text-white">
           <span className="sk-wave inline-block"><Hand size={44} color="#231A2C" /></span>
           <p className="mt-2 font-display text-[18px] font-bold">Skuzi!</p>
           <p className="text-[11px] font-semibold">Eric knows. He'll be right with you.</p>

@@ -27,12 +27,12 @@ const isDrink = (c: string) => /drink|beer|bia|wine|cocktail|juice|soda|spirit|b
 
 export function DishIcon({ category, className = "" }: { category: string; className?: string }) {
   return isDrink(category) ? (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="#F2B33A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4h10l-1 16H8z" /><path d="M7.5 9h9" /></svg>
+    <svg viewBox="0 0 24 24" className={`${className} text-[color:var(--g-hi)]`} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4h10l-1 16H8z" /><path d="M7.5 9h9" /></svg>
   ) : (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="#F2B33A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 13h18" /><path d="M5 13a7 7 0 0 1 14 0" /><path d="M12 6V4" /><path d="M2 17h20" /></svg>
+    <svg viewBox="0 0 24 24" className={`${className} text-[color:var(--g-hi)]`} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 13h18" /><path d="M5 13a7 7 0 0 1 14 0" /><path d="M12 6V4" /><path d="M2 17h20" /></svg>
   );
 }
-const TILE = ["#4A2440", "#3B2E52", "#23394A", "#5A2338", "#2E2840", "#1F3A3F"];
+const TILE = ["rgb(var(--gray-800))"];
 
 export default function Explore() {
   const [data, setData] = useState<{ venues: Venue[]; events: Event[] } | null>(null);
@@ -47,7 +47,7 @@ export default function Explore() {
   if (error) {
     return (
       <GuestShell tab="explore" tone="night">
-        <GuestState title="Couldn't load Explore" text={error} action={<button onClick={load} className="mt-2 min-h-[44px] rounded-full bg-[#F2B33A] px-6 font-extrabold text-[#231A2C]">Try again</button>} />
+        <GuestState title="Couldn't load Explore" text={error} action={<button onClick={load} className="mt-2 min-h-[44px] rounded-full bg-action px-6 font-extrabold text-action-ink">Try again</button>} />
       </GuestShell>
     );
   }
@@ -63,16 +63,16 @@ export default function Explore() {
   return (
     <GuestShell tab="explore" tone="night">
       <section className="pt-5">
-        <p className="text-sm text-[#D3CADC]">{greeting()}{name ? `, ${name}` : ""}</p>
+        <p className="text-sm text-[color:var(--g-muted)]">{greeting()}{name ? `, ${name}` : ""}</p>
         <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] md:text-5xl">
-          Where are we <span className="text-[#F2B33A]">going?</span>
+          Where are we <span className="text-[color:var(--g-hi)]">going?</span>
         </h1>
       </section>
 
       {!data ? (
         <div className="mt-5 grid gap-4 md:grid-cols-[1.35fr_1fr]" aria-busy="true">
-          <div className="h-60 animate-pulse rounded-[26px] bg-[#231A2C]" />
-          <div className="h-60 animate-pulse rounded-[26px] bg-[#231A2C]" />
+          <div className="h-60 animate-pulse rounded-[26px] bg-gray-900" />
+          <div className="h-60 animate-pulse rounded-[26px] bg-gray-900" />
         </div>
       ) : venues.length === 0 ? (
         <GuestState
@@ -82,28 +82,28 @@ export default function Explore() {
       ) : (
         <div className="mt-5 grid gap-6 md:grid-cols-[1.35fr_1fr] md:items-start">
           {/* Tonight: the event, else the restaurant itself */}
-          <article className="relative overflow-hidden rounded-[26px] bg-[radial-gradient(120%_120%_at_100%_0%,#C9501E,#2A1E36_62%)] p-5 md:p-7">
+          <article className="relative overflow-hidden rounded-[26px] bg-gray-900 p-5 md:p-7">
             {hero ? (
               <>
-                <span className="inline-block rounded-full bg-[#F2B33A] px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#231A2C]">
+                <span className="inline-block rounded-full bg-action px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-action-ink">
                   {hero.eventAt && new Date(new Date(hero.eventAt).getTime() + 2 * 3600e3).toISOString().slice(0, 10) === today ? "Tonight" : eventDay(hero.eventAt)}
                   {hero.time ? ` · ${hero.time}` : ""}
                 </span>
                 <h2 className="mt-3 font-display text-[34px] font-extrabold leading-none tracking-[-0.02em] md:text-[44px]">{hero.title}</h2>
-                <p className="mt-2 flex items-center gap-1.5 text-sm text-[#FCE3D3]"><MapPin size={14} /> {hero.venue.name}{hero.venue.location ? ` · ${hero.venue.location}` : ""}</p>
-                <p className="mt-2 text-[14.5px] leading-snug text-[#F4F0F7]/90">{hero.message}</p>
-                {hero.offer && <p className="mt-2 flex items-center gap-1.5 text-[13.5px] font-semibold"><Gift size={16} className="text-[#F2B33A]" /> {hero.offer}</p>}
+                <p className="mt-2 flex items-center gap-1.5 text-sm text-[color:var(--g-muted)]"><MapPin size={14} /> {hero.venue.name}{hero.venue.location ? ` · ${hero.venue.location}` : ""}</p>
+                <p className="mt-2 text-[14.5px] leading-snug text-[color:var(--g-text)]/90">{hero.message}</p>
+                {hero.offer && <p className="mt-2 flex items-center gap-1.5 text-[13.5px] font-semibold"><Gift size={16} className="text-[color:var(--g-hi)]" /> {hero.offer}</p>}
               </>
             ) : heroVenue ? (
               <>
                 {statusText(heroVenue.status, heroVenue.hoursSet) && (
-                  <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] ${heroVenue.status.open ? "bg-[#5E7A55] text-white" : "bg-[#F2B33A] text-[#231A2C]"}`}>
+                  <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] ${heroVenue.status.open ? "bg-action text-action-ink" : "bg-action text-action-ink"}`}>
                     {statusText(heroVenue.status, heroVenue.hoursSet)}
                   </span>
                 )}
                 <h2 className="mt-3 font-display text-[34px] font-extrabold leading-none tracking-[-0.02em] md:text-[44px]">{heroVenue.name}</h2>
-                {heroVenue.location && <p className="mt-2 flex items-center gap-1.5 text-sm text-[#FCE3D3]"><MapPin size={14} /> {heroVenue.location}</p>}
-                <p className="mt-2 text-[14.5px] text-[#F4F0F7]/90">See the menu and prices before you go.</p>
+                {heroVenue.location && <p className="mt-2 flex items-center gap-1.5 text-sm text-[color:var(--g-muted)]"><MapPin size={14} /> {heroVenue.location}</p>}
+                <p className="mt-2 text-[14.5px] text-[color:var(--g-text)]/90">See the menu and prices before you go.</p>
               </>
             ) : null}
             {heroVenue && (
@@ -113,7 +113,7 @@ export default function Explore() {
                     Book a table
                   </Link>
                 )}
-                <Link to={`/v/${heroVenue.slug}${hero ? `?c=${hero.id}` : ""}`} className="flex min-h-[46px] flex-1 items-center justify-center rounded-full border-[1.5px] border-[#F4F0F7]/50 px-4 text-[14.5px] font-extrabold hover:bg-white/10">
+                <Link to={`/v/${heroVenue.slug}${hero ? `?c=${hero.id}` : ""}`} className="flex min-h-[46px] flex-1 items-center justify-center rounded-full border-[1.5px] border-white/50 px-4 text-[14.5px] font-extrabold hover:bg-white/10">
                   See the menu
                 </Link>
               </div>
@@ -126,13 +126,13 @@ export default function Explore() {
                 <h2 id="hungry" className="font-display text-[19px] font-extrabold">Hungry for…</h2>
                 <div className="-mx-5 mt-3 flex snap-x gap-2.5 overflow-x-auto px-5 pb-1 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
                   {dishes.map((d, i) => (
-                    <Link key={d.id} to={`/v/${d.venue.slug}`} className="w-[118px] flex-none snap-start rounded-[18px] bg-[#231A2C] p-3 hover:bg-[#33293F] md:w-auto">
+                    <Link key={d.id} to={`/v/${d.venue.slug}`} className="w-[118px] flex-none snap-start rounded-[18px] bg-gray-900 p-3 hover:bg-gray-800 md:w-auto">
                       <div className="flex h-16 items-center justify-center rounded-xl" style={{ background: TILE[i % TILE.length] }}>
                         <DishIcon category={d.category} className="h-8 w-8" />
                       </div>
                       <p className="mt-2 line-clamp-2 text-[13.5px] font-bold leading-tight">{d.name}</p>
-                      <p className="mt-1 text-[12.5px] font-bold text-[#F2B33A]">{rwf(d.priceRwf)}</p>
-                      {venues.length > 1 && <p className="mt-0.5 truncate text-[11px] text-[#D3CADC]">{d.venue.name}</p>}
+                      <p className="mt-1 text-[12.5px] font-bold text-[color:var(--g-hi)]">{rwf(d.priceRwf)}</p>
+                      {venues.length > 1 && <p className="mt-0.5 truncate text-[11px] text-[color:var(--g-muted)]">{d.venue.name}</p>}
                     </Link>
                   ))}
                 </div>
@@ -147,14 +147,14 @@ export default function Explore() {
                     const d = e.eventAt ? new Date(new Date(e.eventAt).getTime() + 2 * 3600e3) : null;
                     return (
                       <li key={e.id}>
-                        <Link to={`/v/${e.venue.slug}?c=${e.id}`} className="flex items-center gap-3 rounded-2xl bg-[#231A2C] px-3 py-2.5 hover:bg-[#33293F]">
+                        <Link to={`/v/${e.venue.slug}?c=${e.id}`} className="flex items-center gap-3 rounded-2xl bg-gray-900 px-3 py-2.5 hover:bg-gray-800">
                           <div className="flex w-11 flex-col items-center">
-                            <span className="text-[11px] font-extrabold uppercase text-[#F2B33A]">{d?.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}</span>
+                            <span className="text-[11px] font-extrabold uppercase text-[color:var(--g-hi)]">{d?.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}</span>
                             <span className="font-display text-lg font-extrabold">{d?.getUTCDate()}</span>
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-bold">{e.title}</p>
-                            <p className="truncate text-xs text-[#D3CADC]">{e.venue.name}{e.time ? ` · ${e.time}` : ""}</p>
+                            <p className="truncate text-xs text-[color:var(--g-muted)]">{e.venue.name}{e.time ? ` · ${e.time}` : ""}</p>
                           </div>
                         </Link>
                       </li>
@@ -170,12 +170,12 @@ export default function Explore() {
                 <ul className="mt-3 flex flex-col gap-2">
                   {venues.map((v) => (
                     <li key={v.slug}>
-                      <Link to={`/v/${v.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-[#231A2C] px-4 py-3 hover:bg-[#33293F]">
+                      <Link to={`/v/${v.slug}`} className="flex items-center justify-between gap-3 rounded-2xl bg-gray-900 px-4 py-3 hover:bg-gray-800">
                         <div className="min-w-0">
                           <p className="truncate font-bold">{v.name}</p>
-                          <p className="truncate text-xs text-[#D3CADC]">{[v.location, statusText(v.status, v.hoursSet)].filter(Boolean).join(" · ")}</p>
+                          <p className="truncate text-xs text-[color:var(--g-muted)]">{[v.location, statusText(v.status, v.hoursSet)].filter(Boolean).join(" · ")}</p>
                         </div>
-                        <Clock size={16} className={v.status.open ? "text-[#86A27B]" : "text-[#D3CADC]"} aria-hidden="true" />
+                        <Clock size={16} className={v.status.open ? "text-[#86A27B]" : "text-[color:var(--g-muted)]"} aria-hidden="true" />
                       </Link>
                     </li>
                   ))}

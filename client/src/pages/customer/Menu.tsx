@@ -189,7 +189,7 @@ function MenuCard({
           <button
             onClick={onAdd}
             aria-label={`Add ${item.name}`}
-            className="w-11 h-11 rounded-full bg-brand-500 hover:bg-brand-600 flex items-center justify-center text-white flex-shrink-0 active:scale-90 transition-all"
+            className="w-11 h-11 rounded-full bg-action hover:bg-action-hover flex items-center justify-center text-white flex-shrink-0 active:scale-90 transition-all"
           >
             <Plus size={20} strokeWidth={3} />
           </button>
@@ -206,7 +206,7 @@ function MenuCard({
             <button
               onClick={onAdd}
               aria-label={`Add one more ${item.name}`}
-              className="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center active:scale-90 transition-all"
+              className="w-9 h-9 rounded-full bg-action text-white flex items-center justify-center active:scale-90 transition-all"
             >
               <Plus size={15} strokeWidth={3} />
             </button>
@@ -770,7 +770,7 @@ export default function CustomerMenu() {
   if (step === "identify") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-6 py-10 text-center">
-        <div className="w-20 h-20 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-brand-500/30">
+        <div className="w-20 h-20 rounded-3xl bg-action flex items-center justify-center mx-auto mb-5 shadow-xl shadow-action/30">
           <Logo size={44} />
         </div>
         {error ? (
@@ -780,7 +780,7 @@ export default function CustomerMenu() {
             <button
               onClick={loadPreview}
               disabled={loading}
-              className="mt-6 px-6 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-black disabled:opacity-50"
+              className="mt-6 px-6 py-3.5 rounded-2xl bg-action hover:bg-action-hover text-white font-black disabled:opacity-50"
             >
               {loading ? "Trying…" : "Try again"}
             </button>
@@ -1047,7 +1047,7 @@ export default function CustomerMenu() {
                 setPayPhone(phone);
                 setPayStep("entering_phone");
               }}
-              className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-brand-500/30"
+              className="w-full flex items-center justify-center gap-2 bg-action hover:bg-action-hover text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-action/30"
             >
               <svg
                 width="20"
@@ -1176,7 +1176,7 @@ export default function CustomerMenu() {
               <div className="px-5 py-4 flex flex-col gap-2">
                 <button
                   onClick={handleMomoPay}
-                  className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-colors"
+                  className="w-full bg-action hover:bg-action-hover text-white font-bold py-3 rounded-xl transition-colors"
                 >
                   Confirm & pay {fmt(toPay)}
                 </button>
@@ -1323,7 +1323,7 @@ export default function CustomerMenu() {
           <button
             onClick={() => handleSubmitRating(false)}
             disabled={ratingLoading}
-            className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-brand-500/30 active:scale-95 transition-all"
+            className="w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-sm font-black disabled:opacity-50 mb-2 shadow-lg shadow-action/30 active:scale-95 transition-all"
           >
             {ratingLoading ? "Submitting..." : "Submit rating"}
           </button>
@@ -1342,7 +1342,7 @@ export default function CustomerMenu() {
   if (step === "closed") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#1B1524] flex flex-col items-center justify-center px-4 py-10">
-        <div className="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-brand-500/40">
+        <div className="w-24 h-24 rounded-full bg-action flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-action/40">
           <CheckCircle size={44} className="text-white" />
         </div>
         <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
@@ -1409,7 +1409,7 @@ export default function CustomerMenu() {
             <button
               onClick={sendFirstOrder}
               disabled={loading || orderLoading}
-              className="mt-4 w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2"
+              className="mt-4 w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-action/30 flex items-center justify-center gap-2"
             >
               {loading || orderLoading ? <><Loader size={16} className="animate-spin" /> Sending…</> : <>Send my order · {fmt(cartTotal)}</>}
             </button>
@@ -1431,14 +1431,14 @@ export default function CustomerMenu() {
         style={{ paddingBottom: (cartCount > 0 ? 84 : 0) + (placedOrders.length > 0 ? 68 : 0) }}
       >
         {/* Header: espresso band with the venue, the table, the waiter and the categories */}
-        <div className="sticky top-0 z-10 bg-[#231A2C] dark:bg-[#231A2C] text-[#F4F0F7] rounded-b-[28px] shadow-lg shadow-black/10">
+        <div className="sticky top-0 z-10 dark guest-skin bg-gray-900 text-[color:var(--g-text)] rounded-b-[28px] shadow-lg shadow-black/10">
           <div className="px-5 pt-5 pb-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <VenueLogo logoUrl={venueLogoUrl} venueName={venueName} size={44} />
                 <div className="min-w-0">
                   <h1 className="font-display font-bold text-[22px] leading-tight truncate">{venueName}</h1>
-                  <p className="text-[13px] text-[#D3CADC] truncate">
+                  <p className="text-[13px] text-[color:var(--g-muted)] truncate">
                     {tableLabel}
                     {waiterName ? ` · ${waiterName} is your waiter` : ""}
                   </p>
@@ -1449,14 +1449,14 @@ export default function CustomerMenu() {
                   <button
                     onClick={handleNudge}
                     disabled={nudgeLoading || justNudged}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-[#F2B33A] text-[#231A2C] disabled:opacity-70 transition-all"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-action text-action-ink disabled:opacity-70 transition-all"
                   >
                     {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
                   </button>
                   <button
                     onClick={handleRequestBill}
                     disabled={billLoading}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold border-2 border-[#F4F0F7]/80 text-[#F4F0F7] disabled:opacity-50 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold border-2 border-white/80 text-[color:var(--g-text)] disabled:opacity-50 transition-all"
                   >
                     <Receipt size={14} /> {billLoading ? "..." : "My bill"}
                   </button>
@@ -1466,7 +1466,7 @@ export default function CustomerMenu() {
 
             {(isDemo || isGroupTab) && (
               <div className="flex flex-wrap gap-2 mt-3">
-                {isDemo && <span className="inline-flex items-center rounded-full bg-[#F2B33A] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#231A2C]">Demo · no real money</span>}
+                {isDemo && <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[color:var(--g-text)]">Demo · no real money</span>}
                 {isGroupTab && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/10 px-2.5 py-1 rounded-full">
                     <Users size={11} /> Group tab
@@ -1476,14 +1476,14 @@ export default function CustomerMenu() {
             )}
 
             <div className="relative mt-4">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#D3CADC]" />
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--g-muted)]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search the menu"
                 aria-label="Search the menu"
-                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-2xl bg-white/10 border-0 text-[#F4F0F7] placeholder-[#D3CADC]/70 focus:outline-none focus:ring-2 focus:ring-[#F2B33A]"
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-2xl bg-white/10 border-0 text-[color:var(--g-text)] placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-[#F2B33A]"
               />
             </div>
 
@@ -1494,7 +1494,7 @@ export default function CustomerMenu() {
                     key={cat}
                     onClick={() => scrollToCategory(cat)}
                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all active:scale-95 ${
-                      activeCategory === cat ? "bg-brand-500 text-white font-extrabold" : "bg-white/10 text-[#F4F0F7] font-semibold"
+                      activeCategory === cat ? "bg-action text-white font-extrabold" : "bg-white/10 text-[color:var(--g-text)] font-semibold"
                     }`}
                   >
                     {cat}
@@ -1593,7 +1593,7 @@ export default function CustomerMenu() {
                 <button
                   onClick={handleNudge}
                   disabled={nudgeLoading || justNudged}
-                  className="flex-1 h-[54px] rounded-[18px] bg-[#F2B33A] text-[#231A2C] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
+                  className="flex-1 h-[54px] rounded-[18px] bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-80 active:scale-[0.98] transition-all"
                 >
                   {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
                 </button>
@@ -1609,7 +1609,7 @@ export default function CustomerMenu() {
             {cartCount > 0 && (
               <button
                 onClick={() => setCartOpen(!cartOpen)}
-                className="h-[60px] rounded-[20px] bg-brand-500 text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-brand-500/25 active:scale-[0.98] transition-all"
+                className="h-[60px] rounded-[20px] bg-action text-white px-5 flex items-center justify-between text-[17px] font-extrabold shadow-xl shadow-action/25 active:scale-[0.98] transition-all"
               >
                 <span className="flex items-center gap-2"><ShoppingBag size={18} /> Send order · {cartCount} {cartCount === 1 ? "item" : "items"}</span>
                 <span>{fmt(cartTotal)}</span>
@@ -1694,7 +1694,7 @@ export default function CustomerMenu() {
                         </span>
                         <button
                           onClick={() => addToCart(item)}
-                          className="w-6 h-6 rounded-lg bg-brand-500 flex items-center justify-center text-white active:scale-90"
+                          className="w-6 h-6 rounded-lg bg-action flex items-center justify-center text-white active:scale-90"
                         >
                           <Plus size={11} />
                         </button>
@@ -1732,7 +1732,7 @@ export default function CustomerMenu() {
             <button
               onClick={confirmOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-action/30"
             >
               {orderLoading ? (
                 <>
@@ -1751,7 +1751,7 @@ export default function CustomerMenu() {
             <button
               onClick={handleNudge}
               disabled={nudgeLoading || justNudged}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#F2B33A] text-[#231A2C] disabled:opacity-80 transition-all"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-extrabold bg-[#FCE3D3] text-[#AE4217] dark:bg-gray-800 dark:text-[#F0763A] disabled:opacity-80 transition-all"
             >
               {justNudged ? <span className="whitespace-nowrap">Your waiter knows 👋</span> : <><WaveIcon /> Skuzi!</>}
             </button>
@@ -1811,7 +1811,7 @@ export default function CustomerMenu() {
                       </span>
                       <button
                         onClick={() => addToCart(item)}
-                        className="w-7 h-7 rounded-xl bg-brand-500 flex items-center justify-center text-white active:scale-90"
+                        className="w-7 h-7 rounded-xl bg-action flex items-center justify-center text-white active:scale-90"
                       >
                         <Plus size={13} />
                       </button>
@@ -1835,7 +1835,7 @@ export default function CustomerMenu() {
             <button
               onClick={confirmOrder}
               disabled={orderLoading}
-              className="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-brand-500/30"
+              className="w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-sm font-black disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-action/30"
             >
               {orderLoading ? (
                 <>

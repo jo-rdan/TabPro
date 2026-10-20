@@ -77,21 +77,21 @@ function Nav() {
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 bg-[var(--hero-bg)] transition-all duration-300 ${scrolled ? "py-3 shadow-[0_1px_0_var(--hero-ring)]" : "py-5"}`}>
+    <header className={`fixed inset-x-0 top-0 z-50 bg-[var(--paper)] transition-all duration-300 ${scrolled ? "py-3 shadow-[0_1px_0_var(--line)]" : "py-5"}`}>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8">
         <a href="/" aria-label="Skuzi home" className="flex items-center">
           <AnimatedLogo size={28} on="light" bg="#FDFCFE" className="dark:hidden" />
           <AnimatedLogo size={28} on="dark" bg="#1B1524" className="hidden dark:inline-flex" />
         </a>
-        <div className="hidden items-center gap-1 rounded-full bg-[var(--hero-chip)] p-1 ring-1 ring-[var(--hero-ring)] md:flex">
+        <div className="hidden items-center gap-1 rounded-full bg-[var(--bg)] p-1 ring-1 ring-[var(--line)] md:flex">
           {[["How it works", "#tour"], ["For owners", "#owners"], ["Questions", "#faq"]].map(([l, h]) => (
-            <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[var(--hero-body)] transition hover:bg-[var(--hero-chip)] hover:text-[var(--hero-ink)]">{l}</a>
+            <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[var(--body)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)]">{l}</a>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <span className="hidden xl:block"><ThemeSwitch /></span>
           <ThemeCycleButton className="xl:hidden" />
-          {!WAITLIST_MODE && <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--hero-body)] transition hover:text-[var(--hero-ink)] sm:block">
+          {!WAITLIST_MODE && <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--body)] transition hover:text-[var(--ink)] sm:block">
             {loggedIn ? "Dashboard" : "Log in"}
           </Link>}
           <button onClick={openBookDemo} className="rounded-full bg-[var(--cta-bg)] px-4 py-2 text-[13.5px] font-extrabold text-[var(--cta-ink)] transition hover:bg-[var(--cta-hover)]">
@@ -134,7 +134,7 @@ function Hero() {
             <h1 className="mt-7 font-display text-[46px] font-extrabold leading-[0.98] tracking-[-0.045em] text-balance sm:text-7xl lg:text-[92px]">
               <span className="inline-flex items-baseline">
                 Less waiting.
-                <span className="sk-wave ml-2 inline-block translate-y-[0.06em] text-[#F0763A]"><Hand size={64} color="currentColor" className="h-[0.8em] w-[0.8em]" /></span>
+                <span className="sk-wave ml-2 inline-block translate-y-[0.06em] text-[var(--hero-hand)]"><Hand size={64} color="currentColor" className="h-[0.8em] w-[0.8em]" /></span>
               </span>
               <br />
               <Swoosh><span className="text-[var(--hero-accent)]">More fun.</span></Swoosh>
@@ -699,15 +699,14 @@ function Footer() {
 
 // Coffee & imigongo, with light sections that follow the visitor's theme.
 const STYLES = `
-.sk-site { --hero-bg:#FDFCFE; --hero-ink:#231A2C; --hero-body:#554A60; --hero-muted:#6F6379; --hero-accent:#BF4A1A; --hero-chip:rgba(35,26,44,.04); --hero-ring:rgba(35,26,44,.12); --hero-glow:.4; --cta-bg:#BF4A1A; --cta-ink:#F4F0F7; --cta-hover:#A63F15; --cta-glow:rgba(191,74,26,.45); --bg:#F4F0F7; --paper:#FFFFFF; --card:#FDFCFE; --ink:#231A2C; --body:#554A60; --muted:#6F6379; --line:#E2DCE8; --rust-ink:#A63F15; }
-.dark .sk-site { --hero-bg:#1B1524; --hero-ink:#F4F0F7; --hero-body:#D3CADC; --hero-muted:#9C90A8; --hero-accent:#F2B33A; --hero-chip:rgba(255,255,255,.05); --hero-ring:rgba(255,255,255,.10); --hero-glow:1; --cta-bg:#E2602A; --cta-ink:#FFFFFF; --cta-hover:#EE7843; --cta-glow:rgba(226,96,42,.6); --bg:#1E1727; --paper:#1B1524; --card:#231A2C; --ink:#F4F0F7; --body:#D3CADC; --muted:#9C90A8; --line:#41354E; --rust-ink:#F29C6F; }
+.sk-site { --hero-bg:#AE4217; --hero-hand:#FFFFFF; --hero-ink:#FFFFFF; --hero-body:#FFE6D8; --hero-muted:#FFD3BC; --hero-accent:#FFD966; --hero-chip:rgba(255,255,255,.12); --hero-ring:rgba(255,255,255,.30); --hero-glow:0; --cta-bg:#231A2C; --cta-ink:#FFFFFF; --cta-hover:#3A2D48; --cta-glow:rgba(35,26,44,.35); --bg:#F4F0F7; --paper:#FFFFFF; --card:#FDFCFE; --ink:#231A2C; --body:#554A60; --muted:#6F6379; --line:#E2DCE8; --rust-ink:#A63F15; }
+.dark .sk-site { --hero-bg:#1B1524; --hero-hand:#F0763A; --hero-ink:#F4F0F7; --hero-body:#D3CADC; --hero-muted:#9C90A8; --hero-accent:#F2B33A; --hero-chip:rgba(255,255,255,.05); --hero-ring:rgba(255,255,255,.10); --hero-glow:0; --cta-bg:#E2602A; --cta-ink:#FFFFFF; --cta-hover:#EE7843; --cta-glow:rgba(226,96,42,.6); --bg:#1E1727; --paper:#1B1524; --card:#231A2C; --ink:#F4F0F7; --body:#D3CADC; --muted:#9C90A8; --line:#41354E; --rust-ink:#F29C6F; }
 .sk-reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
 .sk-reveal.is-in { opacity: 1; transform: none; }
 .sk-glow { background: radial-gradient(closest-side, rgba(191,74,26,.55), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(242,179,58,.28), transparent 70%); filter: blur(40px); }
 .sk-glow-sm { background: radial-gradient(closest-side, rgba(242,179,58,.30), transparent 70%); filter: blur(30px); }
-/* On deep ink an orange glow muddies into brown; a plum undertone keeps the night page clearly Skuzi. */
-.dark .sk-glow { background: radial-gradient(closest-side, rgba(226,96,42,.34), transparent 70%), radial-gradient(closest-side at 70% 40%, rgba(124,72,170,.32), transparent 70%); }
-.dark .sk-glow-sm { background: radial-gradient(closest-side, rgba(124,72,170,.28), transparent 70%); }
+/* Flat colours, like the 2026-10-20 mockup: no glows. */
+.sk-glow, .sk-glow-sm { display: none; }
 /* Imigongo: soft diamonds, like the cow-dung art of eastern Rwanda */
 .sk-pattern { opacity: .07; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M28 4L52 28L28 52L4 28Z' fill='none' stroke='%23F4EDE3' stroke-width='2'/%3E%3Cpath d='M28 16L40 28L28 40L16 28Z' fill='%23F4EDE3'/%3E%3C/svg%3E"); mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); }
 .sk-pattern-mask { mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 15%, transparent 70%); }
