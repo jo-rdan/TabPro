@@ -14,20 +14,15 @@ export default function VenueSetup() {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
-  const [momoPhone, setMomoPhone] = useState('');
+  const [momoPayCode, setMomoPayCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [agreed, setAgreed] = useState(false);
 
-  const validateMomoPhone = (p: string) => {
-    const digits = p.replace(/\D/g, '');
-    return /^07[2389]\d{7}$/.test(digits) || /^2507[2389]\d{7}$/.test(digits);
-  };
-
   const handleSubmit = async () => {
     if (!name.trim()) { setError('Venue name is required.'); return; }
-    if (!validateMomoPhone(momoPhone)) {
-      setError('Enter a valid MTN or Airtel Rwanda payout number (e.g. 0788123456).');
+    if (momoPayCode && !/^\d{4,10}$/.test(momoPayCode)) {
+      setError('A MoMo Pay code is 4 to 10 digits (or leave it empty for now).');
       return;
     }
     if (!agreed) { setError('Please tick "I agree" to the Skuzi venue terms.'); return; }
@@ -37,7 +32,7 @@ export default function VenueSetup() {
       const res = await api.post('/venues', {
         name: name.trim(),
         location: location.trim() || undefined,
-        momoPhone: momoPhone.trim(),
+        momoPayCode: momoPayCode || undefined,
         acceptTerms: true,
       });
       const venue = res.data.data;
@@ -101,17 +96,17 @@ export default function VenueSetup() {
             </div>
           </div>
           <div className="mb-5">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Mobile Money payout number
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5" htmlFor="momo-pay-code">
+              MoMo Pay code
             </label>
             <div className="relative">
               <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="tel" value={momoPhone} onChange={(e) => setMomoPhone(e.target.value)}
-                placeholder="e.g. 0788123456"
+              <input id="momo-pay-code" inputMode="numeric" value={momoPayCode} onChange={(e) => setMomoPayCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="e.g. 123456"
                 className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-gray-50 dark:bg-[#2B1838] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
-            <p className="text-xs text-gray-400 mt-1.5">MTN MoMo or Airtel Money. Skuzi sends your share here when customers pay through the app.</p>
+            <p className="text-xs text-gray-400 mt-1.5">Guests pay this code straight from their bill: 100% goes to you. No code yet? Leave it empty and add it later in Plan.</p>
           </div>
           <TermsSummary />
           <AgreeBox checked={agreed} onChange={(v) => { setAgreed(v); if (v) setError(''); }} />

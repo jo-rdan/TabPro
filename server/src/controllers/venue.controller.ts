@@ -14,7 +14,15 @@ const momoPhoneSchema = z
 const createVenueSchema = z.object({
   name: z.string().min(1, 'Venue name is required').max(100),
   location: z.string().max(200).optional(),
-  momoPhone: momoPhoneSchema,
+  // Old payout number (in-app pawaPay payments, retired 2026-10-21): optional now.
+  momoPhone: momoPhoneSchema.optional(),
+  // The venue's MoMo Pay code: guests pay it straight from their bill. Optional
+  // at setup (it can be added later on the Plan page).
+  momoPayCode: z
+    .string()
+    .transform((c) => c.replace(/\s/g, ''))
+    .refine((c) => c === '' || /^\d{4,10}$/.test(c), 'A MoMo Pay code is 4 to 10 digits')
+    .optional(),
   // The Skuzi app always sends this (its button stays off until "I agree" is
   // ticked). The old TabPro site doesn't; those owners agree in-app later.
   acceptTerms: z.literal(true, { errorMap: () => ({ message: 'Please agree to the Skuzi venue terms' }) }).optional(),
@@ -28,7 +36,7 @@ export async function handleCreateVenue(req: Request, res: Response) {
     return;
   }
 
-  const created = await createVenue(req.owner!.ownerId, parsed.data.name, parsed.data.location, parsed.data.momoPhone);
+  const created = await createVenue(req.owner!.ownerId, parsed.data.name, parsed.data.location, parsed.data.momoPhone, parsed.data.momoPayCode || undefined);
   const venue = parsed.data.acceptTerms ? await acceptVenueTerms(created.id, req.owner!.ownerId, VENUE_TERMS_VERSION) : null;
   const body: ApiResponse = { success: true, data: { ...created, ...venue } };
   res.status(201).json(body);
