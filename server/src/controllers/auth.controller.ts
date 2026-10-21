@@ -62,7 +62,11 @@ export async function getMe(req: Request, res: Response) {
 
     // currentTermsVersion: the app asks owners to agree when theirs is older.
     // isAdmin: the founder, who sees Skuzi-wide tools (creators).
-    const body: ApiResponse = { success: true, data: { ...owner, currentTermsVersion: VENUE_TERMS_VERSION, isAdmin: owner.email.toLowerCase() === adminEmail() } };
+    // Each venue carries its package status (trial, paid, grace, locked) so the
+    // app can open the right features and put up the wall when unpaid.
+    const { planStatus } = await import("../services/plan.service");
+    const withPlans = { ...owner, venues: owner.venues.map((v) => ({ ...v, planStatus: planStatus(v) })) };
+    const body: ApiResponse = { success: true, data: { ...withPlans, currentTermsVersion: VENUE_TERMS_VERSION, isAdmin: owner.email.toLowerCase() === adminEmail() } };
     res.json(body);
   } catch (err) {
     throw err;

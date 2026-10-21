@@ -2,7 +2,7 @@ import { db } from '../lib/db';
 import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff, customers } from '../models/schema';
 import { eq, and, like, inArray } from 'drizzle-orm';
 import { getTableByQrCode } from './qr.service';
-import { planAllows } from '@tabpro/shared';
+import { planStatus, venueAllows } from './plan.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
@@ -22,8 +22,10 @@ function publicVenue(venue: typeof venues.$inferSelect) {
     isDemo: venue.isDemo,
     // Guests pay the venue's own MoMo Pay code (Pro and Bar+); Skuzi never holds
     // the money. The demo venue shows a pretend code.
-    momoPayCode: planAllows(venue.plan, 'momo') ? venue.momoPayCode ?? (venue.isDemo ? '000000' : null) : null,
-    acceptsMobileMoney: planAllows(venue.plan, 'momo') && (venue.isDemo || !!venue.momoPayCode),
+    momoPayCode: venueAllows(venue, 'momo') ? venue.momoPayCode ?? (venue.isDemo ? '000000' : null) : null,
+    acceptsMobileMoney: venueAllows(venue, 'momo') && (venue.isDemo || !!venue.momoPayCode),
+    // The package went unpaid 10+ days: guests see the menu but can't order from their phone.
+    orderingPaused: planStatus(venue).orderingPaused,
   };
 }
 

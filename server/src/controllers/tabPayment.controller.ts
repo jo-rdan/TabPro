@@ -9,6 +9,7 @@ import {
 import { PawapayError } from "../lib/pawapay";
 import { ApiResponse } from "@tabpro/shared";
 import { z } from "zod";
+import { isPlanPayment, settlePlanPayment } from "../services/plan.service";
 
 const tabPaySchema = z.object({
   phone: z.string().min(9),
@@ -73,7 +74,10 @@ export async function handleDepositWebhook(req: Request, res: Response) {
   res.json({ received: true });
   const depositId = req.body?.depositId;
   if (typeof depositId === "string") {
-    handleDepositCallback(depositId).catch((err) => console.error("Deposit webhook error:", err.message));
+    // A venue paying its package, or a guest paying a bill.
+    isPlanPayment(depositId)
+      .then(async (plan) => { if (plan) await settlePlanPayment(depositId); else await handleDepositCallback(depositId); })
+      .catch((err) => console.error("Deposit webhook error:", err.message));
   }
 }
 

@@ -1,27 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Check, Lock, Smartphone } from "lucide-react";
-import { PLANS, PLAN_FOR, type PlanFeature, type PlanId } from "@tabpro/shared";
+import { Check, Lock, Smartphone, Loader2 } from "lucide-react";
+import { PLANS, PLAN_FOR, type PlanFeature, type PlanId, type PlanStatus } from "@tabpro/shared";
 import Layout from "../../components/Layout";
 import api from "../../lib/api";
 import { useAuthStore } from "../../lib/auth";
 
-// Plan: the venue's package (Starter / Pro / Bar+), its free trial, and the
-// MoMo Pay code guests pay. Skuzi takes nothing from sales.
+// Plan: the venue's package (Starter / Pro / Bar+), its free trial (with
+// everything), paying a month with MoMo, and the MoMo Pay code guests pay.
+// Skuzi takes nothing from sales.
 
-type Status = {
-  plan: PlanId; planName: string; priceRwf: number; trialEndsAt: string | null; trialDaysLeft: number;
-  paidUntil: string | null; state: "trial" | "paid" | "due"; momoPayCode: string | null;
-};
-
-const SKUZI_WHATSAPP = "250781268924";
+type Status = PlanStatus;
 const rwf = (n: number) => `${n.toLocaleString("en-US")} RWF`;
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "Africa/Kigali" }) : "");
 
 const INCLUDED: Record<PlanId, string[]> = {
   basic: ["QR menu and ordering at every table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Unlimited tables and staff"],
   pro: ["Everything in Starter", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", "Bookings and your page on Explore", "Campaigns that bring guests back"],
-  elite: ["Everything in Pro", "Bar stock: every bottle counted", "Closing count shows what went missing", "Kitchen screen: the chef sees food orders, taps Ready", "Kitchen: food spending vs food sold"],
+  elite: ["Everything in Pro", "Kitchen screen: the chef sees food orders, taps Ready", "Bar stock: every bottle counted", "Closing count shows what went missing", "Kitchen: food spending vs food sold"],
 };
 
 const FEATURE_NAME: Record<PlanFeature, string> = {
@@ -69,6 +65,65 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
   );
 }
 
+// Pays one month of a package from the owner's MoMo: their phone asks for the
+// PIN, then this checks every few seconds until MoMo confirms.
+function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onPaid: (s: Status) => void }) {
+  const [phone, setPhone] = useState(() => localStorage.getItem("skuzi_pay_phone") ?? "");
+  const [step, setStep] = useState<"form" | "waiting" | "done">("form");
+  const [error, setError] = useState("");
+  const timer = useRef<number>();
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  const pay = async () => {
+    setError("");
+    try {
+      localStorage.setItem("skuzi_pay_phone", phone);
+    } catch { /* private mode */ }
+    try {
+      const r = await api.post(`/plans/${venueId}/pay`, { plan, phone });
+      setStep("waiting");
+      const { depositId } = r.data.data;
+      const started = Date.now();
+      const check = async () => {
+        try {
+          const c = await api.get(`/plans/${venueId}/pay/${depositId}`);
+          const d = c.data.data;
+          if (d.status === "successful") { setStep("done"); onPaid(d.plan); return; }
+          if (d.status === "failed") { setStep("form"); setError(d.error || "The payment didn't go through. Try again."); return; }
+        } catch { /* keep checking */ }
+        if (Date.now() - started > 3 * 60_000) { setStep("form"); setError("No answer from MoMo yet. If money left your account, it will show here within a few minutes."); return; }
+        timer.current = window.setTimeout(check, 3000);
+      };
+      timer.current = window.setTimeout(check, 3000);
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? "Could not start the payment. Try again.");
+    }
+  };
+
+  if (step === "done") return <p className="mt-3 rounded-xl bg-green-500/15 px-4 py-3 text-sm font-bold text-green-800 dark:text-green-200">Paid ✓ Thank you!</p>;
+  if (step === "waiting") {
+    return (
+      <p className="mt-3 flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold">
+        <Loader2 size={16} className="animate-spin" /> Check your phone and approve with your MoMo PIN…
+      </p>
+    );
+  }
+  return (
+    <div className="mt-3">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Your MoMo number, 07…" aria-label="MoMo number to pay from"
+          className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3 text-base font-semibold text-gray-900 placeholder-gray-400" />
+        <button onClick={pay} disabled={phone.replace(/\D/g, "").length < 9}
+          className="rounded-xl bg-[#FFD966] px-5 py-3 text-sm font-extrabold text-gray-900 disabled:opacity-60">
+          Pay {rwf(PLANS[plan].priceRwf)} with MoMo
+        </button>
+      </div>
+      {error && <p role="alert" className="mt-2 text-sm font-semibold text-red-200">{error}</p>}
+      <p className="mt-2 text-xs text-white/60">One month of {PLANS[plan].name}. Paying early never loses days.</p>
+    </div>
+  );
+}
+
 export default function Subscription() {
   const { venues, fetchMe } = useAuthStore();
   const venue = venues[0];
@@ -78,6 +133,9 @@ export default function Subscription() {
   const [error, setError] = useState("");
   const [params] = useSearchParams();
   const need = params.get("need") as PlanFeature | null;
+  // Which package to pay for (after the trial, paying is how you switch).
+  const [payFor, setPayFor] = useState<PlanId | null>(null);
+  const paid = async (s: Status | null) => { if (s) setStatus(s); await fetchMe(); };
 
   useEffect(() => { if (venue) api.get(`/plans/${venue.id}`).then((r) => setStatus(r.data.data)).catch(() => {}); }, [venue?.id]);
 
@@ -109,13 +167,11 @@ export default function Subscription() {
               <p className="mt-1 font-display text-3xl font-bold">{status.planName} <span className="text-base font-semibold text-white/70">· {rwf(status.priceRwf)} / month</span></p>
               <p className="mt-2 text-sm text-white/80">
                 {status.state === "paid" && `Paid until ${day(status.paidUntil)} ✓`}
-                {status.state === "trial" && `Free trial: ${status.trialDaysLeft} ${status.trialDaysLeft === 1 ? "day" : "days"} left (until ${day(status.trialEndsAt)})`}
-                {status.state === "due" && "Your free trial has ended. Pay your package to keep going."}
+                {status.state === "trial" && `Free trial with everything unlocked: ${status.trialDaysLeft} ${status.trialDaysLeft === 1 ? "day" : "days"} left (until ${day(status.trialEndsAt)})`}
+                {status.state === "grace" && `Unpaid. Pay by ${day(status.locksAt)} to keep your dashboard.`}
+                {status.state === "locked" && (status.orderingPaused ? "Unpaid: your dashboard is locked and guests can't order from their phones." : `Unpaid: your dashboard is locked. Guests stop ordering from their phones on ${day(status.pausesAt)}.`)}
               </p>
-              {status.state === "due" && (
-                <a href={`https://wa.me/${SKUZI_WHATSAPP}?text=${encodeURIComponent(`Hi Skuzi, I'd like to pay my ${status.planName} package for ${venue?.name ?? "my restaurant"}.`)}`} target="_blank" rel="noreferrer"
-                  className="mt-3 inline-flex rounded-full bg-[#FFD966] px-4 py-2 text-sm font-extrabold text-gray-900">Pay on WhatsApp</a>
-              )}
+              {venue && <PayCard key={payFor ?? status.plan} venueId={venue.id} plan={payFor ?? status.plan} onPaid={paid} />}
             </div>
 
             {venue && <div className="mt-4"><MomoCodeCard venueId={venue.id} status={status} onSaved={setStatus} /></div>}
@@ -144,7 +200,9 @@ export default function Subscription() {
                       status.state === "trial" ? (
                         <button onClick={() => choose(id)} disabled={switching !== null} className="mt-4 rounded-xl bg-action py-2.5 text-sm font-extrabold text-action-ink disabled:opacity-50">{switching === id ? "Switching…" : `Switch to ${p.name}`}</button>
                       ) : (
-                        <a href={`https://wa.me/${SKUZI_WHATSAPP}?text=${encodeURIComponent(`Hi Skuzi, I'd like to switch ${venue?.name ?? "my restaurant"} to ${p.name}.`)}`} target="_blank" rel="noreferrer" className="mt-4 rounded-xl border-2 border-gray-900 py-2.5 text-center text-sm font-extrabold text-gray-900 dark:border-gray-100 dark:text-white">Switch on WhatsApp</a>
+                        <button onClick={() => { setPayFor(id); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="mt-4 rounded-xl border-2 border-gray-900 py-2.5 text-center text-sm font-extrabold text-gray-900 dark:border-gray-100 dark:text-white">
+                          {payFor === id ? "Selected ↑ pay above" : `Pay for ${p.name} instead`}
+                        </button>
                       )
                     )}
                   </div>

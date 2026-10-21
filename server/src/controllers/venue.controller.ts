@@ -26,6 +26,8 @@ const createVenueSchema = z.object({
   // The Skuzi app always sends this (its button stays off until "I agree" is
   // ticked). The old TabPro site doesn't; those owners agree in-app later.
   acceptTerms: z.literal(true, { errorMap: () => ({ message: 'Please agree to the Skuzi venue terms' }) }).optional(),
+  // The package picked at sign-up (sets the trial length; the trial has everything).
+  plan: z.enum(['basic', 'pro', 'elite']).optional(),
 });
 
 export async function handleCreateVenue(req: Request, res: Response) {
@@ -36,7 +38,7 @@ export async function handleCreateVenue(req: Request, res: Response) {
     return;
   }
 
-  const created = await createVenue(req.owner!.ownerId, parsed.data.name, parsed.data.location, parsed.data.momoPhone, parsed.data.momoPayCode || undefined);
+  const created = await createVenue(req.owner!.ownerId, parsed.data.name, parsed.data.location, parsed.data.momoPhone, parsed.data.momoPayCode || undefined, parsed.data.plan);
   const venue = parsed.data.acceptTerms ? await acceptVenueTerms(created.id, req.owner!.ownerId, VENUE_TERMS_VERSION) : null;
   const body: ApiResponse = { success: true, data: { ...created, ...venue } };
   res.status(201).json(body);

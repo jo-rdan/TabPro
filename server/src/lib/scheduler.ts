@@ -1,10 +1,11 @@
 import { sendDueCampaigns } from '../services/campaign.service';
 import { runBookingJobs } from '../services/booking.service';
+import { sendPlanReminders, reconcilePlanPayments } from '../services/plan.service';
 import { ensureVenueSlugs } from '../services/venue.service';
 import { startPolling } from './activity';
 
 // Every minute: send scheduled campaigns, expire unanswered booking requests,
-// remind guests 2 hours before. A failure is logged and retried next minute.
+// remind guests 2 hours before, and run package payments and reminders. A failure is logged and retried next minute.
 let running = false;
 async function tick() {
   if (running) return;
@@ -12,6 +13,10 @@ async function tick() {
   try {
     await sendDueCampaigns();
     await runBookingJobs();
+    // Packages: settle MoMo payments whose owner closed the page, and remind
+    // owners before and after their trial or month runs out.
+    await reconcilePlanPayments();
+    await sendPlanReminders();
   } catch (err: any) {
     console.error('[scheduler]', err?.message);
   } finally {

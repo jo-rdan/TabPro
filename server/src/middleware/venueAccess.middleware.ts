@@ -6,7 +6,8 @@ import {
   venues, staff, menuItems, shifts, orders, orderItems, tabs, tables, campaigns, momoPayments,
 } from '../models/schema';
 import { HttpError } from './error.middleware';
-import { PLANS, PLAN_FOR, planAllows, type PlanFeature } from '@tabpro/shared';
+import { PLANS, PLAN_FOR, type PlanFeature } from '@tabpro/shared';
+import { venueAllows } from '../services/plan.service';
 import { JwtPayload, StaffJwtPayload } from './auth.middleware';
 
 // Works out which venue a request is about, from a param, the body, or by
@@ -161,7 +162,7 @@ export function planFeature(feature: PlanFeature, resolve: VenueResolver) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     const venueId = await resolveVenueId(resolve, req);
     const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
-    if (!venue || !planAllows(venue.plan, feature)) {
+    if (!venue || !venueAllows(venue, feature)) {
       throw new HttpError(403, `This is part of ${PLANS[PLAN_FOR[feature]].name}. Switch package in Plan to use it.`);
     }
     next();
