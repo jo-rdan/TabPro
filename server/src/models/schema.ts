@@ -237,6 +237,29 @@ export const menuItems = pgTable("menu_items", {
   isAvailable: boolean("is_available").default(true).notNull(),
   // Chef's pick: shown first on the venue's page and on Explore (max 3).
   featured: boolean("featured").default(false).notNull(),
+  // Stock (bars): bottles/cans counted down by every order. Off unless the owner
+  // switches it on for this item. At 0 the item is sold out automatically.
+  stockTracked: boolean("stock_tracked").default(false).notNull(),
+  stockQty: integer("stock_qty"),
+  stockAlertAt: integer("stock_alert_at"),
+});
+
+export const stockMovementKindEnum = pgEnum("stock_movement_kind", ["sale", "delivery", "count"]);
+
+// Every change to an item's stock, so the owner can see where each bottle went:
+// a sale (an order), a delivery, or a count (counted vs what Skuzi expected).
+export const stockMovements = pgTable("stock_movements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  venueId: uuid("venue_id").references(() => venues.id, { onDelete: "cascade" }).notNull(),
+  menuItemId: uuid("menu_item_id").references(() => menuItems.id, { onDelete: "cascade" }).notNull(),
+  kind: stockMovementKindEnum("kind").notNull(),
+  qtyChange: integer("qty_change").notNull(),
+  qtyAfter: integer("qty_after").notNull(),
+  // For a count: what Skuzi expected before the count.
+  expectedQty: integer("expected_qty"),
+  orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ─── Ratings ──────────────────────────────────────────────────────────────────
@@ -462,6 +485,11 @@ export const tabsRelations = relations(tabs, ({ one, many }) => ({
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   tab: one(tabs, { fields: [orders.tabId], references: [tabs.id] }),
   items: many(orderItems),
+}));
+
+export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
+  menuItem: one(menuItems, { fields: [stockMovements.menuItemId], references: [menuItems.id] }),
+  order: one(orders, { fields: [stockMovements.orderId], references: [orders.id] }),
 }));
 
 export const staffPointsRelations = relations(staffPoints, ({ one }) => ({

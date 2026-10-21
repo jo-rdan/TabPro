@@ -15,6 +15,7 @@ import InviteAccept from "./pages/owner/InviteAccept";
 import VenueSetup from "./pages/owner/VenueSetup";
 import MenuManagement from "./pages/owner/MenuManagement";
 import Subscription from "./pages/owner/Subscription";
+import Stock from "./pages/owner/Stock";
 import Campaigns, { CampaignNew, CampaignDetail } from "./pages/owner/Campaigns";
 import Bookings from "./pages/owner/Bookings";
 import Explore from "./pages/guest/Explore";
@@ -143,6 +144,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
         <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
         <Route path="/campaigns/new" element={<ProtectedRoute><CampaignNew /></ProtectedRoute>} />
         <Route path="/campaigns/:campaignId" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />

@@ -210,7 +210,8 @@ export type WsEventType =
   | "staff_join_request"
   | "tab_paid"
   | "disbursement_failed"
-  | "booking_update";
+  | "booking_update"
+  | "stock_update";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;
