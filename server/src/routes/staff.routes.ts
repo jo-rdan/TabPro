@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { handleCreateStaff, handleAcceptInvite, handleGetStaff, handleGetMyPoints, handleToggleStaffActive, handleResendInvite, handleSetPin, handleVerifyPin, handleStaffLogin, handleJoinRequest, handleApproveJoin, handleDeclineJoin, handleUpdateStaff, handleGetMe } from '../controllers/staff.controller';
 import { requireAuth, requireStaffAuth } from '../middleware/auth.middleware';
 import { ownsVenue, venueFromParam, venueFromBody, venueOfStaff } from '../middleware/venueAccess.middleware';
+import { setTipMomo } from '../services/tips.service';
 
 const router = Router();
 
@@ -13,6 +14,11 @@ router.post('/join', handleJoinRequest);
 // Staff-auth
 router.get('/me', requireStaffAuth, handleGetMe);
 router.get('/me/points', requireStaffAuth, handleGetMyPoints);
+// Tips on (with the MoMo number guests send to) or off.
+router.patch('/me/tips', requireStaffAuth, async (req, res) => {
+  try { res.json({ success: true, data: await setTipMomo(req.staffMember!.staffId, req.body?.tipMomo ?? null) }); }
+  catch (err) { res.status(400).json({ success: false, error: (err as Error).message }); }
+});
 router.post('/me/set-pin', requireStaffAuth, handleSetPin);
 router.post('/me/verify-pin', requireStaffAuth, handleVerifyPin);
 

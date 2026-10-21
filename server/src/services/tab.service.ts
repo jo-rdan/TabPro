@@ -1,8 +1,9 @@
 import { db } from '../lib/db';
 import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff, customers } from '../models/schema';
-import { eq, and, like, inArray } from 'drizzle-orm';
+import { eq, and, or, like, inArray } from 'drizzle-orm';
 import { getTableByQrCode } from './qr.service';
 import { planStatus, venueAllows } from './plan.service';
+import { skuziCallReason } from './tips.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
@@ -255,21 +256,14 @@ export async function nudgeWaiter(tabId: string) {
     { title: `👋 ${tab.table.label} called a waiter`, body: 'Their waiter has been notified' },
   );
 
-  // Deduct points from assigned waiter: −2 first nudge, −5 on repeat
+  // Count the call for the owner (Staff page). It costs the waiter nothing:
+  // points only go up, so waiters never have a reason to hide Skuzi.
   const resolvedStaffId = tab.staffId ?? (await db.query.tableAssignments.findFirst({
     where: eq(tableAssignments.tableId, tab.tableId),
   }))?.staffId ?? null;
 
   if (resolvedStaffId) {
-    const prevNudges = await db.query.staffPoints.findMany({
-      where: and(eq(staffPoints.staffId, resolvedStaffId), like(staffPoints.reason, `Nudge penalty [${tabId}]%`)),
-    });
-    const penalty = prevNudges.length === 0 ? -2 : -5;
-    await db.insert(staffPoints).values({
-      staffId: resolvedStaffId,
-      points: penalty,
-      reason: `Nudge penalty [${tabId}]`,
-    });
+    await db.insert(staffPoints).values({ staffId: resolvedStaffId, points: 0, reason: skuziCallReason(tabId) });
   }
 
   return { tabId, tableLabel: tab.table.label };
@@ -474,20 +468,23 @@ export async function closeTab(tabId: string, { paidByMomo = false, paidWith }: 
     );
   }
 
-  // Zero-nudge bonus: +5 pts if waiter had no nudge penalties on this tab
+  // Happy-table bonus: +5 pts if the guest never needed to tap Skuzi! on this tab
   const resolvedStaffId = tab.staffId ?? (await db.query.tableAssignments.findFirst({
     where: eq(tableAssignments.tableId, tab.tableId),
   }))?.staffId ?? null;
 
   if (resolvedStaffId) {
     const nudgePenalties = await db.query.staffPoints.findFirst({
-      where: and(eq(staffPoints.staffId, resolvedStaffId), like(staffPoints.reason, `Nudge penalty [${tabId}]%`)),
+      where: and(
+        eq(staffPoints.staffId, resolvedStaffId),
+        or(like(staffPoints.reason, `${skuziCallReason(tabId)}%`), like(staffPoints.reason, `Nudge penalty [${tabId}]%`)),
+      ),
     });
     if (!nudgePenalties) {
       await db.insert(staffPoints).values({
         staffId: resolvedStaffId,
         points: 5,
-        reason: `Zero-nudge shift bonus`,
+        reason: 'Happy table: no Skuzi! needed',
       });
     }
   }

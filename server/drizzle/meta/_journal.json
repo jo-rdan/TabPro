@@ -225,6 +225,13 @@
       "when": 1792584988164,
       "tag": "0031_skuzi_auto_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792602684056,
+      "tag": "0032_skuzi_waiter_tips",
+      "breakpoints": true
     }
   ]
 }

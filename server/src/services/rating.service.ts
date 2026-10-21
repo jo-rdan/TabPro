@@ -2,6 +2,7 @@ import { sendPushToOwner } from './push.service';
 import { db } from '../lib/db';
 import { ratings, staffPoints, tabs, staff } from '../models/schema';
 import { eq, desc, sum } from 'drizzle-orm';
+import { earnedPoints } from './tips.service';
 
 function calculatePoints(waiterScore: number, overallScore: number): number {
   // Base: waiter score * 10 (10–50 points)
@@ -80,7 +81,7 @@ export async function getLeaderboard(venueId: string) {
   });
 
   const leaderboard = allStaff.map((s) => {
-    const totalPoints = s.points.reduce((sum, p) => sum + p.points, 0);
+    const totalPoints = earnedPoints(s.points);
     const ratingCount = s.ratings.length;
     const avgRating = ratingCount > 0
       ? s.ratings.reduce((sum, r) => sum + r.waiterScore, 0) / ratingCount

@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import { sendInviteSms, buildWhatsAppLink } from './messaging.service';
 import { broadcastToVenue } from '../lib/websocket';
 import { sendPushToOwner } from './push.service';
+import { earnedPoints, weeklyStanding } from './tips.service';
 
 export async function setPin(staffId: string, pin: string): Promise<void> {
   if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits');
@@ -102,7 +103,8 @@ export async function getMyPoints(staffId: string) {
 
   if (!staffMember) throw new Error('Staff not found');
 
-  const totalPoints = staffMember.points.reduce((sum, p) => sum + p.points, 0);
+  // Points only go up (Skuzi! calls and older penalties don't count).
+  const totalPoints = earnedPoints(staffMember.points);
   const ratingCount = staffMember.ratings.length;
   const avgRating = ratingCount > 0
     ? Math.round((staffMember.ratings.reduce((sum, r) => sum + r.waiterScore, 0) / ratingCount) * 10) / 10
@@ -111,9 +113,8 @@ export async function getMyPoints(staffId: string) {
   // Weekly points (last 7 days)
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
-  const weeklyPoints = staffMember.points
-    .filter((p) => new Date(p.createdAt) >= weekAgo)
-    .reduce((sum, p) => sum + p.points, 0);
+  const weeklyPoints = earnedPoints(staffMember.points.filter((p) => new Date(p.createdAt) >= weekAgo));
+  const standing = (await weeklyStanding(staffMember.venueId)).get(staffId);
 
   return {
     staffId,
@@ -122,7 +123,9 @@ export async function getMyPoints(staffId: string) {
     weeklyPoints,
     avgRating,
     ratingCount,
-    history: staffMember.points.map((p) => ({
+    weekRank: standing?.weekRank ?? null,
+    tipsWeekRwf: standing?.tipsWeekRwf ?? 0,
+    history: staffMember.points.filter((p) => p.points > 0).map((p) => ({
       id: p.id,
       points: p.points,
       reason: p.reason,
@@ -265,8 +268,10 @@ export async function getStaffForVenue(venueId: string) {
     },
   });
 
+  const standing = await weeklyStanding(venueId);
   return allStaff.map((s) => {
-    const totalPoints = s.points.reduce((sum, p) => sum + p.points, 0);
+    const totalPoints = earnedPoints(s.points);
+    const week = standing.get(s.id);
     const ratingCount = s.ratings.length;
     const avgRating = ratingCount > 0
       ? Math.round((s.ratings.reduce((sum, r) => sum + r.waiterScore, 0) / ratingCount) * 10) / 10
@@ -289,6 +294,12 @@ export async function getStaffForVenue(venueId: string) {
       totalPoints,
       ratingCount,
       avgRating,
+      // This week, for the owner: rank, tips guests reported, Skuzi! calls.
+      weekPoints: week?.weekPoints ?? 0,
+      weekRank: week?.weekRank ?? null,
+      tipsWeekRwf: week?.tipsWeekRwf ?? 0,
+      skuziCallsWeek: week?.skuziCallsWeek ?? 0,
+      tipsOn: !!s.tipMomo,
     };
   });
 }
