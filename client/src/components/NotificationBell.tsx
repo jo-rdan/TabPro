@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, BellRing, Receipt, ShoppingBag, PhoneOff, DoorClosed, UtensilsCrossed, Ban } from "lucide-react";
+import { Bell, BellRing, Receipt, ShoppingBag, PhoneOff, DoorClosed, UtensilsCrossed, Ban, HandCoins } from "lucide-react";
 
 export type NotificationKind =
   | "new_order"
@@ -8,7 +8,8 @@ export type NotificationKind =
   | "customer_away"
   | "tab_closed"
   | "food_ready"
-  | "item_unavailable";
+  | "item_unavailable"
+  | "tip";
 
 export interface NotificationItem {
   id: string;
@@ -26,6 +27,7 @@ const ICONS: Record<NotificationKind, typeof Bell> = {
   tab_closed: DoorClosed,
   food_ready: UtensilsCrossed,
   item_unavailable: Ban,
+  tip: HandCoins,
 };
 
 const ICON_COLORS: Record<NotificationKind, string> = {
@@ -36,6 +38,7 @@ const ICON_COLORS: Record<NotificationKind, string> = {
   tab_closed: "text-gray-500 bg-gray-100 dark:bg-gray-800",
   food_ready: "text-green-700 bg-green-100 dark:bg-green-900/40",
   item_unavailable: "text-red-600 bg-red-100 dark:bg-red-900/40",
+  tip: "text-green-700 bg-green-100 dark:bg-green-900/40",
 };
 
 function timeAgo(dateStr: string) {

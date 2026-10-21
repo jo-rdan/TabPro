@@ -17,6 +17,7 @@ import {
 } from '../controllers/tabPayment.controller';
 import { handleHeartbeat, handleCustomerLeft } from '../controllers/heartbeat.controller';
 import { venueMember, venueOfTable, venueOfTab } from '../middleware/venueAccess.middleware';
+import { waiterCard, recordTip } from '../services/tips.service';
 
 const router = Router();
 
@@ -32,6 +33,15 @@ router.get('/:tabId/bill', handleGetTabBill);
 router.post('/:tabId/nudge', handleNudgeWaiter);
 router.post('/:tabId/paid-by-momo', handleClaimPaid);
 router.post('/:tabId/request-bill', handleRequestBill);
+// The guest's waiter (badges, tips on/off) and "I've sent a tip".
+router.get('/:tabId/waiter', async (req, res) => {
+  try { res.json({ success: true, data: await waiterCard(req.params.tabId) }); }
+  catch { res.json({ success: true, data: null }); }
+});
+router.post('/:tabId/tip', async (req, res) => {
+  try { res.json({ success: true, data: await recordTip(req.params.tabId, req.body?.amountRwf) }); }
+  catch (err) { res.status(400).json({ success: false, error: (err as Error).message }); }
+});
 router.post('/:tabId/close', venueMember(venueOfTab()), handleCloseTab);
 
 // ─── Tab payment via MoMo ─────────────────────────────────────────────────────

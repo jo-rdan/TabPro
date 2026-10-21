@@ -239,7 +239,8 @@ export type WsEventType =
   | "payment_claimed"
   | "kitchen_update"
   | "food_ready"
-  | "item_unavailable";
+  | "item_unavailable"
+  | "tip_sent";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;

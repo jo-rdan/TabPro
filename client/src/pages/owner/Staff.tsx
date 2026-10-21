@@ -34,6 +34,12 @@ interface StaffRow {
   totalPoints: number;
   ratingCount: number;
   avgRating: number | null;
+  // This week: rank by points, tips guests reported, Skuzi! calls (no penalty).
+  weekPoints: number;
+  weekRank: number | null;
+  tipsWeekRwf: number;
+  skuziCallsWeek: number;
+  tipsOn: boolean;
 }
 
 interface TableRow {
@@ -463,6 +469,23 @@ export default function Staff() {
                     )}
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">{member.phone}</p>
+                  {member.role !== "kitchen" && (member.weekPoints > 0 || member.tipsWeekRwf > 0 || member.skuziCallsWeek > 0) && (
+                    <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-bold">
+                      {member.weekPoints > 0 && (
+                        <span className={`rounded-full px-2.5 py-1 ${member.weekRank === 1 ? "bg-[#FFEDB8] text-[#7A5A16]" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
+                          {member.weekRank === 1 ? "🏆 #1 this week" : `#${member.weekRank} this week`} · {member.weekPoints} pts
+                        </span>
+                      )}
+                      {member.tipsWeekRwf > 0 && (
+                        <span className="rounded-full bg-green-50 px-2.5 py-1 text-green-700 dark:bg-green-500/15 dark:text-green-300">💸 Tips: {member.tipsWeekRwf.toLocaleString()} RWF</span>
+                      )}
+                      {member.skuziCallsWeek > 0 && (
+                        <span title="Guests who tapped Skuzi! on this waiter's tables this week. It costs them no points." className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                          👋 Skuzi! taps: {member.skuziCallsWeek}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {member.isActive && (
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs">
                       {(["waiter", "manager", "kitchen"] as const).filter((r) => r !== member.role).map((r, i) => (

@@ -129,6 +129,21 @@ export const staff = pgTable("staff", {
   pin: text("pin"), // bcrypt hash, null until waiter sets it on first login
   // Joined by scanning the clock-in sticker; inactive until the owner approves.
   pendingApproval: boolean("pending_approval").default(false).notNull(),
+  // The MoMo number guests tip to (07XXXXXXXX). Null = tips off; the waiter
+  // turns them on in the waiter app, so their number is only shown by choice.
+  tipMomo: text("tip_momo"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// A guest says they tipped their waiter on MoMo. The money goes straight from
+// the guest's MoMo to the waiter's: Skuzi never holds it and can't see it, so
+// this is what the guest reported (the waiter checks their own MoMo).
+export const tips = pgTable("tips", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  venueId: uuid("venue_id").references(() => venues.id, { onDelete: "cascade" }).notNull(),
+  staffId: uuid("staff_id").references(() => staff.id, { onDelete: "cascade" }).notNull(),
+  tabId: uuid("tab_id").references(() => tabs.id, { onDelete: "set null" }),
+  amountRwf: integer("amount_rwf").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -19,6 +19,7 @@ import {
 import Logo, { WavingHand } from "../../components/Logo";
 import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
+import WaiterTipCard from "../../components/WaiterTipCard";
 import { WsEvent } from "@tabpro/shared";
 import { apiFetch, apiBeacon } from "../../lib/apiFetch";
 import InviteOptIn from "../../components/guest/InviteOptIn";
@@ -1132,6 +1133,8 @@ export default function CustomerMenu() {
               </p>
             </div>
           )}
+          {/* Who served them, their badges, and a tip straight to their MoMo */}
+          {tabId && <WaiterTipCard tabId={tabId} />}
           {/* Mobile Money payment flow (pawaPay) */}
           {/* Pay the venue's own MoMo Pay code: 100% to the venue, Skuzi never
               holds the money. The waiter checks their MoMo and taps Paid. */}
@@ -1435,6 +1438,7 @@ export default function CustomerMenu() {
               onChange={setOverallScore}
             />
           </div>
+          {tabId && <WaiterTipCard tabId={tabId} />}
           <textarea
             value={ratingComment}
             onChange={(e) => setRatingComment(e.target.value)}

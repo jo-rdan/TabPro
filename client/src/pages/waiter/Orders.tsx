@@ -107,9 +107,80 @@ interface MyPoints {
   name: string;
   totalPoints: number;
   weeklyPoints: number;
+  weekRank: number | null;
+  tipsWeekRwf: number;
   avgRating: number | null;
   ratingCount: number;
   history: PointsHistory[];
+}
+
+// Tips go from the guest's MoMo straight to this number. Off until the waiter
+// turns them on, so their number is only ever shown by their choice.
+function TipsSetup({ token, phone, current, onSaved, onDismiss }: {
+  token: string;
+  phone: string;
+  current: string | null;
+  onSaved: (tipMomo: string | null) => void;
+  onDismiss?: () => void;
+}) {
+  const [number, setNumber] = useState(current ?? phone);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const save = async (value: string | null) => {
+    setSaving(true);
+    setError("");
+    try {
+      const r = await apiFetch("/staff/me/tips", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tipMomo: value }),
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      onSaved(d.data.tipMomo);
+    } catch (e: any) {
+      setError(e?.message || "Couldn't save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div className="rounded-[22px] bg-white dark:bg-gray-800 p-4 ring-1 ring-green-500/30">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[17px] font-bold text-gray-900 dark:text-white">💸 Get tips on your MoMo</p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            Guests see a <b>Tip</b> button with your name on their bill. The money goes straight to you.
+          </p>
+        </div>
+        {onDismiss && (
+          <button onClick={onDismiss} aria-label="Not now" className="text-gray-400 text-sm font-bold">✕</button>
+        )}
+      </div>
+      <div className="mt-3 flex gap-2">
+        <input
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          inputMode="tel"
+          aria-label="MoMo number for tips"
+          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-base font-semibold text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        />
+        <button
+          onClick={() => save(number)}
+          disabled={saving}
+          className="rounded-xl bg-green-600 px-4 text-sm font-extrabold text-white disabled:opacity-60"
+        >
+          {saving ? "…" : current ? "Save" : "Turn on"}
+        </button>
+      </div>
+      {current && (
+        <button onClick={() => save(null)} disabled={saving} className="mt-2 text-xs font-semibold text-gray-500 underline">
+          Turn tips off
+        </button>
+      )}
+      {error && <p role="alert" className="mt-2 text-sm font-semibold text-red-600">{error}</p>}
+    </div>
+  );
 }
 
 function formatRwf(amount: number) {
@@ -176,6 +247,12 @@ export default function WaiterOrders() {
   const [foodReady, setFoodReady] = useState<FoodReady[]>([]);
   // The kitchen took an item off: a short note for the waiter.
   const [kitchenNote, setKitchenNote] = useState("");
+  // Tips: the waiter's MoMo for tips (null = off), and tips that just came in.
+  const [tipMomo, setTipMomo] = useState<string | null>(null);
+  const [myPhone, setMyPhone] = useState("");
+  const [tipsLoaded, setTipsLoaded] = useState(false);
+  const [tipsDismissed, setTipsDismissed] = useState(() => sessionStorage.getItem("skuzi_tips_later") === "1");
+  const [tipCards, setTipCards] = useState<{ id: string; tableLabel: string; amountRwf: number }[]>([]);
   // The owner hasn't paid the Skuzi package: waiters hear it from guests first.
   const [planNotice, setPlanNotice] = useState<{ orderingPaused: boolean; pausesAt: string } | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -436,6 +513,16 @@ export default function WaiterOrders() {
           const label = orders.find((o) => o.tabId === p.tabId)?.tableLabel ?? "A table";
           setKitchenNote(`${label}: ${p.name} isn't available. The kitchen took it off the bill and told the guest.`);
           pushNotification("item_unavailable", `${label}: ${p.name} not available`);
+        }
+      }
+
+      if (event.type === "tip_sent") {
+        const p = event.payload as { staffId: string; tableLabel: string; amountRwf: number };
+        if (p.staffId === staffId) {
+          const id = `${Date.now()}`;
+          setTipCards((prev) => [...prev, { id, tableLabel: p.tableLabel, amountRwf: p.amountRwf }]);
+          pushNotification("tip", `${p.tableLabel} sent you a ${p.amountRwf.toLocaleString()} RWF tip`);
+          if (activeTab === "points") fetchMyPoints();
         }
       }
 
@@ -734,7 +821,12 @@ export default function WaiterOrders() {
     apiFetch("/staff/me", { headers: { Authorization: `Bearer ${staffToken}` } })
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setPlanNotice(d.data.planNotice ?? null);
+        if (d.success) {
+          setPlanNotice(d.data.planNotice ?? null);
+          setTipMomo(d.data.tipMomo ?? null);
+          setMyPhone(d.data.phone ?? "");
+          setTipsLoaded(true);
+        }
         // The chef uses the kitchen screen, not the waiter screen.
         if (d.success && d.data.role === "kitchen") {
           navigate(`/kitchen?venueId=${venueId}&token=${staffToken}`, { replace: true });
@@ -1049,6 +1141,34 @@ export default function WaiterOrders() {
               </button>
             </div>
           ))}
+
+          {tipCards.map((t) => (
+            <div key={t.id} className="bg-green-600 text-white rounded-[26px] p-5 flex flex-col gap-3 shadow-lg shadow-green-600/20">
+              <div>
+                <p className="font-display text-[24px] font-bold leading-tight">🎉 {t.tableLabel} sent you a {t.amountRwf.toLocaleString()} RWF tip</p>
+                <p className="text-sm font-semibold mt-1.5 text-white/90">Straight to your MoMo. Check it, and thank them!</p>
+              </div>
+              <button
+                onClick={() => setTipCards((prev) => prev.filter((x) => x.id !== t.id))}
+                className="h-12 rounded-2xl bg-gray-900 text-white text-base font-extrabold active:scale-[0.98] transition-all"
+              >
+                Thanks!
+              </button>
+            </div>
+          ))}
+
+          {tipsLoaded && !tipMomo && !tipsDismissed && staffToken && (
+            <TipsSetup
+              token={staffToken}
+              phone={myPhone}
+              current={null}
+              onSaved={setTipMomo}
+              onDismiss={() => {
+                sessionStorage.setItem("skuzi_tips_later", "1");
+                setTipsDismissed(true);
+              }}
+            />
+          )}
 
           {planNotice && (
             <div role="status" className="rounded-[22px] bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30">
@@ -1400,8 +1520,23 @@ export default function WaiterOrders() {
                   </span>
                 </div>
                 <p className="text-xs opacity-70">
-                  +{myPoints.weeklyPoints} pts this week
+                  +{myPoints.weeklyPoints} pts this week{myPoints.weekRank === 1 ? " · 🏆 Top waiter this week" : myPoints.weekRank ? ` · #${myPoints.weekRank} this week` : ""}
                 </p>
+              </div>
+
+              {/* Tips */}
+              <div className="mb-5">
+                {tipMomo ? (
+                  <div className="rounded-2xl bg-white dark:bg-[#3B2149] border border-gray-100 dark:border-gray-800 p-4">
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400">💸 Tips this week (what guests told us)</p>
+                    <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{(myPoints.tipsWeekRwf ?? 0).toLocaleString()} RWF</p>
+                    <div className="mt-3">
+                      <TipsSetup token={staffToken} phone={myPhone} current={tipMomo} onSaved={setTipMomo} />
+                    </div>
+                  </div>
+                ) : (
+                  <TipsSetup token={staffToken} phone={myPhone} current={null} onSaved={setTipMomo} />
+                )}
               </div>
 
               {/* Stats row */}

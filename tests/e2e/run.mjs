@@ -976,6 +976,60 @@ console.log('\n── Kitchen screen');
   guestWs.ws.close();
 }
 
+// ── Waiter tips & badges (points only go up) ─────────────────────────────────
+console.log('\n── Waiter tips');
+{
+  const aliceId = (await call('GET', '/staff/me', null, staffTok)).json?.data?.id;
+  const tt = await q1(`insert into tables (venue_id,label) values ($1,'Tip Table') returning id`, [venueId]);
+  const tCode = rnd() + rnd();
+  await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [tCode, tt.id]);
+  await pg.query(`insert into table_assignments (table_id,staff_id,shift_date) values ($1,$2,'permanent')`, [tt.id, aliceId]);
+  r = await call('POST', '/tabs/open', { qrCode: tCode, phone: phone() });
+  const tTab = r.json?.data?.tab?.id;
+  r = await call('GET', `/tabs/${tTab}/waiter`);
+  check('The guest sees who serves them; tips are off until the waiter turns them on', r.json?.data?.name === 'Alice' && r.json?.data?.tipMomo === null, JSON.stringify(r.json?.data));
+  r = await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 1000 });
+  check('No tip button while tips are off', r.status === 400, r.json?.error);
+  r = await call('PATCH', '/staff/me/tips', { tipMomo: '12345' }, staffTok);
+  check('A tip number must be a Rwandan MoMo number', r.status === 400, r.json?.error);
+  r = await call('PATCH', '/staff/me/tips', { tipMomo: '+250 788 111 222' }, staffTok);
+  check('Waiter turns tips on with their MoMo number', r.status === 200 && r.json?.data?.tipMomo === '0788111222', JSON.stringify(r.json?.data));
+  r = await call('PATCH', '/staff/me/tips', { tipMomo: '0788111222' });
+  check('Only the waiter can change their tip number', r.status === 401, `status ${r.status}`);
+  r = await call('GET', `/tabs/${tTab}/waiter`);
+  check('…the guest now sees where to send a tip', r.json?.data?.tipMomo === '0788111222');
+  r = await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 50 });
+  check('A tip below 100 RWF is refused', r.status === 400);
+  const s0 = staffWs.events.length;
+  r = await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 1000 });
+  await sleep(400);
+  check('"I\'ve sent it": the waiter is told live', r.status === 200 && staffWs.events.slice(s0).some((e) => e.type === 'tip_sent' && e.payload?.staffId === aliceId && e.payload?.amountRwf === 1000 && e.payload?.tableLabel === 'Tip Table'), r.json?.error);
+  r = await call('GET', `/staff/${venueId}`, null, ownerTok);
+  const aliceRow = (r.json?.data ?? []).find((m) => m.id === aliceId);
+  check('The owner sees the tips on the Staff page', aliceRow?.tipsWeekRwf >= 1000 && aliceRow?.tipsOn === true, JSON.stringify(aliceRow && { tips: aliceRow.tipsWeekRwf, on: aliceRow.tipsOn }));
+  await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 500 });
+  await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 500 });
+  r = await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 500 });
+  check('At most 3 tips per bill (no spamming the waiter)', r.status === 400);
+  // Skuzi! costs the waiter nothing; older penalties stop counting
+  let before = (await call('GET', '/staff/me/points', null, staffTok)).json?.data?.totalPoints;
+  r = await call('POST', `/tabs/${tTab}/nudge`);
+  await pg.query(`insert into staff_points (staff_id,points,reason) values ($1,-5,'Nudge penalty [old]')`, [aliceId]);
+  let after = (await call('GET', '/staff/me/points', null, staffTok)).json?.data;
+  check('A guest tapping Skuzi! costs the waiter no points', r.status === 200 && after?.totalPoints === before && !(after?.history ?? []).some((h) => h.points <= 0), `${before} → ${after?.totalPoints}`);
+  r = await call('GET', `/staff/${venueId}`, null, ownerTok);
+  check('…the owner still sees the Skuzi! taps', ((r.json?.data ?? []).find((m) => m.id === aliceId)?.skuziCallsWeek ?? 0) >= 1);
+  await pg.query(`insert into staff_points (staff_id,points,reason) values ($1,500,'Fast delivery bonus (2m)')`, [aliceId]);
+  r = await call('GET', `/tabs/${tTab}/waiter`);
+  check('The week\'s top waiter gets the 🏆 badge on the bill', r.json?.data?.topThisWeek === true, JSON.stringify(r.json?.data));
+  await call('POST', `/tabs/${tTab}/close`, { paidWith: 'cash' }, staffTok);
+  await pg.query("update tabs set closed_at = now() - interval '7 hours' where id=$1", [tTab]);
+  r = await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 500 });
+  check('No tips on a bill closed hours ago', r.status === 400);
+  r = await call('PATCH', '/staff/me/tips', { tipMomo: null }, staffTok);
+  check('Waiter can turn tips off', r.status === 200 && r.json?.data?.tipMomo === null);
+}
+
 // ── Packages and paying the venue's own MoMo Pay code ───────────────────────
 console.log('\n── Packages & direct MoMo');
 {

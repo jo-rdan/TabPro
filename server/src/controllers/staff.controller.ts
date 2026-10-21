@@ -203,6 +203,6 @@ export async function handleGetMe(req: Request, res: Response) {
   const planNotice = plan && (plan.state === 'grace' || plan.state === 'locked')
     ? { orderingPaused: plan.orderingPaused, pausesAt: plan.pausesAt }
     : null;
-  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, role: me.role, hasSmartphone: me.hasSmartphone, planNotice } };
+  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, phone: me.phone, role: me.role, hasSmartphone: me.hasSmartphone, tipMomo: me.tipMomo, planNotice } };
   res.json(body);
 }
