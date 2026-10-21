@@ -5,7 +5,9 @@ import { ownsVenue, venueFromParam } from '../middleware/venueAccess.middleware'
 import { db } from '../lib/db';
 import { venues } from '../models/schema';
 import { eq } from 'drizzle-orm';
-import { planStatus, setMomoPayCode, chooseOwnPlan, listVenuePlans, adminUpdatePlan } from '../services/plan.service';
+import { planStatus, setMomoPayCode, chooseOwnPlan, listVenuePlans, adminUpdatePlan, startPlanPayment, settlePlanPayment } from '../services/plan.service';
+import { momoPayments } from '../models/schema';
+import { and } from 'drizzle-orm';
 
 // Packages and the venue's MoMo Pay code. Owners see and pick their package in
 // the trial; the founder sets packages and marks venues paid.
@@ -29,6 +31,23 @@ router.patch('/:venueId/momo-code', ownsVenue(venueFromParam()), async (req: Req
 });
 router.patch('/:venueId', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
   try { ok(res, await chooseOwnPlan(req.params.venueId, req.body?.plan)); } catch (err) { fail(res, err); }
+});
+
+// The owner pays a month with MoMo: their phone asks for the PIN, then the
+// Plan page checks until it's through.
+router.post('/:venueId/pay', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
+  try { ok(res, await startPlanPayment(req.params.venueId, req.body ?? {})); } catch (err) { fail(res, err); }
+});
+router.get('/:venueId/pay/:depositId', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
+  try {
+    const mine = await db.query.momoPayments.findFirst({
+      where: and(eq(momoPayments.referenceId, req.params.depositId), eq(momoPayments.venueId, req.params.venueId)),
+    });
+    if (!mine) throw new Error('Payment not found');
+    const result = await settlePlanPayment(req.params.depositId);
+    const venue = await db.query.venues.findFirst({ where: eq(venues.id, req.params.venueId) });
+    ok(res, { ...result, plan: venue ? planStatus(venue) : null });
+  } catch (err) { fail(res, err); }
 });
 
 export default router;

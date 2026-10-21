@@ -3,20 +3,21 @@ import { PLANS, type PlanId } from "@tabpro/shared";
 import Layout from "../../components/Layout";
 import api from "../../lib/api";
 
-// Founder only: every venue's package, trial and payment. Billing is by hand
-// for now: when a venue pays you on MoMo, tap "Paid +1 month".
+// Founder only: every venue's package, trial and payment. Owners pay by MoMo
+// in the app on their own; "Paid +1 month" is for a payment made outside it.
 
 type Row = {
   id: string; name: string; isDemo: boolean; ownerName: string; ownerEmail: string; createdAt: string;
   plan: PlanId; planName: string; priceRwf: number; trialEndsAt: string | null; trialDaysLeft: number;
-  paidUntil: string | null; state: "trial" | "paid" | "due"; momoPayCode: string | null;
+  paidUntil: string | null; state: "trial" | "paid" | "grace" | "locked"; orderingPaused: boolean; momoPayCode: string | null;
 };
 
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Kigali" }) : "—");
 const STATE: Record<Row["state"], string> = {
   trial: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
   paid: "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300",
-  due: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
+  grace: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  locked: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
 };
 
 export default function PlansAdmin() {
@@ -58,7 +59,7 @@ export default function PlansAdmin() {
                   <p className="truncate text-xs text-gray-500">{r.ownerName} · {r.ownerEmail} · joined {day(r.createdAt)}</p>
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase ${STATE[r.state]}`}>
-                  {r.state === "trial" ? `Trial · ${r.trialDaysLeft}d left` : r.state === "paid" ? `Paid · until ${day(r.paidUntil)}` : "Due"}
+                  {r.state === "trial" ? `Trial · ${r.trialDaysLeft}d left` : r.state === "paid" ? `Paid · until ${day(r.paidUntil)}` : r.state === "grace" ? "Unpaid · grace" : r.orderingPaused ? "Locked · ordering paused" : "Locked"}
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">

@@ -50,6 +50,30 @@ export interface Venue {
   /** { mon: { open: "11:00", close: "01:00" } | null, … }; null = not set yet. */
   openingHours?: Record<string, { open: string; close: string } | null> | null;
   bookingsEnabled?: boolean;
+  /** The package right now (from /auth/me). */
+  planStatus?: PlanStatus;
+}
+
+/**
+ * A venue's package right now. trial = free with everything (Bar+); grace =
+ * unpaid up to 3 days; locked = the owner's dashboard is behind a wall
+ * (after 10 days, orderingPaused: guests can't order from their phones).
+ */
+export interface PlanStatus {
+  plan: PlanId;
+  planName: string;
+  priceRwf: number;
+  effectivePlan: PlanId;
+  trialEndsAt: string | null;
+  trialDaysLeft: number;
+  paidUntil: string | null;
+  runsOutAt: string;
+  daysLeft: number;
+  state: "trial" | "paid" | "grace" | "locked";
+  locksAt: string;
+  pausesAt: string;
+  orderingPaused: boolean;
+  momoPayCode: string | null;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────

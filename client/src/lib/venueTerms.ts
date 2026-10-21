@@ -26,7 +26,7 @@ export const TERMS_CLAUSES: { title: string; text: string }[] = [
   },
   {
     title: "Packages and payment",
-    text: "The venue chooses a monthly package: Starter (25,000 RWF), Pro (45,000 RWF) or Bar+ (70,000 RWF). The first 2 weeks (Starter) or month (Pro, Bar+) are free. After that the package is paid monthly in advance to VNT250 Ltd by Mobile Money; the app shows when payment is due. Prices include no setup fee and no equipment.",
+    text: "The venue chooses a monthly package: Starter (25,000 RWF), Pro (45,000 RWF) or Bar+ (70,000 RWF). The first 2 weeks (Starter) or month (Pro, Bar+) are free. The free trial includes every Bar+ feature. After that the package is paid monthly in advance to VNT250 Ltd by Mobile Money, from the Plan page; the app reminds the venue before it is due. If a payment is 3 days late, the owner's dashboard locks until it is paid; if it is 10 days late, guests can no longer order from their phones (the menu stays visible and staff keep working). Everything comes back as soon as the payment goes through. Prices include no setup fee and no equipment.",
   },
   {
     title: "Guests' payments",

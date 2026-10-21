@@ -366,6 +366,8 @@ export default function CustomerMenu() {
   // False when the venue has no payout number or payments aren't configured —
   // the customer is asked to pay the waiter instead.
   const [acceptsMobileMoney, setAcceptsMobileMoney] = useState(true);
+  // The venue's Skuzi package went unpaid: the menu shows, ordering is by the waiter.
+  const [orderingPaused, setOrderingPaused] = useState(false);
   // The venue's own MoMo Pay code: guests pay it directly, the waiter confirms.
   const [momoPayCode, setMomoPayCode] = useState<string | null>(null);
   const [claimState, setClaimState] = useState<"idle" | "sending" | "sent">("idle");
@@ -516,6 +518,7 @@ export default function CustomerMenu() {
       setVenueName(venue.name);
       if (venue.logoUrl) setVenueLogoUrl(venue.logoUrl);
       setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
+      setOrderingPaused(!!venue.orderingPaused);
       setMomoPayCode(venue.momoPayCode ?? null);
       setIsDemo(!!venue.isDemo);
       setTableLabel(table.label);
@@ -556,6 +559,7 @@ export default function CustomerMenu() {
       setVenueId(venue.id);
       setVenueName(venue.name);
       setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
+      setOrderingPaused(!!venue.orderingPaused);
       setMomoPayCode(venue.momoPayCode ?? null);
       setIsDemo(!!venue.isDemo);
       setTableLabel(table.label);
@@ -1627,6 +1631,12 @@ export default function CustomerMenu() {
 
         {/* Menu content */}
         <div className="flex-1 px-4 pt-5 overflow-y-auto">
+          {orderingPaused && (
+            <div role="status" className="mb-5 rounded-2xl bg-gray-900 px-4 py-3 text-white dark:bg-white dark:text-gray-900">
+              <p className="text-sm font-black">Ordering from your phone is paused here</p>
+              <p className="mt-0.5 text-sm font-semibold opacity-80">Have a look at the menu, then tap Skuzi! or call your waiter to order.</p>
+            </div>
+          )}
           {skuziOffer?.text && (
             <div className="mb-5 flex items-center gap-3 rounded-2xl border-[1.5px] border-amber-500/60 bg-amber-50 px-4 py-3 dark:bg-amber-500/10">
               <span className="text-2xl" aria-hidden="true">🎁</span>

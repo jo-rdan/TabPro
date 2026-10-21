@@ -97,6 +97,9 @@ export const venues = pgTable("venues", {
   // Paid up to this date (set by the founder when the venue pays its package;
   // see `plan` + `trialEndsAt` above: basic = Starter, pro = Pro, elite = Bar+).
   paidUntil: timestamp("paid_until"),
+  // The last package reminder sent to the owner ("2026-11-20:soon", ":due",
+  // ":locked", ":paused"), so each one goes out once.
+  planNotice: text("plan_notice"),
 });
 
 // Every time an owner agrees to the venue terms: the permanent record.

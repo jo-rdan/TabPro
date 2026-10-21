@@ -1,3 +1,4 @@
+import { PLANS, type PlanId } from '@tabpro/shared';
 import { db } from '../lib/db';
 import { venues, subscriptions, owners, venueTermsAcceptances } from '../models/schema';
 import { eq, isNull, like } from 'drizzle-orm';
@@ -48,13 +49,13 @@ export async function updateVenueSettings(
   return venue;
 }
 
-export async function createVenue(ownerId: string, name: string, location?: string, momoPhone?: string, momoPayCode?: string) {
-  const trialEndsAt = new Date();
-  trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+export async function createVenue(ownerId: string, name: string, location?: string, momoPhone?: string, momoPayCode?: string, plan: PlanId = 'pro') {
+  // The free trial follows the package picked (Starter 2 weeks, Pro and Bar+ a month).
+  const trialEndsAt = new Date(Date.now() + PLANS[plan].trialDays * 24 * 3600e3);
 
   const [venue] = await db
     .insert(venues)
-    .values({ ownerId, name, location, momoPhone, momoPayCode, trialEndsAt, plan: 'pro', slug: await uniqueSlug(name) })
+    .values({ ownerId, name, location, momoPhone, momoPayCode, trialEndsAt, plan, slug: await uniqueSlug(name) })
     .returning();
 
   await db.insert(subscriptions).values({

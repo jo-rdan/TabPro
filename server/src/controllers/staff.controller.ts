@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { createStaff, acceptInvite, getStaffForVenue, getMyPoints, toggleStaffActive, resendInvite, setPin, verifyPin, loginByPhone, requestToJoin, approveJoinRequest, declineJoinRequest, updateStaff } from '../services/staff.service';
 import { ApiResponse } from '@tabpro/shared';
 import { db } from '../lib/db';
-import { staff } from '../models/schema';
+import { staff, venues } from '../models/schema';
+import { planStatus } from '../services/plan.service';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -196,6 +197,12 @@ export async function handleGetMe(req: Request, res: Response) {
     res.status(404).json(body);
     return;
   }
-  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, role: me.role, hasSmartphone: me.hasSmartphone } };
+  // Waiters see when the owner's package is unpaid (they're the ones guests ask).
+  const venue = await db.query.venues.findFirst({ where: eq(venues.id, me.venueId) });
+  const plan = venue ? planStatus(venue) : null;
+  const planNotice = plan && (plan.state === 'grace' || plan.state === 'locked')
+    ? { orderingPaused: plan.orderingPaused, pausesAt: plan.pausesAt }
+    : null;
+  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, role: me.role, hasSmartphone: me.hasSmartphone, planNotice } };
   res.json(body);
 }

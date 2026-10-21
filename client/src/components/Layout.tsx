@@ -21,6 +21,7 @@ import {
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
 import TermsPrompt from "./TermsPrompt";
+import { PlanBanner, PlanWall } from "./PlanWall";
 import VenueLogo from "./VenueLogo";
 import LogoUploader from "./LogoUploader";
 import api from "../lib/api";
@@ -74,7 +75,10 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/");
   // Features outside the venue's package stay in the menu with a lock (a quiet
   // upsell) and open the Plan page instead.
-  const locked = (feature?: PlanFeature) => !!feature && !!venue && !planAllows(venue.plan, feature);
+  // In the free trial everything is open (effectivePlan = Bar+).
+  const locked = (feature?: PlanFeature) => !!feature && !!venue && !planAllows(venue.planStatus?.effectivePlan ?? venue.plan, feature);
+  // Unpaid 3+ days: a wall on every page but Plan (and the founder's Plans).
+  const walled = venue?.planStatus?.state === "locked" && !["/subscription", "/plans"].includes(location.pathname);
   const linkFor = (href: string, feature?: PlanFeature) => (locked(feature) ? `/subscription?need=${feature}` : href);
 
   // Booking requests waiting for an answer: a badge on "Bookings".
@@ -282,7 +286,10 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         min-h-screen
       `}
       >
-        <div className={`${wide ? "max-w-7xl md:px-8" : "max-w-5xl"} mx-auto px-4 py-6 md:py-7`}>{children}</div>
+        <div className={`${wide ? "max-w-7xl md:px-8" : "max-w-5xl"} mx-auto px-4 py-6 md:py-7`}>
+          {location.pathname !== "/subscription" && <PlanBanner status={venue?.planStatus} />}
+          {walled && venue?.planStatus ? <PlanWall status={venue.planStatus} venueName={venue.name} /> : children}
+        </div>
         <TermsPrompt />
       </main>
 

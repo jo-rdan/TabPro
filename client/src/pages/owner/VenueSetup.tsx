@@ -6,6 +6,14 @@ import LogoUploader from '../../components/LogoUploader';
 import api from '../../lib/api';
 import { useAuthStore } from '../../lib/auth';
 import { TermsSummary, AgreeBox } from '../../components/VenueTermsAgree';
+import { PLANS, type PlanId } from '@tabpro/shared';
+
+// One line each: what the package is for.
+const PLAN_LINE: Record<PlanId, string> = {
+  basic: 'Ordering, the Skuzi! button, your dashboard',
+  pro: '+ MoMo Pay from the bill, history, bookings, campaigns',
+  elite: '+ kitchen screen and stock. For restaurants with a kitchen',
+};
 
 export default function VenueSetup() {
   const navigate = useNavigate();
@@ -18,6 +26,7 @@ export default function VenueSetup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [agreed, setAgreed] = useState(false);
+  const [plan, setPlan] = useState<PlanId>('elite');
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError('Venue name is required.'); return; }
@@ -34,6 +43,7 @@ export default function VenueSetup() {
         location: location.trim() || undefined,
         momoPayCode: momoPayCode || undefined,
         acceptTerms: true,
+        plan,
       });
       const venue = res.data.data;
       if (logoUrl && venue?.id) {
@@ -108,6 +118,27 @@ export default function VenueSetup() {
             </div>
             <p className="text-xs text-gray-400 mt-1.5">Guests pay this code straight from their bill: 100% goes to you. No code yet? Leave it empty and add it later in Plan.</p>
           </div>
+          <fieldset className="mb-5">
+            <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Your package</legend>
+            <div className="flex flex-col gap-2">
+              {(['elite', 'pro', 'basic'] as PlanId[]).map((id) => (
+                <label key={id} className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 px-3 py-2.5 ${plan === id ? 'border-brand-500 bg-brand-50/60 dark:bg-white/5' : 'border-gray-200 dark:border-gray-700'}`}>
+                  <input type="radio" name="plan" value={id} checked={plan === id} onChange={() => setPlan(id)} className="mt-1 accent-brand-500" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">{PLANS[id].name}</span>
+                      {id === 'elite' && <span className="whitespace-nowrap rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white">Best for restaurants</span>}
+                    </span>
+                    <span className="block text-xs font-bold text-gray-700 dark:text-gray-200">{PLANS[id].priceRwf.toLocaleString('en-US')} RWF / month</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">{PLAN_LINE[id]}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">
+              🎁 Free for {PLANS[plan].trialDays === 14 ? '2 weeks' : '1 month'}, with <b>everything</b> unlocked. Then pay with MoMo in Plan. Nothing taken from your sales.
+            </p>
+          </fieldset>
           <TermsSummary />
           <AgreeBox checked={agreed} onChange={(v) => { setAgreed(v); if (v) setError(''); }} />
           {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
@@ -116,7 +147,7 @@ export default function VenueSetup() {
             {loading ? 'Setting up...' : 'Create my venue →'}
           </button>
         </div>
-        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">Free to use. Skuzi only earns when customers pay through the app.</p>
+        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">Skuzi never takes a cut of your sales. Guests pay you directly.</p>
       </div>
     </div>
   );

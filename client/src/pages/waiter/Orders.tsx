@@ -176,6 +176,8 @@ export default function WaiterOrders() {
   const [foodReady, setFoodReady] = useState<FoodReady[]>([]);
   // The kitchen took an item off: a short note for the waiter.
   const [kitchenNote, setKitchenNote] = useState("");
+  // The owner hasn't paid the Skuzi package: waiters hear it from guests first.
+  const [planNotice, setPlanNotice] = useState<{ orderingPaused: boolean; pausesAt: string } | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   // Tabs whose guest closed Skuzi on their phone (cleared when they come back).
   const [phoneClosed, setPhoneClosed] = useState<Set<string>>(new Set());
@@ -652,7 +654,7 @@ export default function WaiterOrders() {
     try {
       const res = await apiFetch("/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${staffToken}` },
         body: JSON.stringify({
           tabId: manualTabId,
           source: "staff",
@@ -732,6 +734,7 @@ export default function WaiterOrders() {
     apiFetch("/staff/me", { headers: { Authorization: `Bearer ${staffToken}` } })
       .then((r) => r.json())
       .then((d) => {
+        if (d.success) setPlanNotice(d.data.planNotice ?? null);
         // The chef uses the kitchen screen, not the waiter screen.
         if (d.success && d.data.role === "kitchen") {
           navigate(`/kitchen?venueId=${venueId}&token=${staffToken}`, { replace: true });
@@ -1046,6 +1049,14 @@ export default function WaiterOrders() {
               </button>
             </div>
           ))}
+
+          {planNotice && (
+            <div role="status" className="rounded-[22px] bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30">
+              {planNotice.orderingPaused
+                ? "🚫 Guests can't order from their phones: this venue's Skuzi package is unpaid. Take their orders with + Add order, and let your manager know."
+                : `⚠️ This venue's Skuzi package is unpaid. From ${new Date(planNotice.pausesAt).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Africa/Kigali" })}, guests can't order from their phones. Let your manager know.`}
+            </div>
+          )}
 
           {kitchenNote && (
             <div role="status" className="rounded-[22px] bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-200 dark:bg-red-900/20 dark:text-red-300 dark:ring-red-900/40 flex items-start justify-between gap-3">

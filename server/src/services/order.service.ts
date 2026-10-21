@@ -6,7 +6,7 @@ import { notifyTable, notifyGuest } from './push.service';
 import { offerForTab } from './campaign.service';
 import { takeStockForOrder, sendStockAlerts } from './stock.service';
 import { categoriesOf } from './kitchen.service';
-import { planAllows } from '@tabpro/shared';
+import { planStatus, venueAllows } from './plan.service';
 
 interface OrderItemInput {
   menuItemId: string;
@@ -26,6 +26,10 @@ export async function placeOrder(
 
   if (!tab) throw new Error('Tab not found');
   if (tab.status !== 'open') throw new Error('Tab is not open');
+  // The venue's package went unpaid 10+ days: guests order through the waiter.
+  if (source === 'customer' && planStatus(tab.table.venue).orderingPaused) {
+    throw new Error('Ordering from your phone is paused here. Please call your waiter.');
+  }
 
   // Fetch menu items to get current prices
   const menuItemIds = items.map((i) => i.menuItemId);
@@ -44,7 +48,7 @@ export async function placeOrder(
 
   // Bar+ venues: an order with food also becomes a ticket on the kitchen screen.
   let kitchenStatus: 'new' | null = null;
-  if (planAllows(tab.table.venue.plan, 'kitchen')) {
+  if (venueAllows(tab.table.venue, 'kitchen')) {
     const { kitchen } = await categoriesOf(tab.table.venueId);
     if (menuItemRecords.some((m) => kitchen.includes(m!.category))) kitchenStatus = 'new';
   }
