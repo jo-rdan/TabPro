@@ -13,6 +13,7 @@ import {
   X,
   ChevronsLeft,
   ChevronsRight,
+ Package,
 } from "lucide-react";
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { label: "Tables", href: "/tables", icon: QrCode },
   { label: "Bookings", href: "/bookings", icon: CalendarDays },
   { label: "Menu", href: "/menu", icon: UtensilsCrossed },
+  { label: "Stock", href: "/stock", icon: Package },
   { label: "Campaigns", href: "/campaigns", icon: Megaphone },
   { label: "Staff", href: "/staff", icon: Users },
   { label: "History", href: "/history", icon: History },

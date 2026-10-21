@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
 import { notifyTable, notifyGuest } from './push.service';
 import { offerForTab } from './campaign.service';
+import { takeStockForOrder, sendStockAlerts } from './stock.service';
 
 interface OrderItemInput {
   menuItemId: string;
@@ -39,24 +40,40 @@ export async function placeOrder(
     if (!item.isAvailable) throw new Error(`"${item.name}" is not available`);
   }
 
-  // Create order
-  const [order] = await db
-    .insert(orders)
-    .values({ tabId, source, status: 'pending' })
-    .returning();
+  // Create the order and take tracked items off the stock in one go: if there
+  // aren't enough bottles left, nothing is saved and the guest is told.
+  const { order, createdItems, stockAlerts } = await db.transaction(async (tx) => {
+    const [order] = await tx
+      .insert(orders)
+      .values({ tabId, source, status: 'pending' })
+      .returning();
 
-  // Create order items
-  const createdItems = await db
-    .insert(orderItems)
-    .values(
+    const stockAlerts = await takeStockForOrder(
+      tx,
+      tab.table.venueId,
+      order.id,
       items.map((item, i) => ({
-        orderId: order.id,
         menuItemId: item.menuItemId,
         quantity: item.quantity,
-        unitPriceRwf: menuItemRecords[i]!.priceRwf,
-      }))
-    )
-    .returning();
+        name: menuItemRecords[i]!.name,
+        stockTracked: menuItemRecords[i]!.stockTracked,
+      })),
+    );
+
+    const createdItems = await tx
+      .insert(orderItems)
+      .values(
+        items.map((item, i) => ({
+          orderId: order.id,
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          unitPriceRwf: menuItemRecords[i]!.priceRwf,
+        }))
+      )
+      .returning();
+    return { order, createdItems, stockAlerts };
+  });
+  await sendStockAlerts(tab.table.venueId, stockAlerts);
 
   // Calculate total for this order
   const total = createdItems.reduce(

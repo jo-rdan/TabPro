@@ -18,6 +18,7 @@ import demoRequestRoutes from "./demoRequest.routes";
 import guestRoutes from "./guest.routes";
 import bookingRoutes from "./booking.routes";
 import creatorRoutes from "./creator.routes";
+import stockRoutes from "./stock.routes";
 
 const router = Router();
 
@@ -40,5 +41,6 @@ router.use("/demo-requests", demoRequestRoutes);
 router.use("/guests", guestRoutes);
 router.use("/venue-bookings", bookingRoutes);
 router.use("/creators", creatorRoutes);
+router.use("/stock", stockRoutes);
 
 export default router;

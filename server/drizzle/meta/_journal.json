@@ -190,6 +190,20 @@
       "when": 1791629086150,
       "tag": "0026_skuzi_money",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792541861353,
+      "tag": "0027_skuzi_stock",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792543747821,
+      "tag": "0028_skuzi_kitchen",
+      "breakpoints": true
     }
   ]
 }

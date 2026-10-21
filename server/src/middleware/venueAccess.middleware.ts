@@ -110,3 +110,20 @@ export function venueMember(resolve: VenueResolver) {
     throw new HttpError(401, 'Unauthorized');
   };
 }
+
+/**
+ * Owner of the venue OR an active MANAGER of the venue (not waiters). Used for
+ * stock: the owner's manager runs the bar too. Does its own token check.
+ */
+export function venueManager(resolve: VenueResolver) {
+  const member = venueMember(resolve);
+  return async (req: Request, res: Response, next: NextFunction) => {
+    await member(req, res, async () => {
+      if (req.staffMember) {
+        const m = await db.query.staff.findFirst({ where: eq(staff.id, req.staffMember.staffId) });
+        if (m?.role !== 'manager') throw new HttpError(403, 'Only the owner and managers can see stock');
+      }
+      next();
+    });
+  };
+}

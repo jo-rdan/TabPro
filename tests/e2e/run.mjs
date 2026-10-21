@@ -827,6 +827,61 @@ check('Agreeing to an old version of the terms is refused', r.status === 400, `s
 r = await call('POST', `/venues/${venueId}/terms`, { version: 2 }, ownerTok);
 check('Owner can agree to the current terms in the app', r.status === 200 && r.json?.data?.termsVersion === 2, `status ${r.status}`);
 
+// ── Stock (bars) ─────────────────────────────────────────────────────────────
+console.log('\n── Stock');
+{
+  await call('POST', '/menu', { venueId, items: [{ name: 'Stock Beer', category: 'Beers', priceRwf: 1500 }] }, ownerTok);
+  const beer = (await call('GET', `/stock/${venueId}`, null, ownerTok)).json?.data?.items?.find((i) => i.name === 'Stock Beer');
+  check('Owner sees every menu item on the Stock page', !!beer && beer.tracked === false);
+  r = await call('PUT', `/stock/items/${beer.id}`, { tracked: true, qty: 5, alertAt: 3 }, ownerTok);
+  check('Owner starts tracking an item with its count', r.status === 200);
+  r = await call('POST', '/tabs/open', { qrCode: codes[2], phone: phone() });
+  const st = r.json?.data?.tab?.id;
+  r = await call('POST', '/orders', { tabId: st, items: [{ menuItemId: beer.id, quantity: 2 }] });
+  check('An order takes bottles off the count', r.status === 201 && (await q1('select stock_qty from menu_items where id=$1', [beer.id])).stock_qty === 3);
+  r = await call('POST', '/orders', { tabId: st, items: [{ menuItemId: beer.id, quantity: 4 }] });
+  check('Ordering more than is left is refused, nothing saved', r.status >= 400 && /Only 3/.test(r.json?.error ?? '') && (await q1('select stock_qty from menu_items where id=$1', [beer.id])).stock_qty === 3, r.json?.error);
+  r = await call('POST', '/orders', { tabId: st, items: [{ menuItemId: beer.id, quantity: 3 }] });
+  const out = await q1('select stock_qty, is_available from menu_items where id=$1', [beer.id]);
+  check('The last bottle sells it out on the menu', r.status === 201 && out.stock_qty === 0 && out.is_available === false);
+  r = await call('POST', `/stock/${venueId}/delivery`, { items: [{ menuItemId: beer.id, qty: 24 }], supplier: 'Bralirwa' }, ownerTok);
+  const back = await q1('select stock_qty, is_available from menu_items where id=$1', [beer.id]);
+  check('A delivery adds bottles and puts it back on the menu', r.status === 200 && back.stock_qty === 24 && back.is_available === true);
+  r = await call('POST', `/stock/${venueId}/count`, { items: [{ menuItemId: beer.id, counted: 21 }] }, ownerTok);
+  check('The closing count shows what went missing', r.status === 200 && r.json?.data?.missing?.[0]?.qty === 3 && r.json?.data?.missingValueRwf === 4500, JSON.stringify(r.json?.data));
+  r = await call('GET', `/stock/items/${beer.id}/history`, null, ownerTok);
+  check('Item history: sales, delivery, count', r.status === 200 && r.json?.data?.week?.sold === 5 && r.json?.data?.week?.delivered === 24 && r.json?.data?.week?.missing === 3, JSON.stringify(r.json?.data?.week));
+  r = await call('GET', `/stock/${venueId}`, null, staffTok);
+  check('Waiters cannot see stock', r.status === 401 || r.status === 403, `status ${r.status}`);
+  {
+    const mgr = await q1(`insert into staff (venue_id,name,phone,role) values ($1,'Stock Manager',$2,'manager') returning id`, [venueId, phone()]);
+    const mgrTok = jwt.sign({ staffId: mgr.id, venueId }, JWT_SECRET, { expiresIn: '1d' });
+    r = await call('GET', `/stock/${venueId}`, null, mgrTok);
+    check('A manager can see stock', r.status === 200, `status ${r.status}`);
+    r = await call('POST', `/stock/${venueId}/kitchen/spend`, { amountRwf: 1000, note: 'Market' }, mgrTok);
+    check('A manager can log food spending', r.status === 200, `status ${r.status}`);
+    if (r.json?.data?.id) await call('DELETE', `/stock/${venueId}/kitchen/spend/${r.json.data.id}`, null, mgrTok);
+  }
+  r = await call('GET', `/stock/${venueId}`, null, rivalTokEarly);
+  check('Another owner cannot see this stock', r.status === 403 || r.status === 404, `status ${r.status}`);
+  // Kitchen, in money: food spending against the food Skuzi sold
+  let k = (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data;
+  check('Kitchen counts food categories, not drinks', k?.categories?.kitchen?.includes('Food') && !k.categories.kitchen.includes('Drinks') && !k.categories.kitchen.includes('Beers'), JSON.stringify(k?.categories));
+  const soldBefore = k?.soldRwf ?? 0;
+  await call('POST', '/orders', { tabId: st, items: [{ menuItemId: item('Brochette').id, quantity: 2 }, { menuItemId: item('Primus').id, quantity: 1 }] });
+  r = await call('POST', `/stock/${venueId}/kitchen/spend`, { amountRwf: 2500, note: 'Butcher' }, ownerTok);
+  const spendId = r.json?.data?.id;
+  k = (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data;
+  check('Food sold counts only food (2 brochettes = 6,000)', k?.soldRwf === soldBefore + 6000, `${soldBefore} → ${k?.soldRwf}`);
+  check('Food spending and profit add up', k?.spentRwf === 2500 && k?.profitRwf === k.soldRwf - 2500, JSON.stringify({ spent: k?.spentRwf, profit: k?.profitRwf }));
+  r = await call('POST', `/stock/${venueId}/kitchen/spend`, { amountRwf: 0 }, ownerTok);
+  check('An empty amount is refused', r.status === 400);
+  r = await call('DELETE', `/stock/${venueId}/kitchen/spend/${spendId}`, null, rivalTokEarly);
+  check('Another owner cannot delete my spending', r.status === 403 || r.status === 404, `status ${r.status}`);
+  r = await call('DELETE', `/stock/${venueId}/kitchen/spend/${spendId}`, null, ownerTok);
+  check('Owner can remove a mistake', r.status === 200 && (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data?.spentRwf === 0);
+}
+
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');
