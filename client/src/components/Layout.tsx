@@ -1,3 +1,4 @@
+import { planAllows, type PlanFeature } from "@tabpro/shared";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
@@ -14,6 +15,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
  Package,
+  Gem,
+  Lock,
 } from "lucide-react";
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
@@ -31,15 +34,17 @@ interface LayoutProps {
   wide?: boolean;
 }
 
-const NAV_ITEMS = [
+type NavItem = { label: string; href: string; icon: typeof LayoutDashboard; feature?: PlanFeature };
+const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Tables", href: "/tables", icon: QrCode },
-  { label: "Bookings", href: "/bookings", icon: CalendarDays },
+  { label: "Bookings", href: "/bookings", icon: CalendarDays, feature: "bookings" as PlanFeature },
   { label: "Menu", href: "/menu", icon: UtensilsCrossed },
-  { label: "Stock", href: "/stock", icon: Package },
-  { label: "Campaigns", href: "/campaigns", icon: Megaphone },
+  { label: "Stock", href: "/stock", icon: Package, feature: "stock" as PlanFeature },
+  { label: "Campaigns", href: "/campaigns", icon: Megaphone, feature: "campaigns" as PlanFeature },
   { label: "Staff", href: "/staff", icon: Users },
-  { label: "History", href: "/history", icon: History },
+  { label: "History", href: "/history", icon: History, feature: "history" as PlanFeature },
+  { label: "Plan", href: "/subscription", icon: Gem },
   // Hidden for launch to keep Skuzi simple to pitch and learn; the pages
   // still exist and can come back as paid extras: /ratings, /busy-hours,
   // /shifts (the staff sticker and venue PIN moved to Staff).
@@ -67,6 +72,10 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   const navItems = NAV_ITEMS;
   const MORE_NAV = navItems.slice(3);
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/");
+  // Features outside the venue's package stay in the menu with a lock (a quiet
+  // upsell) and open the Plan page instead.
+  const locked = (feature?: PlanFeature) => !!feature && !!venue && !planAllows(venue.plan, feature);
+  const linkFor = (href: string, feature?: PlanFeature) => (locked(feature) ? `/subscription?need=${feature}` : href);
 
   // Booking requests waiting for an answer: a badge on "Bookings".
   const [pendingBookings, setPendingBookings] = useState(0);
@@ -159,10 +168,10 @@ export default function Layout({ children, wide = false }: LayoutProps) {
 
         {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {navItems.map(({ label, href, icon: Icon }) => (
+          {navItems.map(({ label, href, icon: Icon, feature }) => (
             <Link
               key={href}
-              to={href}
+              to={linkFor(href, feature)}
               title={collapsed ? label : undefined}
               className={`
                 flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-colors
@@ -179,6 +188,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
                 {collapsed && pendingBookings > 0 && href === "/bookings" && <span className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-[#3B2149]" />}
               </span>
               {!collapsed && <span className="flex-1 whitespace-nowrap">{label}</span>}
+              {!collapsed && locked(feature) && <Lock size={13} className="opacity-50" aria-label="Not in your package" />}
               {!collapsed && badge(href)}
             </Link>
           ))}
@@ -285,10 +295,10 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         h-16 flex items-stretch
       "
       >
-        {PINNED_NAV.map(({ label, href, icon: Icon }) => (
+        {PINNED_NAV.map(({ label, href, icon: Icon, feature }) => (
           <Link
             key={href}
-            to={href}
+            to={linkFor(href, feature)}
             className={`
               relative flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors
               ${
@@ -382,11 +392,11 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              {MORE_NAV.map(({ label, href, icon: Icon }) => {
+              {MORE_NAV.map(({ label, href, icon: Icon, feature }) => {
                 return (
                   <Link
                     key={href}
-                    to={href}
+                    to={linkFor(href, feature)}
                     onClick={() => setMoreOpen(false)}
                     className={`
                       relative flex flex-col items-center justify-center gap-2 rounded-2xl px-3 py-4 text-center transition-colors
@@ -404,6 +414,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                       {label}
                     </span>
+                    {locked(feature) && <Lock size={12} className="absolute right-2.5 top-2.5 text-gray-400" aria-label="Not in your package" />}
                   </Link>
                 );
               })}

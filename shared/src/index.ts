@@ -211,7 +211,8 @@ export type WsEventType =
   | "tab_paid"
   | "disbursement_failed"
   | "booking_update"
-  | "stock_update";
+  | "stock_update"
+  | "payment_claimed";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;
@@ -228,4 +229,30 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+// ─── Packages (2026-10-21) ────────────────────────────────────────────────────
+// Monthly packages replace the 8% fee. Stored in venues.plan with the old enum
+// names: basic = Starter, pro = Pro, elite = Bar+.
+export type PlanId = "basic" | "pro" | "elite";
+export type PlanFeature = "history" | "bookings" | "campaigns" | "momo" | "stock";
+
+export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[] }> = {
+  basic: { name: "Starter", priceRwf: 25000, trialDays: 14, features: [] },
+  pro: { name: "Pro", priceRwf: 45000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo"] },
+  elite: { name: "Bar+", priceRwf: 70000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock"] },
+};
+
+/** The cheapest package that includes a feature. */
+export const PLAN_FOR: Record<PlanFeature, PlanId> = {
+  history: "pro",
+  bookings: "pro",
+  campaigns: "pro",
+  momo: "pro",
+  stock: "elite",
+};
+
+export function planAllows(plan: string | null | undefined, feature: PlanFeature): boolean {
+  const p = PLANS[(plan as PlanId) ?? "basic"] ?? PLANS.basic;
+  return p.features.includes(feature);
 }

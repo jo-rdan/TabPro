@@ -6,47 +6,47 @@
 export const TERMS_DATE = "October 2026";
 
 export const TERMS_SUMMARY: { icon: string; tint: string; title: string; text: string }[] = [
-  { icon: "💰", tint: "#E4EADF", title: "You keep 92%", text: "of bills paid by MoMo through Skuzi, sent to your MoMo in seconds. Skuzi keeps 8%." },
-  { icon: "💵", tint: "#FFEDB8", title: "Cash is free.", text: "No setup fee, no monthly fee, no machine." },
+  { icon: "💯", tint: "#E4EADF", title: "100% of your sales are yours.", text: "Guests pay your own MoMo Pay code or cash. Skuzi takes nothing from your bills." },
+  { icon: "📦", tint: "#FFEDB8", title: "One monthly package.", text: "Starter 25,000 · Pro 45,000 · Bar+ 70,000 RWF. No setup fee, no machine." },
+  { icon: "🎁", tint: "#FCE3D3", title: "Free to start.", text: "2 weeks on Starter, 1 month on Pro and Bar+." },
   { icon: "🧾", tint: "#EFEBF2", title: "Your sales, your receipts.", text: "You issue your own EBM receipts and handle your taxes." },
-  { icon: "📣", tint: "#FCE3D3", title: "Campaigns are free to send.", text: "You pay only when guests come: 15% (not 8%) on their Skuzi bills." },
-  { icon: "👋", tint: "#FEF3EC", title: "Stop anytime,", text: "with nothing to pay or return." },
+  { icon: "👋", tint: "#FEF3EC", title: "Stop anytime,", text: "with nothing to return." },
 ];
 
 // Shown to owners who agreed to an earlier version: what changed in this one.
 export const TERMS_WHATS_NEW: string[] = [
-  "Campaigns: invite guests who said yes to Skuzi invites. Sending is free; on Skuzi bills of guests a campaign brings (within 7 days), Skuzi's fee is 15% instead of 8%. Offers you choose are paid by your venue.",
-  "Bookings: guests can book a table on your Skuzi page. You accept or decline. Free.",
+  "No more 8% or 15%: Skuzi takes nothing from your sales. Guests pay your own MoMo Pay code (or cash), and your waiter taps Paid.",
+  "Skuzi is now a monthly package: Starter 25,000, Pro 45,000 or Bar+ 70,000 RWF, after a free trial (2 weeks on Starter, 1 month on Pro and Bar+).",
 ];
 
 export const TERMS_CLAUSES: { title: string; text: string }[] = [
   {
     title: "What Skuzi provides",
-    text: "Ordering from the table, \"Skuzi!\" waiter calls and alerts for waiters, the owner dashboard, Mobile Money payment of bills, the table stickers, the venue's own Skuzi page where guests see the menu and book a table, and campaigns to invite guests. Setup and staff training are free.",
+    text: "Ordering from the table, \"Skuzi!\" calls and alerts for waiters, the owner dashboard, the table stickers, and, depending on the package, payment of bills to the venue's own MoMo Pay code, history, the venue's Skuzi page and bookings, campaigns, and bar stock and kitchen spending. Setup and staff training are free.",
   },
   {
-    title: "How payouts work",
-    text: "Payments are processed by Skuzi's licensed payment partner. The venue's share is sent automatically to its payout number as soon as each payment is confirmed. If a payout is delayed, Skuzi retries automatically and tells the owner. The venue keeps its payout number up to date in the app.",
+    title: "Packages and payment",
+    text: "The venue chooses a monthly package: Starter (25,000 RWF), Pro (45,000 RWF) or Bar+ (70,000 RWF). The first 2 weeks (Starter) or month (Pro, Bar+) are free. After that the package is paid monthly in advance to VNT250 Ltd by Mobile Money; the app shows when payment is due. Prices include no setup fee and no equipment.",
+  },
+  {
+    title: "Guests' payments",
+    text: "Guests pay the venue directly: to the venue's own MoMo Pay code shown on their bill, or in cash. Skuzi never holds the venue's money and takes nothing from its sales. The venue's staff confirm each payment in the app once they see it.",
   },
   {
     title: "What the venue does",
-    text: "Keeps its menu and prices correct in Skuzi, serves the orders guests place, keeps the stickers on its tables, and makes sure its staff use Skuzi during opening hours.",
+    text: "Keeps its menu, prices and MoMo Pay code correct in Skuzi, serves the orders guests place, keeps the stickers on its tables, and makes sure its staff use Skuzi during opening hours.",
   },
   {
-    title: "Campaigns",
-    text: "Sending a campaign is free. Campaigns reach only guests who said yes to Skuzi invites, at most 2 campaigns a week per venue. When a guest who received a campaign opens a bill at the venue within 7 days and pays through Skuzi, Skuzi's fee on that bill is 15% instead of 8%. Any offer the venue chooses (for example a free drink or 10% off) is the venue's own promotion and is paid by the venue; a 10% discount is taken off the guest's Skuzi payment automatically.",
-  },
-  {
-    title: "Bookings",
-    text: "Guests can ask to book a table on the venue's Skuzi page. The venue accepts or declines each request in the app; a request not answered by its time expires and the guest is told. Bookings are free.",
+    title: "Campaigns and bookings",
+    text: "Campaigns reach only guests who said yes to Skuzi invites, at most 2 campaigns a week per venue. Any offer the venue chooses is its own promotion. Guests can ask to book a table on the venue's Skuzi page; the venue accepts or declines each request in the app.",
   },
   {
     title: "Your sales, your receipts",
-    text: "The venue is responsible for its food, drinks and service, for its own taxes, and for issuing official receipts (EBM) for its sales. Skuzi's fee is for its service only.",
+    text: "The venue is responsible for its food, drinks and service, for its own taxes, and for issuing official receipts (EBM) for its sales.",
   },
   {
     title: "Refunds",
-    text: "Questions about an order are handled by the venue with its guest. If the venue agrees to refund a guest, the venue pays them back directly (cash or MoMo). Skuzi provides the payment record.",
+    text: "Questions about an order are handled by the venue with its guest. Because guests pay the venue directly, any refund is paid by the venue.",
   },
   {
     title: "Guests' data",
@@ -54,11 +54,11 @@ export const TERMS_CLAUSES: { title: string; text: string }[] = [
   },
   {
     title: "If Skuzi is unavailable",
-    text: "The venue keeps serving as usual and takes cash. Skuzi is not responsible for indirect losses, and its total responsibility is limited to the fees it received from the venue in the last three months.",
+    text: "The venue keeps serving as usual and takes payment directly. Skuzi is not responsible for indirect losses, and its total responsibility is limited to the package fees the venue paid in the last three months.",
   },
   {
     title: "Changes and ending",
-    text: "Either side can end this agreement at any time, with nothing to pay or return. Payments already made are settled as usual. Skuzi gives 30 days' notice before changing its fee, and asks the venue to agree again in the app.",
+    text: "Either side can end this agreement at any time; a month already paid is not refunded. Skuzi gives 30 days' notice before changing package prices, and asks the venue to agree again in the app.",
   },
   {
     title: "Law",

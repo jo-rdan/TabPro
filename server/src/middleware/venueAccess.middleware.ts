@@ -6,6 +6,7 @@ import {
   venues, staff, menuItems, shifts, orders, tabs, tables, campaigns, momoPayments,
 } from '../models/schema';
 import { HttpError } from './error.middleware';
+import { PLANS, PLAN_FOR, planAllows, type PlanFeature } from '@tabpro/shared';
 import { JwtPayload, StaffJwtPayload } from './auth.middleware';
 
 // Works out which venue a request is about, from a param, the body, or by
@@ -125,5 +126,21 @@ export function venueManager(resolve: VenueResolver) {
       }
       next();
     });
+  };
+}
+
+/**
+ * The venue's package must include this feature (Starter / Pro / Bar+). Put it
+ * after the access check. Guests are never blocked mid-meal by this: it guards
+ * owner and manager screens only.
+ */
+export function planFeature(feature: PlanFeature, resolve: VenueResolver) {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    const venueId = await resolveVenueId(resolve, req);
+    const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+    if (!venue || !planAllows(venue.plan, feature)) {
+      throw new HttpError(403, `This is part of ${PLANS[PLAN_FOR[feature]].name}. Switch package in Plan to use it.`);
+    }
+    next();
   };
 }

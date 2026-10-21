@@ -54,7 +54,7 @@ export async function createVenue(ownerId: string, name: string, location?: stri
 
   const [venue] = await db
     .insert(venues)
-    .values({ ownerId, name, location, momoPhone, trialEndsAt, slug: await uniqueSlug(name) })
+    .values({ ownerId, name, location, momoPhone, trialEndsAt, plan: 'pro', slug: await uniqueSlug(name) })
     .returning();
 
   await db.insert(subscriptions).values({

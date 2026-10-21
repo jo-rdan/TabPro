@@ -1,8 +1,8 @@
-import { Router, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { ApiResponse } from "@tabpro/shared";
 import { requireAuth } from "../middleware/auth.middleware";
-import { ownsVenue, venueFromParam } from "../middleware/venueAccess.middleware";
+import { ownsVenue, venueFromParam, planFeature } from '../middleware/venueAccess.middleware';
 import { acceptBooking, declineBooking, listBookings, pendingCount, setBookingTable, tableReservations } from "../services/booking.service";
 import { kigaliDateKey } from "../lib/hours";
 
@@ -10,7 +10,13 @@ import { kigaliDateKey } from "../lib/hours";
 const router = Router();
 const ok = (res: Response, data: unknown) => res.json({ success: true, data } as ApiResponse);
 const bad = (res: Response, error: string) => res.status(400).json({ success: false, error } as ApiResponse);
-const own = ownsVenue(venueFromParam());
+// The owner of the venue, on a package that includes bookings.
+const ownsVenueOnly = ownsVenue(venueFromParam());
+const bookingsPlan = planFeature('bookings', venueFromParam());
+const own = async (req: Request, res: Response, next: NextFunction) => {
+  await ownsVenueOnly(req, res, () => {});
+  await bookingsPlan(req, res, next);
+};
 
 router.use(requireAuth);
 // A booking id that isn't an id is simply not found (never a database error).

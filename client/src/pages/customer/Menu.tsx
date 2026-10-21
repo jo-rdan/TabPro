@@ -229,6 +229,10 @@ function WaveIcon() {
 }
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
+// MTN MoMo dial string for paying a merchant. Until the exact MoMo Pay path is
+// confirmed, it opens the MoMo menu and the code is shown on screen.
+const MOMO_DIAL = (_code: string, _amount: number) => "*182#";
+
 function StatusBadge({ status }: { status: PlacedOrder["status"] }) {
   const m = {
     pending: [
@@ -351,6 +355,10 @@ export default function CustomerMenu() {
   // False when the venue has no payout number or payments aren't configured —
   // the customer is asked to pay the waiter instead.
   const [acceptsMobileMoney, setAcceptsMobileMoney] = useState(true);
+  // The venue's own MoMo Pay code: guests pay it directly, the waiter confirms.
+  const [momoPayCode, setMomoPayCode] = useState<string | null>(null);
+  const [claimState, setClaimState] = useState<"idle" | "sending" | "sent">("idle");
+  const [codeCopied, setCodeCopied] = useState(false);
   // Demo venue: everything works, but payments are simulated.
   const [isDemo, setIsDemo] = useState(false);
   const [payReferenceId, setPayReferenceId] = useState("");
@@ -373,6 +381,7 @@ export default function CustomerMenu() {
     setVenueId(s.venueId);
     setVenueName(s.venueName);
     setAcceptsMobileMoney(s.acceptsMobileMoney !== false);
+    setMomoPayCode(s.momoPayCode ?? null);
     setIsDemo(!!s.isDemo);
     setTableLabel(s.tableLabel);
     setWaiterName(s.waiterName ?? null);
@@ -474,6 +483,7 @@ export default function CustomerMenu() {
       setVenueName(venue.name);
       if (venue.logoUrl) setVenueLogoUrl(venue.logoUrl);
       setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
+      setMomoPayCode(venue.momoPayCode ?? null);
       setIsDemo(!!venue.isDemo);
       setTableLabel(table.label);
       setMenuGrouped(mg);
@@ -513,6 +523,7 @@ export default function CustomerMenu() {
       setVenueId(venue.id);
       setVenueName(venue.name);
       setAcceptsMobileMoney(venue.acceptsMobileMoney !== false);
+      setMomoPayCode(venue.momoPayCode ?? null);
       setIsDemo(!!venue.isDemo);
       setTableLabel(table.label);
       setMenuGrouped(mg);
@@ -526,6 +537,7 @@ export default function CustomerMenu() {
           venueId: venue.id,
           venueName: venue.name,
           acceptsMobileMoney: venue.acceptsMobileMoney !== false,
+          momoPayCode: venue.momoPayCode ?? null,
           isDemo: !!venue.isDemo,
           tableLabel: table.label,
           waiterName: waiter?.name ?? null,
@@ -849,7 +861,7 @@ export default function CustomerMenu() {
               <h1 className="font-black text-gray-900 dark:text-white text-lg">
                 {venueName}
               </h1>
-              <p className="text-xs text-gray-400 mt-0.5">{tableLabel}{isDemo && <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">Demo · no real money</span>}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{tableLabel}{isDemo && <span className="ml-2 inline-flex items-center rounded-full bg-brand-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700 dark:text-[#F59A63]">Demo · no real money</span>}</p>
             </div>
           </div>
         </div>
@@ -1084,32 +1096,63 @@ export default function CustomerMenu() {
             </div>
           )}
           {/* Mobile Money payment flow (pawaPay) */}
-          {payStep === "idle" && acceptsMobileMoney && (
-            <button
-              onClick={() => {
-                setPayPhone(phone);
-                setPayStep("entering_phone");
-              }}
-              className="w-full flex items-center justify-center gap-2 bg-action hover:bg-action-hover text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-action/30"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          {/* Pay the venue's own MoMo Pay code: 100% to the venue, Skuzi never
+              holds the money. The waiter checks their MoMo and taps Paid. */}
+          {payStep === "idle" && acceptsMobileMoney && momoPayCode && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F0763A]">Pay with MoMo</p>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                Send <b className="text-gray-900 dark:text-white">{fmt(grandTotal)}</b> to <b className="text-gray-900 dark:text-white">{venueName}</b>. The money goes straight to them.
+              </p>
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 py-3 dark:bg-gray-800">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">MoMo Pay code</p>
+                  <p className="font-display text-3xl font-black tracking-[0.12em] text-gray-900 dark:text-white tabular-nums">{momoPayCode}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText(momoPayCode); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 1500); } catch { /* the code is on screen */ }
+                  }}
+                  className="rounded-full bg-white px-4 py-2 text-sm font-bold text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white"
+                >
+                  {codeCopied ? "Copied ✓" : "Copy"}
+                </button>
+              </div>
+              <a
+                href={`tel:${encodeURIComponent(MOMO_DIAL(momoPayCode, grandTotal))}`}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FFCB05] py-4 text-base font-extrabold text-[#1B1B1B]"
               >
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                <line x1="12" y1="18" x2="12.01" y2="18" />
-              </svg>
-              Pay with Mobile Money
-            </button>
+                📱 Open MoMo
+              </a>
+              <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">In MoMo: Pay → MoMo Pay code {momoPayCode} → {fmt(grandTotal)} → your PIN.</p>
+              {claimState === "sent" ? (
+                <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-center dark:bg-green-500/10">
+                  <p className="text-sm font-extrabold text-green-800 dark:text-green-300">Your waiter is checking it 👍</p>
+                  <p className="text-xs text-green-700/80 dark:text-green-300/80">This page updates as soon as they confirm.</p>
+                </div>
+              ) : (
+                <button
+                  onClick={async () => {
+                    if (!tabId) return;
+                    setClaimState("sending");
+                    try {
+                      await apiFetch(`/tabs/${tabId}/paid-by-momo`, { method: "POST" });
+                      setClaimState("sent");
+                    } catch {
+                      setClaimState("idle");
+                    }
+                  }}
+                  disabled={claimState === "sending"}
+                  className="mt-4 w-full rounded-2xl bg-action py-4 text-base font-extrabold text-action-ink disabled:opacity-60 hover:bg-action-hover"
+                >
+                  {claimState === "sending" ? "..." : "I've paid"}
+                </button>
+              )}
+            </div>
           )}
 
-          {payStep === "idle" && !acceptsMobileMoney && (
+          {payStep === "idle" && !(acceptsMobileMoney && momoPayCode) && (
             <div className="bg-gray-50 dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 text-center">
               <p className="text-sm font-bold text-gray-800 dark:text-white">Please pay your waiter</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

@@ -3,6 +3,7 @@ import {
   handleOpenTab,
   handlePreviewTable,
   handleNudgeTable,
+  handleClaimPaid,
   handleStaffOpenTab,
   handleGetTab,
   handleNudgeWaiter,
@@ -29,6 +30,7 @@ router.post('/staff-open', venueMember(venueOfTable((req) => req.body?.tableId))
 router.get('/:tabId', handleGetTab);
 router.get('/:tabId/bill', handleGetTabBill);
 router.post('/:tabId/nudge', handleNudgeWaiter);
+router.post('/:tabId/paid-by-momo', handleClaimPaid);
 router.post('/:tabId/request-bill', handleRequestBill);
 router.post('/:tabId/close', venueMember(venueOfTab()), handleCloseTab);
 

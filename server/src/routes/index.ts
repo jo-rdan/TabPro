@@ -19,6 +19,7 @@ import guestRoutes from "./guest.routes";
 import bookingRoutes from "./booking.routes";
 import creatorRoutes from "./creator.routes";
 import stockRoutes from "./stock.routes";
+import planRoutes from "./plan.routes";
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.use("/guests", guestRoutes);
 router.use("/venue-bookings", bookingRoutes);
 router.use("/creators", creatorRoutes);
 router.use("/stock", stockRoutes);
+router.use("/plans", planRoutes);
 
 export default router;

@@ -2,6 +2,7 @@ import { db } from '../lib/db';
 import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff, customers } from '../models/schema';
 import { eq, and, like, inArray } from 'drizzle-orm';
 import { getTableByQrCode } from './qr.service';
+import { planAllows } from '@tabpro/shared';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
@@ -19,7 +20,10 @@ function publicVenue(venue: typeof venues.$inferSelect) {
     name: venue.name,
     logoUrl: venue.logoUrl,
     isDemo: venue.isDemo,
-    acceptsMobileMoney: venue.isDemo || (isPawapayConfigured() && !!venue.momoPhone),
+    // Guests pay the venue's own MoMo Pay code (Pro and Bar+); Skuzi never holds
+    // the money. The demo venue shows a pretend code.
+    momoPayCode: planAllows(venue.plan, 'momo') ? venue.momoPayCode ?? (venue.isDemo ? '000000' : null) : null,
+    acceptsMobileMoney: planAllows(venue.plan, 'momo') && (venue.isDemo || !!venue.momoPayCode),
   };
 }
 
@@ -405,7 +409,32 @@ export async function getTabBill(tabId: string) {
 }
 
 // paidByMomo: closed because the guest paid in the app (that alert is sent by the payment code).
-export async function closeTab(tabId: string, { paidByMomo = false }: { paidByMomo?: boolean } = {}) {
+// The guest says they paid the venue's MoMo Pay code. Skuzi can't see that
+// payment (it goes straight to the venue), so the waiter checks their MoMo and
+// taps "Paid": we tell them now, with the amount.
+export async function claimPaidByMomo(tabId: string) {
+  const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: { with: { venue: true } } } });
+  if (!tab) throw new Error('Tab not found');
+  if (tab.status === 'closed') return { alreadyClosed: true };
+  await db.update(tabs).set({ paidClaimAt: new Date() }).where(eq(tabs.id, tabId));
+  const bill = await getTabBill(tabId).catch(() => null);
+  const total = bill?.grandTotal ?? 0;
+  broadcastToVenue(tab.table.venueId, {
+    type: 'payment_claimed',
+    payload: { tabId, tableId: tab.tableId, tableLabel: tab.table.label, total },
+    venueId: tab.table.venueId,
+    tableId: tab.tableId,
+    timestamp: new Date().toISOString(),
+  });
+  const msg = {
+    title: `💰 ${tab.table.label} paid by MoMo`,
+    body: `${total.toLocaleString('en-US')} RWF to your MoMo Pay. Check your MoMo, then tap Paid.`,
+  };
+  await notifyTable(tab.table.venueId, tab.tableId, tab.staffId, msg, msg);
+  return { alreadyClosed: false };
+}
+
+export async function closeTab(tabId: string, { paidByMomo = false, paidWith }: { paidByMomo?: boolean; paidWith?: "cash" | "momo" } = {}) {
   const tab = await db.query.tabs.findFirst({
     where: eq(tabs.id, tabId),
     with: { table: { with: { venue: true } } },
@@ -416,7 +445,7 @@ export async function closeTab(tabId: string, { paidByMomo = false }: { paidByMo
 
   const [updated] = await db
     .update(tabs)
-    .set({ status: 'closed', closedAt: new Date() })
+    .set({ status: 'closed', closedAt: new Date(), ...(paidWith ? { paidWith } : {}) })
     .where(eq(tabs.id, tabId))
     .returning();
 
@@ -439,7 +468,7 @@ export async function closeTab(tabId: string, { paidByMomo = false }: { paidByMo
     await sendPushToOwner(
       tab.table.venueId,
       `🧾 ${tab.table.label} closed${total ? ` · ${total.toLocaleString('en-US')} RWF` : ''}`,
-      'Closed by staff (paid in cash or outside Skuzi)',
+      paidWith === 'momo' ? 'Paid by MoMo, straight to your MoMo Pay' : paidWith === 'cash' ? 'Paid in cash' : 'Closed by staff (paid in cash or outside Skuzi)',
     );
   }
 
