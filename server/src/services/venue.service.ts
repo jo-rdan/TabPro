@@ -48,13 +48,13 @@ export async function updateVenueSettings(
   return venue;
 }
 
-export async function createVenue(ownerId: string, name: string, location?: string, momoPhone?: string) {
+export async function createVenue(ownerId: string, name: string, location?: string, momoPhone?: string, momoPayCode?: string) {
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + 30);
 
   const [venue] = await db
     .insert(venues)
-    .values({ ownerId, name, location, momoPhone, trialEndsAt, plan: 'pro', slug: await uniqueSlug(name) })
+    .values({ ownerId, name, location, momoPhone, momoPayCode, trialEndsAt, plan: 'pro', slug: await uniqueSlug(name) })
     .returning();
 
   await db.insert(subscriptions).values({

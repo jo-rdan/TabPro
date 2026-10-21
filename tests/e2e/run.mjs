@@ -75,8 +75,8 @@ async function newOwner(name) {
 // ── 1. Setup ─────────────────────────────────────────────────────────────────
 console.log('\n── Setup');
 const ownerTok = await newOwner('Owner');
-let r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', acceptTerms: true }, ownerTok);
-check('Venue without payout number is refused', r.status === 400, r.json?.error);
+let r = await call('POST', '/venues', { name: 'No Code Bar', location: 'Kigali', acceptTerms: true }, await newOwner('No code owner'));
+check('A venue can start without a MoMo Pay code (added later in Plan)', r.status === 201 && r.json?.data?.momoPayCode == null, r.json?.error);
 r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: false }, ownerTok);
 check('Venue with "I agree" unticked is refused', r.status === 400 && /terms/i.test(r.json?.error ?? ''), r.json?.error);
 { // The old TabPro site doesn't send acceptTerms: the venue is made, no agreement recorded
@@ -87,6 +87,11 @@ check('Venue with "I agree" unticked is refused', r.status === 400 && /terms/i.t
 r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: true }, ownerTok);
 check('Owner creates venue', r.status === 201, `payout number stored as ${r.json?.data?.momoPhone}`);
 const venueId = r.json?.data?.id;
+{
+  const ownTok = await newOwner('Code Owner');
+  const cv = await call('POST', '/venues', { name: 'Code Bar', momoPayCode: '55 1234', acceptTerms: true }, ownTok);
+  check('Setup takes the MoMo Pay code (no payout number needed)', cv.status === 201 && cv.json?.data?.momoPayCode === '551234', JSON.stringify({ s: cv.status, c: cv.json?.data?.momoPayCode, e: cv.json?.error }));
+}
 check('New venues start on Pro with a free month', r.json?.data?.plan === 'pro' && new Date(r.json?.data?.trialEndsAt) > new Date(Date.now() + 28 * 864e5), `${r.json?.data?.plan} until ${r.json?.data?.trialEndsAt}`);
 await pg.query("update venues set plan='elite' where id=$1", [venueId]); // Bar+: everything below is available
 check('Agreeing to the terms is recorded (version, time, name)', r.json?.data?.termsVersion === 3 && !!r.json?.data?.termsAcceptedAt && r.json?.data?.termsAcceptedBy === 'Owner', `v${r.json?.data?.termsVersion} by ${r.json?.data?.termsAcceptedBy}`);
