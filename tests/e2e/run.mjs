@@ -889,6 +889,88 @@ console.log('\n── Stock');
   check('Owner can remove a mistake', r.status === 200 && (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data?.spentRwf === 0);
 }
 
+// ── Kitchen screen (Bar+) ────────────────────────────────────────────────────
+console.log('\n── Kitchen screen');
+{
+  r = await call('POST', '/staff', { venueId, name: 'Chef Paul', phone: phone(), role: 'kitchen' }, ownerTok);
+  check('Owner adds a kitchen staff member', r.status === 201 && r.json?.data?.staff?.role === 'kitchen', r.json?.error);
+  const chefId = r.json?.data?.staff?.id;
+  const chefTok = jwt.sign({ staffId: chefId, venueId }, JWT_SECRET, { expiresIn: '1d' });
+  check('The kitchen gets no tables', (await q1('select count(*)::int n from table_assignments where staff_id=$1', [chefId])).n === 0);
+  { // A waiter moved to the kitchen loses their tables
+    r = await call('POST', '/staff', { venueId, name: 'Bea', phone: phone() }, ownerTok);
+    const beaId = r.json?.data?.staff?.id;
+    const had = (await q1('select count(*)::int n from table_assignments where staff_id=$1', [beaId])).n;
+    r = await call('PATCH', `/staff/${beaId}`, { role: 'kitchen' }, ownerTok);
+    const left = (await q1('select count(*)::int n from table_assignments where staff_id=$1', [beaId])).n;
+    check('A waiter moved to the kitchen hands their tables back', r.status === 200 && had > 0 && left === 0, `had ${had}, left ${left}`);
+    await pg.query('update staff set is_active=false where id=$1', [beaId]);
+  }
+  await call('POST', '/menu', { venueId, items: [{ name: 'Chips', category: 'Food', priceRwf: 2000 }] }, ownerTok);
+  const chips = (await call('GET', `/menu/${venueId}`)).json?.data?.items?.find((m) => m.name === 'Chips');
+  await call('PUT', `/stock/items/${chips.id}`, { tracked: true, qty: 10 }, ownerTok);
+  const kt = await q1(`insert into tables (venue_id,label) values ($1,'Kitchen Test') returning id`, [venueId]);
+  const kCode = rnd() + rnd();
+  await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [kCode, kt.id]);
+  r = await call('POST', '/tabs/open', { qrCode: kCode, phone: phone() });
+  const kTab = r.json?.data?.tab?.id;
+  const guestWs = socket(`venueId=${venueId}&tabId=${kTab}`);
+  await sleep(300);
+  r = await call('POST', '/orders', { tabId: kTab, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
+  const drinksOnly = r.json?.data?.order?.id;
+  r = await call('POST', '/orders', { tabId: kTab, items: [{ menuItemId: item('Primus').id, quantity: 2 }, { menuItemId: item('Brochette').id, quantity: 2 }, { menuItemId: chips.id, quantity: 1 }] });
+  const foodOrder = r.json?.data?.order?.id;
+  check('An order with food goes to the kitchen; drinks only do not', (await q1('select kitchen_status k from orders where id=$1', [foodOrder])).k === 'new' && (await q1('select kitchen_status k from orders where id=$1', [drinksOnly])).k === null);
+  r = await call('GET', `/kitchen/${venueId}/tickets`, null, chefTok);
+  const ticket = (r.json?.data ?? []).find((t) => t.orderId === foodOrder);
+  check('The kitchen sees food only (no drinks), with the table', r.status === 200 && ticket?.tableLabel === 'Kitchen Test' && ticket.items.map((i) => i.name).sort().join() === 'Brochette,Chips' && !(r.json?.data ?? []).some((t) => t.orderId === drinksOnly), JSON.stringify(ticket));
+  r = await call('GET', `/kitchen/${venueId}/tickets`, null, staffTok);
+  check('Waiters cannot open the kitchen screen', r.status === 403, `status ${r.status}`);
+  r = await call('GET', `/kitchen/${venueId}/tickets`, null, rivalTokEarly);
+  check('Another owner cannot see my kitchen', r.status === 403 || r.status === 404, `status ${r.status}`);
+  r = await call('POST', `/kitchen/orders/${foodOrder}/start`, null, staffTok);
+  check('Waiters cannot press the kitchen buttons', r.status === 403, `status ${r.status}`);
+  let g0 = guestWs.events.length;
+  r = await call('POST', `/kitchen/orders/${foodOrder}/start`, null, chefTok);
+  await sleep(400);
+  check('Start: the guest sees "Preparing"', r.status === 200 && (await q1('select status from orders where id=$1', [foodOrder])).status === 'preparing' && guestWs.events.slice(g0).some((e) => e.type === 'order_status_update' && e.payload?.status === 'preparing'));
+  // The kitchen has no chips
+  const billBefore = (await call('GET', `/tabs/${kTab}/bill`)).json?.data?.grandTotal;
+  const chipsLine = ticket.items.find((i) => i.name === 'Chips');
+  g0 = guestWs.events.length; let s0 = staffWs.events.length;
+  r = await call('POST', `/kitchen/items/${chipsLine.id}/unavailable`, { soldOut: true }, chefTok);
+  await sleep(400);
+  const billAfter = (await call('GET', `/tabs/${kTab}/bill`)).json?.data?.grandTotal;
+  const chipsNow = await q1('select is_available, stock_qty from menu_items where id=$1', [chips.id]);
+  check('Not available: off the bill', r.status === 200 && billBefore - billAfter === 2000, `${billBefore} → ${billAfter}`);
+  check('…the guest and the waiter are told', guestWs.events.slice(g0).some((e) => e.type === 'item_unavailable' && e.payload?.name === 'Chips') && staffWs.events.slice(s0).some((e) => e.type === 'item_unavailable'));
+  check('…sold out on the menu, and the counted stock comes back', chipsNow.is_available === false && chipsNow.stock_qty === 10, JSON.stringify(chipsNow));
+  g0 = guestWs.events.length; s0 = staffWs.events.length;
+  r = await call('POST', `/kitchen/orders/${foodOrder}/ready`, null, chefTok);
+  await sleep(400);
+  const ready = staffWs.events.slice(s0).find((e) => e.type === 'food_ready');
+  check('Ready: the waiter is told which table and what to pick up', r.status === 200 && ready?.payload?.tableLabel === 'Kitchen Test' && /2 Brochette/.test(ready?.payload?.food ?? ''), JSON.stringify(ready?.payload));
+  check('Ready: the guest is told their food is on its way', guestWs.events.slice(g0).some((e) => e.type === 'food_ready' && e.payload?.tabId === kTab));
+  r = await call('GET', `/kitchen/${venueId}/tickets`, null, chefTok);
+  check('The ticket moves to "Ready"', (r.json?.data ?? []).find((t) => t.orderId === foodOrder)?.status === 'ready');
+  { // Managers can use the kitchen screen too
+    const m = await q1(`insert into staff (venue_id,name,phone,role) values ($1,'Kitchen Manager',$2,'manager') returning id`, [venueId, phone()]);
+    r = await call('GET', `/kitchen/${venueId}/tickets`, null, jwt.sign({ staffId: m.id, venueId }, JWT_SECRET, { expiresIn: '1d' }));
+    check('A manager can open the kitchen screen', r.status === 200, `status ${r.status}`);
+    await pg.query('update staff set is_active=false where id=$1', [m.id]);
+  }
+  // Pro has no kitchen screen
+  await pg.query("update venues set plan='pro' where id=$1", [venueId]);
+  r = await call('GET', `/kitchen/${venueId}/tickets`, null, chefTok);
+  check('Pro: the kitchen screen is locked (Bar+)', r.status === 403 && /Bar\+/.test(r.json?.error ?? ''), r.json?.error);
+  r = await call('POST', '/orders', { tabId: kTab, items: [{ menuItemId: item('Brochette').id, quantity: 1 }] });
+  check('Pro: food orders go to the waiter as before', (await q1('select kitchen_status k from orders where id=$1', [r.json?.data?.order?.id])).k === null);
+  await pg.query("update venues set plan='elite' where id=$1", [venueId]);
+  await pg.query("update menu_items set is_available=true where id=$1", [chips.id]);
+  await call('POST', `/tabs/${kTab}/close`, { paidWith: 'cash' }, ownerTok);
+  guestWs.ws.close();
+}
+
 // ── Packages and paying the venue's own MoMo Pay code ───────────────────────
 console.log('\n── Packages & direct MoMo');
 {

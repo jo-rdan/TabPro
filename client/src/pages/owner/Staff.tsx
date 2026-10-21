@@ -26,7 +26,7 @@ interface StaffRow {
   id: string;
   name: string;
   phone: string;
-  role: "waiter" | "manager";
+  role: "waiter" | "manager" | "kitchen";
   hasSmartphone: boolean;
   isActive: boolean;
   inviteStatus: "none" | "invited" | "active" | "no_phone";
@@ -59,7 +59,7 @@ export default function Staff() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [newRole, setNewRole] = useState<"waiter" | "manager">("waiter");
+  const [newRole, setNewRole] = useState<"waiter" | "manager" | "kitchen">("waiter");
   const [newHasPhone, setNewHasPhone] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -172,7 +172,7 @@ export default function Staff() {
     }
   };
 
-  const handleUpdate = async (member: StaffRow, changes: { role?: "waiter" | "manager"; hasSmartphone?: boolean }) => {
+  const handleUpdate = async (member: StaffRow, changes: { role?: "waiter" | "manager" | "kitchen"; hasSmartphone?: boolean }) => {
     if (!venue) return;
     setUpdating(member.id);
     try {
@@ -183,6 +183,8 @@ export default function Staff() {
       setToast(
         changes.role === "manager"
           ? `${member.name} is now a manager: they see every table and cover waiters without a smartphone.`
+          : changes.role === "kitchen"
+            ? `${member.name} is now on the kitchen screen: they see food orders and tap Ready. No tables.`
           : changes.role === "waiter"
             ? `${member.name} is a waiter again.`
             : changes.hasSmartphone === false
@@ -349,7 +351,7 @@ export default function Staff() {
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-4">
             <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
-              {(["waiter", "manager"] as const).map((r) => (
+              {(["waiter", "manager", "kitchen"] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
@@ -367,7 +369,12 @@ export default function Staff() {
               Has a smartphone
             </label>
           </div>
-          {!newHasPhone && (
+          {newRole === "kitchen" && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
+              🔥 The chef: sees food orders on the kitchen screen and taps Ready. No tables. Part of Bar+.
+            </p>
+          )}
+          {!newHasPhone && newRole !== "kitchen" && (
             <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
               No invite needed. They still get tables and points; alerts for their tables go to your manager, or to you.
             </p>
@@ -444,6 +451,11 @@ export default function Staff() {
                         Manager
                       </span>
                     )}
+                    {member.role === "kitchen" && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                        🔥 Kitchen
+                      </span>
+                    )}
                     {!member.hasSmartphone && (
                       <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                         📵 No smartphone
@@ -453,13 +465,18 @@ export default function Staff() {
                   <p className="text-xs text-gray-400 mt-0.5">{member.phone}</p>
                   {member.isActive && (
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs">
-                      <button
-                        onClick={() => handleUpdate(member, { role: member.role === "manager" ? "waiter" : "manager" })}
-                        disabled={updating === member.id}
-                        className="font-semibold text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
-                      >
-                        {member.role === "manager" ? "Make waiter" : "Make manager"}
-                      </button>
+                      {(["waiter", "manager", "kitchen"] as const).filter((r) => r !== member.role).map((r, i) => (
+                        <span key={r} className="contents">
+                          {i > 0 && <span className="text-gray-300 dark:text-gray-700">·</span>}
+                          <button
+                            onClick={() => handleUpdate(member, { role: r })}
+                            disabled={updating === member.id}
+                            className="font-semibold text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
+                          >
+                            {r === "waiter" ? "Make waiter" : r === "manager" ? "Make manager" : "Move to kitchen"}
+                          </button>
+                        </span>
+                      ))}
                       <span className="text-gray-300 dark:text-gray-700">·</span>
                       <button
                         onClick={() => handleUpdate(member, { hasSmartphone: !member.hasSmartphone })}
@@ -545,8 +562,8 @@ export default function Staff() {
               </div>
             )}
 
-            {/* Table assignment panel */}
-            {member.isActive && (
+            {/* Table assignment panel (the kitchen gets no tables) */}
+            {member.isActive && member.role !== "kitchen" && (
               <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <button
                   onClick={() =>

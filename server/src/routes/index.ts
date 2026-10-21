@@ -20,6 +20,7 @@ import bookingRoutes from "./booking.routes";
 import creatorRoutes from "./creator.routes";
 import stockRoutes from "./stock.routes";
 import planRoutes from "./plan.routes";
+import kitchenRoutes from "./kitchen.routes";
 
 const router = Router();
 
@@ -44,5 +45,6 @@ router.use("/venue-bookings", bookingRoutes);
 router.use("/creators", creatorRoutes);
 router.use("/stock", stockRoutes);
 router.use("/plans", planRoutes);
+router.use("/kitchen", kitchenRoutes);
 
 export default router;

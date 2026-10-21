@@ -1,6 +1,6 @@
 import { db } from "../lib/db";
 import { tables, tableAssignments, staff, qrStickers } from "../models/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { createUnclaimedSticker, claimSticker } from "./qr.service";
 
 // Owner: replace all table assignments for a staff member (permanent, no date)
@@ -23,7 +23,7 @@ export async function assignTablesToStaff(staffId: string, tableIds: string[]) {
 // Owner: get all assignments for a venue
 export async function getVenueAssignments(venueId: string) {
   const allStaff = await db.query.staff.findMany({
-    where: and(eq(staff.venueId, venueId), eq(staff.isActive, true)),
+    where: and(eq(staff.venueId, venueId), eq(staff.isActive, true), ne(staff.role, 'kitchen')),
     with: {
       tableAssignments: { with: { table: true } },
     },

@@ -11,7 +11,7 @@ const DRINK = /drink|boisson|beer|bi[eè]re|wine|\bvin\b|cocktail|spirit|liqu|so
 
 export type KitchenRange = 'tonight' | 'week';
 
-async function categoriesOf(venueId: string) {
+export async function categoriesOf(venueId: string) {
   const [venue, rows] = await Promise.all([
     db.query.venues.findFirst({ where: eq(venues.id, venueId) }),
     db.selectDistinct({ category: menuItems.category }).from(menuItems).where(eq(menuItems.venueId, venueId)),

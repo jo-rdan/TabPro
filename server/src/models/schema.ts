@@ -28,7 +28,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "delivered",
 ]);
 export const orderSourceEnum = pgEnum("order_source", ["customer", "staff"]);
-export const staffRoleEnum = pgEnum("staff_role", ["waiter", "manager"]);
+export const staffRoleEnum = pgEnum("staff_role", ["waiter", "manager", "kitchen"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "trialing",
   "active",
@@ -223,6 +223,10 @@ export const orders = pgTable("orders", {
   placedAt: timestamp("placed_at").defaultNow().notNull(),
   // When staff were told this order has been waiting too long (once per order).
   waitAlertAt: timestamp("wait_alert_at"),
+  // The kitchen's side of an order that has food: "new" → "preparing" →
+  // "ready" (the waiter and guest are told). Null when there's no food in it.
+  kitchenStatus: text("kitchen_status"),
+  kitchenReadyAt: timestamp("kitchen_ready_at"),
 });
 
 export const orderItems = pgTable("order_items", {

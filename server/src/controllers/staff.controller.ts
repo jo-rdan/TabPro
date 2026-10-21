@@ -10,7 +10,7 @@ const createStaffSchema = z.object({
   venueId: z.string().uuid(),
   name: z.string().min(1).max(100),
   phone: z.string().min(9).max(15),
-  role: z.enum(['waiter', 'manager']).optional(),
+  role: z.enum(['waiter', 'manager', 'kitchen']).optional(),
   hasSmartphone: z.boolean().optional(),
 });
 
@@ -173,7 +173,7 @@ export async function handleDeclineJoin(req: Request, res: Response) {
 }
 
 const updateStaffSchema = z
-  .object({ role: z.enum(['waiter', 'manager']).optional(), hasSmartphone: z.boolean().optional() })
+  .object({ role: z.enum(['waiter', 'manager', 'kitchen']).optional(), hasSmartphone: z.boolean().optional() })
   .refine((v) => v.role !== undefined || v.hasSmartphone !== undefined, 'Nothing to change');
 
 export async function handleUpdateStaff(req: Request, res: Response) {

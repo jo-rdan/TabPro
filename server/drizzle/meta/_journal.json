@@ -211,6 +211,13 @@
       "when": 1792548466936,
       "tag": "0029_skuzi_momo_direct",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792582512352,
+      "tag": "0030_skuzi_kitchen_screen",
+      "breakpoints": true
     }
   ]
 }

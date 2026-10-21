@@ -21,11 +21,11 @@ const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-
 const INCLUDED: Record<PlanId, string[]> = {
   basic: ["QR menu and ordering at every table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Unlimited tables and staff"],
   pro: ["Everything in Starter", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", "Bookings and your page on Explore", "Campaigns that bring guests back"],
-  elite: ["Everything in Pro", "Bar stock: every bottle counted", "Closing count shows what went missing", "Kitchen: food spending vs food sold"],
+  elite: ["Everything in Pro", "Bar stock: every bottle counted", "Closing count shows what went missing", "Kitchen screen: the chef sees food orders, taps Ready", "Kitchen: food spending vs food sold"],
 };
 
 const FEATURE_NAME: Record<PlanFeature, string> = {
-  history: "History", bookings: "Bookings", campaigns: "Campaigns", momo: "MoMo payments", stock: "Stock",
+  history: "History", bookings: "Bookings", campaigns: "Campaigns", momo: "MoMo payments", stock: "Stock", kitchen: "The kitchen screen",
 };
 
 function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: Status; onSaved: (s: Status) => void }) {
