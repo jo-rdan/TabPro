@@ -1,3 +1,4 @@
+import { StockPanel } from "../owner/Stock";
 import { ThemeCycleButton } from "../../components/ThemeSwitch";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
@@ -17,6 +18,7 @@ import {
   TrendingUp,
   MapPin,
   LogOut,
+  Package,
 } from "lucide-react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { usePushNotifications, useKeepPushSubscribed } from "../../hooks/usePushNotifications";
@@ -209,7 +211,7 @@ export default function WaiterOrders() {
   const [manualSuccess, setManualSuccess] = useState(false);
 
   // ── Tab bar + points ──────────────────────────────────────────────────────
-  type ActiveTab = "orders" | "tables" | "points";
+  type ActiveTab = "orders" | "tables" | "points" | "stock";
   const [activeTab, setActiveTab] = useState<ActiveTab>("orders");
   const staffToken =
     searchParams.get("token") ||
@@ -807,7 +809,8 @@ export default function WaiterOrders() {
               { key: "orders", label: "Orders", icon: Receipt },
               { key: "tables", label: isManager ? "Floor" : "My Tables", icon: MapPin },
               { key: "points", label: "My Points", icon: Trophy },
-            ] as const
+              ...(isManager ? [{ key: "stock", label: "Stock", icon: Package }] : []),
+            ] as { key: ActiveTab; label: string; icon: typeof Receipt }[]
           ).map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -1224,6 +1227,12 @@ export default function WaiterOrders() {
           )}
         </div>
       )}
+      {/* ── Stock (managers only) ──────────────────────────────────────────── */}
+      {activeTab === "stock" && isManager && staffToken && venueId && (
+        <div className="px-4 pt-4 pb-28 md:pb-6 min-h-screen">
+          <StockPanel venueId={venueId} token={staffToken} />
+        </div>
+      )}
       {/* ── My Points tab ─────────────────────────────────────────────────── */}
       {activeTab === "points" && (
         <div className="px-4 pt-4 pb-28 md:pb-6 min-h-screen">
@@ -1351,13 +1360,14 @@ export default function WaiterOrders() {
       )}
       {/* ── Bottom tab bar (mobile only — desktop uses the sidebar) ────────── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-2 bg-gray-50 dark:bg-gray-950">
-        <div className="grid grid-cols-3 gap-1.5 bg-white dark:bg-gray-800 rounded-[22px] p-1.5 ring-1 ring-gray-200/70 dark:ring-0">
+        <div className={`grid ${isManager ? "grid-cols-4" : "grid-cols-3"} gap-1.5 bg-white dark:bg-gray-800 rounded-[22px] p-1.5 ring-1 ring-gray-200/70 dark:ring-0`}>
           {(
             [
               { key: "orders", label: "Orders", icon: Receipt },
               { key: "tables", label: isManager ? "Floor" : "My tables", icon: MapPin },
               { key: "points", label: "Points", icon: Trophy },
-            ] as const
+              ...(isManager ? [{ key: "stock", label: "Stock", icon: Package }] : []),
+            ] as { key: ActiveTab; label: string; icon: typeof Receipt }[]
           ).map(({ key, label, icon: Icon }) => (
             <button
               key={key}

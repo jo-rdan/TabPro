@@ -853,6 +853,15 @@ console.log('\n── Stock');
   check('Item history: sales, delivery, count', r.status === 200 && r.json?.data?.week?.sold === 5 && r.json?.data?.week?.delivered === 24 && r.json?.data?.week?.missing === 3, JSON.stringify(r.json?.data?.week));
   r = await call('GET', `/stock/${venueId}`, null, staffTok);
   check('Waiters cannot see stock', r.status === 401 || r.status === 403, `status ${r.status}`);
+  {
+    const mgr = await q1(`insert into staff (venue_id,name,phone,role) values ($1,'Stock Manager',$2,'manager') returning id`, [venueId, phone()]);
+    const mgrTok = jwt.sign({ staffId: mgr.id, venueId }, JWT_SECRET, { expiresIn: '1d' });
+    r = await call('GET', `/stock/${venueId}`, null, mgrTok);
+    check('A manager can see stock', r.status === 200, `status ${r.status}`);
+    r = await call('POST', `/stock/${venueId}/kitchen/spend`, { amountRwf: 1000, note: 'Market' }, mgrTok);
+    check('A manager can log food spending', r.status === 200, `status ${r.status}`);
+    if (r.json?.data?.id) await call('DELETE', `/stock/${venueId}/kitchen/spend/${r.json.data.id}`, null, mgrTok);
+  }
   r = await call('GET', `/stock/${venueId}`, null, rivalTokEarly);
   check('Another owner cannot see this stock', r.status === 403 || r.status === 404, `status ${r.status}`);
   // Kitchen, in money: food spending against the food Skuzi sold

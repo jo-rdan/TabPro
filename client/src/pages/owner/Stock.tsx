@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Package, Plus, Minus, X, ClipboardCheck, Truck, Settings2, Trash2 } from 'lucide-react';
 import type { WsEvent } from '@tabpro/shared';
 import Layout from '../../components/Layout';
@@ -16,6 +16,21 @@ type Stock = { items: Item[]; summary: { soldTonight: number; low: number; out: 
 type Movement = { id: string; kind: 'sale' | 'delivery' | 'count'; qtyChange: number; qtyAfter: number; expectedQty: number | null; note: string | null; createdAt: string; tableLabel: string | null };
 type History = { movements: Movement[]; week: { sold: number; delivered: number; missing: number } };
 type CountResult = { missing: { name: string; qty: number; valueRwf: number }[]; extra: { name: string; qty: number }[]; missingValueRwf: number };
+
+
+// Owners use their own sign-in; a manager in the waiter app passes their staff
+// token, so the same screens work for both.
+const TokenCtx = createContext<string | undefined>(undefined);
+function useReq() {
+  const token = useContext(TokenCtx);
+  const h = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  return {
+    get: (url: string, params?: Record<string, unknown>) => api.get(url, { ...h, params }),
+    post: (url: string, body?: unknown) => api.post(url, body, h),
+    put: (url: string, body?: unknown) => api.put(url, body, h),
+    del: (url: string) => api.delete(url, h),
+  };
+}
 
 const rwf = (n: number) => `${n.toLocaleString('en-US')} RWF`;
 const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Kigali' });
@@ -69,9 +84,20 @@ function Stepper({ value, onChange, min = 0 }: { value: number; onChange: (n: nu
 }
 
 export default function Stock() {
-  const { venues, fetchMe, token } = useAuthStore();
+  const { venues, fetchMe } = useAuthStore();
   useEffect(() => { if (!venues[0]) fetchMe(); }, []);
   const venue = venues[0];
+  return <Layout>{venue && <StockPanel venueId={venue.id} venueName={venue.name} />}</Layout>;
+}
+
+/** The whole Stock screen. `token`: a manager's staff token (waiter app). */
+export function StockPanel(props: { venueId: string; venueName?: string; token?: string }) {
+  return <TokenCtx.Provider value={props.token}><StockScreen {...props} /></TokenCtx.Provider>;
+}
+
+function StockScreen({ venueId, venueName, token: staffToken }: { venueId: string; venueName?: string; token?: string }) {
+  const req = useReq();
+  const ownerToken = useAuthStore((st) => st.token);
   const [stock, setStock] = useState<Stock | null>(null);
   const [sheet, setSheet] = useState<null | 'setup' | 'delivery' | 'count'>(null);
   const [itemId, setItemId] = useState<string | null>(null);
@@ -79,14 +105,13 @@ export default function Stock() {
   const [tab, setTab] = useState<'bar' | 'kitchen'>('bar');
 
   const load = useCallback(() => {
-    if (!venue) return;
-    api.get(`/stock/${venue.id}`).then((r) => setStock(r.data.data)).catch(() => {});
-  }, [venue?.id]);
+    req.get(`/stock/${venueId}`).then((r) => setStock(r.data.data)).catch(() => {});
+  }, [venueId]);
   useEffect(load, [load]);
   useWebSocket({
-    venueId: venue?.id ?? '',
-    token: token ?? undefined,
-    enabled: !!venue,
+    venueId,
+    token: staffToken ?? ownerToken ?? undefined,
+    enabled: !!venueId,
     onEvent: (e: WsEvent) => { if (e.type === 'stock_update' || e.type === 'new_order') load(); },
   });
 
@@ -94,12 +119,12 @@ export default function Stock() {
   const item = stock?.items.find((i) => i.id === itemId) ?? null;
 
   return (
-    <Layout>
+    <>
       <div className="mx-auto max-w-3xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white">Stock</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Tonight{venue ? ` · ${venue.name}` : ''}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Tonight{venueName ? ` · ${venueName}` : ''}</p>
           </div>
           {tab === 'bar' && tracked.length > 0 && (
             <button onClick={() => setSheet('setup')} className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-bold text-gray-700 dark:border-gray-700 dark:text-gray-200">
@@ -116,8 +141,8 @@ export default function Stock() {
           ))}
         </div>
 
-        {tab === 'kitchen' && venue ? (
-          <KitchenPanel venueId={venue.id} onToast={setToast} />
+        {tab === 'kitchen' ? (
+          <KitchenPanel venueId={venueId} onToast={setToast} />
         ) : stock === null ? (
           <div className="mt-6 h-40 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
         ) : tracked.length === 0 ? (
@@ -161,16 +186,17 @@ export default function Stock() {
       </div>
 
       {sheet === 'setup' && stock && <SetupSheet stock={stock} onClose={() => setSheet(null)} onSaved={() => { load(); setToast('Stock items saved'); }} />}
-      {sheet === 'delivery' && venue && <DeliverySheet venueId={venue.id} items={tracked} onClose={() => setSheet(null)} onSaved={() => { load(); setSheet(null); setToast('Delivery added'); }} />}
-      {sheet === 'count' && venue && <CountSheet venueId={venue.id} items={tracked} onClose={() => { setSheet(null); load(); }} />}
+      {sheet === 'delivery' && <DeliverySheet venueId={venueId} items={tracked} onClose={() => setSheet(null)} onSaved={() => { load(); setSheet(null); setToast('Delivery added'); }} />}
+      {sheet === 'count' && <CountSheet venueId={venueId} items={tracked} onClose={() => { setSheet(null); load(); }} />}
       {item && <ItemSheet item={item} onClose={() => setItemId(null)} onChanged={load} />}
       {toast && <Toast message={toast} onDismiss={() => setToast('')} />}
-    </Layout>
+    </>
   );
 }
 
 // ─── Choose items to track ────────────────────────────────────────────────────
 function SetupSheet({ stock, onClose, onSaved }: { stock: Stock; onClose: () => void; onSaved: () => void }) {
+  const req = useReq();
   const [draft, setDraft] = useState(() => Object.fromEntries(stock.items.map((i) => [i.id, { tracked: i.tracked, qty: i.qty, alertAt: i.alertAt ?? 12 }])));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -180,7 +206,7 @@ function SetupSheet({ stock, onClose, onSaved }: { stock: Stock; onClose: () => 
       for (const i of stock.items) {
         const d = draft[i.id];
         if (d.tracked !== i.tracked || (d.tracked && (d.qty !== i.qty || d.alertAt !== i.alertAt))) {
-          await api.put(`/stock/items/${i.id}`, d.tracked ? { tracked: true, qty: d.qty, alertAt: d.alertAt } : { tracked: false });
+          await req.put(`/stock/items/${i.id}`, d.tracked ? { tracked: true, qty: d.qty, alertAt: d.alertAt } : { tracked: false });
         }
       }
       onSaved(); onClose();
@@ -217,6 +243,7 @@ function SetupSheet({ stock, onClose, onSaved }: { stock: Stock; onClose: () => 
 
 // ─── A delivery arrived ───────────────────────────────────────────────────────
 function DeliverySheet({ venueId, items, onClose, onSaved }: { venueId: string; items: Item[]; onClose: () => void; onSaved: () => void }) {
+  const req = useReq();
   const [qty, setQty] = useState<Record<string, number>>({});
   const [supplier, setSupplier] = useState('');
   const [saving, setSaving] = useState(false);
@@ -224,7 +251,7 @@ function DeliverySheet({ venueId, items, onClose, onSaved }: { venueId: string; 
   const lines = Object.entries(qty).filter(([, n]) => n > 0).map(([menuItemId, n]) => ({ menuItemId, qty: n }));
   const save = async () => {
     setSaving(true); setError('');
-    try { await api.post(`/stock/${venueId}/delivery`, { items: lines, supplier }); onSaved(); }
+    try { await req.post(`/stock/${venueId}/delivery`, { items: lines, supplier }); onSaved(); }
     catch (e: any) { setError(e?.response?.data?.error ?? 'Could not save. Try again.'); } finally { setSaving(false); }
   };
   return (
@@ -254,6 +281,7 @@ function DeliverySheet({ venueId, items, onClose, onSaved }: { venueId: string; 
 
 // ─── Closing count ────────────────────────────────────────────────────────────
 function CountSheet({ venueId, items, onClose }: { venueId: string; items: Item[]; onClose: () => void }) {
+  const req = useReq();
   const [counted, setCounted] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -261,7 +289,7 @@ function CountSheet({ venueId, items, onClose }: { venueId: string; items: Item[
   const lines = Object.entries(counted).filter(([, v]) => v !== '').map(([menuItemId, v]) => ({ menuItemId, counted: Number(v) }));
   const save = async () => {
     setSaving(true); setError('');
-    try { const r = await api.post(`/stock/${venueId}/count`, { items: lines }); setResult(r.data.data); }
+    try { const r = await req.post(`/stock/${venueId}/count`, { items: lines }); setResult(r.data.data); }
     catch (e: any) { setError(e?.response?.data?.error ?? 'Could not save. Try again.'); } finally { setSaving(false); }
   };
   if (result) {
@@ -299,8 +327,9 @@ function CountSheet({ venueId, items, onClose }: { venueId: string; items: Item[
 
 // ─── One item's story ─────────────────────────────────────────────────────────
 function ItemSheet({ item, onClose, onChanged }: { item: Item; onClose: () => void; onChanged: () => void }) {
+  const req = useReq();
   const [history, setHistory] = useState<History | null>(null);
-  useEffect(() => { api.get(`/stock/items/${item.id}/history`).then((r) => setHistory(r.data.data)).catch(() => {}); }, [item.id, item.qty]);
+  useEffect(() => { req.get(`/stock/items/${item.id}/history`).then((r) => setHistory(r.data.data)).catch(() => {}); }, [item.id, item.qty]);
   const line = (m: Movement) => {
     if (m.kind === 'sale') return { text: m.tableLabel ? `${m.tableLabel} · sold ${-m.qtyChange}` : `Sold ${-m.qtyChange}`, value: `${m.qtyChange}`, cls: 'text-gray-900 dark:text-white' };
     if (m.kind === 'delivery') return { text: `Delivery${m.note ? ` · ${m.note}` : ''}`, value: `+${m.qtyChange}`, cls: 'text-green-700 dark:text-green-400' };
@@ -309,7 +338,7 @@ function ItemSheet({ item, onClose, onChanged }: { item: Item; onClose: () => vo
     if (m.qtyChange > 0) return { text: `Count · expected ${m.expectedQty}, counted ${m.qtyAfter}`, value: `+${m.qtyChange}`, cls: 'text-gray-500' };
     return { text: `Count · matched (${m.qtyAfter})`, value: '✓', cls: 'text-green-700 dark:text-green-400' };
   };
-  const stop = async () => { await api.put(`/stock/items/${item.id}`, { tracked: false }).catch(() => {}); onChanged(); onClose(); };
+  const stop = async () => { await req.put(`/stock/items/${item.id}`, { tracked: false }).catch(() => {}); onChanged(); onClose(); };
   return (
     <Sheet title={item.name} onClose={onClose}>
       <div className="flex items-center gap-3 rounded-2xl border border-gray-200 p-4 dark:border-gray-800">
@@ -352,13 +381,14 @@ type Kitchen = {
 const QUICK = ['Market', 'Butcher', 'Vegetables', 'Gas', 'Other'];
 
 function KitchenPanel({ venueId, onToast }: { venueId: string; onToast: (m: string) => void }) {
+  const req = useReq();
   const [range, setRange] = useState<'tonight' | 'week'>('week');
   const [k, setK] = useState<Kitchen | null>(null);
   const [adding, setAdding] = useState(false);
   const [editCats, setEditCats] = useState(false);
-  const load = useCallback(() => { api.get(`/stock/${venueId}/kitchen`, { params: { range } }).then((r) => setK(r.data.data)).catch(() => {}); }, [venueId, range]);
+  const load = useCallback(() => { req.get(`/stock/${venueId}/kitchen`, { range }).then((r) => setK(r.data.data)).catch(() => {}); }, [venueId, range]);
   useEffect(load, [load]);
-  const remove = async (id: string) => { await api.delete(`/stock/${venueId}/kitchen/spend/${id}`).catch(() => {}); load(); };
+  const remove = async (id: string) => { await req.del(`/stock/${venueId}/kitchen/spend/${id}`).catch(() => {}); load(); };
   return (
     <div className="mt-4">
       <div className="flex gap-1.5">
@@ -404,13 +434,14 @@ function KitchenPanel({ venueId, onToast }: { venueId: string; onToast: (m: stri
 }
 
 function SpendSheet({ venueId, onClose, onSaved }: { venueId: string; onClose: () => void; onSaved: () => void }) {
+  const req = useReq();
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('Market');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const save = async () => {
     setSaving(true); setError('');
-    try { await api.post(`/stock/${venueId}/kitchen/spend`, { amountRwf: Number(amount), note }); onSaved(); }
+    try { await req.post(`/stock/${venueId}/kitchen/spend`, { amountRwf: Number(amount), note }); onSaved(); }
     catch (e: any) { setError(e?.response?.data?.error ?? 'Could not save. Try again.'); } finally { setSaving(false); }
   };
   return (
@@ -429,8 +460,9 @@ function SpendSheet({ venueId, onClose, onSaved }: { venueId: string; onClose: (
 }
 
 function CategorySheet({ venueId, k, onClose, onSaved }: { venueId: string; k: Kitchen; onClose: () => void; onSaved: () => void }) {
+  const req = useReq();
   const [picked, setPicked] = useState<string[]>(k.categories.kitchen);
-  const save = async () => { await api.put(`/stock/${venueId}/kitchen/categories`, { categories: picked }).catch(() => {}); onSaved(); };
+  const save = async () => { await req.put(`/stock/${venueId}/kitchen/categories`, { categories: picked }).catch(() => {}); onSaved(); };
   return (
     <Sheet title="What counts as food" onClose={onClose}>
       <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Tick the menu categories made in the kitchen. Drinks stay with the bar.</p>
