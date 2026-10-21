@@ -68,7 +68,7 @@ export async function createVenueForOwner(
 
   const [venue] = await db
     .insert(venues)
-    .values({ ownerId, name, location, trialEndsAt })
+    .values({ ownerId, name, location, trialEndsAt, plan: 'pro' })
     .returning();
 
   // Create a trialing subscription

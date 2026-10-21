@@ -91,6 +91,12 @@ export const venues = pgTable("venues", {
   // Menu categories that count as food for Kitchen (null: everything that
   // isn't a drink category).
   kitchenCategories: text("kitchen_categories").array(),
+  // Guests pay this MoMo Pay code directly: 100% to the venue, Skuzi never
+  // holds the money (2026-10-21, replaces the 8% in-app payments).
+  momoPayCode: text("momo_pay_code"),
+  // Paid up to this date (set by the founder when the venue pays its package;
+  // see `plan` + `trialEndsAt` above: basic = Starter, pro = Pro, elite = Bar+).
+  paidUntil: timestamp("paid_until"),
 });
 
 // Every time an owner agrees to the venue terms: the permanent record.
@@ -197,6 +203,11 @@ export const tabs = pgTable("tabs", {
   lastSeenAt: timestamp("last_seen_at").defaultNow(),
   // The guest came because of this campaign (opened within 7 days of it).
   campaignId: uuid("campaign_id"),
+  // How a closed bill was paid when staff closed it: "momo" (straight to the
+  // venue's MoMo Pay code) or "cash". Null for older bills.
+  paidWith: text("paid_with"),
+  // The guest tapped "I've paid" with MoMo; the waiter still confirms.
+  paidClaimAt: timestamp("paid_claim_at"),
 });
 
 // ─── Orders ───────────────────────────────────────────────────────────────────

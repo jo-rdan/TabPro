@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { openTab, openTabByTableId, previewTable, getTab, nudgeWaiter,
-  nudgeTable, requestBill, getTabBill, closeTab } from '../services/tab.service';
+  nudgeTable, claimPaidByMomo, requestBill, getTabBill, closeTab } from '../services/tab.service';
 import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
 
@@ -44,6 +44,16 @@ export async function handleGetTab(req: Request, res: Response) {
   res.json(body);
 }
 
+export async function handleClaimPaid(req: Request, res: Response) {
+  try {
+    const body: ApiResponse = { success: true, data: await claimPaidByMomo(req.params.tabId) };
+    res.json(body);
+  } catch (err: any) {
+    const body: ApiResponse = { success: false, error: err.message };
+    res.status(400).json(body);
+  }
+}
+
 export async function handleNudgeTable(req: Request, res: Response) {
   try {
     const result = await nudgeTable(req.params.qrCode);
@@ -75,7 +85,8 @@ export async function handleGetTabBill(req: Request, res: Response) {
 
 export async function handleCloseTab(req: Request, res: Response) {
   try {
-    const result = await closeTab(req.params.tabId);
+    const paidWith = req.body?.paidWith === 'momo' || req.body?.paidWith === 'cash' ? req.body.paidWith : undefined;
+    const result = await closeTab(req.params.tabId, { paidWith });
     const body: ApiResponse = { success: true, data: result };
     res.json(body);
   } catch (err: any) {

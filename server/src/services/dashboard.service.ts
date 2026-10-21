@@ -111,7 +111,11 @@ export async function getActivityLog(venueId: string, limit = 100, night?: strin
             paidAt: p.resolvedAt ?? p.createdAt,
           };
         }
-        return tab.status === 'closed' ? { method: 'other' as const } : null;
+        if (tab.status === 'closed' && tab.paidWith === 'momo') {
+          const total = tab.orders.flatMap((o) => o.items).reduce((n, i) => n + i.unitPriceRwf * i.quantity, 0);
+          return { method: 'momo_direct' as const, amountRwf: total, paidAt: tab.closedAt };
+        }
+        return tab.status === 'closed' ? { method: (tab.paidWith === 'cash' ? 'cash' : 'other') as 'cash' | 'other' } : null;
       })(),
       tabId: tab.id,
       tableLabel: tab.table.label,

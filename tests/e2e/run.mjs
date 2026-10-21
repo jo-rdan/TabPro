@@ -87,9 +87,11 @@ check('Venue with "I agree" unticked is refused', r.status === 400 && /terms/i.t
 r = await call('POST', '/venues', { name: 'Test Bar', location: 'Kigali', momoPhone: '0788 000 000', acceptTerms: true }, ownerTok);
 check('Owner creates venue', r.status === 201, `payout number stored as ${r.json?.data?.momoPhone}`);
 const venueId = r.json?.data?.id;
-check('Agreeing to the terms is recorded (version, time, name)', r.json?.data?.termsVersion === 2 && !!r.json?.data?.termsAcceptedAt && r.json?.data?.termsAcceptedBy === 'Owner', `v${r.json?.data?.termsVersion} by ${r.json?.data?.termsAcceptedBy}`);
+check('New venues start on Pro with a free month', r.json?.data?.plan === 'pro' && new Date(r.json?.data?.trialEndsAt) > new Date(Date.now() + 28 * 864e5), `${r.json?.data?.plan} until ${r.json?.data?.trialEndsAt}`);
+await pg.query("update venues set plan='elite' where id=$1", [venueId]); // Bar+: everything below is available
+check('Agreeing to the terms is recorded (version, time, name)', r.json?.data?.termsVersion === 3 && !!r.json?.data?.termsAcceptedAt && r.json?.data?.termsAcceptedBy === 'Owner', `v${r.json?.data?.termsVersion} by ${r.json?.data?.termsAcceptedBy}`);
 r = await call('GET', '/auth/me', null, ownerTok);
-check('App knows which terms version is current', r.json?.data?.currentTermsVersion === 2 && r.json?.data?.name === 'Owner', `v${r.json?.data?.currentTermsVersion}`);
+check('App knows which terms version is current', r.json?.data?.currentTermsVersion === 3 && r.json?.data?.name === 'Owner', `v${r.json?.data?.currentTermsVersion}`);
 
 const codes = [rnd() + rnd(), rnd() + rnd(), rnd() + rnd()];
 for (const [i, c] of codes.entries()) {
@@ -152,7 +154,7 @@ r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788111222', na
 const tabId = r.json?.data?.tab?.id;
 check('Customer scans QR → tab opens with waiter', r.status === 201 && !!r.json?.data?.tab?.staffId, `status ${r.status}`);
 const vkeys = Object.keys(r.json?.data?.venue ?? {}).sort().join(',');
-check('Customers only see public venue info', vkeys === 'acceptsMobileMoney,id,isDemo,logoUrl,name', vkeys);
+check('Customers only see public venue info', vkeys === 'acceptsMobileMoney,id,isDemo,logoUrl,momoPayCode,name', vkeys);
 const bobWs = socket(`venueId=${venueId}&tabId=${tabId}`);
 const anonWs = socket(`venueId=${venueId}`);
 await sleep(600);
@@ -211,7 +213,7 @@ check('Leaderboard works', r.status === 200 && r.json?.data?.[0]?.name === 'Alic
 console.log('\n── Mobile Money (fake pawaPay v2)');
 r = await call('POST', '/tabs/open', { qrCode: codes[1], phone: '0788555666' });
 const t2 = r.json?.data?.tab?.id;
-check('Customer is told Mobile Money is available', r.json?.data?.venue?.acceptsMobileMoney === true);
+check('No MoMo Pay code yet → guests are asked to pay the waiter', r.json?.data?.venue?.acceptsMobileMoney === false);
 await call('POST', '/orders', { tabId: t2, items: [{ menuItemId: item('Primus').id, quantity: 4 }] }); // 6,000
 await call('POST', `/tabs/${t2}/request-bill`);
 r = await call('POST', `/tabpayment/${t2}/pay`, { phone: '0711111111' });
@@ -305,7 +307,7 @@ check('Every request matched the pawaPay v2 format', pawa.state.schemaErrors.len
 // ── Demo venue: payments are simulated, no money moves ───────────────────────
 console.log('\n── Demo venue');
 const owner1 = await q1(`select owner_id from venues where id=$1`, [venueId]);
-const demo = await q1(`insert into venues (owner_id,name,trial_ends_at,is_demo) values ($1,'Demo Lounge',now()+interval '30 days',true) returning id`, [owner1.owner_id]);
+const demo = await q1(`insert into venues (owner_id,name,trial_ends_at,is_demo,plan) values ($1,'Demo Lounge',now()+interval '30 days',true,'elite') returning id`, [owner1.owner_id]);
 const demoTable = await q1(`insert into tables (venue_id,label) values ($1,'Table 1') returning id`, [demo.id]);
 const demoCode = rnd() + rnd();
 await pg.query(`insert into qr_stickers (code,status,table_id,claimed_at) values ($1,'claimed',$2,now())`, [demoCode, demoTable.id]);
@@ -824,8 +826,8 @@ check('Demo form blocks spam bursts', r.status === 429, `status ${r.status}`);
 // Owners who joined before agree once in the app; old versions are refused.
 r = await call('POST', `/venues/${venueId}/terms`, { version: 0 }, ownerTok);
 check('Agreeing to an old version of the terms is refused', r.status === 400, `status ${r.status}`);
-r = await call('POST', `/venues/${venueId}/terms`, { version: 2 }, ownerTok);
-check('Owner can agree to the current terms in the app', r.status === 200 && r.json?.data?.termsVersion === 2, `status ${r.status}`);
+r = await call('POST', `/venues/${venueId}/terms`, { version: 3 }, ownerTok);
+check('Owner can agree to the current terms in the app', r.status === 200 && r.json?.data?.termsVersion === 3, `status ${r.status}`);
 
 // ── Stock (bars) ─────────────────────────────────────────────────────────────
 console.log('\n── Stock');
@@ -882,6 +884,51 @@ console.log('\n── Stock');
   check('Owner can remove a mistake', r.status === 200 && (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data?.spentRwf === 0);
 }
 
+// ── Packages and paying the venue's own MoMo Pay code ───────────────────────
+console.log('\n── Packages & direct MoMo');
+{
+  // The owner sets the MoMo Pay code; guests see it on the venue
+  r = await call('PATCH', `/plans/${venueId}/momo-code`, { code: 'abc' }, ownerTok);
+  check('A MoMo Pay code must be digits', r.status === 400);
+  r = await call('PATCH', `/plans/${venueId}/momo-code`, { code: '482910' }, ownerTok);
+  check('Owner saves the MoMo Pay code', r.status === 200 && r.json?.data?.momoPayCode === '482910');
+  r = await call('GET', `/tabs/preview/${codes[1]}`);
+  check('Guests see the code and can pay by MoMo', r.json?.data?.venue?.momoPayCode === '482910' && r.json?.data?.venue?.acceptsMobileMoney === true, JSON.stringify(r.json?.data?.venue));
+  // A guest pays the code directly and says so; the waiter confirms
+  r = await call('POST', '/tabs/open', { qrCode: codes[1], phone: phone() });
+  const mt = r.json?.data?.tab?.id;
+  await call('POST', '/orders', { tabId: mt, items: [{ menuItemId: item('Brochette').id, quantity: 1 }] });
+  const before = staffWs.events.length;
+  r = await call('POST', `/tabs/${mt}/paid-by-momo`);
+  await sleep(500);
+  check('"I\'ve paid" alerts the waiter with the amount', r.status === 200 && staffWs.events.slice(before).some((e) => e.type === 'payment_claimed' && e.payload?.tabId === mt && e.payload?.total > 0));
+  r = await call('POST', `/tabs/${mt}/close`, { paidWith: 'momo' }, staffTok);
+  const closed = await q1('select status, paid_with from tabs where id=$1', [mt]);
+  check('Waiter taps Paid ✓ MoMo: bill closed as MoMo', r.status === 200 && closed.status === 'closed' && closed.paid_with === 'momo', JSON.stringify(closed));
+  r = await call('GET', `/dashboard/activity/${venueId}`, null, ownerTok);
+  check('History shows it as MoMo straight to the venue', (r.json?.data ?? []).some((t) => t.tabId === mt && t.payment?.method === 'momo_direct' && t.payment?.amountRwf >= 3000), JSON.stringify((r.json?.data ?? []).find((t) => t.tabId === mt)?.payment));
+  // Packages: what Starter can't do, switching in the trial, the founder's page
+  await pg.query("update venues set plan='basic' where id=$1", [venueId]);
+  r = await call('GET', `/stock/${venueId}`, null, ownerTok);
+  check('Starter: stock is locked (Bar+)', r.status === 403 && /Bar\+/.test(r.json?.error ?? ''), r.json?.error);
+  r = await call('GET', `/dashboard/activity/${venueId}`, null, ownerTok);
+  check('Starter: history is locked (Pro)', r.status === 403);
+  r = await call('GET', `/tabs/preview/${codes[1]}`);
+  check('Starter: guests pay the waiter, no MoMo code shown', r.json?.data?.venue?.acceptsMobileMoney === false && r.json?.data?.venue?.momoPayCode === null);
+  r = await call('PATCH', `/plans/${venueId}`, { plan: 'elite' }, ownerTok);
+  check('In the free trial the owner can switch to Bar+', r.status === 200 && r.json?.data?.plan === 'elite' && r.json?.data?.state === 'trial', JSON.stringify(r.json?.data));
+  r = await call('GET', `/stock/${venueId}`, null, ownerTok);
+  check('…and stock opens', r.status === 200);
+  r = await call('GET', '/plans/admin/all', null, ownerTok);
+  check('Only the founder sees every venue\'s plan', r.status === 403);
+  await pg.query("update venues set trial_ends_at = now() - interval '1 day' where id=$1", [venueId]);
+  r = await call('PATCH', `/plans/${venueId}`, { plan: 'pro' }, ownerTok);
+  check('After the trial, switching goes through Skuzi', r.status === 400 && /WhatsApp/.test(r.json?.error ?? ''));
+  r = await call('GET', `/plans/${venueId}`, null, ownerTok);
+  check('After the trial without payment: "due", but nothing is switched off', r.json?.data?.state === 'due' && (await call('GET', `/stock/${venueId}`, null, ownerTok)).status === 200);
+  await pg.query("update venues set trial_ends_at = now() + interval '30 days', plan='elite' where id=$1", [venueId]);
+}
+
 // ── 5. Security ──────────────────────────────────────────────────────────────
 console.log('\n── Security');
 const rivalTok = await newOwner('Rival');
@@ -889,7 +936,7 @@ for (const [name, path] of [['revenue', `/dashboard/stats/${venueId}`], ['staff 
   r = await call('GET', path, null, rivalTok);
   check(`Another owner CANNOT read my ${name}`, r.status === 403, `status ${r.status}`);
 }
-r = await call('POST', `/venues/${venueId}/terms`, { version: 2 }, rivalTok);
+r = await call('POST', `/venues/${venueId}/terms`, { version: 3 }, rivalTok);
 check('Another owner CANNOT agree to terms for my venue', r.status === 403, `status ${r.status}`);
 r = await call('POST', '/menu', { venueId, items: [{ name: 'Free beer', category: 'Drinks', priceRwf: 1 }] }, rivalTok);
 check('Another owner CANNOT edit my menu', r.status === 403);

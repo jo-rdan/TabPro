@@ -63,6 +63,9 @@ interface BillRequest {
   tabId: string;
   tableLabel: string;
   timestamp: string;
+  // The guest says they paid the venue's MoMo Pay code: check MoMo, tap Paid.
+  paidMomo?: boolean;
+  total?: number;
 }
 
 interface TableOption {
@@ -383,6 +386,13 @@ export default function WaiterOrders() {
         );
       }
 
+      if (event.type === "payment_claimed") {
+        const p = event.payload as any;
+        setBillRequests((prev) => [
+          { tabId: p.tabId, tableLabel: p.tableLabel, timestamp: new Date().toISOString(), paidMomo: true, total: p.total },
+          ...prev.filter((b) => b.tabId !== p.tabId),
+        ]);
+      }
       if (event.type === "new_nudge") {
         const p = event.payload as any;
         const id = `${p.tabId}-${Date.now()}`;
@@ -474,12 +484,13 @@ export default function WaiterOrders() {
 
   // ── Close tab ─────────────────────────────────────────────────────────────
 
-  const handleCloseTab = async (tabId: string) => {
+  const handleCloseTab = async (tabId: string, paidWith?: "cash" | "momo") => {
     setClosingTabId(tabId);
     try {
       const res = await apiFetch(`/tabs/${tabId}/close`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${staffToken}` },
+        headers: { Authorization: `Bearer ${staffToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ paidWith }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
@@ -993,19 +1004,33 @@ export default function WaiterOrders() {
                   </div>
                   <div>
                     <p className="text-[17px] font-bold text-gray-900 dark:text-white">
-                      {bill.tableLabel} <span className="ml-1 align-middle text-[11px] font-extrabold bg-green-500 text-white px-2 py-0.5 rounded-full">Wants to pay</span>
+                      {bill.tableLabel}{" "}
+                      <span className="ml-1 align-middle text-[11px] font-extrabold bg-green-500 text-white px-2 py-0.5 rounded-full">
+                        {bill.paidMomo ? "Paid by MoMo?" : "Wants to pay"}
+                      </span>
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {timeAgo(bill.timestamp)}
+                      {bill.paidMomo
+                        ? `${(bill.total ?? 0).toLocaleString("en-US")} RWF to your MoMo Pay · check MoMo, then tap Paid`
+                        : timeAgo(bill.timestamp)}
                     </p>
                   </div>
                 </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => handleCloseTab(bill.tabId)}
+                  onClick={() => handleCloseTab(bill.tabId, "momo")}
                   disabled={closingTabId === bill.tabId}
-                  className="text-sm px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold disabled:opacity-50 transition-colors"
+                  className="text-sm px-4 py-3 rounded-xl bg-green-600 text-white font-extrabold disabled:opacity-50 transition-colors"
                 >
-                  {closingTabId === bill.tabId ? "..." : "Close bill"}
+                  {closingTabId === bill.tabId ? "..." : "Paid ✓ MoMo"}
+                </button>
+                <button
+                  onClick={() => handleCloseTab(bill.tabId, "cash")}
+                  disabled={closingTabId === bill.tabId}
+                  className="text-sm px-4 py-3 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold disabled:opacity-50 transition-colors"
+                >
+                  {closingTabId === bill.tabId ? "..." : "Paid ✓ Cash"}
                 </button>
               </div>
             </div>

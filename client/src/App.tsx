@@ -28,6 +28,7 @@ import { HomeScreenGuide, Join } from "./pages/guest/HomeScreen";
 import CreatorJoin from "./pages/guest/CreatorJoin";
 import { CreatorHome, CreatorLink } from "./pages/guest/CreatorHome";
 import CreatorsAdmin from "./pages/owner/CreatorsAdmin";
+import PlansAdmin from "./pages/owner/PlansAdmin";
 import Ratings from "./pages/owner/Ratings";
 import BusyHours from "./pages/owner/BusyHours";
 import Shifts from "./pages/owner/Shifts";
@@ -165,6 +166,7 @@ export default function App() {
         <Route path="/creator/:token" element={<CreatorHome />} />
         <Route path="/c/:code" element={<CreatorLink />} />
         <Route path="/creators" element={<ProtectedRoute><CreatorsAdmin /></ProtectedRoute>} />
+        <Route path="/plans" element={<ProtectedRoute><PlansAdmin /></ProtectedRoute>} />
         <Route
           path="/ratings"
           element={
