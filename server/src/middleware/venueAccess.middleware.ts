@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
 import { db } from '../lib/db';
 import {
-  venues, staff, menuItems, shifts, orders, tabs, tables, campaigns, momoPayments,
+  venues, staff, menuItems, shifts, orders, orderItems, tabs, tables, campaigns, momoPayments,
 } from '../models/schema';
 import { HttpError } from './error.middleware';
 import { PLANS, PLAN_FOR, planAllows, type PlanFeature } from '@tabpro/shared';
@@ -128,6 +128,29 @@ export function venueManager(resolve: VenueResolver) {
     });
   };
 }
+
+/**
+ * Owner of the venue, or an active manager or kitchen staff member. Used for
+ * the kitchen screen. Does its own token check.
+ */
+export function venueKitchen(resolve: VenueResolver) {
+  const member = venueMember(resolve);
+  return async (req: Request, res: Response, next: NextFunction) => {
+    await member(req, res, async () => {
+      if (req.staffMember) {
+        const m = await db.query.staff.findFirst({ where: eq(staff.id, req.staffMember.staffId) });
+        if (m?.role !== 'manager' && m?.role !== 'kitchen') throw new HttpError(403, 'Only the kitchen, managers and the owner use the kitchen screen');
+      }
+      next();
+    });
+  };
+}
+
+export const venueOfOrderItem = (param = 'orderItemId'): VenueResolver => async (req) =>
+  (await db.query.orderItems.findFirst({
+    where: eq(orderItems.id, req.params[param]),
+    with: { order: { with: { tab: { with: { table: true } } } } },
+  }))?.order?.tab?.table?.venueId;
 
 /**
  * The venue's package must include this feature (Starter / Pro / Bar+). Put it

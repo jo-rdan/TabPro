@@ -1,6 +1,6 @@
 import { db } from '../lib/db';
 import { staff, tables, tableAssignments, shifts, shiftAssignments } from '../models/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, ne } from 'drizzle-orm';
 
 /**
  * Evenly distributes all venue tables across all active waiters using round-robin.
@@ -14,9 +14,14 @@ export async function autoAssignTablesForVenue(venueId: string): Promise<void> {
       where: and(eq(tables.venueId, venueId), eq(tables.isActive, true)),
     }),
     db.query.staff.findMany({
-      where: and(eq(staff.venueId, venueId), eq(staff.isActive, true)),
+      // Kitchen staff cook; they never get tables.
+      where: and(eq(staff.venueId, venueId), eq(staff.isActive, true), ne(staff.role, 'kitchen')),
     }),
   ]);
+
+  // Kitchen staff never keep tables (e.g. a waiter just moved to the kitchen).
+  const cooks = await db.query.staff.findMany({ where: and(eq(staff.venueId, venueId), eq(staff.role, 'kitchen')) });
+  if (cooks.length > 0) await db.delete(tableAssignments).where(inArray(tableAssignments.staffId, cooks.map((c) => c.id)));
 
   // Nothing to assign — clear any stale assignments and exit
   if (activeStaff.length === 0 || allTables.length === 0) {

@@ -56,7 +56,7 @@ function recordFailedLogin(key: string) {
   else entry.count += 1;
 }
 
-export async function loginByPhone(phone: string, pin: string): Promise<{ token: string; staffId: string; venueId: string; name: string; role: 'waiter' | 'manager' } | null> {
+export async function loginByPhone(phone: string, pin: string): Promise<{ token: string; staffId: string; venueId: string; name: string; role: 'waiter' | 'manager' | 'kitchen' } | null> {
   const normalizedPhone = normalizeStaffPhone(phone);
   if (isLockedOut(normalizedPhone)) {
     throw new Error('Too many wrong PINs. Try again in 15 minutes or ask your manager.');
@@ -150,7 +150,7 @@ export async function createStaff(
   venueId: string,
   name: string,
   rawPhone: string,
-  { role = 'waiter', hasSmartphone = true }: { role?: 'waiter' | 'manager'; hasSmartphone?: boolean } = {},
+  { role = 'waiter', hasSmartphone = true }: { role?: 'waiter' | 'manager' | 'kitchen'; hasSmartphone?: boolean } = {},
 ) {
   const phone = normalizeStaffPhone(rawPhone);
 
@@ -368,7 +368,7 @@ export async function declineJoinRequest(staffId: string) {
 }
 
 // ─── Owner edits a team member: manager or waiter, smartphone or not ─────────
-export async function updateStaff(staffId: string, changes: { role?: 'waiter' | 'manager'; hasSmartphone?: boolean }) {
+export async function updateStaff(staffId: string, changes: { role?: 'waiter' | 'manager' | 'kitchen'; hasSmartphone?: boolean }) {
   const [updated] = await db.update(staff).set(changes).where(eq(staff.id, staffId)).returning();
   if (!updated) throw new Error('Staff not found');
   // Managers don't serve tables when there are waiters: share tables out again.

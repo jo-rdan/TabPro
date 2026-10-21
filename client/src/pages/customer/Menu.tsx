@@ -39,7 +39,8 @@ interface CartItem extends MenuItemData {
 interface PlacedOrder {
   orderId: string;
   items: { name: string; quantity: number; unitPriceRwf: number }[];
-  status: "pending" | "preparing" | "delivered";
+  // "ready": the kitchen finished it and the waiter is bringing it.
+  status: "pending" | "preparing" | "ready" | "delivered";
   total: number;
 }
 interface BillLine {
@@ -243,6 +244,10 @@ function StatusBadge({ status }: { status: PlacedOrder["status"] }) {
       "🍳 Preparing",
       "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
     ],
+    ready: [
+      "🍽️ On its way",
+      "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    ],
     delivered: [
       "✓ Delivered",
       "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
@@ -319,6 +324,12 @@ export default function CustomerMenu() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [justOrdered, setJustOrdered] = useState(false);
   const [nudgeToast, setNudgeToast] = useState(false);
+  // From the kitchen: "Your food is ready" or "Sorry, X isn't available".
+  const [kitchenToast, setKitchenToast] = useState<{ title: string; body: string; bad?: boolean } | null>(null);
+  const showKitchenToast = (t: { title: string; body: string; bad?: boolean }) => {
+    setKitchenToast(t);
+    setTimeout(() => setKitchenToast((cur) => (cur === t ? null : cur)), 8000);
+  };
   const [nudgeLoading, setNudgeLoading] = useState(false);
   const [justNudged, setJustNudged] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
@@ -416,8 +427,30 @@ export default function CustomerMenu() {
       if (event.type === "order_status_update") {
         const { orderId, status } = event.payload as any;
         setPlacedOrders((p) =>
-          p.map((o) => (o.orderId === orderId ? { ...o, status } : o)),
+          // Food the kitchen finished stays "On its way" until it's delivered.
+          p.map((o) => (o.orderId === orderId && !(o.status === "ready" && status === "preparing") ? { ...o, status } : o)),
         );
+      }
+      if (event.type === "food_ready") {
+        const { orderId } = event.payload as any;
+        setPlacedOrders((p) => p.map((o) => (o.orderId === orderId && o.status !== "delivered" ? { ...o, status: "ready" } : o)));
+        showKitchenToast({ title: "Your food is ready 🍽️", body: "Your waiter is bringing it to you." });
+      }
+      if (event.type === "item_unavailable") {
+        const { orderId, name, quantity } = event.payload as any;
+        setPlacedOrders((p) =>
+          p
+            .map((o) => {
+              if (o.orderId !== orderId) return o;
+              const i = o.items.findIndex((it) => it.name === name && it.quantity === quantity);
+              if (i < 0) return o;
+              const items = o.items.filter((_, j) => j !== i);
+              return { ...o, items, total: items.reduce((n, it) => n + it.quantity * it.unitPriceRwf, 0) };
+            })
+            .filter((o) => o.items.length > 0),
+        );
+        if (tabId) fetchBill(tabId);
+        showKitchenToast({ title: `Sorry, ${name} isn't available tonight`, body: "It's off your bill. Your waiter can suggest something else.", bad: true });
       }
       if (
         event.type === "bill_requested" &&
@@ -459,7 +492,7 @@ export default function CustomerMenu() {
           return {
             orderId: o.id,
             items,
-            status: o.status,
+            status: o.kitchenStatus === "ready" && o.status !== "delivered" ? "ready" : o.status,
             total: items.reduce((n: number, i: { quantity: number; unitPriceRwf: number }) => n + i.quantity * i.unitPriceRwf, 0),
           };
         }),
@@ -2007,6 +2040,14 @@ export default function CustomerMenu() {
       {nudgeToast && !justOrdered && (
         <div role="status" className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-black px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl whitespace-nowrap">
           <CheckCircle size={16} className="text-brand-400 dark:text-brand-600" /> Your waiter has been notified 👋
+        </div>
+      )}
+
+      {/* From the kitchen */}
+      {kitchenToast && (
+        <div role="status" className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,380px)] rounded-3xl px-5 py-4 shadow-2xl ${kitchenToast.bad ? "bg-white text-gray-900 ring-2 ring-red-400 dark:bg-gray-900 dark:text-white" : "bg-gray-900 text-white dark:bg-white dark:text-gray-900"}`}>
+          <p className="text-base font-black">{kitchenToast.title}</p>
+          <p className="text-sm font-semibold opacity-80 mt-0.5">{kitchenToast.body}</p>
         </div>
       )}
 

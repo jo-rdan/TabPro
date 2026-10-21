@@ -5,6 +5,8 @@ import { broadcastToVenue } from '../lib/websocket';
 import { notifyTable, notifyGuest } from './push.service';
 import { offerForTab } from './campaign.service';
 import { takeStockForOrder, sendStockAlerts } from './stock.service';
+import { categoriesOf } from './kitchen.service';
+import { planAllows } from '@tabpro/shared';
 
 interface OrderItemInput {
   menuItemId: string;
@@ -40,12 +42,19 @@ export async function placeOrder(
     if (!item.isAvailable) throw new Error(`"${item.name}" is not available`);
   }
 
+  // Bar+ venues: an order with food also becomes a ticket on the kitchen screen.
+  let kitchenStatus: 'new' | null = null;
+  if (planAllows(tab.table.venue.plan, 'kitchen')) {
+    const { kitchen } = await categoriesOf(tab.table.venueId);
+    if (menuItemRecords.some((m) => kitchen.includes(m!.category))) kitchenStatus = 'new';
+  }
+
   // Create the order and take tracked items off the stock in one go: if there
   // aren't enough bottles left, nothing is saved and the guest is told.
   const { order, createdItems, stockAlerts } = await db.transaction(async (tx) => {
     const [order] = await tx
       .insert(orders)
-      .values({ tabId, source, status: 'pending' })
+      .values({ tabId, source, status: 'pending', kitchenStatus })
       .returning();
 
     const stockAlerts = await takeStockForOrder(
@@ -90,6 +99,7 @@ export async function placeOrder(
     venueId: tab.table.venueId,
     source,
     status: 'pending',
+    kitchen: kitchenStatus,
     placedAt: order.placedAt,
     items: items.map((item, i) => ({
       menuItemId: item.menuItemId,

@@ -37,6 +37,7 @@ import ClaimSticker from "./pages/owner/ClaimSticker";
 // Waiter pages
 import WaiterOrders from "./pages/waiter/Orders";
 import WaiterLogin from "./pages/waiter/WaiterLogin";
+import Kitchen from "./pages/waiter/Kitchen";
 import ClockIn from "./pages/waiter/ClockIn";
 
 // Customer pages
@@ -83,6 +84,7 @@ export default function App() {
         <Route path="/waiter" element={<WaiterLogin />} />
         <Route path="/clock-in" element={CLOCK_IN_ENABLED ? <ClockIn /> : <ClockInOff />} />
         <Route path="/waiter/orders" element={<WaiterOrders />} />
+        <Route path="/kitchen" element={<Kitchen />} />
 
         {/* Receipt — accessible by cashier/owner, no strict auth gate needed */}
         <Route path="/receipt/:tabId" element={<Receipt />} />

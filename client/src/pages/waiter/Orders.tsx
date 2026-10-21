@@ -1,7 +1,7 @@
 import { StockPanel } from "../owner/Stock";
 import { ThemeCycleButton } from "../../components/ThemeSwitch";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
   CheckCircle,
   Clock,
@@ -50,6 +50,15 @@ interface LiveOrder {
   total: number;
   // The guest came with a campaign offer, e.g. "Free shot when you pay with Skuzi".
   offer?: string | null;
+  // Bar+ kitchen screen: where the food in this order is.
+  kitchen?: "new" | "preparing" | "ready" | null;
+}
+
+interface FoodReady {
+  orderId: string;
+  tabId: string;
+  tableLabel: string;
+  food: string;
 }
 
 interface NudgeAlert {
@@ -141,6 +150,7 @@ const STATUS_CONFIG = {
 
 export default function WaiterOrders() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   // Opening a notification lands on /waiter/orders with no ?venueId, so fall
   // back to the venue saved at sign-in on this device.
   const venueId = searchParams.get("venueId") || localStorage.getItem("tabpro_staff_venue") || "";
@@ -162,6 +172,10 @@ export default function WaiterOrders() {
 
   const [nudges, setNudges] = useState<NudgeAlert[]>([]);
   const [billRequests, setBillRequests] = useState<BillRequest[]>([]);
+  // The kitchen tapped Ready: pick the food up.
+  const [foodReady, setFoodReady] = useState<FoodReady[]>([]);
+  // The kitchen took an item off: a short note for the waiter.
+  const [kitchenNote, setKitchenNote] = useState("");
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   // Tabs whose guest closed Skuzi on their phone (cleared when they come back).
   const [phoneClosed, setPhoneClosed] = useState<Set<string>>(new Set());
@@ -297,6 +311,7 @@ export default function WaiterOrders() {
               0,
             ),
             offer: tab.offer ?? null,
+            kitchen: order.kitchenStatus ?? null,
           });
         }
 
@@ -366,6 +381,7 @@ export default function WaiterOrders() {
             })),
             total: p.total,
             offer: p.offer ?? null,
+            kitchen: p.kitchen ?? null,
           },
           ...prev,
         ]);
@@ -384,6 +400,41 @@ export default function WaiterOrders() {
               : o,
           ),
         );
+      }
+
+      if (event.type === "kitchen_update") {
+        const p = event.payload as { orderId?: string; status?: "preparing" | "ready" };
+        if (p.orderId) setOrders((prev) => prev.map((o) => (o.orderId === p.orderId ? { ...o, kitchen: p.status } : o)));
+      }
+
+      if (event.type === "food_ready") {
+        const p = event.payload as FoodReady;
+        // Waiters see their own tables' food; managers see it all.
+        if (isManager || orders.some((o) => o.tabId === p.tabId)) {
+          setFoodReady((prev) => [...prev.filter((f) => f.orderId !== p.orderId), p]);
+          pushNotification("food_ready", `${p.tableLabel}: food is ready`);
+        }
+      }
+
+      if (event.type === "item_unavailable") {
+        const p = event.payload as { tabId: string; orderId: string; name: string; quantity: number };
+        const mine = isManager || orders.some((o) => o.tabId === p.tabId);
+        setOrders((prev) =>
+          prev
+            .map((o) => {
+              if (o.orderId !== p.orderId) return o;
+              const i = o.items.findIndex((it) => it.name === p.name && it.quantity === p.quantity);
+              if (i < 0) return o;
+              const items = o.items.filter((_, j) => j !== i);
+              return { ...o, items, total: items.reduce((s, it) => s + it.unitPriceRwf * it.quantity, 0) };
+            })
+            .filter((o) => o.items.length > 0),
+        );
+        if (mine) {
+          const label = orders.find((o) => o.tabId === p.tabId)?.tableLabel ?? "A table";
+          setKitchenNote(`${label}: ${p.name} isn't available. The kitchen took it off the bill and told the guest.`);
+          pushNotification("item_unavailable", `${label}: ${p.name} not available`);
+        }
       }
 
       if (event.type === "payment_claimed") {
@@ -681,6 +732,11 @@ export default function WaiterOrders() {
     apiFetch("/staff/me", { headers: { Authorization: `Bearer ${staffToken}` } })
       .then((r) => r.json())
       .then((d) => {
+        // The chef uses the kitchen screen, not the waiter screen.
+        if (d.success && d.data.role === "kitchen") {
+          navigate(`/kitchen?venueId=${venueId}&token=${staffToken}`, { replace: true });
+          return;
+        }
         if (d.success && d.data.role === "manager") {
           setIsManager(true);
           fetchMyTables();
@@ -991,6 +1047,29 @@ export default function WaiterOrders() {
             </div>
           ))}
 
+          {kitchenNote && (
+            <div role="status" className="rounded-[22px] bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-200 dark:bg-red-900/20 dark:text-red-300 dark:ring-red-900/40 flex items-start justify-between gap-3">
+              <span>⚠️ {kitchenNote}</span>
+              <button onClick={() => setKitchenNote("")} className="text-xs font-extrabold underline flex-none">OK</button>
+            </div>
+          )}
+
+          {/* The kitchen tapped Ready */}
+          {foodReady.map((f) => (
+            <div key={f.orderId} className="bg-green-600 text-white rounded-[26px] p-5 flex flex-col gap-3 shadow-lg shadow-green-600/20">
+              <div>
+                <p className="font-display text-[24px] font-bold leading-none">🍽️ {f.tableLabel}: food is ready</p>
+                <p className="text-sm font-semibold mt-1.5 text-white/90">{f.food}. Pick it up at the kitchen.</p>
+              </div>
+              <button
+                onClick={() => setFoodReady((prev) => prev.filter((x) => x.orderId !== f.orderId))}
+                className="h-12 rounded-2xl bg-gray-900 text-white text-base font-extrabold active:scale-[0.98] transition-all"
+              >
+                Got it
+              </button>
+            </div>
+          ))}
+
           {/* Bill requests */}
           {billRequests.map((bill) => (
             <div
@@ -1078,6 +1157,11 @@ export default function WaiterOrders() {
                     {phoneClosed.has(order.tabId) && (
                       <span title="The guest closed Skuzi on their phone. They may still be at the table." className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                         📵 Phone closed
+                      </span>
+                    )}
+                    {order.kitchen && (
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${order.kitchen === "ready" ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300" : "bg-orange-50 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"}`}>
+                        {order.kitchen === "new" ? "🔥 Sent to kitchen" : order.kitchen === "preparing" ? "🔥 Cooking" : "🍽️ Food ready"}
                       </span>
                     )}
                     {order.source === "staff" && (
