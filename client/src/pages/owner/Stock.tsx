@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Package, Plus, Minus, X, ClipboardCheck, Truck, Settings2 } from 'lucide-react';
+import { Package, Plus, Minus, X, ClipboardCheck, Truck, Settings2, Trash2 } from 'lucide-react';
 import type { WsEvent } from '@tabpro/shared';
 import Layout from '../../components/Layout';
 import Toast from '../../components/Toast';
@@ -76,6 +76,7 @@ export default function Stock() {
   const [sheet, setSheet] = useState<null | 'setup' | 'delivery' | 'count'>(null);
   const [itemId, setItemId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const [tab, setTab] = useState<'bar' | 'kitchen'>('bar');
 
   const load = useCallback(() => {
     if (!venue) return;
@@ -100,14 +101,24 @@ export default function Stock() {
             <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white">Stock</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">Tonight{venue ? ` · ${venue.name}` : ''}</p>
           </div>
-          {tracked.length > 0 && (
+          {tab === 'bar' && tracked.length > 0 && (
             <button onClick={() => setSheet('setup')} className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-bold text-gray-700 dark:border-gray-700 dark:text-gray-200">
               <Settings2 size={16} /> Items
             </button>
           )}
         </div>
 
-        {stock === null ? (
+        <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-gray-100 p-1 dark:bg-gray-800" role="tablist">
+          {(['bar', 'kitchen'] as const).map((t) => (
+            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`rounded-xl py-2.5 text-sm font-extrabold transition ${tab === t ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+              {t === 'bar' ? '🍺 Bar' : '🥩 Kitchen'}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'kitchen' && venue ? (
+          <KitchenPanel venueId={venue.id} onToast={setToast} />
+        ) : stock === null ? (
           <div className="mt-6 h-40 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
         ) : tracked.length === 0 ? (
           <div className="mt-6 rounded-3xl border-[1.5px] border-dashed border-gray-300 p-8 text-center dark:border-gray-700">
@@ -328,6 +339,110 @@ function ItemSheet({ item, onClose, onChanged }: { item: Item; onClose: () => vo
         </>
       )}
       <button onClick={stop} className="mt-4 w-full rounded-2xl border border-gray-200 py-3 text-sm font-bold text-gray-600 dark:border-gray-700 dark:text-gray-300">Stop tracking this item</button>
+    </Sheet>
+  );
+}
+
+// ─── Kitchen, in money ────────────────────────────────────────────────────────
+type Kitchen = {
+  range: 'tonight' | 'week'; soldRwf: number; spentRwf: number; profitRwf: number; spentPct: number | null;
+  spends: { id: string; amountRwf: number; note: string | null; spentAt: string }[];
+  categories: { all: string[]; kitchen: string[] };
+};
+const QUICK = ['Market', 'Butcher', 'Vegetables', 'Gas', 'Other'];
+
+function KitchenPanel({ venueId, onToast }: { venueId: string; onToast: (m: string) => void }) {
+  const [range, setRange] = useState<'tonight' | 'week'>('week');
+  const [k, setK] = useState<Kitchen | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [editCats, setEditCats] = useState(false);
+  const load = useCallback(() => { api.get(`/stock/${venueId}/kitchen`, { params: { range } }).then((r) => setK(r.data.data)).catch(() => {}); }, [venueId, range]);
+  useEffect(load, [load]);
+  const remove = async (id: string) => { await api.delete(`/stock/${venueId}/kitchen/spend/${id}`).catch(() => {}); load(); };
+  return (
+    <div className="mt-4">
+      <div className="flex gap-1.5">
+        {(['tonight', 'week'] as const).map((r) => (
+          <button key={r} onClick={() => setRange(r)} className={`rounded-full px-3.5 py-1.5 text-sm font-bold ${range === r ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300'}`}>{r === 'tonight' ? 'Tonight' : 'Last 7 days'}</button>
+        ))}
+      </div>
+      {k === null ? <div className="mt-4 h-40 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" /> : (
+        <>
+          <div className="mt-4 grid grid-cols-3 gap-2.5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className="font-display text-xl font-bold text-gray-900 dark:text-white">{k.spentRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">spent on food</p></div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className="font-display text-xl font-bold text-gray-900 dark:text-white">{k.soldRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">food sold</p></div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className={`font-display text-xl font-bold ${k.profitRwf < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>{k.profitRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">food profit</p></div>
+          </div>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            {k.spentPct === null ? 'No food sold in Skuzi yet for this period.' : `You spend ${k.spentPct}% of your food sales on ingredients.`} All amounts in RWF.
+          </p>
+
+          <button onClick={() => setAdding(true)} className="mt-4 w-full rounded-2xl bg-action py-3.5 font-extrabold text-action-ink">+ Add food spending</button>
+
+          <p className="mb-1 mt-5 text-xs font-bold uppercase tracking-wider text-gray-400">Spending</p>
+          <div className="divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900">
+            {k.spends.length === 0 && <p className="p-3.5 text-sm text-gray-500">Nothing logged yet. Add what you spend at the market or the butcher.</p>}
+            {k.spends.map((x) => (
+              <div key={x.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-sm">
+                <span className="min-w-0"><span className="block font-semibold text-gray-800 dark:text-gray-100">{x.note ?? 'Food'}</span><span className="text-xs text-gray-400">{time(x.spentAt)}</span></span>
+                <span className="flex items-center gap-2"><span className="font-bold tabular-nums text-gray-900 dark:text-white">{x.amountRwf.toLocaleString('en-US')}</span>
+                  <button onClick={() => remove(x.id)} aria-label={`Remove ${x.note ?? 'spending'}`} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600 dark:hover:bg-gray-800"><Trash2 size={15} /></button></span>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+            Counts as food: {k.categories.kitchen.length ? k.categories.kitchen.join(', ') : 'nothing yet'} ·{' '}
+            <button onClick={() => setEditCats(true)} className="font-bold text-brand-600 underline dark:text-brand-300">Change</button>
+          </p>
+        </>
+      )}
+      {adding && <SpendSheet venueId={venueId} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); load(); onToast('Spending added'); }} />}
+      {editCats && k && <CategorySheet venueId={venueId} k={k} onClose={() => setEditCats(false)} onSaved={() => { setEditCats(false); load(); }} />}
+    </div>
+  );
+}
+
+function SpendSheet({ venueId, onClose, onSaved }: { venueId: string; onClose: () => void; onSaved: () => void }) {
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('Market');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const save = async () => {
+    setSaving(true); setError('');
+    try { await api.post(`/stock/${venueId}/kitchen/spend`, { amountRwf: Number(amount), note }); onSaved(); }
+    catch (e: any) { setError(e?.response?.data?.error ?? 'Could not save. Try again.'); } finally { setSaving(false); }
+  };
+  return (
+    <Sheet title="Food spending" onClose={onClose}>
+      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400" htmlFor="spend-amount">How much (RWF)</label>
+      <input id="spend-amount" inputMode="numeric" autoFocus value={amount ? Number(amount).toLocaleString('en-US') : ''} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} placeholder="e.g. 85,000" className="mt-1 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 font-display text-2xl font-bold text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+      <p className="mb-1 mt-4 text-xs font-bold text-gray-500 dark:text-gray-400">What for</p>
+      <div className="flex flex-wrap gap-1.5">
+        {QUICK.map((q) => <button key={q} type="button" onClick={() => setNote(q)} className={`rounded-full px-3 py-1.5 text-sm font-bold ${note === q ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300'}`}>{q}</button>)}
+      </div>
+      <input value={note} onChange={(e) => setNote(e.target.value)} aria-label="Note" className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+      {error && <p role="alert" className="mt-3 text-sm font-semibold text-red-600">{error}</p>}
+      <button onClick={save} disabled={saving || !amount} className="mt-4 w-full rounded-2xl bg-action py-3.5 font-extrabold text-action-ink disabled:opacity-50">{saving ? 'Saving…' : 'Add'}</button>
+    </Sheet>
+  );
+}
+
+function CategorySheet({ venueId, k, onClose, onSaved }: { venueId: string; k: Kitchen; onClose: () => void; onSaved: () => void }) {
+  const [picked, setPicked] = useState<string[]>(k.categories.kitchen);
+  const save = async () => { await api.put(`/stock/${venueId}/kitchen/categories`, { categories: picked }).catch(() => {}); onSaved(); };
+  return (
+    <Sheet title="What counts as food" onClose={onClose}>
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Tick the menu categories made in the kitchen. Drinks stay with the bar.</p>
+      <div className="flex flex-col gap-2">
+        {k.categories.all.map((c) => (
+          <label key={c} className="flex cursor-pointer items-center justify-between rounded-2xl border border-gray-200 px-3.5 py-3 dark:border-gray-800">
+            <span className="font-bold text-gray-900 dark:text-white">{c}</span>
+            <input type="checkbox" className="h-5 w-5 accent-[#BF4A1A]" checked={picked.includes(c)} onChange={(e) => setPicked(e.target.checked ? [...picked, c] : picked.filter((x) => x !== c))} />
+          </label>
+        ))}
+      </div>
+      <button onClick={save} className="mt-4 w-full rounded-2xl bg-action py-3.5 font-extrabold text-action-ink">Save</button>
     </Sheet>
   );
 }

@@ -855,6 +855,22 @@ console.log('\n── Stock');
   check('Waiters cannot see stock', r.status === 401 || r.status === 403, `status ${r.status}`);
   r = await call('GET', `/stock/${venueId}`, null, rivalTokEarly);
   check('Another owner cannot see this stock', r.status === 403 || r.status === 404, `status ${r.status}`);
+  // Kitchen, in money: food spending against the food Skuzi sold
+  let k = (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data;
+  check('Kitchen counts food categories, not drinks', k?.categories?.kitchen?.includes('Food') && !k.categories.kitchen.includes('Drinks') && !k.categories.kitchen.includes('Beers'), JSON.stringify(k?.categories));
+  const soldBefore = k?.soldRwf ?? 0;
+  await call('POST', '/orders', { tabId: st, items: [{ menuItemId: item('Brochette').id, quantity: 2 }, { menuItemId: item('Primus').id, quantity: 1 }] });
+  r = await call('POST', `/stock/${venueId}/kitchen/spend`, { amountRwf: 2500, note: 'Butcher' }, ownerTok);
+  const spendId = r.json?.data?.id;
+  k = (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data;
+  check('Food sold counts only food (2 brochettes = 6,000)', k?.soldRwf === soldBefore + 6000, `${soldBefore} → ${k?.soldRwf}`);
+  check('Food spending and profit add up', k?.spentRwf === 2500 && k?.profitRwf === k.soldRwf - 2500, JSON.stringify({ spent: k?.spentRwf, profit: k?.profitRwf }));
+  r = await call('POST', `/stock/${venueId}/kitchen/spend`, { amountRwf: 0 }, ownerTok);
+  check('An empty amount is refused', r.status === 400);
+  r = await call('DELETE', `/stock/${venueId}/kitchen/spend/${spendId}`, null, rivalTokEarly);
+  check('Another owner cannot delete my spending', r.status === 403 || r.status === 404, `status ${r.status}`);
+  r = await call('DELETE', `/stock/${venueId}/kitchen/spend/${spendId}`, null, ownerTok);
+  check('Owner can remove a mistake', r.status === 200 && (await call('GET', `/stock/${venueId}/kitchen?range=tonight`, null, ownerTok)).json?.data?.spentRwf === 0);
 }
 
 // ── 5. Security ──────────────────────────────────────────────────────────────

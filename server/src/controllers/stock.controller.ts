@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '@tabpro/shared';
 import { getStock, setTracking, addDelivery, saveCount, getItemHistory } from '../services/stock.service';
+import { getKitchen, addSpend, deleteSpend, setKitchenCategories } from '../services/kitchen.service';
 
 const send = (res: Response, data: unknown) => res.json({ success: true, data } as ApiResponse);
 const fail = (res: Response, err: unknown) =>
@@ -30,4 +31,22 @@ export async function handleCount(req: Request, res: Response) {
 
 export async function handleItemHistory(req: Request, res: Response) {
   try { send(res, await getItemHistory(req.params.itemId)); } catch (err) { fail(res, err); }
+}
+
+// ─── Kitchen, in money ────────────────────────────────────────────────────────
+export async function handleGetKitchen(req: Request, res: Response) {
+  const range = req.query.range === 'tonight' ? 'tonight' : 'week';
+  try { send(res, await getKitchen(req.params.venueId, range)); } catch (err) { fail(res, err); }
+}
+
+export async function handleAddSpend(req: Request, res: Response) {
+  try { send(res, await addSpend(req.params.venueId, req.body ?? {})); } catch (err) { fail(res, err); }
+}
+
+export async function handleDeleteSpend(req: Request, res: Response) {
+  try { await deleteSpend(req.params.venueId, req.params.spendId); send(res, { ok: true }); } catch (err) { fail(res, err); }
+}
+
+export async function handleKitchenCategories(req: Request, res: Response) {
+  try { await setKitchenCategories(req.params.venueId, req.body?.categories); send(res, { ok: true }); } catch (err) { fail(res, err); }
 }

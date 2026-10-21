@@ -88,6 +88,9 @@ export const venues = pgTable("venues", {
   // Shown on Explore. Demo venues never are, whatever this says.
   listed: boolean("listed").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // Menu categories that count as food for Kitchen (null: everything that
+  // isn't a drink category).
+  kitchenCategories: text("kitchen_categories").array(),
 });
 
 // Every time an owner agrees to the venue terms: the permanent record.
@@ -242,6 +245,17 @@ export const menuItems = pgTable("menu_items", {
   stockTracked: boolean("stock_tracked").default(false).notNull(),
   stockQty: integer("stock_qty"),
   stockAlertAt: integer("stock_alert_at"),
+});
+
+// Kitchen, in money: what the owner spends on food (market, butcher…), set
+// against the food Skuzi sold, so she sees her food profit without counting kg.
+export const kitchenSpends = pgTable("kitchen_spends", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  venueId: uuid("venue_id").references(() => venues.id, { onDelete: "cascade" }).notNull(),
+  amountRwf: integer("amount_rwf").notNull(),
+  note: text("note"),
+  spentAt: timestamp("spent_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const stockMovementKindEnum = pgEnum("stock_movement_kind", ["sale", "delivery", "count"]);
