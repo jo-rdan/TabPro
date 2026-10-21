@@ -125,13 +125,11 @@ export default function VenueSetup() {
                 <label key={id} className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 px-3 py-2.5 ${plan === id ? 'border-brand-500 bg-brand-50/60 dark:bg-white/5' : 'border-gray-200 dark:border-gray-700'}`}>
                   <input type="radio" name="plan" value={id} checked={plan === id} onChange={() => setPlan(id)} className="mt-1 accent-brand-500" />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        {PLANS[id].name}
-                        {id === 'elite' && <span className="ml-1.5 rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-extrabold uppercase text-white">Best for restaurants</span>}
-                      </span>
-                      <span className="text-xs font-bold text-gray-500 whitespace-nowrap">{PLANS[id].priceRwf.toLocaleString('en-US')} / month</span>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">{PLANS[id].name}</span>
+                      {id === 'elite' && <span className="whitespace-nowrap rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white">Best for restaurants</span>}
                     </span>
+                    <span className="block text-xs font-bold text-gray-700 dark:text-gray-200">{PLANS[id].priceRwf.toLocaleString('en-US')} RWF / month</span>
                     <span className="block text-xs text-gray-500 dark:text-gray-400">{PLAN_LINE[id]}</span>
                   </span>
                 </label>
