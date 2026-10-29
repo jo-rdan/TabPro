@@ -1,4 +1,5 @@
 import { planAllows, type PlanFeature } from "@tabpro/shared";
+import { BOOKINGS_ENABLED } from "../lib/features";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
@@ -39,7 +40,7 @@ type NavItem = { label: string; href: string; icon: typeof LayoutDashboard; feat
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Tables", href: "/tables", icon: QrCode },
-  { label: "Bookings", href: "/bookings", icon: CalendarDays, feature: "bookings" as PlanFeature },
+  ...(BOOKINGS_ENABLED ? [{ label: "Bookings", href: "/bookings", icon: CalendarDays, feature: "bookings" as PlanFeature }] : []),
   { label: "Menu", href: "/menu", icon: UtensilsCrossed },
   { label: "Stock", href: "/stock", icon: Package, feature: "stock" as PlanFeature },
   { label: "Campaigns", href: "/campaigns", icon: Megaphone, feature: "campaigns" as PlanFeature },
@@ -84,7 +85,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   // Booking requests waiting for an answer: a badge on "Bookings".
   const [pendingBookings, setPendingBookings] = useState(0);
   useEffect(() => {
-    if (!venue) return;
+    if (!venue || !BOOKINGS_ENABLED) return;
     const check = () => api.get(`/venue-bookings/${venue.id}/pending-count`).then((r) => setPendingBookings(r.data.data.pending)).catch(() => {});
     check();
     const t = window.setInterval(check, 60_000);

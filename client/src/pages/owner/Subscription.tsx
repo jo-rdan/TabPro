@@ -5,6 +5,7 @@ import { PLANS, PLAN_FOR, type PlanFeature, type PlanId, type PlanStatus } from 
 import Layout from "../../components/Layout";
 import api from "../../lib/api";
 import { useAuthStore } from "../../lib/auth";
+import { BOOKINGS_ENABLED } from "../../lib/features";
 
 // Plan: the venue's package (Starter / Pro / Bar+), its free trial (with
 // everything), paying a month with MoMo, and the MoMo Pay code guests pay.
@@ -16,7 +17,7 @@ const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-
 
 const INCLUDED: Record<PlanId, string[]> = {
   basic: ["QR menu and ordering at every table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Unlimited tables and staff"],
-  pro: ["Everything in Starter", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", "Bookings and your page on Explore", "Campaigns that bring guests back"],
+  pro: ["Everything in Starter", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", ...(BOOKINGS_ENABLED ? ["Bookings and your page on Explore"] : []), "Campaigns that bring guests back"],
   elite: ["Everything in Pro", "Kitchen screen: the chef sees food orders, taps Ready", "Bar stock: every bottle counted", "Closing count shows what went missing", "Kitchen: food spending vs food sold"],
 };
 

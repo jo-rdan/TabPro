@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Check, Compass } from "lucide-react";
 import { Hand } from "./GuestShell";
 import { guestApi, setGuestToken, setGuestName, needsHomeScreen, pushSupported, getDeviceSubscription, apiError } from "../../lib/guest";
+import { EXPLORE_ENABLED } from "../../lib/features";
 
 // After paying, the happiest moment: "Want invites to Kigali's best nights?"
 // Yes → Android/computer: allow notifications right here. iPhone: a short guide
@@ -45,9 +46,11 @@ export default function InviteOptIn({ tabId, phone }: { tabId: string; phone?: s
       <div className="w-full rounded-[22px] bg-gray-900 p-5 text-left text-[color:var(--g-text)]">
         <p className="flex items-center gap-2 font-bold"><Check size={18} className="text-[#86A27B]" /> You're on the invite list</p>
         {note && <p className="mt-1 text-sm text-[color:var(--g-muted)]">{note}</p>}
-        <Link to="/explore" className="mt-3 flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-action text-sm font-extrabold text-action-ink">
-          <Compass size={16} /> See what's on tonight
-        </Link>
+        {EXPLORE_ENABLED && (
+          <Link to="/explore" className="mt-3 flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-action text-sm font-extrabold text-action-ink">
+            <Compass size={16} /> See what's on tonight
+          </Link>
+        )}
       </div>
     );
   }

@@ -1,5 +1,5 @@
-import { CLOCK_IN_ENABLED } from "./lib/features";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { CLOCK_IN_ENABLED, BOOKINGS_ENABLED, EXPLORE_ENABLED, CREATORS_ENABLED, GUEST_HOME } from "./lib/features";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useThemeStore } from "./lib/theme";
@@ -50,6 +50,12 @@ import VenueTerms from "./pages/VenueTerms";
 import Waitlist from "./pages/Waitlist";
 import { WAITLIST_MODE } from "./lib/waitlistMode";
 
+// Bookings are hidden: an old "Book a table" link opens the venue's page instead.
+function BookingOff() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/v/${slug}`} replace />;
+}
+
 export default function App() {
   const { init } = useThemeStore();
 
@@ -64,8 +70,8 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/waitlist" element={<Waitlist />} />
           <Route path="/venue-terms" element={<VenueTerms />} />
-          <Route path="/creators/join" element={<CreatorJoin />} />
-          <Route path="/creator/:token" element={<CreatorHome />} />
+          {CREATORS_ENABLED && <Route path="/creators/join" element={<CreatorJoin />} />}
+          {CREATORS_ENABLED && <Route path="/creator/:token" element={<CreatorHome />} />}
           <Route path="/privacy.html" element={null} />
           <Route path="/terms.html" element={null} />
           <Route path="*" element={<Navigate to="/waitlist" replace />} />
@@ -151,23 +157,23 @@ export default function App() {
         <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
         <Route path="/campaigns/new" element={<ProtectedRoute><CampaignNew /></ProtectedRoute>} />
         <Route path="/campaigns/:campaignId" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />
-        <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+        <Route path="/bookings" element={BOOKINGS_ENABLED ? <ProtectedRoute><Bookings /></ProtectedRoute> : <Navigate to="/dashboard" replace />} />
 
         {/* Guests' own Skuzi: Explore, venue pages, bookings, invites */}
-        <Route path="/explore" element={<Explore />} />
+        <Route path="/explore" element={EXPLORE_ENABLED ? <Explore /> : <Navigate to={GUEST_HOME} replace />} />
         <Route path="/v/:slug" element={<VenuePage />} />
-        <Route path="/v/:slug/book" element={<BookTable />} />
+        <Route path="/v/:slug/book" element={BOOKINGS_ENABLED ? <BookTable /> : <BookingOff />} />
         <Route path="/booking/:id" element={<BookingStatus />} />
         <Route path="/me" element={<Me />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/my-bookings" element={BOOKINGS_ENABLED ? <MyBookings /> : <Navigate to={GUEST_HOME} replace />} />
         <Route path="/home-screen/:code" element={<HomeScreenGuide />} />
         <Route path="/join/:code" element={<Join />} />
 
         {/* Skuzi Creators */}
-        <Route path="/creators/join" element={<CreatorJoin />} />
-        <Route path="/creator/:token" element={<CreatorHome />} />
-        <Route path="/c/:code" element={<CreatorLink />} />
-        <Route path="/creators" element={<ProtectedRoute><CreatorsAdmin /></ProtectedRoute>} />
+        <Route path="/creators/join" element={CREATORS_ENABLED ? <CreatorJoin /> : <Navigate to="/" replace />} />
+        <Route path="/creator/:token" element={CREATORS_ENABLED ? <CreatorHome /> : <Navigate to="/" replace />} />
+        <Route path="/c/:code" element={CREATORS_ENABLED ? <CreatorLink /> : <Navigate to={GUEST_HOME} replace />} />
+        <Route path="/creators" element={CREATORS_ENABLED ? <ProtectedRoute><CreatorsAdmin /></ProtectedRoute> : <Navigate to="/dashboard" replace />} />
         <Route path="/plans" element={<ProtectedRoute><PlansAdmin /></ProtectedRoute>} />
         <Route
           path="/ratings"
