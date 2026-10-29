@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-10-29 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-10-29); no open PRs. Jordan merged #75-#78 (2026-10-21: MoMo code in setup, kitchen screen, auto-billing packages, waiter tips) and #79-#81 (2026-10-29: new group bill fix, own bill per phone + 'Add a friend' QR, e2e wait fix). The PR run for #80 failed (the 'stepped away' test timing); #81 fixed it and the Tests runs on main after #80 and #81 are green.
+- Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. No code changed, so no e2e run.
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach). Check that prod applied the new migrations.
+
 ## 2026-10-21 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-10-21); no open PRs. PRs #73 (Stock for managers) and #74 (Starter/Pro/Bar+ packages, venue's own MoMo Pay code) were merged on 2026-10-21 and their Tests runs passed.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. No code changed, so no e2e run.
