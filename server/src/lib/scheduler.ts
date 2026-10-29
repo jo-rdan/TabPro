@@ -1,6 +1,7 @@
 import { sendDueCampaigns } from '../services/campaign.service';
 import { runBookingJobs } from '../services/booking.service';
 import { sendPlanReminders, reconcilePlanPayments } from '../services/plan.service';
+import { sendNightReports } from '../services/nightReport.service';
 import { ensureVenueSlugs } from '../services/venue.service';
 import { startPolling } from './activity';
 
@@ -17,6 +18,8 @@ async function tick() {
     // owners before and after their trial or month runs out.
     await reconcilePlanPayments();
     await sendPlanReminders();
+    // 2am, closing time: each owner's "your night's report is ready".
+    await sendNightReports();
   } catch (err: any) {
     console.error('[scheduler]', err?.message);
   } finally {

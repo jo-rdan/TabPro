@@ -29,6 +29,7 @@ import CreatorJoin from "./pages/guest/CreatorJoin";
 import { CreatorHome, CreatorLink } from "./pages/guest/CreatorHome";
 import CreatorsAdmin from "./pages/owner/CreatorsAdmin";
 import PlansAdmin from "./pages/owner/PlansAdmin";
+import NightReport from "./pages/owner/NightReport";
 import Ratings from "./pages/owner/Ratings";
 import BusyHours from "./pages/owner/BusyHours";
 import Shifts from "./pages/owner/Shifts";
@@ -145,6 +146,7 @@ export default function App() {
           }
         />
         <Route path="/activity" element={<Navigate to="/history" replace />} />
+        <Route path="/report" element={<ProtectedRoute><NightReport /></ProtectedRoute>} />
         <Route
           path="/subscription"
           element={

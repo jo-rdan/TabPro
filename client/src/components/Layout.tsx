@@ -18,6 +18,7 @@ import {
  Package,
   Gem,
   Lock,
+  FileText,
 } from "lucide-react";
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
@@ -46,6 +47,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Campaigns", href: "/campaigns", icon: Megaphone, feature: "campaigns" as PlanFeature },
   { label: "Staff", href: "/staff", icon: Users },
   { label: "History", href: "/history", icon: History, feature: "history" as PlanFeature },
+  { label: "Report", href: "/report", icon: FileText },
   { label: "Plan", href: "/subscription", icon: Gem },
   // Hidden for launch to keep Skuzi simple to pitch and learn; the pages
   // still exist and can come back as paid extras: /ratings, /busy-hours,
@@ -111,11 +113,11 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   const isMoreActive = MORE_NAV.some((item) => isActive(item.href));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] text-gray-900 dark:text-gray-100 print:!bg-white">
       {/* ── Side nav (desktop md+) ─────────────────────────────────────────── */}
       <aside
         className={`
-        hidden md:flex flex-col
+        hidden md:flex flex-col print:!hidden
         fixed top-0 left-0 h-full
         bg-white dark:bg-[#3B2149]
         border-r border-gray-200 dark:border-gray-800
@@ -240,7 +242,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       {/* ── Mobile top bar ─────────────────────────────────────────────────── */}
       <header
         className="
-        md:hidden fixed top-0 left-0 right-0 z-20
+        md:hidden fixed top-0 left-0 right-0 z-20 print:hidden
         bg-white dark:bg-[#3B2149]
         border-b border-gray-200 dark:border-gray-800
         h-14 px-4 flex items-center justify-between
@@ -284,11 +286,12 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         transition-[margin] duration-300
         pt-14 md:pt-0
         pb-20 md:pb-0
+        print:!m-0 print:!p-0
         min-h-screen
       `}
       >
         <div className={`${wide ? "max-w-7xl md:px-8" : "max-w-5xl"} mx-auto px-4 py-6 md:py-7`}>
-          {location.pathname !== "/subscription" && <PlanBanner status={venue?.planStatus} />}
+          {location.pathname !== "/subscription" && <div className="print:hidden"><PlanBanner status={venue?.planStatus} /></div>}
           {walled && venue?.planStatus ? <PlanWall status={venue.planStatus} venueName={venue.name} /> : children}
         </div>
         <TermsPrompt />
@@ -297,7 +300,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       {/* ── Bottom nav (mobile) ────────────────────────────────────────────── */}
       <nav
         className="
-        md:hidden fixed bottom-0 left-0 right-0 z-20
+        md:hidden fixed bottom-0 left-0 right-0 z-20 print:hidden
         bg-white dark:bg-[#3B2149]
         border-t border-gray-200 dark:border-gray-800
         h-16 flex items-stretch

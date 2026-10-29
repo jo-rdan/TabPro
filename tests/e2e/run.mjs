@@ -1040,6 +1040,24 @@ console.log('\n── New group at a table with an unpaid bill');
   for (const t of [newTab, typedTab, walkIn]) await call('POST', `/tabs/${t}/close`, { paidWith: 'cash' }, staffTok);
 }
 
+// ── Night report (2am) ───────────────────────────────────────────────────────
+console.log('\n── Night report');
+{
+  r = await call('GET', `/dashboard/night-report/${venueId}`, null, ownerTok);
+  const nr = r.json?.data;
+  const sumPaid = nr ? nr.paid.momoRwf + nr.paid.cashRwf + nr.paid.otherRwf : -1;
+  check('Owner gets tonight\'s report: sales = paid + unpaid', r.status === 200 && nr.salesRwf > 0 && nr.bills > 0 && sumPaid + nr.unpaidRwf === nr.salesRwf, JSON.stringify(nr && { sales: nr.salesRwf, paid: sumPaid, unpaid: nr.unpaidRwf, bills: nr.bills }));
+  check('…with best sellers and waiters', nr?.topItems?.length > 0 && nr.topItems[0].salesRwf >= nr.topItems.at(-1).salesRwf && nr?.waiters?.length > 0);
+  r = await call('GET', `/dashboard/night-report/${venueId}?night=2026-01-01`, null, ownerTok);
+  check('A past night opens (empty here)', r.status === 200 && r.json?.data?.bills === 0 && r.json?.data?.night === '2026-01-01');
+  r = await call('GET', `/dashboard/night-report/${venueId}?night=yesterday`, null, ownerTok);
+  check('A badly written night is refused', r.status === 400);
+  r = await call('GET', `/dashboard/night-report/${venueId}`, null, rivalTokEarly);
+  check('Another owner cannot read my night report', r.status === 403, `status ${r.status}`);
+  r = await call('GET', `/dashboard/night-report/${venueId}`, null, staffTok);
+  check('Waiters cannot read the night report', r.status === 401 || r.status === 403, `status ${r.status}`);
+}
+
 // ── Waiter tips & badges (points only go up) ─────────────────────────────────
 console.log('\n── Waiter tips');
 {
