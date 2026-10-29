@@ -95,7 +95,7 @@ const venueId = r.json?.data?.id;
 {
   const st = await call('POST', '/venues', { name: 'Starter Cafe', acceptTerms: true, plan: 'basic' }, await newOwner('Starter owner'));
   const days = (new Date(st.json?.data?.trialEndsAt) - Date.now()) / 864e5;
-  check('Sign-up picks the package: Starter gets 2 weeks free', st.status === 201 && st.json?.data?.plan === 'basic' && days > 13 && days < 15, `${st.json?.data?.plan}, ${days.toFixed(1)} days`);
+  check('Sign-up picks the package: Go gets 2 weeks free', st.status === 201 && st.json?.data?.plan === 'basic' && days > 13 && days < 15, `${st.json?.data?.plan}, ${days.toFixed(1)} days`);
 }
 check('New venues start on Pro with a free month', r.json?.data?.plan === 'pro' && new Date(r.json?.data?.trialEndsAt) > new Date(Date.now() + 28 * 864e5), `${r.json?.data?.plan} until ${r.json?.data?.trialEndsAt}`);
 await pg.query("update venues set plan='elite' where id=$1", [venueId]); // Bar+: everything below is available
@@ -993,12 +993,12 @@ console.log('\n── Kitchen screen');
     check('A manager can open the kitchen screen', r.status === 200, `status ${r.status}`);
     await pg.query('update staff set is_active=false where id=$1', [m.id]);
   }
-  // Pro (paid, after the trial) has no kitchen screen
-  await pg.query("update venues set plan='pro', trial_ends_at = now() - interval '1 day', paid_until = now() + interval '20 days' where id=$1", [venueId]);
+  // Go (paid, after the trial) has no kitchen screen
+  await pg.query("update venues set plan='basic', trial_ends_at = now() - interval '1 day', paid_until = now() + interval '20 days' where id=$1", [venueId]);
   r = await call('GET', `/kitchen/${venueId}/tickets`, null, chefTok);
-  check('Pro: the kitchen screen is locked (Bar+)', r.status === 403 && /Bar\+/.test(r.json?.error ?? ''), r.json?.error);
+  check('Go: the kitchen screen is locked (Pro)', r.status === 403 && /Pro/.test(r.json?.error ?? ''), r.json?.error);
   r = await call('POST', '/orders', { tabId: kTab, items: [{ menuItemId: item('Brochette').id, quantity: 1 }] });
-  check('Pro: food orders go to the waiter as before', (await q1('select kitchen_status k from orders where id=$1', [r.json?.data?.order?.id])).k === null);
+  check('Go: food orders go to the waiter as before', (await q1('select kitchen_status k from orders where id=$1', [r.json?.data?.order?.id])).k === null);
   await pg.query("update venues set plan='elite', trial_ends_at = now() + interval '30 days', paid_until = null where id=$1", [venueId]);
   await pg.query("update menu_items set is_available=true where id=$1", [chips.id]);
   await call('POST', `/tabs/${kTab}/close`, { paidWith: 'cash' }, ownerTok);
@@ -1151,7 +1151,7 @@ console.log('\n── Packages & direct MoMo');
   // Packages: the free trial has everything; after it, the package decides
   await pg.query("update venues set plan='basic' where id=$1", [venueId]);
   r = await call('GET', `/stock/${venueId}`, null, ownerTok);
-  check('Free trial: everything is open, even on Starter', r.status === 200, `status ${r.status}`);
+  check('Free trial: everything is open, even on Go', r.status === 200, `status ${r.status}`);
   r = await call('GET', '/auth/me', null, ownerTok);
   const ps = r.json?.data?.venues?.find((v) => v.id === venueId)?.planStatus;
   check('The app gets the package status', ps?.state === 'trial' && ps?.effectivePlan === 'elite' && ps?.plan === 'basic', JSON.stringify(ps));
@@ -1159,11 +1159,11 @@ console.log('\n── Packages & direct MoMo');
   check('In the free trial the owner can switch package', r.status === 200 && r.json?.data?.plan === 'elite' && r.json?.data?.state === 'trial', JSON.stringify(r.json?.data));
   await pg.query("update venues set plan='basic', trial_ends_at = now() - interval '1 day', paid_until = now() + interval '20 days' where id=$1", [venueId]);
   r = await call('GET', `/stock/${venueId}`, null, ownerTok);
-  check('Paid Starter: stock is locked (Bar+)', r.status === 403 && /Bar\+/.test(r.json?.error ?? ''), r.json?.error);
+  check('Paid Go: stock is locked (Pro)', r.status === 403 && /Pro/.test(r.json?.error ?? ''), r.json?.error);
   r = await call('GET', `/dashboard/activity/${venueId}`, null, ownerTok);
-  check('Paid Starter: history is locked (Pro)', r.status === 403);
+  check('Paid Go: history is locked (Pro)', r.status === 403);
   r = await call('GET', `/tabs/preview/${codes[1]}`);
-  check('Paid Starter: guests pay the waiter, no MoMo code shown', r.json?.data?.venue?.acceptsMobileMoney === false && r.json?.data?.venue?.momoPayCode === null);
+  check('Paid Go: guests pay the waiter, no MoMo code shown', r.json?.data?.venue?.acceptsMobileMoney === false && r.json?.data?.venue?.momoPayCode === null);
   r = await call('PATCH', `/plans/${venueId}`, { plan: 'elite' }, ownerTok);
   check('After the trial, you switch package by paying for it', r.status === 400 && /Pay/.test(r.json?.error ?? ''), r.json?.error);
   r = await call('GET', '/plans/admin/all', null, ownerTok);
@@ -1177,7 +1177,7 @@ console.log('\n── Packages & direct MoMo');
   check('Another owner cannot pay or start payments for my venue', r.status === 403, `status ${r.status}`);
   r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788 123 456' }, ownerTok);
   const pdep = r.json?.data?.depositId;
-  check('Owner pays Bar+: their phone is asked for 70,000', r.status === 200 && pawa.state.deposits.get(pdep)?.amount === '70000' && pawa.state.deposits.get(pdep)?.payer?.accountDetails?.phoneNumber === '250788123456', r.json?.error);
+  check('Owner pays Max: their phone is asked for 100,000', r.status === 200 && pawa.state.deposits.get(pdep)?.amount === '100000' && pawa.state.deposits.get(pdep)?.payer?.accountDetails?.phoneNumber === '250788123456', r.json?.error);
   r = await call('GET', `/plans/${venueId}/pay/${pdep}`, null, ownerTok);
   check('…nothing changes until MoMo confirms', r.json?.data?.status === 'pending' && (await q1('select paid_until from venues where id=$1', [venueId])).paid_until === null);
   r = await call('GET', `/plans/${venueId}/pay/${pdep}`, null, rivalTokEarly);
@@ -1186,7 +1186,7 @@ console.log('\n── Packages & direct MoMo');
   r = await call('GET', `/plans/${venueId}/pay/${pdep}`, null, ownerTok);
   let pv = await q1('select plan, paid_until from venues where id=$1', [venueId]);
   let paidDays = (new Date(pv.paid_until + 'Z') - Date.now()) / 864e5;
-  check('MoMo confirms: Bar+ for 30 days, automatically', r.json?.data?.status === 'successful' && r.json?.data?.plan?.state === 'paid' && pv.plan === 'elite' && paidDays > 29.5 && paidDays < 30.5, `${pv.plan}, ${paidDays.toFixed(2)} days`);
+  check('MoMo confirms: Max for 30 days, automatically', r.json?.data?.status === 'successful' && r.json?.data?.plan?.state === 'paid' && pv.plan === 'elite' && paidDays > 29.5 && paidDays < 30.5, `${pv.plan}, ${paidDays.toFixed(2)} days`);
   await call('GET', `/plans/${venueId}/pay/${pdep}`, null, ownerTok);
   await fetch(`${BASE}/tabpayment/callback/deposit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ depositId: pdep, status: 'COMPLETED' }) });
   await sleep(500);
@@ -1205,6 +1205,18 @@ console.log('\n── Packages & direct MoMo');
   Object.assign(pawa.state.deposits.get(declined), { status: 'FAILED', failureCode: 'PAYMENT_NOT_APPROVED' });
   r = await call('GET', `/plans/${venueId}/pay/${declined}`, null, ownerTok);
   check('A declined payment says so and changes nothing', r.json?.data?.status === 'failed' && !!r.json?.data?.error && !/waiter/.test(r.json?.data?.error) && Math.abs((new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z') - Date.now()) / 864e5 - paidDays) < 0.01, r.json?.data?.error);
+
+  // Max for a year, 20% off
+  r = await call('POST', `/plans/${venueId}/pay`, { plan: 'pro', phone: '0788123456', period: 'year' }, ownerTok);
+  check('Only Max can be paid for a year', r.status === 400, r.json?.error);
+  const beforeYear = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
+  r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788123456', period: 'year' }, ownerTok);
+  const ydep = r.json?.data?.depositId;
+  check('Max yearly: the phone is asked for 960,000 (20% off)', r.status === 200 && pawa.state.deposits.get(ydep)?.amount === '960000', r.json?.error);
+  pawa.state.deposits.get(ydep).status = 'COMPLETED';
+  await call('GET', `/plans/${venueId}/pay/${ydep}`, null, ownerTok);
+  const afterYear = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
+  check('…and it adds a full year', Math.abs((afterYear - beforeYear) / 864e5 - 365) < 0.01, `${((afterYear - beforeYear) / 864e5).toFixed(2)} days`);
 
   // Never paid: the wall, then guest ordering pauses
   await pg.query("update venues set trial_ends_at = now() - interval '40 days', paid_until = now() - interval '5 days' where id=$1", [venueId]);

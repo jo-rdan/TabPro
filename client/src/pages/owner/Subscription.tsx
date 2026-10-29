@@ -7,7 +7,7 @@ import api from "../../lib/api";
 import { useAuthStore } from "../../lib/auth";
 import { BOOKINGS_ENABLED } from "../../lib/features";
 
-// Plan: the venue's package (Starter / Pro / Bar+), its free trial (with
+// Plan: the venue's package (Go / Pro / Max), its free trial (with
 // everything), paying a month with MoMo, and the MoMo Pay code guests pay.
 // Skuzi takes nothing from sales.
 
@@ -16,13 +16,13 @@ const rwf = (n: number) => `${n.toLocaleString("en-US")} RWF`;
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "Africa/Kigali" }) : "");
 
 const INCLUDED: Record<PlanId, string[]> = {
-  basic: ["QR menu and ordering at every table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Unlimited tables and staff"],
-  pro: ["Everything in Starter", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", ...(BOOKINGS_ENABLED ? ["Bookings and your page on Explore"] : []), "Campaigns that bring guests back"],
-  elite: ["Everything in Pro", "Kitchen screen: the chef sees food orders, taps Ready", "Bar stock: every bottle counted", "Closing count shows what went missing", "Food stock: food bought vs food sold"],
+  basic: ["Guests order from the table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Night report at 2am", "Unlimited tables and staff"],
+  pro: ["Everything in Go", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", ...(BOOKINGS_ENABLED ? ["Bookings and your page on Explore"] : []), "Campaigns that bring guests back", "Bar stock and food stock", "Kitchen screen for the chef"],
+  elite: ["Everything in Pro", "AI event planner: finds the idea, makes the poster, posts it for you (coming soon)", "See how many clients each event brought (coming soon)", "Pay a year at once: 20% off"],
 };
 
 const FEATURE_NAME: Record<PlanFeature, string> = {
-  history: "History", bookings: "Bookings", campaigns: "Campaigns", momo: "MoMo payments", stock: "Stock", kitchen: "The kitchen screen",
+  history: "History", bookings: "Bookings", campaigns: "Campaigns", momo: "MoMo payments", stock: "Stock", kitchen: "The kitchen screen", events: "The AI event planner",
 };
 
 function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: Status; onSaved: (s: Status) => void }) {
@@ -45,7 +45,7 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
         Guests pay this code from their bill. <b className="text-gray-900 dark:text-white">100% goes straight to you</b>: Skuzi takes nothing from your sales. Your waiter taps "Paid" once it shows on your MoMo.
       </p>
       {!allowed ? (
-        <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300"><Lock size={14} /> Part of Pro and Bar+. On Starter, guests pay the waiter.</p>
+        <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300"><Lock size={14} /> Part of Pro and Max. On Go, guests pay the waiter.</p>
       ) : editing ? (
         <div className="mt-3">
           <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="e.g. 123456" aria-label="MoMo Pay code"
@@ -71,6 +71,10 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
 function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onPaid: (s: Status) => void }) {
   const [phone, setPhone] = useState(() => localStorage.getItem("skuzi_pay_phone") ?? "");
   const [step, setStep] = useState<"form" | "waiting" | "done">("form");
+  // Max can be paid for a year at 20% off.
+  const yearlyRwf = PLANS[plan].yearlyRwf;
+  const [period, setPeriod] = useState<"month" | "year">("month");
+  const price = period === "year" && yearlyRwf ? yearlyRwf : PLANS[plan].priceRwf;
   const [error, setError] = useState("");
   const timer = useRef<number>();
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -81,7 +85,7 @@ function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onP
       localStorage.setItem("skuzi_pay_phone", phone);
     } catch { /* private mode */ }
     try {
-      const r = await api.post(`/plans/${venueId}/pay`, { plan, phone });
+      const r = await api.post(`/plans/${venueId}/pay`, { plan, phone, period });
       setStep("waiting");
       const { depositId } = r.data.data;
       const started = Date.now();
@@ -111,16 +115,26 @@ function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onP
   }
   return (
     <div className="mt-3">
+      {yearlyRwf && (
+        <div className="mb-2 inline-flex rounded-xl bg-white/10 p-1" role="group" aria-label="Pay monthly or yearly">
+          {(["month", "year"] as const).map((p) => (
+            <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p}
+              className={`rounded-lg px-3 py-1.5 text-xs font-extrabold ${period === p ? "bg-white text-gray-900" : "text-white/80"}`}>
+              {p === "month" ? "Monthly" : `Yearly · save ${(PLANS[plan].priceRwf * 12 - yearlyRwf).toLocaleString("en-US")}`}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-col gap-2 sm:flex-row">
         <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Your MoMo number, 07…" aria-label="MoMo number to pay from"
           className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3 text-base font-semibold text-gray-900 placeholder-gray-400" />
         <button onClick={pay} disabled={phone.replace(/\D/g, "").length < 9}
           className="rounded-xl bg-[#FFD966] px-5 py-3 text-sm font-extrabold text-gray-900 disabled:opacity-60">
-          Pay {rwf(PLANS[plan].priceRwf)} with MoMo
+          Pay {rwf(price)} with MoMo
         </button>
       </div>
       {error && <p role="alert" className="mt-2 text-sm font-semibold text-red-200">{error}</p>}
-      <p className="mt-2 text-xs text-white/60">One month of {PLANS[plan].name}. Paying early never loses days.</p>
+      <p className="mt-2 text-xs text-white/60">{period === "year" ? `A full year of ${PLANS[plan].name}, 20% off.` : `One month of ${PLANS[plan].name}.`} Paying early never loses days.</p>
     </div>
   );
 }

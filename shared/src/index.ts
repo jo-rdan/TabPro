@@ -264,12 +264,15 @@ export interface ApiResponse<T = unknown> {
 // Monthly packages replace the 8% fee. Stored in venues.plan with the old enum
 // names: basic = Starter, pro = Pro, elite = Bar+.
 export type PlanId = "basic" | "pro" | "elite";
-export type PlanFeature = "history" | "bookings" | "campaigns" | "momo" | "stock" | "kitchen";
+export type PlanFeature = "history" | "bookings" | "campaigns" | "momo" | "stock" | "kitchen" | "events";
 
-export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[] }> = {
-  basic: { name: "Starter", priceRwf: 25000, trialDays: 14, features: [] },
-  pro: { name: "Pro", priceRwf: 45000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo"] },
-  elite: { name: "Bar+", priceRwf: 70000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"] },
+// Go · Pro · Max (2026-10-30). The ids keep their old names (basic = Go,
+// pro = Pro, elite = Max) so existing venues and payments carry on.
+export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[]; yearlyRwf?: number }> = {
+  basic: { name: "Go", priceRwf: 25000, trialDays: 14, features: [] },
+  pro: { name: "Pro", priceRwf: 50000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"] },
+  // Max can also be paid for a year at 20% off.
+  elite: { name: "Max", priceRwf: 100000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], yearlyRwf: 960000 },
 };
 
 /** The cheapest package that includes a feature. */
@@ -278,8 +281,9 @@ export const PLAN_FOR: Record<PlanFeature, PlanId> = {
   bookings: "pro",
   campaigns: "pro",
   momo: "pro",
-  stock: "elite",
-  kitchen: "elite",
+  stock: "pro",
+  kitchen: "pro",
+  events: "elite",
 };
 
 export function planAllows(plan: string | null | undefined, feature: PlanFeature): boolean {

@@ -10,9 +10,9 @@ import { PLANS, type PlanId } from '@tabpro/shared';
 
 // One line each: what the package is for.
 const PLAN_LINE: Record<PlanId, string> = {
-  basic: 'Ordering, the Skuzi! button, your dashboard',
-  pro: '+ MoMo Pay from the bill, history, bookings, campaigns',
-  elite: '+ kitchen screen and stock. For restaurants with a kitchen',
+  basic: 'Ordering, the Skuzi! button, your dashboard. For small cafés',
+  pro: '+ MoMo Pay from the bill, history, campaigns, stock, kitchen screen',
+  elite: '+ the AI event planner that brings you clients (coming soon)',
 };
 
 export default function VenueSetup() {
@@ -26,7 +26,7 @@ export default function VenueSetup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [agreed, setAgreed] = useState(false);
-  const [plan, setPlan] = useState<PlanId>('elite');
+  const [plan, setPlan] = useState<PlanId>('pro');
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError('Venue name is required.'); return; }
@@ -121,13 +121,13 @@ export default function VenueSetup() {
           <fieldset className="mb-5">
             <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Your package</legend>
             <div className="flex flex-col gap-2">
-              {(['elite', 'pro', 'basic'] as PlanId[]).map((id) => (
+              {(['pro', 'elite', 'basic'] as PlanId[]).map((id) => (
                 <label key={id} className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 px-3 py-2.5 ${plan === id ? 'border-brand-500 bg-brand-50/60 dark:bg-white/5' : 'border-gray-200 dark:border-gray-700'}`}>
                   <input type="radio" name="plan" value={id} checked={plan === id} onChange={() => setPlan(id)} className="mt-1 accent-brand-500" />
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">{PLANS[id].name}</span>
-                      {id === 'elite' && <span className="whitespace-nowrap rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white">Best for restaurants</span>}
+                      {id === 'pro' && <span className="whitespace-nowrap rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white">Most restaurants</span>}
                     </span>
                     <span className="block text-xs font-bold text-gray-700 dark:text-gray-200">{PLANS[id].priceRwf.toLocaleString('en-US')} RWF / month</span>
                     <span className="block text-xs text-gray-500 dark:text-gray-400">{PLAN_LINE[id]}</span>
