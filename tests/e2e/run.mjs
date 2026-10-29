@@ -367,8 +367,11 @@ console.log('\n── Locked phone');
 await pg.query(`update tabs set last_seen_at = now() - interval '11 minutes' where id=$1`, [t4]);
 const awayOf = () => ownerWs.events.filter((e) => e.type === 'customer_away' && e.payload?.tabId === t4).length;
 const awayBefore = awayOf();
-console.log('… waiting for the "stepped away" check (≤ 35s)');
-await sleep(35_000);
+// The check walks every quiet bill in turn, so on a slow machine it can take
+// more than one 30s round to reach this one: wait for it, up to 90s.
+console.log('… waiting for the "stepped away" check (≤ 90s)');
+for (let waited = 0; waited < 90_000 && awayOf() === awayBefore; waited += 2_000) await sleep(2_000);
+await sleep(3_000); // …and make sure it doesn't come twice
 const awayAlerts = awayOf() - awayBefore;
 check('Quiet 5+ min → tab stays open, one alert', (await q1('select status from tabs where id=$1', [t4])).status === 'open' && awayAlerts === 1, `alerts=${awayAlerts}`);
 r = await call('POST', '/orders', { tabId: t4, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
