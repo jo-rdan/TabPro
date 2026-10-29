@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, BellOff, CalendarDays, ChevronRight, Lock, Smartphone, Wallet } from "lucide-react";
 import GuestShell from "../../components/guest/GuestShell";
+import { BOOKINGS_ENABLED, SKUZI_MONEY_ENABLED } from "../../lib/features";
 import {
   guestApi, guestToken, guestName, apiError,
   pushSupported, needsHomeScreen, getDeviceSubscription, rwf,
@@ -51,7 +52,7 @@ export default function Me() {
       <div className="mx-auto max-w-xl pt-6">
         <h1 className="font-display text-[30px] font-extrabold tracking-[-0.02em]">{name ? `Hi, ${name}` : "Your Skuzi"}</h1>
 
-        {guest?.wallet && guest.wallet.history.length > 0 && (
+        {SKUZI_MONEY_ENABLED && guest?.wallet && guest.wallet.history.length > 0 && (
           <section className="mt-5 rounded-[22px] border-[1.5px] border-[#FFE08A] bg-[#FFF7E0] p-5 text-[#231A2C] dark:border-[#4A3A5C] dark:bg-gray-800 dark:text-[color:var(--g-text)]" aria-labelledby="money">
             <h2 id="money" className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.08em] text-brand-700 dark:text-[color:var(--g-hi)]"><Wallet size={16} /> Your Skuzi money</h2>
             <p className="mt-2 font-display text-[44px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">{rwf(guest.wallet.balanceRwf)}</p>
@@ -101,10 +102,12 @@ export default function Me() {
           {msg && <p role="alert" className="mt-3 text-sm text-[color:var(--g-muted)]">{msg}</p>}
         </section>
 
+{BOOKINGS_ENABLED && (
         <Link to="/my-bookings" className="mt-8 flex min-h-[52px] items-center justify-between rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 font-bold hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900">
           <span className="flex items-center gap-2"><CalendarDays size={18} /> Your bookings</span>
           <ChevronRight size={18} />
         </Link>
+        )}
 
         <p className="mt-10 flex items-center justify-center gap-1.5 text-center text-xs text-gray-500 dark:text-gray-400"><Lock size={12} /> Your number is never shared with restaurants.</p>
       </div>

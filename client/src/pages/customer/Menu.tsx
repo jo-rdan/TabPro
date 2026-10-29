@@ -21,6 +21,7 @@ import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import WaiterTipCard from "../../components/WaiterTipCard";
 import AddFriendButton from "../../components/AddFriendButton";
+import { CREATORS_ENABLED, SKUZI_MONEY_ENABLED } from "../../lib/features";
 import { WsEvent } from "@tabpro/shared";
 import { apiFetch, apiBeacon } from "../../lib/apiFetch";
 import InviteOptIn from "../../components/guest/InviteOptIn";
@@ -738,7 +739,7 @@ export default function CustomerMenu() {
   // Skuzi money is used when paying from the number it belongs to (the one the
   // guest started with); the server has the final word on the amount.
   const samePhone = (a: string, b: string) => a.replace(/\D/g, "").slice(-9) === b.replace(/\D/g, "").slice(-9);
-  const useWallet = !isDemo && walletRwf > 0 && !!phone && samePhone(payPhone, phone) ? walletRwf : 0;
+  const useWallet = SKUZI_MONEY_ENABLED && !isDemo && walletRwf > 0 && !!phone && samePhone(payPhone, phone) ? walletRwf : 0;
   const toPay = (payTotal || grandTotal) - useWallet;
 
   const handleMomoPay = async () => {
@@ -751,7 +752,7 @@ export default function CustomerMenu() {
     try {
       setPayStep("waiting");
       setPayFailReason("");
-      const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned, creatorCode: !isDemo && creatorCode && creatorCheck !== "unknown" ? creatorCode : null });
+      const res = await api.post(`/tabpayment/${tabId}/pay`, { phone: cleaned, creatorCode: CREATORS_ENABLED && !isDemo && creatorCode && creatorCheck !== "unknown" ? creatorCode : null });
       setPayReferenceId(res.data.data.depositId);
       setChargedRwf(res.data.data.grandTotal ?? null);
     } catch (err: any) {
@@ -1290,7 +1291,7 @@ export default function CustomerMenu() {
                 )}
               </div>
               {/* Skuzi Creators: who sent you? */}
-              {!isDemo && (
+              {CREATORS_ENABLED && !isDemo && (
                 <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
                   <label htmlFor="creator-code" className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
                     Creator code <span className="normal-case tracking-normal font-medium">(optional)</span>
@@ -1372,7 +1373,7 @@ export default function CustomerMenu() {
                 {fmt(chargedRwf ?? toPay)} received. Your official RRA receipt will be
                 issued at the counter.
               </p>
-              {welcomeRwf > 0 && (
+              {SKUZI_MONEY_ENABLED && welcomeRwf > 0 && (
                 <p className="mt-3 rounded-xl bg-[#FFF7E0] px-3 py-2 text-sm font-bold text-[#231A2C] dark:bg-[#2A2035] dark:text-[#F4F0F7]">
                   🎉 You got {fmt(welcomeRwf)} Skuzi money for your next Skuzi bill!
                 </p>
@@ -1489,7 +1490,7 @@ export default function CustomerMenu() {
           {venueName} · {tableLabel}
         </p>
         <p className="text-sm text-gray-400 mt-3 mb-8">See you next time 👋</p>
-        {welcomeRwf > 0 && (
+        {SKUZI_MONEY_ENABLED && welcomeRwf > 0 && (
           <div className="w-full max-w-sm mb-4 rounded-2xl border-[1.5px] border-[#FFE08A] bg-[#FFF7E0] px-5 py-4 text-center dark:border-[#4A3A5C] dark:bg-[#2A2035]">
             <p className="text-sm font-black text-[#231A2C] dark:text-[#F4F0F7]">🎉 {fmt(welcomeRwf)} Skuzi money is waiting for you</p>
             <p className="mt-1 text-xs text-[#665A72] dark:text-[#D3CADC]">It comes off your next bill when you pay with Skuzi, at any Skuzi restaurant.</p>

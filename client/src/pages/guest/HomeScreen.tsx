@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Gift } from "lucide-react";
 import GuestShell, { Hand, GuestState } from "../../components/guest/GuestShell";
 import { guestApi, guestToken, setGuestToken, setGuestName, getDeviceSubscription, apiError, isStandalone } from "../../lib/guest";
+import { EXPLORE_ENABLED, GUEST_HOME } from "../../lib/features";
 
 // iPhone only lets a site notify once it's on the Home Screen, and keeps the
 // icon's storage apart from Safari. So the icon is added from a page whose
@@ -57,9 +58,9 @@ export function HomeScreenGuide() {
         </ol>
         <div className="mt-5 flex items-center gap-3 rounded-[20px] bg-gray-900 p-4 text-[color:var(--g-text)]">
           <Gift size={22} className="flex-none text-[color:var(--g-hi)]" />
-          <p className="text-sm leading-snug">You'll also find places to go tonight and book a table, right from the icon.</p>
+          <p className="text-sm leading-snug">{EXPLORE_ENABLED ? "You'll also find places to go tonight and book a table, right from the icon." : "Invites and offers from your favourite places land right on the icon."}</p>
         </div>
-        <Link to="/explore" className="mt-6 flex min-h-[48px] items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400">Maybe later</Link>
+        <Link to={GUEST_HOME} className="mt-6 flex min-h-[48px] items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400">Maybe later</Link>
       </div>
     </GuestShell>
   );
@@ -76,7 +77,7 @@ export function Join() {
     // Opened in Safari right after "Add to Home Screen" was offered: show the steps.
     if (!isStandalone() && new URLSearchParams(window.location.search).get("add")) { navigate(`/home-screen/${code}`, { replace: true }); return; }
     // The icon always opens this address: once connected, go straight to Explore.
-    if (guestToken()) { navigate("/explore", { replace: true }); return; }
+    if (guestToken()) { navigate(GUEST_HOME, { replace: true }); return; }
     guestApi.post("/guests/claim", { code })
       .then((r) => { setGuestToken(r.data.data.guestToken); setGuestName(r.data.data.name); setName(r.data.data.name); setState("ready"); })
       .catch((e) => { setError(apiError(e)); setState("error"); });
@@ -86,11 +87,11 @@ export function Join() {
     const sub = await getDeviceSubscription();
     if (sub) await guestApi.post("/guests/me/devices", { subscription: sub }).catch(() => {});
     setState("done");
-    setTimeout(() => navigate("/explore", { replace: true }), 900);
+    setTimeout(() => navigate(GUEST_HOME, { replace: true }), 900);
   };
 
   if (state === "error") {
-    return <GuestShell tone="night"><GuestState title="Almost there" text={`${error} You can still explore Skuzi.`} action={<Link to="/explore" className="mt-2 flex min-h-[44px] items-center rounded-full bg-action px-6 font-extrabold text-action-ink">Explore Skuzi</Link>} /></GuestShell>;
+    return <GuestShell tone="night"><GuestState title="Almost there" text={`${error}`} action={<Link to={GUEST_HOME} className="mt-2 flex min-h-[44px] items-center rounded-full bg-action px-6 font-extrabold text-action-ink">Open Skuzi</Link>} /></GuestShell>;
   }
   return (
     <GuestShell tone="night" header={false}>

@@ -2,6 +2,7 @@ import { ThemeCycleButton } from "../ThemeSwitch";
 import { Link } from "react-router-dom";
 import { Compass, CalendarDays, UserRound } from "lucide-react";
 import { WavingHand } from "../Logo";
+import { BOOKINGS_ENABLED, EXPLORE_ENABLED, GUEST_HOME } from "../../lib/features";
 
 // The frame of guests' own Skuzi: logo on top, Explore · Bookings · Me at the
 // bottom on phones (on the top bar from tablets up). `tone` "night" is the
@@ -15,15 +16,18 @@ export function Hand({ className = "h-7 w-7", color = "#F0763A" }: { className?:
   );
 }
 
+// Explore and Bookings are hidden for now (lib/features.ts); with one tab
+// left there's no tab bar.
 const TABS: { id: Tab; label: string; href: string; Icon: typeof Compass }[] = [
-  { id: "explore", label: "Explore", href: "/explore", Icon: Compass },
-  { id: "bookings", label: "Bookings", href: "/my-bookings", Icon: CalendarDays },
+  ...(EXPLORE_ENABLED ? [{ id: "explore" as Tab, label: "Explore", href: "/explore", Icon: Compass }] : []),
+  ...(BOOKINGS_ENABLED ? [{ id: "bookings" as Tab, label: "Bookings", href: "/my-bookings", Icon: CalendarDays }] : []),
   { id: "me", label: "Me", href: "/me", Icon: UserRound },
 ];
+const SHOW_TABS = TABS.length > 1;
 
 export function GuestLogo({ night = false }: { night?: boolean }) {
   return (
-    <Link to="/explore" aria-label="Skuzi Explore" className="inline-flex items-center gap-1.5">
+    <Link to={GUEST_HOME} aria-label="Skuzi" className="inline-flex items-center gap-1.5">
       <Hand />
       <span className={`font-display text-[22px] font-semibold tracking-[-0.04em] ${night ? "text-[color:var(--g-text)]" : "text-gray-900 dark:text-[color:var(--g-text)]"}`}>skuzi</span>
     </Link>
@@ -51,7 +55,7 @@ export default function GuestShell({
         <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-5 md:px-8">
           <GuestLogo night={night} />
           <div className="flex items-center gap-1">
-          {tab && (
+          {tab && SHOW_TABS && (
               <nav aria-label="Skuzi" className="hidden items-center gap-1 md:flex">
                 {TABS.map(({ id, label, href }) => (
                   <Link
@@ -73,8 +77,8 @@ export default function GuestShell({
           </div>
         </header>
       )}
-      <main className={`mx-auto max-w-5xl px-5 md:px-8 ${tab ? "pb-28 md:pb-12" : "pb-12"}`}>{children}</main>
-      {tab && (
+      <main className={`mx-auto max-w-5xl px-5 md:px-8 ${tab && SHOW_TABS ? "pb-28 md:pb-12" : "pb-12"}`}>{children}</main>
+      {tab && SHOW_TABS && (
         <nav
           aria-label="Skuzi"
           className={`fixed inset-x-0 bottom-0 z-30 border-t md:hidden ${night ? "border-gray-800 bg-gray-950/95" : "border-gray-200 bg-[#FDFCFE]/95 dark:border-gray-800 dark:bg-gray-950/95"} backdrop-blur`}

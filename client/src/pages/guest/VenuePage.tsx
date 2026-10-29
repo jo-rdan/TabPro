@@ -4,6 +4,7 @@ import { ArrowLeft, Gift, MapPin, QrCode } from "lucide-react";
 import GuestShell, { GuestState } from "../../components/guest/GuestShell";
 import { guestApi, apiError, rwf, dayLabel, kigaliDay } from "../../lib/guest";
 import { statusText, DishIcon } from "./Explore";
+import { BOOKINGS_ENABLED, EXPLORE_ENABLED } from "../../lib/features";
 
 // A restaurant's own page on Skuzi (/v/<slug>): what's on, its dishes with
 // prices, opening hours, and "Book a table".
@@ -44,9 +45,9 @@ export default function VenuePage() {
       <GuestShell tab="explore">
         <GuestState
           title={error.missing ? "We couldn't find this restaurant" : "Couldn't load this page"}
-          text={error.missing ? "The link may be old. Have a look at what's on Skuzi instead." : error.text}
+          text={error.missing ? (EXPLORE_ENABLED ? "The link may be old. Have a look at what's on Skuzi instead." : "The link may be old.") : error.text}
           action={error.missing
-            ? <Link to="/explore" className="mt-2 flex min-h-[44px] items-center rounded-full bg-action px-6 font-extrabold text-white">Explore Skuzi</Link>
+            ? (EXPLORE_ENABLED ? <Link to="/explore" className="mt-2 flex min-h-[44px] items-center rounded-full bg-action px-6 font-extrabold text-white">Explore Skuzi</Link> : undefined)
             : <button onClick={load} className="mt-2 min-h-[44px] rounded-full bg-action px-6 font-extrabold text-white">Try again</button>}
         />
       </GuestShell>
@@ -73,9 +74,11 @@ export default function VenuePage() {
         <div className="min-w-0">
           {/* Hero */}
           <div className="-mx-5 bg-gray-900 px-5 pb-8 pt-4 text-[color:var(--g-text)] md:mx-0 md:rounded-[28px] md:px-8 md:pt-6">
+            {EXPLORE_ENABLED && (
             <Link to="/explore" aria-label="Back to Explore" className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 hover:bg-black/40">
               <ArrowLeft size={18} />
             </Link>
+            )}
             <h1 className="mt-5 font-display text-[32px] font-extrabold leading-tight tracking-[-0.02em] md:text-[44px]">{page.name}</h1>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {page.location && <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold"><MapPin size={12} />{page.location}</span>}
@@ -152,7 +155,7 @@ export default function VenuePage() {
         {/* Side: book + hours (bottom bar on phones) */}
         <aside className="mt-8 md:mt-0">
           <div className="md:sticky md:top-6 md:rounded-[24px] md:border-[1.5px] md:border-gray-200 md:p-5 md:dark:border-gray-800">
-            {page.bookingsEnabled && (
+            {BOOKINGS_ENABLED && page.bookingsEnabled && (
               <Link to={bookHref} className="hidden min-h-[54px] items-center justify-center rounded-full bg-action text-base font-extrabold text-white hover:bg-action-hover md:flex">
                 Book a table
               </Link>
@@ -177,14 +180,14 @@ export default function VenuePage() {
         </aside>
       </div>
 
-      {page.bookingsEnabled && (
+      {BOOKINGS_ENABLED && page.bookingsEnabled && (
         <div className="fixed inset-x-0 bottom-[64px] z-20 border-t border-gray-200 bg-[#FDFCFE]/95 px-5 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 md:hidden" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
           <Link to={bookHref} className="mx-auto flex min-h-[52px] max-w-md items-center justify-center rounded-full bg-action text-base font-extrabold text-white">
             Book a table
           </Link>
         </div>
       )}
-      {page.bookingsEnabled && <div className="h-20 md:hidden" aria-hidden="true" />}
+      {BOOKINGS_ENABLED && page.bookingsEnabled && <div className="h-20 md:hidden" aria-hidden="true" />}
     </GuestShell>
   );
 }

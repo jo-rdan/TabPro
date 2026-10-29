@@ -5,6 +5,7 @@ import { useAuthStore } from '../../lib/auth';
 import api from '../../lib/api';
 import Toast from '../../components/Toast';
 import QrScannerModal from '../../components/QrScannerModal';
+import { BOOKINGS_ENABLED } from "../../lib/features";
 
 // Manual "Add table" (self-serve QR generation) is off for launch — we're doing
 // pre-printed sticker binding only for now. Flip this to true to bring it back.
@@ -69,7 +70,7 @@ export default function Tables() {
   // Tonight's accepted bookings, shown on their table.
   const [reserved, setReserved] = useState<Record<string, { name: string; partySize: number; time: string; status: string }>>({});
   useEffect(() => {
-    if (!venue) return;
+    if (!venue || !BOOKINGS_ENABLED) return;
     api.get(`/venue-bookings/${venue.id}/tables`)
       .then((r) => {
         const map: Record<string, { name: string; partySize: number; time: string; status: string }> = {};

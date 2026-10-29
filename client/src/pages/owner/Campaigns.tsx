@@ -6,6 +6,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import api from '../../lib/api';
 import { useAuthStore } from '../../lib/auth';
 import { kigaliDay, dayLabel, kigaliTime } from '../../lib/guest';
+import { EXPLORE_ENABLED } from "../../lib/features";
 
 // Campaigns: "We already have the right people." A notification to guests who
 // said yes to invites, plus an event on Explore and the venue's Skuzi page.
@@ -45,7 +46,7 @@ function AudienceCard({ a }: { a: Audience | null }) {
       {a === null ? <div className="mt-2 h-10 animate-pulse rounded-lg bg-white/10" /> : a.total === 0 ? (
         <>
           <p className="mt-1 font-display text-3xl font-extrabold">0 <span className="text-base font-bold text-[#D3CADC]">for now</span></p>
-          <p className="mt-1 text-sm text-[#D3CADC]">It builds up every time a guest pays with Skuzi and says yes to invites. Campaigns still show on Explore and your Skuzi page.</p>
+          <p className="mt-1 text-sm text-[#D3CADC]">It builds up every time a guest pays with Skuzi and says yes to invites. {EXPLORE_ENABLED ? "Campaigns still show on Explore and your Skuzi page." : "Campaigns still show on your Skuzi page."}</p>
         </>
       ) : (
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -199,7 +200,7 @@ export function CampaignNew() {
             <fieldset className="flex flex-col gap-2">
               <legend className={label}>When is it?</legend>
               <label className="flex min-h-[40px] items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                <input type="checkbox" checked={hasEvent} onChange={(e) => setHasEvent(e.target.checked)} className="h-5 w-5 accent-brand-500" /> It's an event with a date (shows on Explore)
+                <input type="checkbox" checked={hasEvent} onChange={(e) => setHasEvent(e.target.checked)} className="h-5 w-5 accent-brand-500" /> It's an event with a date{EXPLORE_ENABLED ? " (shows on Explore)" : ""}
               </label>
               {hasEvent && (
                 <div className="flex flex-wrap items-center gap-2">
@@ -258,9 +259,9 @@ export function CampaignNew() {
 
             {error && <p role="alert" className="rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-200">{error}</p>}
             <button onClick={onSend} disabled={busy || !venue} className="min-h-[54px] rounded-xl bg-brand-500 text-base font-bold text-white hover:bg-brand-600 disabled:opacity-50">
-              {busy ? 'Sending…' : later ? `Schedule for ${dayLabel(sendDay, true)} ${sendTime}` : reach > 0 ? `Send to ${reach.toLocaleString()} ${reach === 1 ? 'guest' : 'guests'}` : 'Publish on Explore'}
+              {busy ? 'Sending…' : later ? `Schedule for ${dayLabel(sendDay, true)} ${sendTime}` : reach > 0 ? `Send to ${reach.toLocaleString()} ${reach === 1 ? 'guest' : 'guests'}` : EXPLORE_ENABLED ? 'Publish on Explore' : 'Publish on your Skuzi page'}
             </button>
-            {reach === 0 && audience && <p className="-mt-3 text-center text-xs text-gray-500 dark:text-gray-400">Nobody to notify yet. It will show on Explore and your Skuzi page.</p>}
+            {reach === 0 && audience && <p className="-mt-3 text-center text-xs text-gray-500 dark:text-gray-400">Nobody to notify yet. It will show on {EXPLORE_ENABLED ? "Explore and " : ""}your Skuzi page.</p>}
           </div>
 
           <aside className="space-y-4">
@@ -346,14 +347,14 @@ export function CampaignDetail() {
             )}
             {c.status === 'scheduled' && (
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500 bg-amber-50 p-4 dark:bg-amber-500/10">
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Goes out {when(c.sendAt)}. It's already on Explore{c.eventAt ? ' as an event' : ''}.</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Goes out {when(c.sendAt)}. It's already on {EXPLORE_ENABLED ? 'Explore' : 'your Skuzi page'}{c.eventAt ? ' as an event' : ''}.</p>
                 <button onClick={() => setConfirm(true)} className="min-h-[40px] rounded-xl border border-gray-300 bg-white px-4 text-sm font-bold text-gray-700 dark:border-gray-700 dark:bg-transparent dark:text-gray-200">Cancel it</button>
               </div>
             )}
           </>
         )}
       </div>
-      {confirm && <ConfirmDialog title="Cancel this campaign?" message="It won't be sent, and it comes off Explore." confirmLabel="Cancel campaign" cancelLabel="Keep it" danger onConfirm={cancel} onCancel={() => setConfirm(false)} />}
+      {confirm && <ConfirmDialog title="Cancel this campaign?" message={EXPLORE_ENABLED ? "It won't be sent, and it comes off Explore." : "It won't be sent, and it comes off your Skuzi page."} confirmLabel="Cancel campaign" cancelLabel="Keep it" danger onConfirm={cancel} onCancel={() => setConfirm(false)} />}
     </Layout>
   );
 }
