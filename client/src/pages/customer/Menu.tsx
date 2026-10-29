@@ -56,50 +56,6 @@ type TabStatus = "open" | "bill_requested" | "closed";
 const SESSION_KEY = (qr: string) => `tabpro_tab_${qr}`;
 const fmt = (n: number) => `${n.toLocaleString()} RWF`;
 
-// ─── Foodish API category mapping ────────────────────────────────────────────
-
-function getFoodishCategory(name: string, cat: string): string | null {
-  const s = (name + " " + cat).toLowerCase();
-  if (s.includes("burger") || s.includes("hamburger")) return "burger";
-  if (s.includes("pizza")) return "pizza";
-  if (s.includes("pasta") || s.includes("spaghetti") || s.includes("macaroni"))
-    return "pasta";
-  if (s.includes("rice") || s.includes("biryani") || s.includes("fried rice"))
-    return "rice";
-  if (s.includes("chicken") || s.includes("butter chicken"))
-    return "butter-chicken";
-  if (s.includes("dessert") || s.includes("cake") || s.includes("sweet"))
-    return "dessert";
-  if (s.includes("samosa") || s.includes("starter") || s.includes("snack"))
-    return "samosa";
-  if (s.includes("idly") || s.includes("dosa") || s.includes("indian"))
-    return "idly";
-  // No match: show the category icon rather than a photo of a different dish.
-  return null;
-}
-
-// Cache images so we don't refetch on re-render
-const imageCache: Record<string, string> = {};
-
-async function fetchFoodImage(
-  itemId: string,
-  name: string,
-  cat: string,
-): Promise<string> {
-  if (imageCache[itemId]) return imageCache[itemId];
-  const foodCat = getFoodishCategory(name, cat);
-  if (!foodCat) return "";
-  try {
-    const res = await fetch(`https://foodish-api.com/api/images/${foodCat}`);
-    const data = await res.json();
-    imageCache[itemId] = data.image;
-    return data.image;
-  } catch {
-    imageCache[itemId] = "";
-    return "";
-  }
-}
-
 // ─── Category config (emoji for chips/fallback) ───────────────────────────────
 const CAT_EMOJI: Record<string, string> = {
   drinks: "🍹",
@@ -143,17 +99,7 @@ function MenuCard({
   onAdd: () => void;
   onRemove: () => void;
 }) {
-  const [imgUrl, setImgUrl] = useState<string>(imageCache[item.id] || "");
-  const [imgLoaded, setImgLoaded] = useState(false);
   const emoji = getCatEmoji(item.category);
-
-  useEffect(() => {
-    if (!imgUrl) {
-      fetchFoodImage(item.id, item.name, item.category).then((url) => {
-        if (url) setImgUrl(url);
-      });
-    }
-  }, [item.id]);
 
   return (
     <div
@@ -165,15 +111,6 @@ function MenuCard({
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-3xl opacity-50 select-none">{emoji}</span>
         </div>
-        {imgUrl && (
-          <img
-            src={imgUrl}
-            alt={item.name}
-            onLoad={() => setImgLoaded(true)}
-            onError={() => setImgUrl("")}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-          />
-        )}
         {!item.isAvailable && (
           <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
             <span className="text-[10px] font-bold text-white">Sold out</span>
@@ -536,7 +473,7 @@ export default function CustomerMenu() {
 
   // The guest gave their number: open (or join) the table's tab. Returns the
   // tab id, or null if the bill is already being paid (they land on the bill).
-  const openTabWithPhone = async (): Promise<string | null> => {
+  const openTabWithPhone = async (choice?: "join" | "new"): Promise<string | null> => {
     const cleaned = phone.trim();
     if (cleaned.replace(/\D/g, "").length < 9) {
       setError("Enter your MTN MoMo or Airtel Money number, e.g. 078 123 4567");
@@ -548,10 +485,15 @@ export default function CustomerMenu() {
       const res = await apiFetch("/tabs/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qrCode, phone: cleaned }),
+        body: JSON.stringify({ qrCode, phone: cleaned, choice }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
+      // Someone else's bill is open on this table: ask before joining it.
+      if (data.data.needsChoice) {
+        setGroupQuestion({ openedAt: data.data.openedAt });
+        return null;
+      }
       const { tab, venue, table, menuGrouped: mg, isExisting, waiter, offer } = data.data;
       setSkuziOffer(offer ?? null);
       setWaiterName(waiter?.name ?? null);
@@ -609,11 +551,17 @@ export default function CustomerMenu() {
     setCartOpen(false);
     setAskPhone(true);
   };
-  const sendFirstOrder = async () => {
-    const id = await openTabWithPhone();
+  const sendFirstOrder = async (choice?: "join" | "new") => {
+    const id = await openTabWithPhone(choice);
     if (!id) return;
     setAskPhone(false);
     await handlePlaceOrder(id);
+  };
+  // "Are you with them?" when the table already has an open bill.
+  const [groupQuestion, setGroupQuestion] = useState<{ openedAt: string } | null>(null);
+  const answerGroup = async (choice: "join" | "new") => {
+    setGroupQuestion(null);
+    await sendFirstOrder(choice);
   };
 
   const addToCart = (item: MenuItemData) =>
@@ -1534,7 +1482,7 @@ export default function CustomerMenu() {
             />
             {error && <p role="alert" className="text-sm text-red-500 mt-2">{error}</p>}
             <button
-              onClick={sendFirstOrder}
+              onClick={() => sendFirstOrder()}
               disabled={loading || orderLoading}
               className="mt-4 w-full py-4 rounded-2xl bg-action hover:bg-action-hover text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-action/30 flex items-center justify-center gap-2"
             >
@@ -2054,6 +2002,26 @@ export default function CustomerMenu() {
       {nudgeToast && !justOrdered && (
         <div role="status" className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-black px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl whitespace-nowrap">
           <CheckCircle size={16} className="text-brand-400 dark:text-brand-600" /> Your waiter has been notified 👋
+        </div>
+      )}
+
+      {/* The table already has an open bill: same group, or new guests? */}
+      {groupQuestion && (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center">
+          <div role="dialog" aria-modal="true" aria-labelledby="group-q" className="w-full max-w-sm rounded-3xl bg-white p-6 text-gray-900 dark:bg-[#3B2149] dark:text-white">
+            <p className="text-4xl">🧾</p>
+            <h2 id="group-q" className="mt-2 text-xl font-black">Are you with the group already at this table?</h2>
+            <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-300">
+              A bill was opened here at{" "}
+              {new Date(groupQuestion.openedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Kigali" })}.
+            </p>
+            <button onClick={() => answerGroup("new")} className="mt-5 w-full rounded-2xl bg-gray-900 py-4 text-base font-extrabold text-white dark:bg-white dark:text-gray-900">
+              No, we just sat down
+            </button>
+            <button onClick={() => answerGroup("join")} className="mt-2 w-full rounded-2xl border-2 border-gray-200 py-3.5 text-base font-bold text-gray-700 dark:border-gray-600 dark:text-gray-200">
+              Yes, add me to their bill
+            </button>
+          </div>
         </div>
       )}
 

@@ -664,9 +664,12 @@ export default function WaiterOrders() {
     }
   };
 
-  const handleSelectTable = async (table: TableOption) => {
+  // The table already has an unpaid bill: same group (add to it) or new group?
+  const [manualChoice, setManualChoice] = useState<{ table: TableOption; openedAt: string; totalRwf: number } | null>(null);
+  const handleSelectTable = async (table: TableOption, choice?: "join" | "new") => {
     setSelectedTable(table);
     setManualError("");
+    setManualChoice(null);
     setManualLoading(true);
     try {
       // Load menu if not yet loaded
@@ -690,10 +693,14 @@ export default function WaiterOrders() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${staffToken}`,
         },
-        body: JSON.stringify({ tableId: table.id }),
+        body: JSON.stringify({ tableId: table.id, choice }),
       });
       const tabData = await tabRes.json();
       if (!tabData.success) throw new Error(tabData.error);
+      if (tabData.data.needsChoice) {
+        setManualChoice({ table, openedAt: tabData.data.openedAt, totalRwf: tabData.data.totalRwf });
+        return;
+      }
       setManualTabId(tabData.data.tab.id);
       setManualStep("menu");
     } catch (err: any) {
@@ -1686,6 +1693,22 @@ export default function WaiterOrders() {
               <div className="overflow-y-auto px-5 py-4">
                 {manualError && (
                   <p className="text-sm text-red-500 mb-3">{manualError}</p>
+                )}
+                {manualChoice && (
+                  <div className="mb-4 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">
+                      {manualChoice.table.label} already has an unpaid bill: {manualChoice.totalRwf.toLocaleString()} RWF, opened at{" "}
+                      {new Date(manualChoice.openedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Kigali" })}.
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button onClick={() => handleSelectTable(manualChoice.table, "join")} disabled={manualLoading} className="rounded-xl bg-gray-900 py-2.5 text-sm font-extrabold text-white disabled:opacity-50 dark:bg-white dark:text-gray-900">
+                        Same group: add to it
+                      </button>
+                      <button onClick={() => handleSelectTable(manualChoice.table, "new")} disabled={manualLoading} className="rounded-xl bg-brand-500 py-2.5 text-sm font-extrabold text-white disabled:opacity-50">
+                        New group: new bill
+                      </button>
+                    </div>
+                  </div>
                 )}
                 {tableOptions.length === 0 ? (
                   <div className="flex items-center justify-center py-12">

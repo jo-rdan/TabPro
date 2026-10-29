@@ -8,6 +8,8 @@ const openTabSchema = z.object({
   qrCode: z.string().min(1),
   phone: z.string().min(9).max(15),
   name: z.string().max(100).optional(),
+  // Answer to "Is this your group's bill?" when the table already has one.
+  choice: z.enum(['join', 'new']).optional(),
 });
 
 export async function handleOpenTab(req: Request, res: Response) {
@@ -17,9 +19,9 @@ export async function handleOpenTab(req: Request, res: Response) {
     res.status(400).json(body);
     return;
   }
-  const result = await openTab(parsed.data.qrCode, parsed.data.phone, parsed.data.name);
+  const result = await openTab(parsed.data.qrCode, parsed.data.phone, parsed.data.name, parsed.data.choice);
   const body: ApiResponse = { success: true, data: result };
-  res.status(result.isExisting ? 200 : 201).json(body);
+  res.status('needsChoice' in result || result.isExisting ? 200 : 201).json(body);
 }
 
 export async function handlePreviewTable(req: Request, res: Response) {
@@ -100,6 +102,7 @@ export async function handleCloseTab(req: Request, res: Response) {
 const staffOpenTabSchema = z.object({
   tableId: z.string().uuid(),
   phone: z.string().min(9).max(15).optional(),
+  choice: z.enum(['join', 'new']).optional(),
 });
 
 export async function handleStaffOpenTab(req: Request, res: Response) {
@@ -109,7 +112,7 @@ export async function handleStaffOpenTab(req: Request, res: Response) {
     res.status(400).json(body);
     return;
   }
-  const result = await openTabByTableId(parsed.data.tableId, parsed.data.phone);
+  const result = await openTabByTableId(parsed.data.tableId, parsed.data.phone, parsed.data.choice);
   const body: ApiResponse = { success: true, data: result };
   res.status(201).json(body);
 }
