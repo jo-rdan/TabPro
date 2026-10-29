@@ -176,3 +176,9 @@ html:not(.dark) .guest-skin {
 }
 .skuzi-bounce { animation: skuzi-bounce 0.9s ease-out; }
 @media (prefers-reduced-motion: reduce) { .skuzi-bounce { animation: none; } }
+
+/* Night report "Download PDF": print on white, whatever the theme. */
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  @page { margin: 14mm; }
+}

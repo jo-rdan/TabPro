@@ -136,7 +136,7 @@ function StockScreen({ venueId, venueName, token: staffToken }: { venueId: strin
         <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-gray-100 p-1 dark:bg-gray-800" role="tablist">
           {(['bar', 'kitchen'] as const).map((t) => (
             <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`rounded-xl py-2.5 text-sm font-extrabold transition ${tab === t ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-              {t === 'bar' ? '🍺 Bar' : '🥩 Kitchen'}
+              {t === 'bar' ? '🍺 Bar' : '🥩 Food stock'}
             </button>
           ))}
         </div>
@@ -407,7 +407,7 @@ function KitchenPanel({ venueId, onToast }: { venueId: string; onToast: (m: stri
             {k.spentPct === null ? 'No food sold in Skuzi yet for this period.' : `You spend ${k.spentPct}% of your food sales on ingredients.`} All amounts in RWF.
           </p>
 
-          <button onClick={() => setAdding(true)} className="mt-4 w-full rounded-2xl bg-action py-3.5 font-extrabold text-action-ink">+ Add food spending</button>
+          <button onClick={() => setAdding(true)} className="mt-4 w-full rounded-2xl bg-action py-3.5 font-extrabold text-action-ink">+ Add food you bought</button>
 
           <p className="mb-1 mt-5 text-xs font-bold uppercase tracking-wider text-gray-400">Spending</p>
           <div className="divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900">
