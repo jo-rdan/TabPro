@@ -20,6 +20,7 @@ import Logo, { WavingHand } from "../../components/Logo";
 import VenueLogo from "../../components/VenueLogo";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import WaiterTipCard from "../../components/WaiterTipCard";
+import AddFriendButton from "../../components/AddFriendButton";
 import { WsEvent } from "@tabpro/shared";
 import { apiFetch, apiBeacon } from "../../lib/apiFetch";
 import InviteOptIn from "../../components/guest/InviteOptIn";
@@ -54,6 +55,18 @@ type Step = "identify" | "menu" | "bill" | "rating" | "closed";
 type TabStatus = "open" | "bill_requested" | "closed";
 
 const SESSION_KEY = (qr: string) => `tabpro_tab_${qr}`;
+// The same session, kept on the phone after the page is closed (sessionStorage
+// is wiped then), so only this phone can bring its bill back.
+const KEPT_KEY = (qr: string) => `skuzi_bill_${qr}`;
+function keep(qr: string, session: unknown) {
+  try { localStorage.setItem(KEPT_KEY(qr), JSON.stringify(session)); } catch { /* private mode */ }
+}
+function readKept(qr: string): any | null {
+  try { return JSON.parse(localStorage.getItem(KEPT_KEY(qr)) || "null"); } catch { return null; }
+}
+function forgetKept(qr: string) {
+  try { localStorage.removeItem(KEPT_KEY(qr)); } catch { /* ignore */ }
+}
 const fmt = (n: number) => `${n.toLocaleString()} RWF`;
 
 // ─── Category config (emoji for chips/fallback) ───────────────────────────────
@@ -319,14 +332,52 @@ export default function CustomerMenu() {
   const [ratingComment, setRatingComment] = useState("");
   const [ratingLoading, setRatingLoading] = useState(false);
 
+  // "Add a friend": the link in a friend's QR carries ?join=CODE.
+  const [joinCode, setJoinCode] = useState<string | null>(() => new URLSearchParams(window.location.search).get("join"));
+  // undefined = not looked up yet, null = expired, else who and where.
+  const [joinInfo, setJoinInfo] = useState<{ hostName: string; tableLabel: string } | null | undefined>(undefined);
+
   useEffect(() => {
     if (!qrCode) return;
-    const saved = sessionStorage.getItem(SESSION_KEY(qrCode));
-    if (!saved) {
+    if (joinCode) {
+      apiFetch(`/tabs/join/${encodeURIComponent(joinCode)}`)
+        .then((r) => r.json())
+        .then((d) => setJoinInfo(d.success ? d.data : null))
+        .catch(() => setJoinInfo(null));
       loadPreview();
       return;
     }
-    const s = JSON.parse(saved);
+    const saved = sessionStorage.getItem(SESSION_KEY(qrCode));
+    if (!saved) {
+      // The page was closed: this phone remembers its own bill (and only this
+      // phone: a bill never comes back from typing a number).
+      const kept = readKept(qrCode);
+      if (!kept) {
+        loadPreview();
+        return;
+      }
+      apiFetch(`/tabs/${kept.tabId}`)
+        .then((r) => r.json())
+        .then((d) => {
+          const raw = d.success ? d.data?.status : null;
+          // "abandoned": an older bill's quiet state; it's still this phone's open bill.
+          const status = raw === "abandoned" ? "open" : raw;
+          if (status === "open" || status === "bill_requested") {
+            const s = { ...kept, tabStatus: status };
+            sessionStorage.setItem(SESSION_KEY(qrCode), JSON.stringify(s));
+            restoreSession(s);
+          } else {
+            forgetKept(qrCode);
+            loadPreview();
+          }
+        })
+        .catch(() => loadPreview());
+      return;
+    }
+    restoreSession(JSON.parse(saved));
+  }, [qrCode]);
+
+  function restoreSession(s: any) {
     setTabId(s.tabId);
     setTabStatus(s.tabStatus ?? "open");
     setVenueId(s.venueId);
@@ -351,12 +402,14 @@ export default function CustomerMenu() {
       setStep("menu");
       loadOrders(s.tabId);
     }
-  }, [qrCode]);
+  }
 
   const saveSession = (o: Record<string, unknown> = {}) => {
     if (!qrCode) return;
     const p = JSON.parse(sessionStorage.getItem(SESSION_KEY(qrCode)) || "{}");
-    sessionStorage.setItem(SESSION_KEY(qrCode), JSON.stringify({ ...p, ...o }));
+    const next = { ...p, ...o };
+    sessionStorage.setItem(SESSION_KEY(qrCode), JSON.stringify(next));
+    keep(qrCode, next);
   };
 
   useWebSocket({
@@ -370,6 +423,14 @@ export default function CustomerMenu() {
           // Food the kitchen finished stays "On its way" until it's delivered.
           p.map((o) => (o.orderId === orderId && !(o.status === "ready" && status === "preparing") ? { ...o, status } : o)),
         );
+      }
+      // A friend on the same bill ordered: show it in everyone's list.
+      if (event.type === "new_order" && tabId && (event.payload as any).tabId === tabId) {
+        loadOrders(tabId);
+      }
+      if (event.type === "bill_joined") {
+        const { name } = event.payload as any;
+        showKitchenToast({ title: `${name} joined your bill 👋`, body: "Everything you both order goes on this bill." });
       }
       if (event.type === "food_ready") {
         const { orderId } = event.payload as any;
@@ -473,7 +534,7 @@ export default function CustomerMenu() {
 
   // The guest gave their number: open (or join) the table's tab. Returns the
   // tab id, or null if the bill is already being paid (they land on the bill).
-  const openTabWithPhone = async (choice?: "join" | "new"): Promise<string | null> => {
+  const openTabWithPhone = async (joinCode?: string): Promise<string | null> => {
     const cleaned = phone.trim();
     if (cleaned.replace(/\D/g, "").length < 9) {
       setError("Enter your MTN MoMo or Airtel Money number, e.g. 078 123 4567");
@@ -485,15 +546,10 @@ export default function CustomerMenu() {
       const res = await apiFetch("/tabs/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qrCode, phone: cleaned, choice }),
+        body: JSON.stringify({ qrCode, phone: cleaned, joinCode }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
-      // Someone else's bill is open on this table: ask before joining it.
-      if (data.data.needsChoice) {
-        setGroupQuestion({ openedAt: data.data.openedAt });
-        return null;
-      }
       const { tab, venue, table, menuGrouped: mg, isExisting, waiter, offer } = data.data;
       setSkuziOffer(offer ?? null);
       setWaiterName(waiter?.name ?? null);
@@ -509,9 +565,7 @@ export default function CustomerMenu() {
       setMenuGrouped(mg);
       setAllItems(Object.values(mg).flat() as MenuItemData[]);
       setIsGroupTab(isExisting);
-      sessionStorage.setItem(
-        SESSION_KEY(qrCode!),
-        JSON.stringify({
+      const session = {
           tabId: tab.id,
           tabStatus: tab.status,
           venueId: venue.id,
@@ -523,8 +577,9 @@ export default function CustomerMenu() {
           waiterName: waiter?.name ?? null,
           phone: cleaned,
           menuGrouped: mg,
-        }),
-      );
+      };
+      sessionStorage.setItem(SESSION_KEY(qrCode!), JSON.stringify(session));
+      keep(qrCode!, session);
       // Joining a table whose bill is already requested lands on the bill.
       if (tab.status === "bill_requested") {
         setAskPhone(false);
@@ -551,17 +606,23 @@ export default function CustomerMenu() {
     setCartOpen(false);
     setAskPhone(true);
   };
-  const sendFirstOrder = async (choice?: "join" | "new") => {
-    const id = await openTabWithPhone(choice);
+  const sendFirstOrder = async () => {
+    const id = await openTabWithPhone();
     if (!id) return;
     setAskPhone(false);
     await handlePlaceOrder(id);
   };
-  // "Are you with them?" when the table already has an open bill.
-  const [groupQuestion, setGroupQuestion] = useState<{ openedAt: string } | null>(null);
-  const answerGroup = async (choice: "join" | "new") => {
-    setGroupQuestion(null);
-    await sendFirstOrder(choice);
+  // "Add a friend": this guest scanned the code on a friend's phone.
+  const joinFriend = async () => {
+    if (!joinCode) return;
+    const id = await openTabWithPhone(joinCode);
+    if (!id) return;
+    const host = joinInfo?.hostName;
+    setJoinInfo(null);
+    setJoinCode(null);
+    try { window.history.replaceState(null, "", window.location.pathname); } catch { /* ignore */ }
+    loadOrders(id);
+    showKitchenToast({ title: `You're on ${host ? `${host}'s` : "your friend's"} bill 🎉`, body: "Order away: it all goes on the same bill." });
   };
 
   const addToCart = (item: MenuItemData) =>
@@ -1083,6 +1144,7 @@ export default function CustomerMenu() {
           )}
           {/* Who served them, their badges, and a tip straight to their MoMo */}
           {tabId && <WaiterTipCard tabId={tabId} />}
+          {tabId && tabStatus !== "closed" && <AddFriendButton tabId={tabId} className="mb-4 w-full" />}
           {/* Mobile Money payment flow (pawaPay) */}
           {/* Pay the venue's own MoMo Pay code: 100% to the venue, Skuzi never
               holds the money. The waiter checks their MoMo and taps Paid. */}
@@ -1435,7 +1497,7 @@ export default function CustomerMenu() {
         )}
         {tabId && (
           <div className="w-full max-w-sm">
-            <InviteOptIn tabId={tabId} />
+            <InviteOptIn tabId={tabId} phone={phone} />
           </div>
         )}
       </div>
@@ -1709,6 +1771,7 @@ export default function CustomerMenu() {
                 >
                   {billLoading ? "..." : "My bill"}
                 </button>
+                {tabId && <AddFriendButton tabId={tabId} className="mt-2 w-full" />}
               </div>
             </div>
           </div>
@@ -1911,6 +1974,11 @@ export default function CustomerMenu() {
             </button>
           </div>
         )}
+        {placedOrders.length > 0 && tabId && (
+          <div className="px-5 pb-5 -mt-2">
+            <AddFriendButton tabId={tabId} className="w-full" />
+          </div>
+        )}
       </div>
 
       {/* ── Mobile cart sheet ─────────────────────────────────────────────── */}
@@ -2005,21 +2073,42 @@ export default function CustomerMenu() {
         </div>
       )}
 
-      {/* The table already has an open bill: same group, or new guests? */}
-      {groupQuestion && (
+      {/* Joining a friend's bill: they scanned the code on the friend's phone */}
+      {joinCode && joinInfo !== undefined && (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center">
-          <div role="dialog" aria-modal="true" aria-labelledby="group-q" className="w-full max-w-sm rounded-3xl bg-white p-6 text-gray-900 dark:bg-[#3B2149] dark:text-white">
-            <p className="text-4xl">🧾</p>
-            <h2 id="group-q" className="mt-2 text-xl font-black">Are you with the group already at this table?</h2>
-            <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-300">
-              A bill was opened here at{" "}
-              {new Date(groupQuestion.openedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Kigali" })}.
-            </p>
-            <button onClick={() => answerGroup("new")} className="mt-5 w-full rounded-2xl bg-gray-900 py-4 text-base font-extrabold text-white dark:bg-white dark:text-gray-900">
-              No, we just sat down
-            </button>
-            <button onClick={() => answerGroup("join")} className="mt-2 w-full rounded-2xl border-2 border-gray-200 py-3.5 text-base font-bold text-gray-700 dark:border-gray-600 dark:text-gray-200">
-              Yes, add me to their bill
+          <div role="dialog" aria-modal="true" aria-labelledby="join-title" className="w-full max-w-sm rounded-3xl bg-white p-6 text-gray-900 dark:bg-[#3B2149] dark:text-white">
+            {joinInfo ? (
+              <>
+                <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F2B33A]">Join a bill</p>
+                <h2 id="join-title" className="mt-1 text-2xl font-black">Join {joinInfo.hostName}'s bill at {joinInfo.tableLabel}</h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">You'll order on the same bill and pay together.</p>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && joinFriend()}
+                  placeholder="078 123 4567"
+                  aria-label="Your MTN MoMo or Airtel Money number"
+                  className="mt-4 w-full px-4 py-3.5 text-lg font-bold tracking-wide rounded-2xl bg-gray-50 dark:bg-[#2B1838] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-brand-500"
+                />
+                {error && <p role="alert" className="text-sm text-red-500 mt-2">{error}</p>}
+                <button onClick={joinFriend} disabled={loading} className="mt-4 w-full rounded-2xl bg-gray-900 py-4 text-base font-extrabold text-white disabled:opacity-50 dark:bg-white dark:text-gray-900">
+                  {loading ? "Joining…" : "Join the bill"}
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 id="join-title" className="text-xl font-black">This code has expired</h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Ask your friend to show it again, or start your own bill.</p>
+              </>
+            )}
+            <button
+              onClick={() => { setJoinCode(null); setJoinInfo(undefined); setError(""); try { window.history.replaceState(null, "", window.location.pathname); } catch { /* ignore */ } }}
+              className="mt-2 w-full py-2 text-sm font-semibold text-gray-500 dark:text-gray-400"
+            >
+              {joinInfo ? "No, start my own bill" : "Start my own bill"}
             </button>
           </div>
         </div>

@@ -67,9 +67,9 @@ router.post("/bookings/:id/device", async (req, res) => {
 });
 
 router.post("/invites", async (req, res) => {
-  const p = z.object({ tabId: z.string().uuid(), optIn: z.boolean(), subscription: pushSub.optional().nullable() }).safeParse(req.body);
+  const p = z.object({ tabId: z.string().uuid(), optIn: z.boolean(), subscription: pushSub.optional().nullable(), phone: z.string().max(20).optional().nullable() }).safeParse(req.body);
   if (!p.success) return bad(res, "Something went wrong. Please try again.");
-  ok(res, await setInvitesFromTab(p.data.tabId, p.data.optIn, p.data.subscription));
+  ok(res, await setInvitesFromTab(p.data.tabId, p.data.optIn, p.data.subscription, p.data.phone));
 });
 router.post("/claim", limiter(20, 60 * 60_000, "Too many tries. Please try again later."), async (req, res) => {
   const p = z.object({ code: z.string().min(6).max(20) }).safeParse(req.body);

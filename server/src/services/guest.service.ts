@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { db } from "../lib/db";
-import { customers, guestLinkCodes, tabs } from "../models/schema";
+import { customers, guestLinkCodes, tabs, tabMembers } from "../models/schema";
+import { normalizeGuestPhone } from "./customer.service";
 import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { HttpError } from "../middleware/error.middleware";
 import { walletFor } from "./wallet.service";
@@ -24,19 +25,28 @@ async function lastVenueOf(customerId: string) {
 }
 
 /** Yes (or no) to invites, from a guest's tab of the last 24 hours. */
-export async function setInvitesFromTab(tabId: string, optIn: boolean, subscription?: PushSub | null) {
+export async function setInvitesFromTab(tabId: string, optIn: boolean, subscription?: PushSub | null, phone?: string | null) {
   const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: true, customer: true } });
   if (!tab || tab.openedAt.getTime() < Date.now() - DAY) throw new HttpError(404, "Please scan your table again");
+  // The guest on THIS phone: a friend who joined the bill says yes for
+  // themselves, not for whoever opened it. Only people on the bill count.
+  let guest = tab.customer;
+  if (phone) {
+    const me = await db.query.customers.findFirst({ where: eq(customers.phone, normalizeGuestPhone(phone)) });
+    const onBill = me && (me.id === tab.customerId
+      || !!(await db.query.tabMembers.findFirst({ where: and(eq(tabMembers.tabId, tabId), eq(tabMembers.customerId, me.id)) })));
+    if (me && onBill) guest = me;
+  }
   // Walk-ins opened by a waiter have a placeholder number: nothing to invite.
-  if (!/^07\d{8}$/.test(tab.customer.phone)) throw new HttpError(400, "Invites need your own phone number");
+  if (!/^07\d{8}$/.test(guest.phone)) throw new HttpError(400, "Invites need your own phone number");
   await db
     .update(customers)
     .set({ invitesOptIn: optIn, invitesOptInAt: optIn ? new Date() : null })
-    .where(eq(customers.id, tab.customerId));
+    .where(eq(customers.id, guest.id));
   if (subscription) {
-    await saveGuestSubscription(tab.customerId, tab.table.venueId, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth);
+    await saveGuestSubscription(guest.id, tab.table.venueId, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth);
   }
-  return { guestToken: signGuestToken(tab.customerId), name: tab.customer.name, invitesOptIn: optIn };
+  return { guestToken: signGuestToken(guest.id), name: guest.name, invitesOptIn: optIn };
 }
 
 export async function getGuest(customerId: string) {

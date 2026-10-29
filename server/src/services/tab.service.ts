@@ -1,5 +1,6 @@
 import { db } from '../lib/db';
-import { tabs, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff, customers } from '../models/schema';
+import { tabs, tabMembers, qrStickers, tableAssignments, orders, orderItems, staffPoints, tables, venues, staff, customers } from '../models/schema';
+import { randomBytes } from 'crypto';
 import { eq, and, or, like, inArray, desc } from 'drizzle-orm';
 import { getTableByQrCode } from './qr.service';
 import { planStatus, venueAllows } from './plan.service';
@@ -48,6 +49,41 @@ async function findUnsettledTab(tableId: string) {
 type UnsettledTab = NonNullable<Awaited<ReturnType<typeof findUnsettledTab>>>;
 export type TabChoice = 'join' | 'new';
 
+// How a guest is named to their friends: their first name, or the end of their number.
+const guestLabel = (c: { name: string | null; phone: string }) =>
+  c.name?.trim().split(' ')[0] || `…${c.phone.replace(/\D/g, '').slice(-3)}`;
+
+// Easy to read out and type: no 0/O or 1/I.
+const JOIN_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function newJoinCode() {
+  const bytes = randomBytes(8);
+  return Array.from(bytes, (b) => JOIN_ALPHABET[b % JOIN_ALPHABET.length]).join('');
+}
+
+/** "Add a friend": the code (and the link inside the QR) for this bill. */
+export async function getJoinCode(tabId: string) {
+  const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId) });
+  if (!tab || tab.status === 'closed') throw new Error('This bill is closed');
+  const sticker = await db.query.qrStickers.findFirst({ where: eq(qrStickers.tableId, tab.tableId) });
+  if (!sticker) throw new Error("This table isn't set up in Skuzi yet");
+  let code = tab.joinCode;
+  if (!code) {
+    code = newJoinCode();
+    await db.update(tabs).set({ joinCode: code }).where(eq(tabs.id, tabId));
+  }
+  return { code, qrCode: sticker.code };
+}
+
+/** What a friend sees after scanning the code, before joining. */
+export async function previewJoin(code: string) {
+  const tab = await db.query.tabs.findFirst({
+    where: and(eq(tabs.joinCode, code.trim().toUpperCase()), inArray(tabs.status, ['open', 'bill_requested', 'abandoned'])),
+    with: { table: { with: { venue: true } }, customer: true },
+  });
+  if (!tab) return null;
+  return { tableLabel: tab.table.label, venueName: tab.table.venue.name, hostName: guestLabel(tab.customer) };
+}
+
 const tabTotal = (t: UnsettledTab) =>
   t.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.unitPriceRwf * i.quantity, 0), 0);
 
@@ -60,13 +96,13 @@ async function revive(tab: UnsettledTab) {
   return tab;
 }
 
-// A new group chose their own bill while an older one is still unpaid on the
-// same table: the waiter and owner hear about it so it gets settled.
+// A new bill started on a table where another one is still unpaid: the waiter
+// and owner hear about it so the older one gets settled.
 async function warnPreviousBill(venueId: string, tableId: string, tableLabel: string, old: UnsettledTab) {
   const total = tabTotal(old);
   const msg = {
-    title: `⚠️ ${tableLabel}: the last bill is still open`,
-    body: `New guests sat down. The previous bill (${total.toLocaleString('en-US')} RWF) hasn't been paid yet: collect it or close it.`,
+    title: `⚠️ ${tableLabel} now has 2 open bills`,
+    body: `A new phone started its own bill. The other bill (${total.toLocaleString('en-US')} RWF) is still open: collect it or close it.`,
   };
   await notifyTable(venueId, tableId, old.staffId, msg, msg).catch(() => {});
 }
@@ -105,24 +141,43 @@ async function afterNewTab(venueId: string, tableId: string, tableLabel: string,
   await onGuestSeated(venueId, tableId, customerId, tableLabel).catch((err) => console.error('[booking] seated', err.message));
 }
 
-export async function openTab(qrCode: string, phone: string, name?: string, choice?: TabChoice) {
+/**
+ * A guest scanned the table. A new phone ALWAYS gets its own bill: no joining
+ * by time, by phone number or by tapping "I'm with them". The only way onto
+ * someone's bill is the code their friend shows on their phone ("Add a
+ * friend"), which you can only scan sitting next to them.
+ */
+export async function openTab(qrCode: string, phone: string, name?: string, joinCode?: string) {
   const table = await getTableByQrCode(qrCode);
   if (!table) throw new Error("This table isn't set up in Skuzi yet. Please ask a waiter.");
   if (!table.venue) throw new Error('Venue not found');
 
-  const unsettled = await findUnsettledTab(table.id);
-
   const customer = await findOrCreateCustomer(phone, name);
 
-  // Someone else's bill with orders on it: never join it without asking. The
-  // guest is shown only when it was opened (nothing on it, no tab id), and
-  // picks "I'm with them" or "We just sat down".
-  const theirs = unsettled && unsettled.customerId !== customer.id && unsettled.orders.length > 0;
-  if (theirs && !choice) {
-    return { needsChoice: true as const, openedAt: unsettled.openedAt, table: { id: table.id, label: table.label } };
+  let existingTab: UnsettledTab | null = null;
+  if (joinCode) {
+    const found = await db.query.tabs.findFirst({
+      where: and(eq(tabs.joinCode, joinCode.trim().toUpperCase()), inArray(tabs.status, ['open', 'bill_requested', 'abandoned'])),
+      with: { orders: { with: { items: { with: { menuItem: true } } } } },
+    });
+    if (!found || found.tableId !== table.id) throw new Error('This code has expired. Ask your friend to show it again.');
+    existingTab = await revive(found);
+    const added = await db.insert(tabMembers).values({ tabId: found.id, customerId: customer.id }).onConflictDoNothing().returning();
+    if (added.length > 0) {
+      broadcastToVenue(table.venue.id, {
+        type: 'bill_joined',
+        payload: { tabId: found.id, name: guestLabel(customer) },
+        venueId: table.venue.id,
+        tableId: table.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } else {
+    // Another bill is still open on this table (friends who didn't use the
+    // code, or a group that left unpaid): it stays for the waiter to settle.
+    const other = await findUnsettledTab(table.id);
+    if (other && other.orders.length > 0) await warnPreviousBill(table.venue.id, table.id, table.label, other);
   }
-  const existingTab = unsettled && (!theirs || choice === 'join') ? await revive(unsettled) : null;
-  if (theirs && choice === 'new') await warnPreviousBill(table.venue.id, table.id, table.label, unsettled);
 
   if (existingTab) {
     // A friend joining the table may be the one the campaign brought.
@@ -158,6 +213,7 @@ export async function openTab(qrCode: string, phone: string, name?: string, choi
       status: 'open',
     })
     .returning();
+  await db.insert(tabMembers).values({ tabId: tab.id, customerId: customer.id }).onConflictDoNothing();
 
   announceTabOpened(table.venue.id, tab, table.label);
   await afterNewTab(table.venue.id, table.id, table.label, customer.id, tab.id);
