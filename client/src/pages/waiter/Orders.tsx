@@ -118,12 +118,14 @@ interface MyPoints {
 
 // Tips go from the guest's MoMo straight to this number. Off until the waiter
 // turns them on, so their number is only ever shown by their choice.
-function TipsSetup({ token, phone, current, onSaved, onDismiss }: {
+function TipsSetup({ token, phone, current, onSaved, onDismiss, title, text }: {
   token: string;
   phone: string;
   current: string | null;
   onSaved: (tipMomo: string | null) => void;
   onDismiss?: () => void;
+  title?: string;
+  text?: string;
 }) {
   const [number, setNumber] = useState(current ?? phone);
   const [saving, setSaving] = useState(false);
@@ -150,9 +152,9 @@ function TipsSetup({ token, phone, current, onSaved, onDismiss }: {
     <div className="rounded-[22px] bg-white dark:bg-gray-800 p-4 ring-1 ring-green-500/30">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[17px] font-bold text-gray-900 dark:text-white">💸 Get tips on your MoMo</p>
+          <p className="text-[17px] font-bold text-gray-900 dark:text-white">{title ?? "💸 Get tips on your MoMo"}</p>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            Guests see a <b>Tip</b> button with your name on their bill. The money goes straight to you.
+            {text ?? <>Guests see a <b>Tip</b> button with your name on their bill. The money goes straight to you.</>}
           </p>
         </div>
         {onDismiss && (
@@ -253,6 +255,8 @@ export default function WaiterOrders() {
   const [tipMomo, setTipMomo] = useState<string | null>(null);
   const [myPhone, setMyPhone] = useState("");
   const [tipsLoaded, setTipsLoaded] = useState(false);
+  // Tips switched on by themselves just now: tell the waiter, with their number.
+  const [tipsJustOn, setTipsJustOn] = useState(false);
   const [tipsDismissed, setTipsDismissed] = useState(() => sessionStorage.getItem("skuzi_tips_later") === "1");
   const [tipCards, setTipCards] = useState<{ id: string; tableLabel: string; amountRwf: number }[]>([]);
   // The owner hasn't paid the Skuzi package: waiters hear it from guests first.
@@ -835,6 +839,7 @@ export default function WaiterOrders() {
         if (d.success) {
           setPlanNotice(d.data.planNotice ?? null);
           setTipMomo(d.data.tipMomo ?? null);
+          if (d.data.tipsJustOn) setTipsJustOn(true);
           setMyPhone(d.data.phone ?? "");
           setTipsLoaded(true);
         }
@@ -1190,6 +1195,18 @@ export default function WaiterOrders() {
               </button>
             </div>
           ))}
+
+          {tipsJustOn && tipMomo && staffToken && (
+            <TipsSetup
+              token={staffToken}
+              phone={myPhone}
+              current={tipMomo}
+              title="💸 Tips are on"
+              text={`Guests can tip you straight to your MoMo (${tipMomo}). Change the number, or turn tips off.`}
+              onSaved={(t) => { setTipMomo(t); setTipsJustOn(false); }}
+              onDismiss={() => setTipsJustOn(false)}
+            />
+          )}
 
           {tipsLoaded && !tipMomo && !tipsDismissed && staffToken && (
             <TipsSetup

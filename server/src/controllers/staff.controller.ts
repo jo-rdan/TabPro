@@ -4,6 +4,7 @@ import { ApiResponse } from '@tabpro/shared';
 import { db } from '../lib/db';
 import { staff, venues } from '../models/schema';
 import { planStatus } from '../services/plan.service';
+import { tipsOnByDefault } from '../services/tips.service';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -203,6 +204,7 @@ export async function handleGetMe(req: Request, res: Response) {
   const planNotice = plan && (plan.state === 'grace' || plan.state === 'locked')
     ? { orderingPaused: plan.orderingPaused, pausesAt: plan.pausesAt }
     : null;
-  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, phone: me.phone, role: me.role, hasSmartphone: me.hasSmartphone, tipMomo: me.tipMomo, planNotice } };
+  const tipsJustOn = await tipsOnByDefault(me);
+  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, phone: me.phone, role: me.role, hasSmartphone: me.hasSmartphone, tipMomo: me.tipMomo || null, tipsJustOn, planNotice } };
   res.json(body);
 }

@@ -87,7 +87,7 @@ export async function waiterCard(tabId: string) {
     fastService: (me?.fastWeek ?? 0) >= 5,
     // Only once a few guests have rated, so one bad night doesn't stick.
     rating: n >= 3 ? { avg: Math.round((rated[0].avg ?? 0) * 10) / 10, count: n } : null,
-    tipMomo: member.tipMomo,
+    tipMomo: member.tipMomo || null,
   };
 }
 
@@ -124,10 +124,28 @@ export async function recordTip(tabId: string, rawAmount: unknown) {
   return { id: tip.id, amountRwf, name: member.name.split(' ')[0] };
 }
 
-/** The waiter turns tips on (with the MoMo number guests send to) or off. */
+/**
+ * The waiter turns tips on (with the MoMo number guests send to) or off.
+ * Stored as: a number = on, '' = turned off by the waiter, null = not decided
+ * yet (tips switch on by themselves the first time they open the app).
+ */
 export async function setTipMomo(staffId: string, raw: unknown) {
-  const tipMomo = raw === null || raw === '' ? null : normaliseMomo(raw);
+  const tipMomo = raw === null || raw === '' ? '' : normaliseMomo(raw);
   const [m] = await db.update(staff).set({ tipMomo }).where(eq(staff.id, staffId)).returning();
   if (!m) throw new Error('Staff not found');
-  return { tipMomo: m.tipMomo };
+  return { tipMomo: m.tipMomo || null };
+}
+
+/**
+ * Tips are on by default: the first time a waiter opens their app, their own
+ * number becomes their tip number, and the app tells them right away (so they
+ * can change it or turn it off). Returns true when it was just switched on.
+ */
+export async function tipsOnByDefault(member: typeof staff.$inferSelect) {
+  if (member.tipMomo !== null || member.role === 'kitchen' || !member.isActive) return false;
+  let phone: string;
+  try { phone = normaliseMomo(member.phone); } catch { return false; }
+  await db.update(staff).set({ tipMomo: phone }).where(eq(staff.id, member.id));
+  member.tipMomo = phone;
+  return true;
 }

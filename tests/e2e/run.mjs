@@ -1069,9 +1069,20 @@ console.log('\n── Waiter tips');
   r = await call('POST', '/tabs/open', { qrCode: tCode, phone: phone() });
   const tTab = r.json?.data?.tab?.id;
   r = await call('GET', `/tabs/${tTab}/waiter`);
-  check('The guest sees who serves them; tips are off until the waiter turns them on', r.json?.data?.name === 'Alice' && r.json?.data?.tipMomo === null, JSON.stringify(r.json?.data));
-  r = await call('POST', `/tabs/${tTab}/tip`, { amountRwf: 1000 });
-  check('No tip button while tips are off', r.status === 400, r.json?.error);
+  check('Tips are on by default once the waiter has opened the app (their own number)', r.json?.data?.name === 'Alice' && r.json?.data?.tipMomo === waiterPhone, JSON.stringify(r.json?.data));
+  { // A brand-new waiter: tips switch on the first time they open the app, and they're told
+    const tinaPhone = phone();
+    const tina = await q1(`insert into staff (venue_id,name,phone,role) values ($1,'Tina',$2,'waiter') returning id`, [venueId, tinaPhone]);
+    const tinaTok = jwt.sign({ staffId: tina.id, venueId }, JWT_SECRET, { expiresIn: '1d' });
+    r = await call('GET', '/staff/me', null, tinaTok);
+    check('New waiter opens the app: tips are on with their number, and they\'re told', r.json?.data?.tipsJustOn === true && r.json?.data?.tipMomo === tinaPhone, JSON.stringify(r.json?.data));
+    r = await call('GET', '/staff/me', null, tinaTok);
+    check('…told only once', r.json?.data?.tipsJustOn === false && r.json?.data?.tipMomo === tinaPhone);
+    await call('PATCH', '/staff/me/tips', { tipMomo: null }, tinaTok);
+    r = await call('GET', '/staff/me', null, tinaTok);
+    check('A waiter who turns tips off stays off (not switched back on)', r.json?.data?.tipMomo === null && r.json?.data?.tipsJustOn === false);
+    await pg.query('update staff set is_active=false where id=$1', [tina.id]);
+  }
   r = await call('PATCH', '/staff/me/tips', { tipMomo: '12345' }, staffTok);
   check('A tip number must be a Rwandan MoMo number', r.status === 400, r.json?.error);
   r = await call('PATCH', '/staff/me/tips', { tipMomo: '+250 788 111 222' }, staffTok);
@@ -1110,6 +1121,8 @@ console.log('\n── Waiter tips');
   check('No tips on a bill closed hours ago', r.status === 400);
   r = await call('PATCH', '/staff/me/tips', { tipMomo: null }, staffTok);
   check('Waiter can turn tips off', r.status === 200 && r.json?.data?.tipMomo === null);
+  r = await call('GET', `/tabs/${tTab}/waiter`);
+  check('…then guests see no tip number', r.json?.data?.tipMomo === null);
 }
 
 // ── Packages and paying the venue's own MoMo Pay code ───────────────────────

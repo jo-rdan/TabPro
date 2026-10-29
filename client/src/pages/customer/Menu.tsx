@@ -1143,9 +1143,6 @@ export default function CustomerMenu() {
               </p>
             </div>
           )}
-          {/* Who served them, their badges, and a tip straight to their MoMo */}
-          {tabId && <WaiterTipCard tabId={tabId} />}
-          {tabId && tabStatus !== "closed" && <AddFriendButton tabId={tabId} className="mb-4 w-full" />}
           {/* Mobile Money payment flow (pawaPay) */}
           {/* Pay the venue's own MoMo Pay code: 100% to the venue, Skuzi never
               holds the money. The waiter checks their MoMo and taps Paid. */}
@@ -1153,11 +1150,11 @@ export default function CustomerMenu() {
             <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F0763A]">Pay with MoMo</p>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                Send <b className="text-gray-900 dark:text-white">{fmt(grandTotal)}</b> to <b className="text-gray-900 dark:text-white">{venueName}</b>. The money goes straight to them.
+                Send <b className="text-gray-900 dark:text-white">{fmt(grandTotal)}</b> to the restaurant, <b className="text-gray-900 dark:text-white">{venueName}</b>. The money goes straight to them.
               </p>
               <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 py-3 dark:bg-gray-800">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">MoMo Pay code</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{venueName}'s MoMo Pay code</p>
                   <p className="font-display text-3xl font-black tracking-[0.12em] text-gray-900 dark:text-white tabular-nums">{momoPayCode}</p>
                 </div>
                 <button
@@ -1211,6 +1208,12 @@ export default function CustomerMenu() {
               </p>
             </div>
           )}
+
+          {/* After paying the restaurant: thank the waiter. Only shown here when
+              they take tips, so the restaurant's code above is never mistaken
+              for the waiter's. */}
+          {payStep === "idle" && tabId && <div className="mt-4"><WaiterTipCard tabId={tabId} onlyWithTips /></div>}
+          {payStep === "idle" && tabId && tabStatus !== "closed" && <AddFriendButton tabId={tabId} className="mb-4 w-full" />}
 
           {payStep === "entering_phone" && (
             <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
