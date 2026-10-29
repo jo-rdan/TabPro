@@ -8,8 +8,8 @@ const openTabSchema = z.object({
   qrCode: z.string().min(1),
   phone: z.string().min(9).max(15),
   name: z.string().max(100).optional(),
-  // Answer to "Is this your group's bill?" when the table already has one.
-  choice: z.enum(['join', 'new']).optional(),
+  // "Add a friend": the code scanned from a friend's phone, to join their bill.
+  joinCode: z.string().min(4).max(20).optional(),
 });
 
 export async function handleOpenTab(req: Request, res: Response) {
@@ -19,9 +19,9 @@ export async function handleOpenTab(req: Request, res: Response) {
     res.status(400).json(body);
     return;
   }
-  const result = await openTab(parsed.data.qrCode, parsed.data.phone, parsed.data.name, parsed.data.choice);
+  const result = await openTab(parsed.data.qrCode, parsed.data.phone, parsed.data.name, parsed.data.joinCode);
   const body: ApiResponse = { success: true, data: result };
-  res.status('needsChoice' in result || result.isExisting ? 200 : 201).json(body);
+  res.status(result.isExisting ? 200 : 201).json(body);
 }
 
 export async function handlePreviewTable(req: Request, res: Response) {

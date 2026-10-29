@@ -10,6 +10,7 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -226,7 +227,19 @@ export const tabs = pgTable("tabs", {
   paidWith: text("paid_with"),
   // The guest tapped "I've paid" with MoMo; the waiter still confirms.
   paidClaimAt: timestamp("paid_claim_at"),
+  // "Add a friend": the code a guest shows on their phone so a friend next to
+  // them can join this bill. A bill is never joined any other way.
+  joinCode: text("join_code").unique(),
 });
+
+// Everyone on a bill: the guest who opened it and each friend who joined with
+// its code. Joined friends are guests too (campaign audience if they say yes).
+export const tabMembers = pgTable("tab_members", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tabId: uuid("tab_id").references(() => tabs.id, { onDelete: "cascade" }).notNull(),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }).notNull(),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (t) => ({ oneEach: unique("tab_members_tab_customer").on(t.tabId, t.customerId) }));
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
@@ -526,7 +539,13 @@ export const tabsRelations = relations(tabs, ({ one, many }) => ({
   }),
   staff: one(staff, { fields: [tabs.staffId], references: [staff.id] }),
   orders: many(orders),
+  members: many(tabMembers),
   rating: one(ratings, { fields: [tabs.id], references: [ratings.tabId] }),
+}));
+
+export const tabMembersRelations = relations(tabMembers, ({ one }) => ({
+  tab: one(tabs, { fields: [tabMembers.tabId], references: [tabs.id] }),
+  customer: one(customers, { fields: [tabMembers.customerId], references: [customers.id] }),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({

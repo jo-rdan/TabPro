@@ -25,6 +25,11 @@ export async function placeOrder(
   });
 
   if (!tab) throw new Error('Tab not found');
+  // 'abandoned' is how older versions marked a quiet bill; its phone can carry on.
+  if (tab.status === 'abandoned') {
+    await db.update(tabs).set({ status: 'open', lastSeenAt: new Date() }).where(eq(tabs.id, tabId));
+    tab.status = 'open';
+  }
   if (tab.status !== 'open') throw new Error('Tab is not open');
   // The venue's package went unpaid 10+ days: guests order through the waiter.
   if (source === 'customer' && planStatus(tab.table.venue).orderingPaused) {
@@ -100,6 +105,7 @@ export async function placeOrder(
     tabId,
     tableId: tab.tableId,
     tableLabel: tab.table.label,
+    tabOpenedAt: tab.openedAt,
     venueId: tab.table.venueId,
     source,
     status: 'pending',

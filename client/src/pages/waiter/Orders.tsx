@@ -52,6 +52,8 @@ interface LiveOrder {
   offer?: string | null;
   // Bar+ kitchen screen: where the food in this order is.
   kitchen?: "new" | "preparing" | "ready" | null;
+  // When this order's bill was opened: tells two bills on one table apart.
+  tabOpenedAt?: string;
 }
 
 interface FoodReady {
@@ -377,6 +379,7 @@ export default function WaiterOrders() {
             orderId: order.id,
             tabId: tab.id,
             tableLabel: tab.table.label,
+            tabOpenedAt: tab.openedAt,
             source: order.source,
             status: order.status,
             placedAt: order.placedAt,
@@ -461,6 +464,7 @@ export default function WaiterOrders() {
             total: p.total,
             offer: p.offer ?? null,
             kitchen: p.kitchen ?? null,
+            tabOpenedAt: p.tabOpenedAt,
           },
           ...prev,
         ]);
@@ -956,6 +960,29 @@ export default function WaiterOrders() {
   }
 
   const activeOrders = orders.filter((o) => o.status !== "delivered");
+  // A table with two open bills (two groups, or a friend who started their
+  // own): each card says when its bill started, so Paid goes on the right one.
+  const billsAtTable = new Map<string, Set<string>>();
+  for (const x of [...orders, ...billRequests]) {
+    if (!billsAtTable.has(x.tableLabel)) billsAtTable.set(x.tableLabel, new Set());
+    billsAtTable.get(x.tableLabel)!.add(x.tabId);
+  }
+  const openedAtOf = new Map(orders.filter((o) => o.tabOpenedAt).map((o) => [o.tabId, o.tabOpenedAt!]));
+  // Bill 1, Bill 2… in the order they were opened (two can start the same minute).
+  const billNumber = (tableLabel: string, tabId: string) =>
+    [...(billsAtTable.get(tableLabel) ?? [])]
+      .sort((a, b) => (openedAtOf.get(a) ?? "9").localeCompare(openedAtOf.get(b) ?? "9"))
+      .indexOf(tabId) + 1;
+  const sinceChip = (tableLabel: string, tabId: string) => {
+    if ((billsAtTable.get(tableLabel)?.size ?? 0) < 2) return null;
+    const at = openedAtOf.get(tabId);
+    return (
+      <span title="This table has more than one open bill" className="ml-1 align-middle text-[11px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 px-2 py-0.5 rounded-full">
+        Bill {billNumber(tableLabel, tabId)}
+        {at ? ` · ${new Date(at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Kigali" })}` : ""}
+      </span>
+    );
+  };
   const deliveredOrders = orders.filter((o) => o.status === "delivered");
 
   return (
@@ -1221,7 +1248,7 @@ export default function WaiterOrders() {
                   </div>
                   <div>
                     <p className="text-[17px] font-bold text-gray-900 dark:text-white">
-                      {bill.tableLabel}{" "}
+                      {bill.tableLabel}{sinceChip(bill.tableLabel, bill.tabId)}{" "}
                       <span className="ml-1 align-middle text-[11px] font-extrabold bg-green-500 text-white px-2 py-0.5 rounded-full">
                         {bill.paidMomo ? "Paid by MoMo?" : "Wants to pay"}
                       </span>
@@ -1282,6 +1309,7 @@ export default function WaiterOrders() {
                     <span className="text-[17px] font-bold text-gray-900 dark:text-white">
                       {order.tableLabel}
                     </span>
+                    {sinceChip(order.tableLabel, order.tabId)}
                     {order.offer && (
                       <span title="This guest came with a campaign offer. Give it when they pay with Skuzi." className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">
                         🎁 {order.offer.replace(/ when you pay with Skuzi$/, "")}

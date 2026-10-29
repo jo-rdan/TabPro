@@ -192,10 +192,33 @@ r = await call('GET', `/tabs/${tabId}/bill`);
 check('Bill total correct (6,800)', r.json?.data?.grandTotal === 6800, `got ${r.json?.data?.grandTotal}`);
 r = await call('POST', '/orders', { tabId, items: [{ menuItemId: item('Fanta').id, quantity: 1 }] });
 check('Ordering after bill → clear error, server stays up', r.status === 400 && (await alive()), r.json?.error);
-r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788333444' });
-check('Someone new scanning a table with an open bill is ASKED first (bill not shown)', r.json?.data?.needsChoice === true && !r.json?.data?.tab && !JSON.stringify(r.json).includes(tabId), JSON.stringify(r.json?.data));
 r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788333444', choice: 'join' });
-check('Friend who says "I\'m with them" joins the same tab', r.json?.data?.tab?.id === tabId && r.json?.data?.tab?.status === 'bill_requested');
+check('Another phone scanning the table gets its OWN bill, never this one', !!r.json?.data?.tab?.id && r.json?.data?.tab?.id !== tabId && !JSON.stringify(r.json).includes(tabId));
+await call('POST', `/tabs/${r.json?.data?.tab?.id}/close`, { paidWith: 'cash' }, staffTok);
+{ // "Add a friend": the only way onto Bob's bill is the code on Bob's phone
+  r = await call('POST', `/tabs/${tabId}/join-code`);
+  const joinCode = r.json?.data?.code;
+  check('Bob\'s phone gets a join code for the QR', r.status === 200 && /^[A-Z2-9]{8}$/.test(joinCode ?? '') && r.json?.data?.qrCode === codes[0], JSON.stringify(r.json?.data));
+  r = await call('POST', `/tabs/${tabId}/join-code`);
+  check('…the same code every time (until the bill closes)', r.json?.data?.code === joinCode);
+  r = await call('GET', `/tabs/join/${joinCode}`);
+  check('The friend sees whose bill and which table', r.json?.data?.hostName === 'Bob' && r.json?.data?.tableLabel === 'Table 1', JSON.stringify(r.json?.data));
+  r = await call('POST', '/tabs/open', { qrCode: codes[1], phone: '0788 300 300', joinCode });
+  check('The code only works at that table', r.status >= 400 && /expired/i.test(r.json?.error ?? ''), r.json?.error);
+  const b0 = bobWs.events.length;
+  r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788 300 300', joinCode: joinCode.toLowerCase() });
+  await sleep(400);
+  check('Friend with the code joins Bob\'s bill', r.json?.data?.tab?.id === tabId && r.json?.data?.isExisting === true, r.json?.error);
+  check('…Bob\'s phone hears that they joined', bobWs.events.slice(b0).some((e) => e.type === 'bill_joined' && e.payload?.tabId === tabId && e.payload?.name === '…300'));
+  const friend = await q1(`select id from customers where phone='0788300300'`);
+  check('…the friend is saved as a guest on the bill', !!(await q1('select 1 as ok from tab_members where tab_id=$1 and customer_id=$2', [tabId, friend?.id])));
+  r = await call('POST', '/guests/invites', { tabId, optIn: true, phone: '0788 300 300' });
+  const optIns = await q1(`select (select invites_opt_in from customers where phone='0788300300') friend, (select invites_opt_in from customers where phone='0788111222') bob`);
+  check('The friend\'s "yes" to invites is theirs, not Bob\'s', r.status === 200 && optIns.friend === true && optIns.bob === false, JSON.stringify(optIns));
+  r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788 300 301', joinCode: 'WRONGCODE' });
+  check('A made-up code doesn\'t work', r.status >= 400);
+  globalThis.bobJoinCode = joinCode;
+}
 
 r = await call('POST', `/tabs/${tabId}/close`);
 check('Anonymous CANNOT close a tab', r.status === 401, `status ${r.status}`);
@@ -342,16 +365,17 @@ check('Demo venue: no money paid out', pawa.state.payouts.length === payoutsBefo
 // ── 4. Locked phone ──────────────────────────────────────────────────────────
 console.log('\n── Locked phone');
 await pg.query(`update tabs set last_seen_at = now() - interval '11 minutes' where id=$1`, [t4]);
-const awayBefore = ownerWs.events.filter((e) => e.type === 'customer_away').length;
+const awayOf = () => ownerWs.events.filter((e) => e.type === 'customer_away' && e.payload?.tabId === t4).length;
+const awayBefore = awayOf();
 console.log('… waiting for the "stepped away" check (≤ 35s)');
 await sleep(35_000);
-const awayAlerts = ownerWs.events.filter((e) => e.type === 'customer_away').length - awayBefore;
+const awayAlerts = awayOf() - awayBefore;
 check('Quiet 5+ min → tab stays open, one alert', (await q1('select status from tabs where id=$1', [t4])).status === 'open' && awayAlerts === 1, `alerts=${awayAlerts}`);
 r = await call('POST', '/orders', { tabId: t4, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
 check('Customer can keep ordering after phone was locked', r.status === 201);
 await pg.query(`update tabs set status='abandoned' where id=$1`, [t4]);
-r = await call('POST', '/tabs/open', { qrCode: codes[1], phone: '0788999111' });
-check('Old "abandoned" tab recovered on re-scan', r.json?.data?.tab?.id === t4 && r.json?.data?.tab?.status === 'open');
+r = await call('POST', '/orders', { tabId: t4, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
+check('Old "abandoned" bill: its own phone can still order on it', r.status === 201 && (await q1('select status from tabs where id=$1', [t4])).status === 'open', r.json?.error);
 
 // ── Join the team (waiter scans the clock-in sticker) ────────────────────────
 console.log('\n── Join the team');
@@ -987,30 +1011,30 @@ console.log('\n── New group at a table with an unpaid bill');
   r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 001' });
   const oldTab = r.json?.data?.tab?.id;
   await call('POST', '/orders', { tabId: oldTab, items: [{ menuItemId: item('Primus').id, quantity: 2 }] });
-  r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 001' });
-  check('The same guest re-scanning gets their own bill back, no question', r.json?.data?.tab?.id === oldTab);
+  // The group leaves without the bill being closed. A new group sits down:
   r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 002' });
-  check('A stranger is asked, and sees nothing of the old bill', r.json?.data?.needsChoice === true && !r.json?.data?.tab && !r.json?.data?.totalRwf);
-  r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 002', choice: 'new' });
   const newTab = r.json?.data?.tab?.id;
-  check('"We just sat down" opens a NEW bill', !!newTab && newTab !== oldTab && r.json?.data?.isExisting === false);
+  check('A new group gets a NEW bill, with no question', !!newTab && newTab !== oldTab && r.json?.data?.isExisting === false && !JSON.stringify(r.json).includes(oldTab));
   await call('POST', '/orders', { tabId: newTab, items: [{ menuItemId: item('Fanta').id, quantity: 1 }] });
   const newBill = (await call('GET', `/tabs/${newTab}/bill`)).json?.data?.grandTotal;
   const oldBill = (await call('GET', `/tabs/${oldTab}/bill`)).json?.data?.grandTotal;
   check('…the new group pays only for what they ordered', newBill === 800 && oldBill === 3000, `new ${newBill}, old ${oldBill}`);
   check('…and the old bill is still there to be collected', (await q1('select status from tabs where id=$1', [oldTab])).status === 'open');
-  r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 003', choice: 'join' });
-  check('A friend of the new group joins the NEW bill (the newest one)', r.json?.data?.tab?.id === newTab);
+  r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 001' });
+  check('Typing a number never brings a bill back (numbers aren\'t secret)', r.json?.data?.tab?.id !== oldTab && r.json?.data?.tab?.id !== newTab);
+  const typedTab = r.json?.data?.tab?.id;
+  await call('POST', '/orders', { tabId: typedTab, items: [{ menuItemId: item('Fanta').id, quantity: 1 }] });
   r = await call('POST', '/tabs/staff-open', { tableId: gt.id }, staffTok);
-  check('Waiter adding an order is asked too, with the amount', r.json?.data?.needsChoice === true && r.json?.data?.totalRwf === 800, JSON.stringify(r.json?.data));
-  r = await call('POST', '/tabs/staff-open', { tableId: gt.id, choice: 'join' }, staffTok);
-  check('Waiter: "Same group" adds to the newest bill', r.json?.data?.tab?.id === newTab);
+  check('Waiter adding an order is asked which bill, with the amount', r.json?.data?.needsChoice === true && typeof r.json?.data?.totalRwf === 'number', JSON.stringify(r.json?.data));
   r = await call('POST', '/tabs/staff-open', { tableId: gt.id, choice: 'new' }, staffTok);
   const walkIn = r.json?.data?.tab?.id;
-  check('Waiter: "New group" opens a separate bill', !!walkIn && walkIn !== newTab && walkIn !== oldTab);
-  r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 004' });
-  check('A bill with nothing on it yet is joined without asking', r.json?.data?.tab?.id === walkIn);
-  for (const t of [oldTab, newTab, walkIn]) await call('POST', `/tabs/${t}/close`, { paidWith: 'cash' }, staffTok);
+  check('Waiter: "New group" opens a separate bill', !!walkIn && ![oldTab, newTab, typedTab].includes(walkIn));
+  r = await call('POST', `/tabs/${oldTab}/join-code`);
+  const oldCode = r.json?.data?.code;
+  await call('POST', `/tabs/${oldTab}/close`, { paidWith: 'cash' }, staffTok);
+  r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 009', joinCode: oldCode });
+  check('A code stops working once its bill is closed', r.status >= 400 && (await call('GET', `/tabs/join/${oldCode}`)).status === 404);
+  for (const t of [newTab, typedTab, walkIn]) await call('POST', `/tabs/${t}/close`, { paidWith: 'cash' }, staffTok);
 }
 
 // ── Waiter tips & badges (points only go up) ─────────────────────────────────

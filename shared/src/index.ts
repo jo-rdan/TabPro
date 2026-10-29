@@ -240,7 +240,8 @@ export type WsEventType =
   | "kitchen_update"
   | "food_ready"
   | "item_unavailable"
-  | "tip_sent";
+  | "tip_sent"
+  | "bill_joined";
 
 export interface WsEvent<T = unknown> {
   type: WsEventType;

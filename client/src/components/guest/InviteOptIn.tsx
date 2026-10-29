@@ -10,7 +10,7 @@ import { guestApi, setGuestToken, setGuestName, needsHomeScreen, pushSupported, 
 const DONE_KEY = "skuzi_invites_yes";
 const said = () => { try { return localStorage.getItem(DONE_KEY) === "1"; } catch { return false; } };
 
-export default function InviteOptIn({ tabId }: { tabId: string }) {
+export default function InviteOptIn({ tabId, phone }: { tabId: string; phone?: string }) {
   const navigate = useNavigate();
   const [state, setState] = useState<"ask" | "busy" | "done" | "hidden">(said() ? "done" : "ask");
   const [note, setNote] = useState("");
@@ -21,7 +21,8 @@ export default function InviteOptIn({ tabId }: { tabId: string }) {
     try {
       const iphone = needsHomeScreen();
       const sub = !iphone && pushSupported() ? await getDeviceSubscription() : null;
-      const r = await guestApi.post("/guests/invites", { tabId, optIn: true, subscription: sub });
+      // phone: so a friend who joined the bill says yes for themselves.
+      const r = await guestApi.post("/guests/invites", { tabId, optIn: true, subscription: sub, phone: phone || null });
       setGuestToken(r.data.data.guestToken);
       setGuestName(r.data.data.name);
       try { localStorage.setItem(DONE_KEY, "1"); } catch { /* ignore */ }
