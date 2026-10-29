@@ -12,7 +12,7 @@ import { PLANS, type PlanId } from '@tabpro/shared';
 const PLAN_LINE: Record<PlanId, string> = {
   basic: 'Ordering, the Skuzi! button, your dashboard. For small cafés',
   pro: '+ MoMo Pay from the bill, history, campaigns, stock, kitchen screen',
-  elite: '+ the AI event planner that brings you clients (coming soon)',
+  elite: '+ the AI event planner that brings you clients',
 };
 
 export default function VenueSetup() {

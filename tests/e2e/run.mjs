@@ -1125,6 +1125,35 @@ console.log('\n── Waiter tips');
   check('…then guests see no tip number', r.json?.data?.tipMomo === null);
 }
 
+// ── AI event planner (Max) ───────────────────────────────────────────────────
+console.log('\n── AI event planner');
+{
+  r = await call('POST', `/events/${venueId}/idea`, { avoid: [] }, ownerTok);
+  const idea = r.json?.data?.idea;
+  const daysAhead = idea ? (new Date(idea.eventAt) - Date.now()) / 864e5 : -1;
+  check('Max (trial): the planner suggests an event for the quiet night', r.status === 200 && !!idea?.name && !!idea?.offer && !!idea?.caption && daysAhead > 1.5 && daysAhead < 10, JSON.stringify(idea));
+  check('…built from the venue\'s own menu (no AI key here: built-in ideas)', idea?.source === 'rules' && (r.json?.data?.insights?.topDrink || r.json?.data?.insights?.topFood));
+  r = await call('POST', `/events/${venueId}/idea`, { avoid: [idea?.name] }, ownerTok);
+  check('"Another idea" gives a different one', r.status === 200 && r.json?.data?.idea?.name !== idea?.name, r.json?.data?.idea?.name);
+  r = await call('PUT', `/events/${venueId}/brand`, { vibe: 'sports', photos: ['https://res.cloudinary.com/demo/image/upload/sample.jpg'] }, ownerTok);
+  check('Owner sets the posters\' vibe and photos', r.status === 200 && r.json?.data?.vibe === 'sports' && r.json?.data?.photos?.length === 1);
+  r = await call('PUT', `/events/${venueId}/brand`, { vibe: 'disco' }, ownerTok);
+  check('…only known vibes', r.status === 400);
+  await pg.query('delete from campaigns where venue_id=$1', [venueId]);
+  r = await call('POST', `/events/${venueId}/approve`, { idea }, ownerTok);
+  const c = r.json?.data?.campaignId && await q1('select title, event_at, status, send_at from campaigns where id=$1', [r.json.data.campaignId]);
+  check('Approve: it becomes a campaign for that date, sent the day before', r.status === 200 && c?.title === idea.name && c?.status === 'scheduled' && new Date(c.send_at + 'Z') < new Date(c.event_at + 'Z'), JSON.stringify(c ?? r.json));
+  r = await call('GET', `/events/${venueId}`, null, ownerTok);
+  check('The event shows in the venue\'s list', (r.json?.data?.events ?? []).some((e) => e.name === idea.name));
+  r = await call('POST', `/events/${venueId}/idea`, {}, rivalTokEarly);
+  check('Another owner cannot use my planner', r.status === 403, `status ${r.status}`);
+  await pg.query("update venues set plan='pro', trial_ends_at = now() - interval '1 day', paid_until = now() + interval '20 days' where id=$1", [venueId]);
+  r = await call('POST', `/events/${venueId}/idea`, {}, ownerTok);
+  check('Paid Pro: the planner is part of Max', r.status === 403 && /Max/.test(r.json?.error ?? ''), r.json?.error);
+  await pg.query("update venues set plan='elite', trial_ends_at = now() + interval '30 days', paid_until = null where id=$1", [venueId]);
+  await pg.query('delete from campaigns where venue_id=$1', [venueId]);
+}
+
 // ── Packages and paying the venue's own MoMo Pay code ───────────────────────
 console.log('\n── Packages & direct MoMo');
 {

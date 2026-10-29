@@ -101,6 +101,10 @@ export const venues = pgTable("venues", {
   // The last package reminder sent to the owner ("2026-11-20:soon", ":due",
   // ":locked", ":paused"), so each one goes out once.
   planNotice: text("plan_notice"),
+  // For the AI event planner's posters: the venue's vibe ("lounge",
+  // "sports", "family", "chill", "club") and up to 5 photo URLs of the place.
+  vibe: text("vibe"),
+  photos: jsonb("photos").$type<string[]>().default([]).notNull(),
 });
 
 // Every time an owner agrees to the venue terms: the permanent record.

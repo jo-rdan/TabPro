@@ -19,6 +19,7 @@ import {
   Gem,
   Lock,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
@@ -44,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   ...(BOOKINGS_ENABLED ? [{ label: "Bookings", href: "/bookings", icon: CalendarDays, feature: "bookings" as PlanFeature }] : []),
   { label: "Menu", href: "/menu", icon: UtensilsCrossed },
   { label: "Stock", href: "/stock", icon: Package, feature: "stock" as PlanFeature },
+  { label: "Events", href: "/events", icon: Sparkles, feature: "events" as PlanFeature },
   { label: "Campaigns", href: "/campaigns", icon: Megaphone, feature: "campaigns" as PlanFeature },
   { label: "Staff", href: "/staff", icon: Users },
   { label: "History", href: "/history", icon: History, feature: "history" as PlanFeature },

@@ -239,6 +239,13 @@
       "when": 1793266313957,
       "tag": "0033_skuzi_bill_join_code",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793314155947,
+      "tag": "0034_skuzi_event_planner",
+      "breakpoints": true
     }
   ]
 }
