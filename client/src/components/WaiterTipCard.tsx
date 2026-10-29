@@ -17,7 +17,8 @@ const AMOUNTS = [500, 1000, 2000];
 const fmt = (n: number) => `${n.toLocaleString("en-US")} RWF`;
 const spaced = (p: string) => p.replace(/^(\d{4})(\d{3})(\d{3})$/, "$1 $2 $3");
 
-export default function WaiterTipCard({ tabId }: { tabId: string }) {
+// onlyWithTips: on the bill, show nothing unless the waiter takes tips.
+export default function WaiterTipCard({ tabId, onlyWithTips = false }: { tabId: string; onlyWithTips?: boolean }) {
   const doneKey = `skuzi_tipped_${tabId}`;
   const [waiter, setWaiter] = useState<Waiter | null>(null);
   const [amount, setAmount] = useState<number | null>(1000);
@@ -40,7 +41,7 @@ export default function WaiterTipCard({ tabId }: { tabId: string }) {
       .catch(() => {});
   }, [tabId]);
 
-  if (!waiter) return null;
+  if (!waiter || (onlyWithTips && !waiter.tipMomo)) return null;
   const tip = amount ?? (Number(other.replace(/\D/g, "")) || 0);
   const valid = tip >= 100 && tip <= 100000;
 
@@ -68,7 +69,7 @@ export default function WaiterTipCard({ tabId }: { tabId: string }) {
 
   return (
     <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F0763A]">Served by</p>
+      <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F0763A]">Thank your waiter</p>
       <div className="mt-2 flex items-center gap-3">
         <div className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-brand-500 text-xl font-black text-white">
           {waiter.name.charAt(0).toUpperCase()}
