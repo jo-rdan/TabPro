@@ -92,19 +92,21 @@ export async function chooseOwnPlan(venueId: string, raw: unknown) {
 
 // ─── Paying with MoMo ─────────────────────────────────────────────────────────
 
-/** Asks the owner's phone for the package price (one month). */
-export async function startPlanPayment(venueId: string, input: { plan?: unknown; phone?: unknown }) {
+/** Asks the owner's phone for the package price: one month, or a year of Max at 20% off. */
+export async function startPlanPayment(venueId: string, input: { plan?: unknown; phone?: unknown; period?: unknown }) {
   const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
   if (!venue) throw new Error('Venue not found');
   const plan = (input.plan ?? venue.plan) as PlanId;
   if (!(plan in PLANS)) throw new Error('Pick Starter, Pro or Bar+');
   if (typeof input.phone !== 'string' || !input.phone.trim()) throw new Error('Enter the MoMo number to pay from');
-  const amountRwf = PLANS[plan].priceRwf;
+  const yearly = input.period === 'year';
+  if (yearly && !PLANS[plan].yearlyRwf) throw new Error('Only Max can be paid for a year');
+  const amountRwf = yearly ? PLANS[plan].yearlyRwf! : PLANS[plan].priceRwf;
   const depositId = uuidv4();
 
   if (venue.isDemo) {
     await db.insert(momoPayments).values({ venueId, type: 'subscription', plan, referenceId: depositId, phone: input.phone, amountRwf, status: 'pending' });
-    return { depositId, amountRwf, plan };
+    return { depositId, amountRwf, plan, period: yearly ? 'year' : 'month' };
   }
   if (!isPawapayConfigured()) throw new Error('MoMo payments are not available right now. Try again later.');
 
@@ -121,7 +123,7 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
       phoneNumber: payer.phoneNumber,
       provider: payer.provider,
       amountRwf,
-      customerMessage: `Skuzi ${PLANS[plan].name.replace(/[^A-Za-z0-9 ]/g, '')} package`.slice(0, 22),
+      customerMessage: `Skuzi ${PLANS[plan].name.replace(/[^A-Za-z0-9 ]/g, '')} ${yearly ? 'year' : 'month'}`.slice(0, 22),
       metadata: { venueId, plan, kind: 'package' },
     });
   } catch (err: any) {
@@ -133,8 +135,12 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
     console.error('[plan payment]', err?.message);
     throw new Error('MoMo payments are not available right now. Try again later.');
   }
-  return { depositId, amountRwf, plan };
+  return { depositId, amountRwf, plan, period: yearly ? 'year' : 'month' };
 }
+
+// A payment of the yearly price buys a year; any other buys a month.
+const daysPaidFor = (plan: PlanId | null, amountRwf: number) =>
+  plan && PLANS[plan]?.yearlyRwf === amountRwf ? 365 : 30;
 
 /**
  * Checks a package payment and, once MoMo confirms it, adds 30 days. Safe to
@@ -173,7 +179,7 @@ export async function settlePlanPayment(depositId: string) {
     // last paid month ends.
     const from = Math.max(Date.now(), v.trialEndsAt ? new Date(v.trialEndsAt).getTime() : 0, v.paidUntil ? new Date(v.paidUntil).getTime() : 0);
     const [after] = await tx.update(venues)
-      .set({ plan: p.plan ?? v.plan, paidUntil: new Date(from + 30 * DAY), planNotice: null })
+      .set({ plan: p.plan ?? v.plan, paidUntil: new Date(from + daysPaidFor(p.plan, p.amountRwf) * DAY), planNotice: null })
       .where(eq(venues.id, v.id)).returning();
     return after;
   });

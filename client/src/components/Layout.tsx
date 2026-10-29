@@ -78,7 +78,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/");
   // Features outside the venue's package stay in the menu with a lock (a quiet
   // upsell) and open the Plan page instead.
-  // In the free trial everything is open (effectivePlan = Bar+).
+  // In the free trial everything is open (effectivePlan = Max).
   const locked = (feature?: PlanFeature) => !!feature && !!venue && !planAllows(venue.planStatus?.effectivePlan ?? venue.plan, feature);
   // Unpaid 3+ days: a wall on every page but Plan (and the founder's Plans).
   const walled = venue?.planStatus?.state === "locked" && !["/subscription", "/plans"].includes(location.pathname);

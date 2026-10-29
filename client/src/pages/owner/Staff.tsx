@@ -377,7 +377,7 @@ export default function Staff() {
           </div>
           {newRole === "kitchen" && (
             <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
-              🔥 The chef: sees food orders on the kitchen screen and taps Ready. No tables. Part of Bar+.
+              🔥 The chef: sees food orders on the kitchen screen and taps Ready. No tables. Part of Pro.
             </p>
           )}
           {!newHasPhone && newRole !== "kitchen" && (
