@@ -21,6 +21,7 @@ import creatorRoutes from "./creator.routes";
 import stockRoutes from "./stock.routes";
 import planRoutes from "./plan.routes";
 import kitchenRoutes from "./kitchen.routes";
+import eventsRoutes from "./events.routes";
 
 const router = Router();
 
@@ -46,5 +47,6 @@ router.use("/creators", creatorRoutes);
 router.use("/stock", stockRoutes);
 router.use("/plans", planRoutes);
 router.use("/kitchen", kitchenRoutes);
+router.use("/events", eventsRoutes);
 
 export default router;
