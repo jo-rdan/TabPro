@@ -92,7 +92,7 @@ export async function chooseOwnPlan(venueId: string, raw: unknown) {
 
 // ─── Paying with MoMo ─────────────────────────────────────────────────────────
 
-/** Asks the owner's phone for the package price: one month, or a year of Max at 20% off. */
+/** Asks the owner's phone for the package price: one month, or a year at once (Go 5%, Pro 10%, Max 20% off). */
 export async function startPlanPayment(venueId: string, input: { plan?: unknown; phone?: unknown; period?: unknown }) {
   const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
   if (!venue) throw new Error('Venue not found');
@@ -100,7 +100,7 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
   if (!(plan in PLANS)) throw new Error('Pick Starter, Pro or Bar+');
   if (typeof input.phone !== 'string' || !input.phone.trim()) throw new Error('Enter the MoMo number to pay from');
   const yearly = input.period === 'year';
-  if (yearly && !PLANS[plan].yearlyRwf) throw new Error('Only Max can be paid for a year');
+  if (yearly && !PLANS[plan].yearlyRwf) throw new Error('This package can only be paid monthly');
   const amountRwf = yearly ? PLANS[plan].yearlyRwf! : PLANS[plan].priceRwf;
   const depositId = uuidv4();
 

@@ -18,7 +18,7 @@ const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-
 const INCLUDED: Record<PlanId, string[]> = {
   basic: ["Guests order from the table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Night report at 2am", "Unlimited tables and staff"],
   pro: ["Everything in Go", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", ...(BOOKINGS_ENABLED ? ["Bookings and your page on Explore"] : []), "Campaigns that bring guests back", "Bar stock and food stock", "Kitchen screen for the chef"],
-  elite: ["Everything in Pro", "AI event planner: finds the idea, makes the poster, sends it to your guests", "See how many clients each event brought", "Pay a year at once: 20% off"],
+  elite: ["Everything in Pro", "AI event planner: finds the idea, makes the poster, sends it to your guests", "See how many clients each event brought"],
 };
 
 const FEATURE_NAME: Record<PlanFeature, string> = {
@@ -71,7 +71,7 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
 function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onPaid: (s: Status) => void }) {
   const [phone, setPhone] = useState(() => localStorage.getItem("skuzi_pay_phone") ?? "");
   const [step, setStep] = useState<"form" | "waiting" | "done">("form");
-  // Max can be paid for a year at 20% off.
+  // Every package can be paid for a year at once, cheaper the bigger the package.
   const yearlyRwf = PLANS[plan].yearlyRwf;
   const [period, setPeriod] = useState<"month" | "year">("month");
   const price = period === "year" && yearlyRwf ? yearlyRwf : PLANS[plan].priceRwf;
@@ -134,7 +134,7 @@ function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onP
         </button>
       </div>
       {error && <p role="alert" className="mt-2 text-sm font-semibold text-red-200">{error}</p>}
-      <p className="mt-2 text-xs text-white/60">{period === "year" ? `A full year of ${PLANS[plan].name}, 20% off.` : `One month of ${PLANS[plan].name}.`} Paying early never loses days.</p>
+      <p className="mt-2 text-xs text-white/60">{period === "year" ? `A full year of ${PLANS[plan].name}, ${yearlyRwf ? Math.round((1 - yearlyRwf / (PLANS[plan].priceRwf * 12)) * 100) : 0}% off.` : `One month of ${PLANS[plan].name}.`} Paying early never loses days.</p>
     </div>
   );
 }

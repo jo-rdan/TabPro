@@ -26,7 +26,7 @@ export const TERMS_CLAUSES: { title: string; text: string }[] = [
   },
   {
     title: "Packages and payment",
-    text: "The venue chooses a monthly package: Go (25,000 RWF), Pro (50,000 RWF) or Max (100,000 RWF; or 960,000 RWF for a year paid at once). The first 2 weeks (Go) or month (Pro, Max) are free. The free trial includes every Max feature. After that the package is paid monthly in advance to VNT250 Ltd by Mobile Money, from the Plan page; the app reminds the venue before it is due. If a payment is 3 days late, the owner's dashboard locks until it is paid; if it is 10 days late, guests can no longer order from their phones (the menu stays visible and staff keep working). Everything comes back as soon as the payment goes through. Prices include no setup fee and no equipment.",
+    text: "The venue chooses a monthly package: Go (25,000 RWF), Pro (50,000 RWF) or Max (100,000 RWF). Each can also be paid for a year at once: Go 285,000 RWF, Pro 540,000 RWF, Max 960,000 RWF. The first 2 weeks (Go) or month (Pro, Max) are free. The free trial includes every Max feature. After that the package is paid monthly (or yearly) in advance to VNT250 Ltd by Mobile Money, from the Plan page; the app reminds the venue before it is due. If a payment is 3 days late, the owner's dashboard locks until it is paid; if it is 10 days late, guests can no longer order from their phones (the menu stays visible and staff keep working). Everything comes back as soon as the payment goes through. Prices include no setup fee and no equipment.",
   },
   {
     title: "Guests' payments",
