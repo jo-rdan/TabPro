@@ -269,9 +269,9 @@ export type PlanFeature = "history" | "bookings" | "campaigns" | "momo" | "stock
 // Go · Pro · Max (2026-10-30). The ids keep their old names (basic = Go,
 // pro = Pro, elite = Max) so existing venues and payments carry on.
 export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[]; yearlyRwf?: number }> = {
-  basic: { name: "Go", priceRwf: 25000, trialDays: 14, features: [] },
-  pro: { name: "Pro", priceRwf: 50000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"] },
-  // Max can also be paid for a year at 20% off.
+  // Every package can also be paid for a year at once: Go 5% off, Pro 10% off, Max 20% off.
+  basic: { name: "Go", priceRwf: 25000, trialDays: 14, features: [], yearlyRwf: 285000 },
+  pro: { name: "Pro", priceRwf: 50000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"], yearlyRwf: 540000 },
   elite: { name: "Max", priceRwf: 100000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], yearlyRwf: 960000 },
 };
 

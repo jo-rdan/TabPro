@@ -1235,9 +1235,15 @@ console.log('\n── Packages & direct MoMo');
   r = await call('GET', `/plans/${venueId}/pay/${declined}`, null, ownerTok);
   check('A declined payment says so and changes nothing', r.json?.data?.status === 'failed' && !!r.json?.data?.error && !/waiter/.test(r.json?.data?.error) && Math.abs((new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z') - Date.now()) / 864e5 - paidDays) < 0.01, r.json?.data?.error);
 
-  // Max for a year, 20% off
+  // A year at once: Go 5%, Pro 10%, Max 20% off
+  r = await call('POST', `/plans/${venueId}/pay`, { plan: 'basic', phone: '0788123456', period: 'year' }, ownerTok);
+  check('Go yearly: the phone is asked for 285,000 (5% off)', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '285000', r.json?.error);
+  pawa.state.deposits.get(r.json?.data?.depositId).status = 'FAILED';
+  await call('GET', `/plans/${venueId}/pay/${r.json?.data?.depositId}`, null, ownerTok);
   r = await call('POST', `/plans/${venueId}/pay`, { plan: 'pro', phone: '0788123456', period: 'year' }, ownerTok);
-  check('Only Max can be paid for a year', r.status === 400, r.json?.error);
+  check('Pro yearly: the phone is asked for 540,000 (10% off)', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '540000', r.json?.error);
+  pawa.state.deposits.get(r.json?.data?.depositId).status = 'FAILED';
+  await call('GET', `/plans/${venueId}/pay/${r.json?.data?.depositId}`, null, ownerTok);
   const beforeYear = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
   r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788123456', period: 'year' }, ownerTok);
   const ydep = r.json?.data?.depositId;
