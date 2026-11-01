@@ -1128,6 +1128,30 @@ console.log('\n── Waiter tips');
 // ── AI event planner (Max) ───────────────────────────────────────────────────
 console.log('\n── AI event planner');
 {
+  // Free trial: it opens after the venue's first 100 orders (or as soon as Max is paid).
+  // Hide the venue's real orders for a moment (nudges don't count), then add 99, then 1.
+  const real = (await pg.query("select o.id from orders o join tabs t on t.id=o.tab_id join tables tb on tb.id=t.table_id where tb.venue_id=$1 and not o.is_nudge", [venueId])).rows.map((x) => x.id);
+  await pg.query('update orders set is_nudge=true where id = any($1)', [real]);
+  r = await call('GET', `/events/${venueId}`, null, ownerTok);
+  check('Trial, no orders yet: the planner shows it is learning (0 / 100)', r.status === 200 && r.json?.data?.learning?.orders === 0 && r.json?.data?.learning?.needed === 100, JSON.stringify(r.json?.data?.learning));
+  r = await call('POST', `/events/${venueId}/idea`, { avoid: [] }, ownerTok);
+  check('…and gives no idea yet, saying why', r.status === 403 && /100 orders/.test(r.json?.error ?? ''), r.json?.error);
+  r = await call('POST', `/events/${venueId}/approve`, { idea: { name: 'x', caption: 'y', eventAt: new Date(Date.now() + 3 * 864e5).toISOString() } }, ownerTok);
+  check('…nor approves one', r.status === 403, `status ${r.status}`);
+  await pg.query("update venues set paid_until = now() + interval '20 days' where id=$1", [venueId]);
+  r = await call('GET', `/events/${venueId}`, null, ownerTok);
+  const paidOpen = r.json?.data?.learning === null;
+  r = await call('POST', `/events/${venueId}/idea`, { avoid: [] }, ownerTok);
+  check('Paid Max: the planner opens straight away, no orders needed', paidOpen && r.status === 200 && !!r.json?.data?.idea, r.json?.error);
+  await pg.query('update venues set paid_until = null where id=$1', [venueId]);
+  const fillTab = (await q1('select t.id from tabs t join tables tb on tb.id=t.table_id where tb.venue_id=$1 limit 1', [venueId])).id;
+  const filler = (await pg.query("insert into orders (tab_id, status) select $1, 'delivered' from generate_series(1, 99) returning id", [fillTab])).rows.map((x) => x.id);
+  r = await call('GET', `/events/${venueId}`, null, ownerTok);
+  check('Trial, 99 orders: still learning (99 / 100)', r.json?.data?.learning?.orders === 99, JSON.stringify(r.json?.data?.learning));
+  filler.push(...(await pg.query("insert into orders (tab_id, status) values ($1, 'delivered') returning id", [fillTab])).rows.map((x) => x.id));
+  r = await call('GET', `/events/${venueId}`, null, ownerTok);
+  check('Trial, 100 orders: the planner opens', r.json?.data?.learning === null, JSON.stringify(r.json?.data?.learning));
+
   r = await call('POST', `/events/${venueId}/idea`, { avoid: [] }, ownerTok);
   const idea = r.json?.data?.idea;
   const daysAhead = idea ? (new Date(idea.eventAt) - Date.now()) / 864e5 : -1;
@@ -1152,6 +1176,8 @@ console.log('\n── AI event planner');
   check('Paid Pro: the planner is part of Max', r.status === 403 && /Max/.test(r.json?.error ?? ''), r.json?.error);
   await pg.query("update venues set plan='elite', trial_ends_at = now() + interval '30 days', paid_until = null where id=$1", [venueId]);
   await pg.query('delete from campaigns where venue_id=$1', [venueId]);
+  await pg.query('delete from orders where id = any($1)', [filler]);
+  await pg.query('update orders set is_nudge=false where id = any($1)', [real]);
 }
 
 // ── Packages and paying the venue's own MoMo Pay code ───────────────────────
