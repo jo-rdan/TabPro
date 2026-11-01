@@ -2,8 +2,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import * as z from 'zod/v4';
 import { db } from '../lib/db';
-import { campaigns, menuItems, tables, tabs, venues } from '../models/schema';
-import { and, desc, eq, gte, inArray, isNotNull } from 'drizzle-orm';
+import { campaigns, menuItems, orders, tables, tabs, venues } from '../models/schema';
+import { and, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
+import { HttpError } from '../middleware/error.middleware';
+import { planStatus } from './plan.service';
 import { categoriesOf } from './kitchen.service';
 import { createCampaign } from './campaign.service';
 
@@ -226,8 +228,33 @@ async function aiIdea(ins: Insights, avoid: string[]): Promise<EventIdea | null>
   }
 }
 
+// On a free trial the planner opens after the venue's first 100 orders through
+// Skuzi: its ideas come from those numbers, and it gets the restaurant using
+// Skuzi every night. A venue that pays for Max gets it straight away.
+export const TRIAL_ORDERS_NEEDED = 100;
+
+/** Null when the planner is open; otherwise how far the trial venue has got. */
+export async function plannerProgress(venueId: string) {
+  const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+  if (!venue || planStatus(venue).state !== 'trial') return null;
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(orders)
+    .innerJoin(tabs, eq(orders.tabId, tabs.id))
+    .innerJoin(tables, eq(tabs.tableId, tables.id))
+    .where(and(eq(tables.venueId, venueId), eq(orders.isNudge, false)));
+  const n = row?.n ?? 0;
+  return n >= TRIAL_ORDERS_NEEDED ? null : { orders: n, needed: TRIAL_ORDERS_NEEDED };
+}
+
+async function mustBeOpen(venueId: string) {
+  const p = await plannerProgress(venueId);
+  if (p) throw new HttpError(403, `Your AI event planner opens after ${p.needed} orders through Skuzi (${p.orders} so far), or as soon as you pay for Max.`);
+}
+
 /** One idea for the venue's quiet night (AI first, built-in templates as backup). */
 export async function suggestEvent(venueId: string, avoid: unknown) {
+  await mustBeOpen(venueId);
   const ins = await venueInsights(venueId);
   const shown = Array.isArray(avoid) ? avoid.filter((x): x is string => typeof x === 'string').slice(0, 10) : [];
   const idea = (await aiIdea(ins, shown)) ?? ruleIdea(ins, shown.length);
@@ -240,6 +267,7 @@ export async function suggestEvent(venueId: string, avoid: unknown) {
  * Skuzi counts who came.
  */
 export async function approveEvent(venueId: string, raw: Partial<EventIdea>) {
+  await mustBeOpen(venueId);
   const name = String(raw.name ?? '').trim();
   const offer = String(raw.offer ?? '').trim();
   const caption = String(raw.caption ?? '').trim();

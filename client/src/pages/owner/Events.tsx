@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Download, ImagePlus, Sparkles, X } from "lucide-react";
 import Layout from "../../components/Layout";
 import api from "../../lib/api";
@@ -38,11 +39,13 @@ export default function Events() {
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState<Idea | null>(null);
   const [error, setError] = useState("");
+  // Free trial: the planner opens after the venue's first 100 orders (or once Max is paid).
+  const [learning, setLearning] = useState<{ orders: number; needed: number } | null>(null);
   const [posterReady, setPosterReady] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const { upload, uploading } = useCloudinaryUpload();
 
-  const load = () => venue && api.get(`/events/${venue.id}`).then((r) => { setBrand(r.data.data.brand); setEvents(r.data.data.events); }).catch((e) => setError(e?.response?.data?.error ?? "Couldn't load your events."));
+  const load = () => venue && api.get(`/events/${venue.id}`).then((r) => { setBrand(r.data.data.brand); setEvents(r.data.data.events); setLearning(r.data.data.learning ?? null); }).catch((e) => setError(e?.response?.data?.error ?? "Couldn't load your events."));
   useEffect(() => { load(); }, [venue?.id]);
 
   const saveBrand = async (change: Partial<Pick<Brand, "vibe" | "photos">>) => {
@@ -109,7 +112,19 @@ export default function Events() {
 
         {/* The idea */}
         <section className="mt-5 rounded-2xl bg-gray-900 p-5 text-white dark:bg-gray-800">
-          {!idea && !thinking && (
+          {learning && !idea && (
+            <>
+              <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#FFD966]"><Sparkles size={15} /> AI event planner</p>
+              <p className="mt-1 font-display text-2xl font-bold">Your AI is learning your restaurant</p>
+              <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuemin={0} aria-valuemax={learning.needed} aria-valuenow={learning.orders}>
+                <div className="h-full rounded-full bg-[#FFD966]" style={{ width: `${Math.max(3, Math.round((learning.orders / learning.needed) * 100))}%` }} />
+              </div>
+              <p className="mt-2 text-sm font-bold">{learning.orders} / {learning.needed} orders</p>
+              <p className="mt-2 text-sm text-white/75">Your first event idea, made from your own nights, is ready at {learning.needed} orders through Skuzi. Get your guests and waiters ordering on Skuzi every night.</p>
+              <Link to="/subscription" className="mt-4 block w-full rounded-xl bg-[#FFD966] py-3.5 text-center text-base font-extrabold text-gray-900">Open it now with Max</Link>
+            </>
+          )}
+          {!learning && !idea && !thinking && (
             <>
               <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#FFD966]"><Sparkles size={15} /> AI event planner</p>
               <p className="mt-1 font-display text-2xl font-bold">Fill your quiet night</p>
