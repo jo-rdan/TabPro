@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-11-02 UTC · weekly
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-02); no open PRs, no `idea` PRs.
+- Did: opened the weekly issue "Week of 2026-11-02" (what happened, plan, 2 ideas, 3 posts). No code changed, so no e2e run.
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach status; no replies on weekly issues). ops/README.md still describes the old 8% model.
+
 ## 2026-11-02 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-02); no open PRs. PR #88 (AI event planner opens after a free trial's first 100 orders; paid Max opens straight away) was merged 2026-11-01 and its Tests runs passed.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. No code changed, so no e2e run.
