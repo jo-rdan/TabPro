@@ -17,7 +17,7 @@ const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-
 
 const INCLUDED: Record<PlanId, string[]> = {
   basic: ["Guests order from the table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Night report at 2am", "Unlimited tables and staff"],
-  pro: ["Everything in Go", "Guests pay your MoMo Pay code from the bill", "History: every night, every bill", ...(BOOKINGS_ENABLED ? ["Bookings and your page on Explore"] : []), "Campaigns that bring guests back", "Bar stock and food stock", "Kitchen screen for the chef"],
+  pro: ["Everything in Go", "History: every night, every bill", ...(BOOKINGS_ENABLED ? ["Bookings and your page on Explore"] : []), "Campaigns that bring guests back", "Bar stock and food stock", "Food orders go straight to the chef's own phone"],
   elite: ["Everything in Pro", "AI event planner: finds the idea, makes the poster, sends it to your guests", "See how many clients each event brought"],
 };
 
