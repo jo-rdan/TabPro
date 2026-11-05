@@ -270,9 +270,9 @@ export type PlanFeature = "history" | "bookings" | "campaigns" | "momo" | "stock
 // pro = Pro, elite = Max) so existing venues and payments carry on.
 export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[]; yearlyRwf?: number }> = {
   // Every package can also be paid for a year at once: Go 5% off, Pro 10% off, Max 20% off.
-  basic: { name: "Go", priceRwf: 25000, trialDays: 14, features: [], yearlyRwf: 285000 },
-  pro: { name: "Pro", priceRwf: 50000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"], yearlyRwf: 540000 },
-  elite: { name: "Max", priceRwf: 100000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], yearlyRwf: 960000 },
+  basic: { name: "Go", priceRwf: 45000, trialDays: 14, features: [], yearlyRwf: 513000 },
+  pro: { name: "Pro", priceRwf: 75000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"], yearlyRwf: 810000 },
+  elite: { name: "Max", priceRwf: 150000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], yearlyRwf: 1440000 },
 };
 
 /** The cheapest package that includes a feature. */

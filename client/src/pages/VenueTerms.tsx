@@ -36,7 +36,7 @@ export default function VenueTerms() {
           <div className="flex flex-col gap-2 rounded-2xl bg-gray-100 dark:bg-[#3B2149] px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4">
             <span className="font-display text-3xl font-bold text-brand-500 whitespace-nowrap">100%</span>
             <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-              Guests pay <b className="text-gray-900 dark:text-white">your own MoMo Pay code</b> or cash, so every franc of your sales is yours: Skuzi takes nothing from your bills. You pay one monthly package: <b className="text-gray-900 dark:text-white">Starter 25,000</b>, <b className="text-gray-900 dark:text-white">Pro 45,000</b> or <b className="text-gray-900 dark:text-white">Bar+ 70,000 RWF</b>, after a free trial.
+              Guests pay <b className="text-gray-900 dark:text-white">your own MoMo Pay code</b> or cash, so every franc of your sales is yours: Skuzi takes nothing from your bills. You pay one monthly package: <b className="text-gray-900 dark:text-white">Go 45,000</b>, <b className="text-gray-900 dark:text-white">Pro 75,000</b> or <b className="text-gray-900 dark:text-white">Max 150,000 RWF</b>, after a free trial.
             </p>
           </div>
 
