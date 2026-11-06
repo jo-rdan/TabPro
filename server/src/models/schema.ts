@@ -295,6 +295,10 @@ export const menuItems = pgTable("menu_items", {
   stockTracked: boolean("stock_tracked").default(false).notNull(),
   stockQty: integer("stock_qty"),
   stockAlertAt: integer("stock_alert_at"),
+  // Bottles in one crate (beers, sodas). Set: stock is shown and warned about in
+  // crates ("3 crates left"); unset: in bottles (spirits, wine). The count
+  // itself is always kept in bottles.
+  crateSize: integer("crate_size"),
 });
 
 // Kitchen, in money: what the owner spends on food (market, butcher…), set

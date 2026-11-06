@@ -141,3 +141,36 @@ export async function extractMenuFromText(text: string): Promise<ExtractedItem[]
     throw new Error('Could not parse the extracted menu. Try a clearer file.');
   }
 }
+
+// ─── A photo of one crate (stock deliveries) ─────────────────────────────────
+export interface CrateReading {
+  bottles: number;
+  drink: string | null;
+  size: 'small' | 'medium' | 'big' | null;
+}
+
+const CRATE_PROMPT = `This is a photo of one crate of drinks at a bar in Rwanda. Return ONLY valid JSON, no other text:
+{"bottles": 24, "drink": "Primus", "size": "small"}
+
+Rules:
+- "bottles": how many bottles the crate holds when full: count the bottles AND the empty slots. Integer.
+- "drink": the brand on the bottles or the crate (e.g. Primus, Mützig, Skol, Heineken, Amstel, Virunga, Fanta, Coca-Cola). null if you can't tell.
+- "size": "small", "medium" or "big" bottles, judged from the bottles and the crate. null if you can't tell.
+- If there is no crate in the photo, return {"bottles": 0, "drink": null, "size": null}.`;
+
+export async function readCrateFromImage(base64Data: string, mimeType: string): Promise<CrateReading> {
+  if (!process.env.GEMINI_API_KEY) throw new Error('Reading crate photos is not switched on yet. Type the number of bottles instead.');
+  const text = await generate([{ inlineData: { mimeType: mimeType as any, data: base64Data } }, { text: CRATE_PROMPT }]);
+  try {
+    const raw = JSON.parse(text.replace(/```json|```/g, '').trim());
+    const bottles = Math.round(Number(raw?.bottles));
+    const size = ['small', 'medium', 'big'].includes(raw?.size) ? raw.size : null;
+    return {
+      bottles: Number.isFinite(bottles) && bottles > 0 && bottles <= 100 ? bottles : 0,
+      drink: typeof raw?.drink === 'string' && raw.drink.trim() ? raw.drink.trim().slice(0, 40) : null,
+      size,
+    };
+  } catch {
+    throw new Error("Couldn't read that photo. Try again with the whole crate in view, or type the number.");
+  }
+}

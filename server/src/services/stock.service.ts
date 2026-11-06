@@ -3,6 +3,7 @@ import { menuItems, stockMovements } from '../models/schema';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import { sendPushToOwner } from './push.service';
 import { broadcastToVenue } from '../lib/websocket';
+import { readCrateFromImage } from './menuExtract.service';
 
 // Stock for bars: an item the owner switched to "track stock" is counted down by
 // every order (guest or waiter), counted up by deliveries, and reset by a count,
@@ -11,7 +12,19 @@ import { broadcastToVenue } from '../lib/websocket';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export type StockAlert = { name: string; left: number };
+export type StockAlert = { name: string; left: number; crateSize: number | null };
+
+/** "3 crates", "3 crates + 4 bottles", "5 bottles": how staff talk about stock. */
+export function stockWords(qty: number, crateSize: number | null) {
+  const bottles = (n: number) => `${n} ${n === 1 ? 'bottle' : 'bottles'}`;
+  if (!crateSize || crateSize < 2) return bottles(qty);
+  if (qty <= 0) return '0 crates';
+  const crates = Math.floor(qty / crateSize);
+  const rest = qty % crateSize;
+  if (crates === 0) return bottles(rest);
+  const c = `${crates} ${crates === 1 ? 'crate' : 'crates'}`;
+  return rest ? `${c} + ${bottles(rest)}` : c;
+}
 
 /** Kigali business day: "tonight" starts at 05:00 local (03:00 UTC). */
 export function startOfBusinessDay(now = new Date()) {
@@ -47,7 +60,7 @@ export async function takeStockForOrder(
         isAvailable: sql`CASE WHEN ${menuItems.stockQty} - ${quantity} <= 0 THEN false ELSE ${menuItems.isAvailable} END`,
       })
       .where(and(eq(menuItems.id, menuItemId), eq(menuItems.stockTracked, true), gte(menuItems.stockQty, quantity)))
-      .returning({ qty: menuItems.stockQty, alertAt: menuItems.stockAlertAt });
+      .returning({ qty: menuItems.stockQty, alertAt: menuItems.stockAlertAt, crateSize: menuItems.crateSize });
     if (!row) {
       const item = await tx.query.menuItems.findFirst({ where: eq(menuItems.id, menuItemId) });
       const left = Math.max(0, item?.stockQty ?? 0);
@@ -56,7 +69,7 @@ export async function takeStockForOrder(
     const after = row.qty ?? 0;
     await tx.insert(stockMovements).values({ venueId, menuItemId, kind: 'sale', qtyChange: -quantity, qtyAfter: after, orderId });
     const before = after + quantity;
-    if (after === 0 || (row.alertAt != null && before > row.alertAt && after <= row.alertAt)) alerts.push({ name, left: after });
+    if (after === 0 || (row.alertAt != null && before > row.alertAt && after <= row.alertAt)) alerts.push({ name, left: after, crateSize: row.crateSize ?? null });
   }
   return alerts;
 }
@@ -66,8 +79,8 @@ export async function sendStockAlerts(venueId: string, alerts: StockAlert[]) {
   for (const a of alerts) {
     await sendPushToOwner(
       venueId,
-      a.left === 0 ? `🍺 ${a.name} is sold out` : `🍺 ${a.name}: ${a.left} left`,
-      a.left === 0 ? 'Guests can no longer order it. Add a delivery to bring it back.' : 'Time to order more.',
+      a.left === 0 ? `🍺 ${a.name} is sold out` : `🍺 ${a.name}: ${stockWords(a.left, a.crateSize)} left`,
+      a.left === 0 ? 'It shows as sold out on the menu. Add a delivery to bring it back.' : 'Time to order more.',
     ).catch(() => {});
   }
   if (alerts.length) {
@@ -93,7 +106,7 @@ export async function getStock(venueId: string) {
       const status = !i.stockTracked ? 'off' : qty <= 0 ? 'out' : i.stockAlertAt != null && qty <= i.stockAlertAt ? 'low' : 'ok';
       return {
         id: i.id, name: i.name, category: i.category, priceRwf: i.priceRwf,
-        tracked: i.stockTracked, qty, alertAt: i.stockAlertAt, soldTonight: soldBy.get(i.id) ?? 0, status,
+        tracked: i.stockTracked, qty, alertAt: i.stockAlertAt, crateSize: i.crateSize ?? null, soldTonight: soldBy.get(i.id) ?? 0, status,
       };
     })
     .sort((a, b) => Number(b.tracked) - Number(a.tracked) || a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
@@ -109,7 +122,7 @@ export async function getStock(venueId: string) {
 }
 
 /** Switch tracking on/off for an item, with its starting count and warning level. */
-export async function setTracking(menuItemId: string, input: { tracked: boolean; qty?: number; alertAt?: number | null }) {
+export async function setTracking(menuItemId: string, input: { tracked: boolean; qty?: number; alertAt?: number | null; crateSize?: number | null }) {
   const item = await db.query.menuItems.findFirst({ where: eq(menuItems.id, menuItemId) });
   if (!item) throw new Error('Menu item not found');
   if (!input.tracked) {
@@ -119,9 +132,10 @@ export async function setTracking(menuItemId: string, input: { tracked: boolean;
   }
   const qty = Math.max(0, Math.floor(input.qty ?? item.stockQty ?? 0));
   const alertAt = input.alertAt == null ? item.stockAlertAt : Math.max(0, Math.floor(input.alertAt));
+  const crateSize = input.crateSize === undefined ? item.crateSize : cleanCrateSize(input.crateSize);
   await db.transaction(async (tx) => {
     await tx.update(menuItems)
-      .set({ stockTracked: true, stockQty: qty, stockAlertAt: alertAt, isAvailable: qty > 0 })
+      .set({ stockTracked: true, stockQty: qty, stockAlertAt: alertAt, crateSize, isAvailable: qty > 0 })
       .where(eq(menuItems.id, menuItemId));
     if (!item.stockTracked || qty !== (item.stockQty ?? 0)) {
       await tx.insert(stockMovements).values({
@@ -129,6 +143,22 @@ export async function setTracking(menuItemId: string, input: { tracked: boolean;
       });
     }
   });
+}
+
+/** Bottles in a crate: 2 to 100, or none (counted in bottles). */
+export function cleanCrateSize(raw: unknown) {
+  if (raw == null || raw === '' || raw === 0) return null;
+  const n = Math.floor(Number(raw));
+  if (!Number.isFinite(n) || n < 2 || n > 100) throw new Error('A crate holds between 2 and 100 bottles');
+  return n;
+}
+
+/** Just the crate size (e.g. after reading a crate photo). */
+export async function setCrateSize(venueId: string, menuItemId: string, raw: unknown) {
+  const crateSize = cleanCrateSize(raw);
+  const [row] = await db.update(menuItems).set({ crateSize })
+    .where(and(eq(menuItems.id, menuItemId), eq(menuItems.venueId, venueId))).returning({ id: menuItems.id });
+  if (!row) throw new Error('Menu item not found');
 }
 
 /** A delivery arrived: add bottles; anything above 0 is back on the menu. */
@@ -198,4 +228,31 @@ export async function getItemHistory(menuItemId: string) {
     })),
     week: week[0] ?? { sold: 0, delivered: 0, missing: 0 },
   };
+}
+
+// ─── A crate photo: how many bottles, and which drink ────────────────────────
+const SIZE_WORDS: Record<'small' | 'medium' | 'big', RegExp> = {
+  small: /\b(small|petit|petite|mini|33\s?cl)\b/i,
+  medium: /\b(medium|moyen|moyenne|50\s?cl)\b/i,
+  big: /\b(big|grand|grande|large|65\s?cl|72\s?cl)\b/i,
+};
+const plain = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/** The tracked drink that best fits what the photo shows (brand, then size), or null. */
+export function matchCrate(items: { id: string; name: string }[], drink: string | null, size: 'small' | 'medium' | 'big' | null) {
+  if (!drink) return null;
+  const brand = plain(drink).split(/[\s-]+/)[0];
+  if (!brand) return null;
+  const sameBrand = items.filter((i) => plain(i.name).includes(brand));
+  if (sameBrand.length <= 1) return sameBrand[0]?.id ?? null;
+  const sized = size ? sameBrand.filter((i) => SIZE_WORDS[size].test(i.name)) : [];
+  return (sized[0] ?? sameBrand[0]).id;
+}
+
+export async function readCratePhoto(venueId: string, base64: string, mimeType: string) {
+  const reading = await readCrateFromImage(base64, mimeType).catch((err: Error) => {
+    throw new Error(/menu/.test(err.message) ? "Couldn't read the photo right now. Type the number of bottles instead." : err.message);
+  });
+  const items = await db.query.menuItems.findMany({ where: and(eq(menuItems.venueId, venueId), eq(menuItems.stockTracked, true)) });
+  return { ...reading, menuItemId: matchCrate(items, reading.drink, reading.size) };
 }

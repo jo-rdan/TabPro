@@ -890,6 +890,28 @@ console.log('\n── Stock');
   check('A delivery adds bottles and puts it back on the menu', r.status === 200 && back.stock_qty === 24 && back.is_available === true);
   r = await call('POST', `/stock/${venueId}/count`, { items: [{ menuItemId: beer.id, counted: 21 }] }, ownerTok);
   check('The closing count shows what went missing', r.status === 200 && r.json?.data?.missing?.[0]?.qty === 3 && r.json?.data?.missingValueRwf === 4500, JSON.stringify(r.json?.data));
+  // Beers are counted in crates: the owner sets how many bottles a crate holds
+  r = await call('PUT', `/stock/items/${beer.id}`, { tracked: true, qty: 21, alertAt: 12, crateSize: 12 }, ownerTok);
+  let crateItem = (await call('GET', `/stock/${venueId}`, null, ownerTok)).json?.data?.items?.find((i) => i.id === beer.id);
+  check('Owner sets a crate size (beers counted in crates)', r.status === 200 && crateItem?.crateSize === 12 && crateItem?.qty === 21, JSON.stringify(crateItem));
+  r = await call('PUT', `/stock/items/${beer.id}`, { tracked: true, crateSize: 1 }, ownerTok);
+  check('…a crate holds 2 to 100 bottles', r.status === 400 && /2 and 100/.test(r.json?.error ?? ''), r.json?.error);
+  r = await call('PUT', `/stock/${venueId}/items/${beer.id}/crate`, { crateSize: 24 }, ownerTok);
+  crateItem = (await call('GET', `/stock/${venueId}`, null, ownerTok)).json?.data?.items?.find((i) => i.id === beer.id);
+  check('After a crate photo, the crate size is saved', r.status === 200 && crateItem?.crateSize === 24 && crateItem?.qty === 21, JSON.stringify(crateItem));
+  {
+    const photo = async (tok, type) => {
+      const fd = new FormData();
+      fd.append('file', new Blob([Buffer.from('not really a photo')], { type }), type === 'application/pdf' ? 'x.pdf' : 'crate.jpg');
+      const res = await fetch(`${BASE}/stock/${venueId}/crate-photo`, { method: 'POST', body: fd, headers: tok ? { Authorization: `Bearer ${tok}` } : {} });
+      return { status: res.status, json: await res.json().catch(() => null) };
+    };
+    r = await photo(ownerTok, 'application/pdf');
+    check('Crate photo: only a photo is accepted', r.status === 400 && /photo of one crate/.test(r.json?.error ?? ''), r.json?.error);
+    r = await photo(staffTok, 'image/jpeg');
+    check('…and waiters cannot add stock by photo', r.status === 401 || r.status === 403, `status ${r.status}`);
+  }
+  await call('PUT', `/stock/${venueId}/items/${beer.id}/crate`, { crateSize: null }, ownerTok);
   r = await call('GET', `/stock/items/${beer.id}/history`, null, ownerTok);
   check('Item history: sales, delivery, count', r.status === 200 && r.json?.data?.week?.sold === 5 && r.json?.data?.week?.delivered === 24 && r.json?.data?.week?.missing === 3, JSON.stringify(r.json?.data?.week));
   r = await call('GET', `/stock/${venueId}`, null, staffTok);

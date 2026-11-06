@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { Package, Plus, Minus, X, ClipboardCheck, Truck, Settings2, Trash2 } from 'lucide-react';
+import { Package, Plus, Minus, X, ClipboardCheck, Truck, Settings2, Trash2, Camera } from 'lucide-react';
 import type { WsEvent } from '@tabpro/shared';
 import Layout from '../../components/Layout';
 import Toast from '../../components/Toast';
@@ -11,7 +11,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 // with deliveries, and a closing count shows what went missing. Owner only.
 
 type Status = 'off' | 'ok' | 'low' | 'out';
-type Item = { id: string; name: string; category: string; priceRwf: number; tracked: boolean; qty: number; alertAt: number | null; soldTonight: number; status: Status };
+type Item = { id: string; name: string; category: string; priceRwf: number; tracked: boolean; qty: number; alertAt: number | null; crateSize: number | null; soldTonight: number; status: Status };
 type Stock = { items: Item[]; summary: { soldTonight: number; low: number; out: number } };
 type Movement = { id: string; kind: 'sale' | 'delivery' | 'count'; qtyChange: number; qtyAfter: number; expectedQty: number | null; note: string | null; createdAt: string; tableLabel: string | null };
 type History = { movements: Movement[]; week: { sold: number; delivered: number; missing: number } };
@@ -33,6 +33,33 @@ function useReq() {
 }
 
 const rwf = (n: number) => `${n.toLocaleString('en-US')} RWF`;
+
+// Beers are counted the way staff talk ("3 crates + 4"), spirits in bottles.
+const bottles = (n: number) => `${n} ${n === 1 ? 'bottle' : 'bottles'}`;
+function stockWords(qty: number, crateSize: number | null) {
+  if (!crateSize || crateSize < 2) return bottles(qty);
+  if (qty <= 0) return '0 crates';
+  const crates = Math.floor(qty / crateSize);
+  const rest = qty % crateSize;
+  if (crates === 0) return bottles(rest);
+  const c = `${crates} ${crates === 1 ? 'crate' : 'crates'}`;
+  return rest ? `${c} + ${rest}` : c;
+}
+
+// Phone photos are big: send a smaller JPEG (faster on mobile data).
+async function shrink(file: File): Promise<Blob> {
+  try {
+    const img = await createImageBitmap(file);
+    const scale = Math.min(1, 1280 / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return await new Promise((ok) => canvas.toBlob((b) => ok(b ?? file), 'image/jpeg', 0.85));
+  } catch {
+    return file;
+  }
+}
 const time = (iso: string) => new Date(iso).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Kigali' });
 
 function emojiFor(i: { name: string; category: string }) {
@@ -99,7 +126,7 @@ function StockScreen({ venueId, venueName, token: staffToken }: { venueId: strin
   const req = useReq();
   const ownerToken = useAuthStore((st) => st.token);
   const [stock, setStock] = useState<Stock | null>(null);
-  const [sheet, setSheet] = useState<null | 'setup' | 'delivery' | 'count'>(null);
+  const [sheet, setSheet] = useState<null | 'setup' | 'delivery' | 'count' | 'photo'>(null);
   const [itemId, setItemId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
   const [tab, setTab] = useState<'bar' | 'kitchen'>('bar');
@@ -169,7 +196,7 @@ function StockScreen({ venueId, venueName, token: staffToken }: { venueId: strin
                     <span className="block text-xs text-gray-500 dark:text-gray-400">Sold {i.soldTonight} tonight</span>
                   </span>
                   <span className="flex flex-col items-end gap-1">
-                    <span className="font-display text-xl font-bold tabular-nums text-gray-900 dark:text-white">{i.qty}</span>
+                    <span className="font-display text-lg font-bold tabular-nums text-gray-900 dark:text-white">{stockWords(i.qty, i.crateSize)}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wide ${CHIP[i.status].cls}`}>{CHIP[i.status].label}</span>
                   </span>
                 </button>
@@ -186,7 +213,8 @@ function StockScreen({ venueId, venueName, token: staffToken }: { venueId: strin
       </div>
 
       {sheet === 'setup' && stock && <SetupSheet stock={stock} onClose={() => setSheet(null)} onSaved={() => { load(); setToast('Stock items saved'); }} />}
-      {sheet === 'delivery' && <DeliverySheet venueId={venueId} items={tracked} onClose={() => setSheet(null)} onSaved={() => { load(); setSheet(null); setToast('Delivery added'); }} />}
+      {sheet === 'delivery' && <DeliverySheet venueId={venueId} items={tracked} onPhoto={() => setSheet('photo')} onClose={() => setSheet(null)} onSaved={() => { load(); setSheet(null); setToast('Delivery added'); }} />}
+      {sheet === 'photo' && <CratePhotoSheet venueId={venueId} items={tracked} onClose={() => setSheet(null)} onSaved={(msg) => { load(); setSheet(null); setToast(msg); }} />}
       {sheet === 'count' && <CountSheet venueId={venueId} items={tracked} onClose={() => { setSheet(null); load(); }} />}
       {item && <ItemSheet item={item} onClose={() => setItemId(null)} onChanged={load} />}
       {toast && <Toast message={toast} onDismiss={() => setToast('')} />}
@@ -195,18 +223,21 @@ function StockScreen({ venueId, venueName, token: staffToken }: { venueId: strin
 }
 
 // ─── Choose items to track ────────────────────────────────────────────────────
+type Draft = { tracked: boolean; qty: number; alertAt: number; crateSize: number | null };
+
 function SetupSheet({ stock, onClose, onSaved }: { stock: Stock; onClose: () => void; onSaved: () => void }) {
   const req = useReq();
-  const [draft, setDraft] = useState(() => Object.fromEntries(stock.items.map((i) => [i.id, { tracked: i.tracked, qty: i.qty, alertAt: i.alertAt ?? 12 }])));
+  const [draft, setDraft] = useState<Record<string, Draft>>(() => Object.fromEntries(stock.items.map((i) => [i.id, { tracked: i.tracked, qty: i.qty, alertAt: i.alertAt ?? (i.crateSize ? i.crateSize * 2 : 12), crateSize: i.crateSize }])));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const set = (id: string, d: Draft) => setDraft({ ...draft, [id]: d });
   const save = async () => {
     setSaving(true); setError('');
     try {
       for (const i of stock.items) {
         const d = draft[i.id];
-        if (d.tracked !== i.tracked || (d.tracked && (d.qty !== i.qty || d.alertAt !== i.alertAt))) {
-          await req.put(`/stock/items/${i.id}`, d.tracked ? { tracked: true, qty: d.qty, alertAt: d.alertAt } : { tracked: false });
+        if (d.tracked !== i.tracked || (d.tracked && (d.qty !== i.qty || d.alertAt !== i.alertAt || d.crateSize !== i.crateSize))) {
+          await req.put(`/stock/items/${i.id}`, d.tracked ? { tracked: true, qty: d.qty, alertAt: d.alertAt, crateSize: d.crateSize } : { tracked: false });
         }
       }
       onSaved(); onClose();
@@ -214,22 +245,43 @@ function SetupSheet({ stock, onClose, onSaved }: { stock: Stock; onClose: () => 
   };
   return (
     <Sheet title="What to track" onClose={onClose}>
-      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Switch on the bottles and cans you want to count. Food and cocktails can stay off.</p>
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Switch on the drinks you want to count. Beers and sodas are counted in crates, spirits and wine in bottles.</p>
       <div className="flex flex-col gap-2">
         {stock.items.map((i) => {
           const d = draft[i.id];
+          const size = d.crateSize ?? 0;
           return (
             <div key={i.id} className={`rounded-2xl border px-3.5 py-3 ${d.tracked ? 'border-brand-300 bg-brand-50/50 dark:border-brand-700 dark:bg-gray-800/60' : 'border-gray-200 dark:border-gray-800'}`}>
               <label className="flex cursor-pointer items-center gap-3">
                 <span className="text-xl" aria-hidden="true">{emojiFor(i)}</span>
                 <span className="min-w-0 flex-1"><span className="block truncate font-bold text-gray-900 dark:text-white">{i.name}</span><span className="text-xs text-gray-500 dark:text-gray-400">{i.category}</span></span>
-                <input type="checkbox" className="h-5 w-5 accent-[#BF4A1A]" checked={d.tracked} onChange={(e) => setDraft({ ...draft, [i.id]: { ...d, tracked: e.target.checked } })} />
+                <input type="checkbox" className="h-5 w-5 accent-[#BF4A1A]" checked={d.tracked} onChange={(e) => set(i.id, { ...d, tracked: e.target.checked })} />
               </label>
               {d.tracked && (
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <div><p className="mb-1 text-xs font-bold text-gray-500 dark:text-gray-400">How many now</p><Stepper value={d.qty} onChange={(n) => setDraft({ ...draft, [i.id]: { ...d, qty: n } })} /></div>
-                  <div><p className="mb-1 text-xs font-bold text-gray-500 dark:text-gray-400">Warn me at</p><Stepper value={d.alertAt ?? 0} onChange={(n) => setDraft({ ...draft, [i.id]: { ...d, alertAt: n } })} /></div>
-                </div>
+                <>
+                  <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800" role="radiogroup" aria-label={`${i.name} counted in`}>
+                    {([['bottles', 'In bottles'], ['crates', 'In crates']] as const).map(([k, label]) => {
+                      const on = k === 'crates' ? !!d.crateSize : !d.crateSize;
+                      return (
+                        <button key={k} type="button" role="radio" aria-checked={on} onClick={() => set(i.id, { ...d, crateSize: k === 'crates' ? (d.crateSize ?? 24) : null })}
+                          className={`rounded-lg py-1.5 text-sm font-bold ${on ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>{label}</button>
+                      );
+                    })}
+                  </div>
+                  {size ? (
+                    <div className="mt-3 flex flex-col gap-3">
+                      <div className="flex items-center justify-between gap-3"><p className="text-xs font-bold text-gray-500 dark:text-gray-400">Bottles in one crate</p><Stepper value={size} min={2} onChange={(n) => set(i.id, { ...d, crateSize: Math.max(2, n), qty: Math.floor(d.qty / size) * Math.max(2, n) + (d.qty % size) })} /></div>
+                      <div className="flex items-center justify-between gap-3"><p className="text-xs font-bold text-gray-500 dark:text-gray-400">Crates now</p><Stepper value={Math.floor(d.qty / size)} onChange={(n) => set(i.id, { ...d, qty: n * size + (d.qty % size) })} /></div>
+                      <div className="flex items-center justify-between gap-3"><p className="text-xs font-bold text-gray-500 dark:text-gray-400">+ loose bottles</p><Stepper value={d.qty % size} onChange={(n) => set(i.id, { ...d, qty: Math.floor(d.qty / size) * size + Math.min(n, size - 1) })} /></div>
+                      <div className="flex items-center justify-between gap-3"><p className="text-xs font-bold text-gray-500 dark:text-gray-400">Warn me at (crates)</p><Stepper value={Math.round(d.alertAt / size)} onChange={(n) => set(i.id, { ...d, alertAt: n * size })} /></div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <div><p className="mb-1 text-xs font-bold text-gray-500 dark:text-gray-400">Bottles now</p><Stepper value={d.qty} onChange={(n) => set(i.id, { ...d, qty: n })} /></div>
+                      <div><p className="mb-1 text-xs font-bold text-gray-500 dark:text-gray-400">Warn me at</p><Stepper value={d.alertAt} onChange={(n) => set(i.id, { ...d, alertAt: n })} /></div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           );
@@ -242,13 +294,15 @@ function SetupSheet({ stock, onClose, onSaved }: { stock: Stock; onClose: () => 
 }
 
 // ─── A delivery arrived ───────────────────────────────────────────────────────
-function DeliverySheet({ venueId, items, onClose, onSaved }: { venueId: string; items: Item[]; onClose: () => void; onSaved: () => void }) {
+// Crate drinks are added in crates, the others in bottles. The photo button
+// counts one crate for you.
+function DeliverySheet({ venueId, items, onPhoto, onClose, onSaved }: { venueId: string; items: Item[]; onPhoto: () => void; onClose: () => void; onSaved: () => void }) {
   const req = useReq();
-  const [qty, setQty] = useState<Record<string, number>>({});
+  const [qty, setQty] = useState<Record<string, number>>({}); // crates for crate drinks, else bottles
   const [supplier, setSupplier] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const lines = Object.entries(qty).filter(([, n]) => n > 0).map(([menuItemId, n]) => ({ menuItemId, qty: n }));
+  const lines = items.filter((i) => (qty[i.id] ?? 0) > 0).map((i) => ({ menuItemId: i.id, qty: (qty[i.id] ?? 0) * (i.crateSize ?? 1) }));
   const save = async () => {
     setSaving(true); setError('');
     try { await req.post(`/stock/${venueId}/delivery`, { items: lines, supplier }); onSaved(); }
@@ -256,16 +310,18 @@ function DeliverySheet({ venueId, items, onClose, onSaved }: { venueId: string; 
   };
   return (
     <Sheet title="Delivery arrived" onClose={onClose}>
+      <button onClick={onPhoto} className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-action py-3.5 font-extrabold text-action-ink"><Camera size={18} /> Snap one crate</button>
+      <p className="mb-2 text-center text-xs text-gray-500 dark:text-gray-400">Or type it below</p>
       <div className="flex flex-col gap-2">
         {items.map((i) => (
           <div key={i.id} className="rounded-2xl border border-gray-200 px-3.5 py-3 dark:border-gray-800">
             <div className="flex items-center justify-between gap-3">
-              <span className="min-w-0 truncate font-bold text-gray-900 dark:text-white">{emojiFor(i)} {i.name} <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">· {i.qty} now</span></span>
+              <span className="min-w-0"><span className="block truncate font-bold text-gray-900 dark:text-white">{emojiFor(i)} {i.name}</span><span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{i.crateSize ? 'crates' : 'bottles'} · {stockWords(i.qty, i.crateSize)} now</span></span>
               <Stepper value={qty[i.id] ?? 0} onChange={(n) => setQty({ ...qty, [i.id]: n })} />
             </div>
             <div className="mt-2 flex gap-1.5">
-              {[12, 24, 48].map((n) => (
-                <button key={n} type="button" onClick={() => setQty({ ...qty, [i.id]: (qty[i.id] ?? 0) + n })} className="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-bold text-gray-700 dark:border-gray-700 dark:text-gray-200">+{n}</button>
+              {(i.crateSize ? [1, 5, 10] : [1, 6, 12]).map((n) => (
+                <button key={n} type="button" onClick={() => setQty({ ...qty, [i.id]: (qty[i.id] ?? 0) + n })} className="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-bold text-gray-700 dark:border-gray-700 dark:text-gray-200">+{n}{i.crateSize ? (n === 1 ? ' crate' : ' crates') : ''}</button>
               ))}
             </div>
           </div>
@@ -274,24 +330,120 @@ function DeliverySheet({ venueId, items, onClose, onSaved }: { venueId: string; 
       <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="From (optional), e.g. Bralirwa" className="mt-3 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white" aria-label="Supplier" />
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-red-600">{error}</p>}
       <button onClick={save} disabled={saving || lines.length === 0} className="mt-4 w-full rounded-2xl bg-brand-500 py-3.5 font-extrabold text-white disabled:opacity-50">{saving ? 'Adding…' : 'Add to stock'}</button>
-      <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">Sold-out items come back on the menu by themselves.</p>
+      <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">Sold-out drinks come back on the menu by themselves.</p>
+    </Sheet>
+  );
+}
+
+// ─── One crate photo → a delivery ─────────────────────────────────────────────
+// Skuzi counts the bottles (and empty slots) in one crate and guesses the drink;
+// the owner checks, says how many crates came, and it's added.
+type Reading = { bottles: number; drink: string | null; size: 'small' | 'medium' | 'big' | null; menuItemId: string | null };
+
+function CratePhotoSheet({ venueId, items, onClose, onSaved }: { venueId: string; items: Item[]; onClose: () => void; onSaved: (msg: string) => void }) {
+  const req = useReq();
+  const [step, setStep] = useState<'snap' | 'reading' | 'confirm'>('snap');
+  const [reading, setReading] = useState<Reading | null>(null);
+  const [itemId, setItemId] = useState(items[0]?.id ?? '');
+  const [perCrate, setPerCrate] = useState(24);
+  const [crates, setCrates] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const item = items.find((i) => i.id === itemId);
+
+  const read = async (file: File) => {
+    setStep('reading'); setError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', await shrink(file), 'crate.jpg');
+      const r = await req.post(`/stock/${venueId}/crate-photo`, fd);
+      const data: Reading = r.data.data;
+      setReading(data);
+      const match = items.find((i) => i.id === data.menuItemId) ?? item;
+      if (match) setItemId(match.id);
+      setPerCrate(data.bottles >= 2 ? data.bottles : match?.crateSize ?? 24);
+      setStep('confirm');
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? "Couldn't read the photo. Try again, or type the numbers.");
+      setStep('snap');
+    }
+  };
+  const save = async () => {
+    if (!item) return;
+    setSaving(true); setError('');
+    try {
+      await req.put(`/stock/${venueId}/items/${item.id}/crate`, { crateSize: perCrate });
+      await req.post(`/stock/${venueId}/delivery`, { items: [{ menuItemId: item.id, qty: perCrate * crates }] });
+      onSaved(`${item.name}: ${crates} ${crates === 1 ? 'crate' : 'crates'} added`);
+    } catch (e: any) { setError(e?.response?.data?.error ?? 'Could not save. Try again.'); } finally { setSaving(false); }
+  };
+
+  return (
+    <Sheet title="Snap one crate" onClose={onClose}>
+      {step === 'snap' && (
+        <>
+          <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Take a photo of one crate from above, so every bottle shows. Skuzi counts them for you.</p>
+          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-action py-4 font-extrabold text-action-ink">
+            <Camera size={20} /> Take the photo
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) read(f); e.target.value = ''; }} />
+          </label>
+          <button onClick={() => { setReading(null); setPerCrate(item?.crateSize ?? 24); setStep('confirm'); }} className="mt-3 w-full text-center text-sm font-bold text-brand-600 underline dark:text-brand-300">Type the numbers instead</button>
+        </>
+      )}
+      {step === 'reading' && (
+        <div className="py-10 text-center">
+          <Camera className="mx-auto animate-pulse text-brand-500" size={30} />
+          <p className="mt-2 font-bold text-gray-900 dark:text-white">Counting the bottles…</p>
+        </div>
+      )}
+      {step === 'confirm' && (
+        <div className="flex flex-col gap-3">
+          {reading && (
+            <div className="rounded-2xl bg-brand-50 px-4 py-3 text-sm text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+              {reading.bottles >= 2
+                ? <>Skuzi sees <b>{reading.bottles} bottles</b> in the crate{reading.drink ? <> of <b>{reading.drink}</b></> : null}{reading.size ? <> ({reading.size})</> : null}.</>
+                : <>Skuzi couldn't count this crate. Type the number below.</>}
+              <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">Check the numbers: Skuzi can get it wrong.</span>
+            </div>
+          )}
+          <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Which drink
+            <select value={itemId} onChange={(e) => { setItemId(e.target.value); const it = items.find((i) => i.id === e.target.value); if (!reading?.bottles && it?.crateSize) setPerCrate(it.crateSize); }}
+              className="mt-1 w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-3 text-base font-bold text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+              {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+          </label>
+          <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-gray-700 dark:text-gray-200">Bottles in one crate</p><Stepper value={perCrate} min={2} onChange={setPerCrate} /></div>
+          <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-gray-700 dark:text-gray-200">How many crates came</p><Stepper value={crates} min={1} onChange={setCrates} /></div>
+          <p className="rounded-2xl bg-gray-50 px-4 py-3 text-center font-display text-xl font-bold text-gray-900 dark:bg-gray-800 dark:text-white">= {perCrate * crates} bottles</p>
+          {error && <p role="alert" className="text-sm font-semibold text-red-600">{error}</p>}
+          <button onClick={save} disabled={saving || !item} className="w-full rounded-2xl bg-brand-500 py-3.5 font-extrabold text-white disabled:opacity-50">{saving ? 'Adding…' : 'Add to stock'}</button>
+        </div>
+      )}
+      {step === 'snap' && error && <p role="alert" className="mt-3 text-sm font-semibold text-red-600">{error}</p>}
     </Sheet>
   );
 }
 
 // ─── Closing count ────────────────────────────────────────────────────────────
+// Crate drinks: count full crates and loose bottles.
 function CountSheet({ venueId, items, onClose }: { venueId: string; items: Item[]; onClose: () => void }) {
   const req = useReq();
-  const [counted, setCounted] = useState<Record<string, string>>({});
+  const [counted, setCounted] = useState<Record<string, { crates: string; bottles: string }>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<CountResult | null>(null);
-  const lines = Object.entries(counted).filter(([, v]) => v !== '').map(([menuItemId, v]) => ({ menuItemId, counted: Number(v) }));
+  const lines = items.flatMap((i) => {
+    const c = counted[i.id];
+    if (!c || (c.crates === '' && c.bottles === '')) return [];
+    return [{ menuItemId: i.id, counted: Number(c.crates || 0) * (i.crateSize ?? 0) + Number(c.bottles || 0) }];
+  });
+  const put = (id: string, k: 'crates' | 'bottles', v: string) => setCounted({ ...counted, [id]: { ...(counted[id] ?? { crates: '', bottles: '' }), [k]: v.replace(/\D/g, '') } });
   const save = async () => {
     setSaving(true); setError('');
     try { const r = await req.post(`/stock/${venueId}/count`, { items: lines }); setResult(r.data.data); }
     catch (e: any) { setError(e?.response?.data?.error ?? 'Could not save. Try again.'); } finally { setSaving(false); }
   };
+  const box = 'w-16 rounded-xl border border-gray-200 bg-white py-2 text-center font-display text-lg font-bold text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white';
   if (result) {
     return (
       <Sheet title="Count saved" onClose={onClose}>
@@ -299,8 +451,9 @@ function CountSheet({ venueId, items, onClose }: { venueId: string; items: Item[
           <div className="rounded-2xl bg-green-50 p-4 text-green-800 dark:bg-green-500/10 dark:text-green-300"><p className="font-display text-lg font-bold">Everything matches ✅</p><p className="text-sm">No bottles missing.</p></div>
         ) : (
           <div className="rounded-2xl bg-red-50 p-4 text-red-800 dark:bg-red-500/10 dark:text-red-300">
-            <p className="font-display text-lg font-bold">{result.missing.reduce((n, m) => n + m.qty, 0)} missing · {rwf(result.missingValueRwf)}</p>
-            {result.missing.map((m) => <p key={m.name} className="text-sm">{m.name}: {m.qty} missing ({rwf(m.valueRwf)})</p>)}
+            <p className="font-display text-lg font-bold">{bottles(result.missing.reduce((n, m) => n + m.qty, 0))} missing · {rwf(result.missingValueRwf)}</p>
+            {result.missing.map((m) => <p key={m.name} className="text-sm">{m.name}: {bottles(m.qty)} missing ({rwf(m.valueRwf)})</p>)}
+            <p className="mt-2 text-xs">A reason to check, not proof: a bottle can break, or a drink can be sold without going into Skuzi.</p>
           </div>
         )}
         {result.extra.length > 0 && <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">More than expected: {result.extra.map((x) => `${x.name} +${x.qty}`).join(', ')}. A delivery may not have been added.</p>}
@@ -310,13 +463,20 @@ function CountSheet({ venueId, items, onClose }: { venueId: string; items: Item[
   }
   return (
     <Sheet title="Count stock" onClose={onClose}>
-      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Count the fridge and type the real number. Leave an item empty to skip it.</p>
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Count the shelf and the fridge, and type what you see. Leave a drink empty to skip it.</p>
       <div className="flex flex-col gap-2">
         {items.map((i) => (
-          <label key={i.id} className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 px-3.5 py-3 dark:border-gray-800">
-            <span className="min-w-0"><span className="block truncate font-bold text-gray-900 dark:text-white">{emojiFor(i)} {i.name}</span><span className="text-xs text-gray-500 dark:text-gray-400">Skuzi expects {i.qty}</span></span>
-            <input inputMode="numeric" value={counted[i.id] ?? ''} placeholder={String(i.qty)} onChange={(e) => setCounted({ ...counted, [i.id]: e.target.value.replace(/\D/g, '') })} className="w-20 rounded-xl border border-gray-200 bg-white py-2 text-center font-display text-lg font-bold text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white" aria-label={`${i.name} counted`} />
-          </label>
+          <div key={i.id} className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 px-3.5 py-3 dark:border-gray-800">
+            <span className="min-w-0"><span className="block truncate font-bold text-gray-900 dark:text-white">{emojiFor(i)} {i.name}</span><span className="text-xs text-gray-500 dark:text-gray-400">Skuzi expects {stockWords(i.qty, i.crateSize)}</span></span>
+            {i.crateSize ? (
+              <span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400">
+                <input inputMode="numeric" value={counted[i.id]?.crates ?? ''} placeholder="0" onChange={(e) => put(i.id, 'crates', e.target.value)} className={box} aria-label={`${i.name} full crates`} />crates +
+                <input inputMode="numeric" value={counted[i.id]?.bottles ?? ''} placeholder="0" onChange={(e) => put(i.id, 'bottles', e.target.value)} className={box} aria-label={`${i.name} loose bottles`} />
+              </span>
+            ) : (
+              <input inputMode="numeric" value={counted[i.id]?.bottles ?? ''} placeholder={String(i.qty)} onChange={(e) => put(i.id, 'bottles', e.target.value)} className={box} aria-label={`${i.name} counted`} />
+            )}
+          </div>
         ))}
       </div>
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-red-600">{error}</p>}
@@ -343,7 +503,7 @@ function ItemSheet({ item, onClose, onChanged }: { item: Item; onClose: () => vo
     <Sheet title={item.name} onClose={onClose}>
       <div className="flex items-center gap-3 rounded-2xl border border-gray-200 p-4 dark:border-gray-800">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-2xl dark:bg-gray-800" aria-hidden="true">{emojiFor(item)}</span>
-        <div><p className="font-display text-3xl font-bold leading-none text-gray-900 dark:text-white">{item.qty}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">left · warn at {item.alertAt ?? '—'} · <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold uppercase ${CHIP[item.status].cls}`}>{CHIP[item.status].label}</span></p></div>
+        <div><p className="font-display text-3xl font-bold leading-none text-gray-900 dark:text-white">{stockWords(item.qty, item.crateSize)}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">left · warn at {item.alertAt == null ? '—' : stockWords(item.alertAt, item.crateSize)} · <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold uppercase ${CHIP[item.status].cls}`}>{CHIP[item.status].label}</span></p></div>
       </div>
       {history && (
         <>
@@ -401,10 +561,10 @@ function KitchenPanel({ venueId, onToast }: { venueId: string; onToast: (m: stri
           <div className="mt-4 grid grid-cols-3 gap-2.5">
             <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className="font-display text-xl font-bold text-gray-900 dark:text-white">{k.spentRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">spent on food</p></div>
             <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className="font-display text-xl font-bold text-gray-900 dark:text-white">{k.soldRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">food sold</p></div>
-            <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className={`font-display text-xl font-bold ${k.profitRwf < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>{k.profitRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">food profit</p></div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className={`font-display text-xl font-bold ${k.profitRwf < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>{k.profitRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">left after buying food</p></div>
           </div>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            {k.spentPct === null ? 'No food sold in Skuzi yet for this period.' : `You spend ${k.spentPct}% of your food sales on ingredients.`} All amounts in RWF.
+            {k.soldRwf === 0 ? 'No food sold in Skuzi yet for this period. ' : ''}All amounts in RWF.
           </p>
 
           <button onClick={() => setAdding(true)} className="mt-4 w-full rounded-2xl bg-action py-3.5 font-extrabold text-action-ink">+ Add food you bought</button>
