@@ -143,7 +143,7 @@ export default function NightReport() {
                   <Section title="Food stock">
                     <Row label="Food sold" value={rwf(report.food.soldRwf)} />
                     <Row label="Food bought" value={rwf(report.food.boughtRwf)} />
-                    <Row label="Kept" value={rwf(report.food.soldRwf - report.food.boughtRwf)} strong />
+                    <Row label="Left after buying food" value={rwf(report.food.soldRwf - report.food.boughtRwf)} strong />
                   </Section>
                 )}
               </>
