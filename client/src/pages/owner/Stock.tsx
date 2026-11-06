@@ -466,14 +466,15 @@ function ReceiveSheet({ venueId, items, photo, canEditMenu, onClose, onSaved }: 
             <input list="stock-drinks" value={name} onChange={(e) => pickName(e.target.value)} placeholder="e.g. Mützig big" className={field} />
             <datalist id="stock-drinks">{items.map((i) => <option key={i.id} value={i.name} />)}</datalist>
           </label>
-          {(reading?.drink || size) && (
+          <div>
+            <p className="mb-1 text-xs font-bold text-gray-500 dark:text-gray-400">Size</p>
             <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Size">
               {SIZES.map((s) => (
                 <button key={s} type="button" role="radio" aria-checked={size === s} onClick={() => pickSize(s)}
                   className={`rounded-xl py-2 text-sm font-bold capitalize ${size === s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'border border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}>{s}</button>
               ))}
             </div>
-          )}
+          </div>
           <div><p className="mb-1 text-xs font-bold text-gray-500 dark:text-gray-400">How it comes</p><PackPicker pack={pack} name={name || 'this drink'} onChange={setPack} /></div>
           <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Price on your menu (RWF)
             <input inputMode="numeric" value={price ? Number(price).toLocaleString('en-US') : ''} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))} disabled={!canEditMenu} placeholder="e.g. 2,000" className={`${field} disabled:opacity-60`} />
@@ -485,6 +486,11 @@ function ReceiveSheet({ venueId, items, photo, canEditMenu, onClose, onSaved }: 
             </p>
           )}
           <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-gray-700 dark:text-gray-200">How many {pack ? packWord(pack.kind) : 'bottles'} came</p><Stepper value={packs} min={0} onChange={setPacks} /></div>
+          <div className="-mt-1.5 flex justify-end gap-1.5">
+            {(pack ? [5, 10, 50] : [1, 6, 12]).map((n) => (
+              <button key={n} type="button" onClick={() => setPacks(packs + n)} className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 dark:border-gray-700 dark:text-gray-200">+{n}</button>
+            ))}
+          </div>
           {pack && <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-gray-700 dark:text-gray-200">+ loose</p><Stepper value={loose} onChange={setLoose} /></div>}
           <p className="rounded-2xl bg-gray-50 px-4 py-3 text-center font-display text-xl font-bold text-gray-900 dark:bg-gray-800 dark:text-white">= {pack ? `${stockWords(total, pack)} · ${total} in all` : plural(total, 'bottle')}</p>
           <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="From (optional), e.g. Bralirwa" className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white" aria-label="Supplier" />
