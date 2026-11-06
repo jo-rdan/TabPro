@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '@tabpro/shared';
-import { getStock, setTracking, addDelivery, saveCount, getItemHistory, readCratePhoto, setCrateSize } from '../services/stock.service';
+import { getStock, setTracking, addDelivery, saveCount, getItemHistory, readDeliveryPhoto, receiveDelivery } from '../services/stock.service';
 import { getKitchen, addSpend, deleteSpend, setKitchenCategories } from '../services/kitchen.service';
 
 const send = (res: Response, data: unknown) => res.json({ success: true, data } as ApiResponse);
@@ -12,9 +12,9 @@ export async function handleGetStock(req: Request, res: Response) {
 }
 
 export async function handleSetTracking(req: Request, res: Response) {
-  const { tracked, qty, alertAt, crateSize } = req.body ?? {};
+  const { tracked, qty, alertAt, packKind, packSize } = req.body ?? {};
   if (typeof tracked !== 'boolean') { fail(res, new Error('Say whether to track this item')); return; }
-  try { await setTracking(req.params.itemId, { tracked, qty, alertAt, crateSize }); send(res, { ok: true }); } catch (err) { fail(res, err); }
+  try { await setTracking(req.params.itemId, { tracked, qty, alertAt, packKind, packSize }); send(res, { ok: true }); } catch (err) { fail(res, err); }
 }
 
 export async function handleDelivery(req: Request, res: Response) {
@@ -29,15 +29,16 @@ export async function handleCount(req: Request, res: Response) {
   try { send(res, await saveCount(req.params.venueId, items)); } catch (err) { fail(res, err); }
 }
 
-// A photo of one crate: Skuzi counts the bottles and guesses the drink.
-export async function handleCratePhoto(req: Request, res: Response) {
+// A photo of a delivery: Skuzi reads the drink, the size and the pack.
+export async function handleDeliveryPhoto(req: Request, res: Response) {
   const file = req.file;
-  if (!file || !file.mimetype.startsWith('image/')) { fail(res, new Error('Take a photo of one crate')); return; }
-  try { send(res, await readCratePhoto(req.params.venueId, file.buffer.toString('base64'), file.mimetype)); } catch (err) { fail(res, err); }
+  if (!file || !file.mimetype.startsWith('image/')) { fail(res, new Error('Take a photo of the delivery')); return; }
+  try { send(res, await readDeliveryPhoto(req.params.venueId, file.buffer.toString('base64'), file.mimetype)); } catch (err) { fail(res, err); }
 }
 
-export async function handleCrateSize(req: Request, res: Response) {
-  try { await setCrateSize(req.params.venueId, req.params.itemId, req.body?.crateSize); send(res, { ok: true }); } catch (err) { fail(res, err); }
+// The review screen's "Add to stock" (after a photo, or typed in).
+export async function handleReceive(req: Request, res: Response) {
+  try { send(res, await receiveDelivery(req.params.venueId, req.body ?? {}, { canEditMenu: !req.staffMember })); } catch (err) { fail(res, err); }
 }
 
 export async function handleItemHistory(req: Request, res: Response) {

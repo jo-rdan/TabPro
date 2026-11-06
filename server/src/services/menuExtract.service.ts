@@ -142,35 +142,39 @@ export async function extractMenuFromText(text: string): Promise<ExtractedItem[]
   }
 }
 
-// ─── A photo of one crate (stock deliveries) ─────────────────────────────────
-export interface CrateReading {
-  bottles: number;
+// ─── A photo of a delivery (stock) ───────────────────────────────────────────
+export interface PackReading {
   drink: string | null;
   size: 'small' | 'medium' | 'big' | null;
+  pack: 'crate' | 'tray' | 'box' | 'single' | null;
+  perPack: number;
+  packsSeen: number;
 }
 
-const CRATE_PROMPT = `This is a photo of one crate of drinks at a bar in Rwanda. Return ONLY valid JSON, no other text:
-{"bottles": 24, "drink": "Primus", "size": "small"}
+const PACK_PROMPT = `This photo shows drinks delivered to a bar in Rwanda: crates of bottles, trays of cans, boxes, or single bottles. It may show one or several packs, from above or at an angle. Return ONLY valid JSON, no other text:
+{"drink": "Primus", "size": "big", "pack": "crate", "perPack": 12, "packsSeen": 3}
 
 Rules:
-- "bottles": how many bottles the crate holds when full: count the bottles AND the empty slots. Integer.
-- "drink": the brand on the bottles or the crate (e.g. Primus, Mützig, Skol, Heineken, Amstel, Virunga, Fanta, Coca-Cola). null if you can't tell.
-- "size": "small", "medium" or "big" bottles, judged from the bottles and the crate. null if you can't tell.
-- If there is no crate in the photo, return {"bottles": 0, "drink": null, "size": null}.`;
+- "drink": the brand, read from the caps, labels, cans or the crate (e.g. Primus, Mützig, Skol, Heineken, Amstel, Virunga, Turbo King, Fanta, Coca-Cola, Red Bull, Inyange). null if you are not sure: never guess.
+- "size": "small", "medium" or "big" bottle or can. null if you are not sure.
+- "pack": "crate" (bottles in a crate), "tray" (cans or plastic bottles on a tray or in film), "box" (cardboard box), or "single" (loose bottles). null if unclear.
+- "perPack": how many one FULL pack holds: count one crate's slots, full AND empty. For "single", 1. 0 if you can't tell.
+- "packsSeen": how many packs you can see in the photo. 0 if you can't tell.`;
 
-export async function readCrateFromImage(base64Data: string, mimeType: string): Promise<CrateReading> {
-  if (!process.env.GEMINI_API_KEY) throw new Error('Reading crate photos is not switched on yet. Type the number of bottles instead.');
-  const text = await generate([{ inlineData: { mimeType: mimeType as any, data: base64Data } }, { text: CRATE_PROMPT }]);
+export async function readPackFromImage(base64Data: string, mimeType: string): Promise<PackReading> {
+  if (!process.env.GEMINI_API_KEY) throw new Error('Reading photos is not switched on yet. Type it in instead.');
+  const text = await generate([{ inlineData: { mimeType: mimeType as any, data: base64Data } }, { text: PACK_PROMPT }]);
   try {
     const raw = JSON.parse(text.replace(/```json|```/g, '').trim());
-    const bottles = Math.round(Number(raw?.bottles));
-    const size = ['small', 'medium', 'big'].includes(raw?.size) ? raw.size : null;
+    const int = (v: unknown, max: number) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 && n <= max ? n : 0; };
     return {
-      bottles: Number.isFinite(bottles) && bottles > 0 && bottles <= 100 ? bottles : 0,
       drink: typeof raw?.drink === 'string' && raw.drink.trim() ? raw.drink.trim().slice(0, 40) : null,
-      size,
+      size: ['small', 'medium', 'big'].includes(raw?.size) ? raw.size : null,
+      pack: ['crate', 'tray', 'box', 'single'].includes(raw?.pack) ? raw.pack : null,
+      perPack: int(raw?.perPack, 100),
+      packsSeen: int(raw?.packsSeen, 200),
     };
   } catch {
-    throw new Error("Couldn't read that photo. Try again with the whole crate in view, or type the number.");
+    throw new Error("Couldn't read that photo. Try again, or type it in.");
   }
 }

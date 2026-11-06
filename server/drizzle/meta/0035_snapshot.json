@@ -1,5 +1,5 @@
 {
-  "id": "5217e810-1c65-4083-a815-7cb3b6d3c694",
+  "id": "28c1afac-395e-4218-9738-38c7ae52d527",
   "prevId": "3ae7c2b3-78cb-432b-8a6e-8b1a931b9c94",
   "version": "7",
   "dialect": "postgresql",
@@ -1163,8 +1163,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "crate_size": {
-          "name": "crate_size",
+        "pack_kind": {
+          "name": "pack_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pack_size": {
+          "name": "pack_size",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
