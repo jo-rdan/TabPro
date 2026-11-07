@@ -10,7 +10,7 @@ import { EXPLORE_ENABLED } from "../../lib/features";
 
 // Campaigns: "We already have the right people." A notification to guests who
 // said yes to invites, plus an event on Explore and the venue's Skuzi page.
-// Sending is free; Skuzi takes 15% (not 8%) on Skuzi bills of guests it brings.
+// Included in the plan: sending is free and Skuzi takes nothing from the bills.
 type Results = { came: number; regulars: number; newFaces: number; spentRwf: number; paidWithSkuzi: number; skuziFeeRwf: number };
 type Campaign = {
   id: string; title: string | null; message: string; offerType: string; offerLabel: string | null; offerText: string | null;
@@ -63,7 +63,7 @@ function FreeBox() {
   return (
     <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#3B2149]">
       <Gift size={22} className="flex-none text-amber-500" />
-      <p className="text-sm text-gray-700 dark:text-gray-300"><b className="text-gray-900 dark:text-white">Sending is free.</b> You only pay when guests come: 15% on their Skuzi bills, instead of 8%. Max 2 campaigns a week, so invites stay special.</p>
+      <p className="text-sm text-gray-700 dark:text-gray-300"><b className="text-gray-900 dark:text-white">Included in your plan.</b> Sending costs nothing extra and Skuzi takes nothing from the bills. Max 2 campaigns a week, so invites stay special.</p>
     </div>
   );
 }
@@ -337,11 +337,9 @@ export function CampaignDetail() {
                   {[
                     ['Reached', `${c.recipientCount} ${c.recipientCount === 1 ? 'guest' : 'guests'}`],
                     ['They spent', rwf(c.results.spentRwf)],
-                    ['Paid with Skuzi', `${c.results.paidWithSkuzi} ${c.results.paidWithSkuzi === 1 ? 'bill' : 'bills'}`],
-                    ['Skuzi fee (15% on those bills)', rwf(c.results.skuziFeeRwf)],
                   ].map(([k, v]) => <div key={k} className="flex justify-between px-4 py-3 text-sm"><dt className="text-gray-600 dark:text-gray-300">{k}</dt><dd className="font-bold text-gray-900 dark:text-white">{v}</dd></div>)}
                 </dl>
-                <p className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-green-600 dark:text-green-400"><TrendingUp size={16} /> Sending cost you nothing. You only pay for guests who came.</p>
+                <p className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-green-600 dark:text-green-400"><TrendingUp size={16} /> Included in your plan. Sending cost you nothing extra.</p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Guests count as "came" when they sit down with Skuzi within 7 days of the campaign.</p>
               </>
             )}

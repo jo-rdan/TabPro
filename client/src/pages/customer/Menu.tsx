@@ -716,6 +716,15 @@ export default function CustomerMenu() {
     }
   };
 
+  // Back to the menu from the bill: the next order reopens the bill on the server.
+  const handleOrderMore = () => {
+    if (!tabId) return;
+    setTabStatus("open");
+    setStep("menu");
+    saveSession({ tabStatus: "open" });
+    loadOrders(tabId);
+  };
+
   // ─── Heartbeat — ping server every 30s so it knows customer is still here ───
   useEffect(() => {
     if (!tabId || tabStatus === "closed") return;
@@ -918,6 +927,14 @@ export default function CustomerMenu() {
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-semibold">
               Your receipt
             </p>
+            {tabId && (
+              <button
+                onClick={handleOrderMore}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold bg-white dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/15 active:scale-95 transition-all"
+              >
+                <Plus size={15} strokeWidth={2.6} /> Order more
+              </button>
+            )}
           </div>
           {/* ── Thermal receipt design ── */}
           <div

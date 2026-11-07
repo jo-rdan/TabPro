@@ -45,7 +45,7 @@ export async function getDashboardStats(venueId: string) {
 
   // Pending orders
   const openTabs = await db.query.tabs.findMany({
-    where: eq(tabs.status, 'open'),
+    where: inArray(tabs.status, ['open', 'bill_requested']),
     with: { orders: true, table: true },
   });
   const pendingOrders = openTabs
