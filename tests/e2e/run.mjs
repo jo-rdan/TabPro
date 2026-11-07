@@ -241,6 +241,7 @@ check('Socket without login or tab is refused', !!anonWs.closed, anonWs.closed);
 
 r = await call('GET', `/dashboard/stats/${venueId}`, null, ownerTok);
 check('Dashboard revenue = 6,800', r.json?.data?.revenueTonight === 6800, `revenueTonight=${r.json?.data?.revenueTonight}`);
+check('Dashboard "Ordered tonight" counts what was ordered (6,800, 1 bill, none open)', r.json?.data?.orderedTonight === 6800 && r.json?.data?.orderedBills === 1 && r.json?.data?.openBills === 0, JSON.stringify(r.json?.data));
 r = await call('GET', `/dashboard/tonight/${venueId}`, null, ownerTok);
 check("Tonight's money for the chart & coin jar = 6,800", r.json?.data?.total === 6800 && r.json?.data?.hourly?.at(-1)?.cumulative === 6800, `total=${r.json?.data?.total}`);
 for (const p of ['report', 'busy-hours', 'activity']) {

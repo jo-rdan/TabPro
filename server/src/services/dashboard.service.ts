@@ -19,7 +19,7 @@ export async function getDashboardStats(venueId: string) {
   const tableIds = venueTables.map((t) => t.id);
 
   if (tableIds.length === 0) {
-    return { revenueTonight: 0, activeTables: 0, pendingOrders: 0, avgRatingToday: null };
+    return { revenueTonight: 0, orderedTonight: 0, orderedBills: 0, openBills: 0, openRwf: 0, closedBills: 0, activeTables: 0, pendingOrders: 0, avgRatingToday: null };
   }
 
   // Tonight's revenue — sum of order items on closed tabs today
@@ -33,6 +33,23 @@ export async function getDashboardStats(venueId: string) {
     .flatMap((t) => t.orders)
     .flatMap((o) => o.items)
     .reduce((sum, item) => sum + item.unitPriceRwf * item.quantity, 0);
+
+  // Ordered tonight: everything guests and staff ordered since 06:00, paid or
+  // not. It's what Skuzi knows for sure; whether it was paid is staff's word.
+  const tonightOrders = await db.query.orders.findMany({
+    where: and(gte(orders.placedAt, today), inArray(orders.tabId, db.select({ id: tabs.id }).from(tabs).where(inArray(tabs.tableId, tableIds)))),
+    with: { items: true, tab: true },
+  });
+  const realOrders = tonightOrders.filter((o) => !o.isNudge);
+  const orderedTonight = realOrders.flatMap((o) => o.items).reduce((n, i) => n + i.unitPriceRwf * i.quantity, 0);
+  const billsTonight = new Map<string, { status: string; total: number }>();
+  for (const o of realOrders) {
+    const b = billsTonight.get(o.tabId) ?? { status: o.tab.status, total: 0 };
+    b.total += o.items.reduce((n, i) => n + i.unitPriceRwf * i.quantity, 0);
+    billsTonight.set(o.tabId, b);
+  }
+  const bills = [...billsTonight.values()];
+  const open = bills.filter((b) => b.status !== 'closed');
 
   // Active tables — open or bill_requested tabs
   const activeTabs = await db.query.tabs.findMany({
@@ -61,7 +78,18 @@ export async function getDashboardStats(venueId: string) {
     ? Math.round((todayRatings.reduce((s, r) => s + r.overallScore, 0) / todayRatings.length) * 10) / 10
     : null;
 
-  return { revenueTonight, activeTables, pendingOrders, avgRatingToday, ratingCount: todayRatings.length };
+  return {
+    revenueTonight,
+    orderedTonight,
+    orderedBills: bills.length,
+    openBills: open.length,
+    openRwf: open.reduce((n, b) => n + b.total, 0),
+    closedBills: bills.length - open.length,
+    activeTables,
+    pendingOrders,
+    avgRatingToday,
+    ratingCount: todayRatings.length,
+  };
 }
 
 // One night of bills (tonight by default, or any past night as "YYYY-MM-DD"),
