@@ -23,6 +23,7 @@ import {
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { usePushNotifications, useKeepPushSubscribed } from "../../hooks/usePushNotifications";
 import NotificationNotice from "../../components/NotificationNotice";
+import MomoToConfirm from "../../components/MomoToConfirm";
 import { WsEvent } from "@tabpro/shared";
 import VenueLogo from "../../components/VenueLogo";
 import { WavingHand } from "../../components/Logo";
@@ -74,9 +75,11 @@ interface BillRequest {
   tabId: string;
   tableLabel: string;
   timestamp: string;
-  // The guest says they paid the venue's MoMo Pay code: check MoMo, tap Paid.
+  // The guest says they paid the venue's MoMo Pay code: the cashier, a manager
+  // or the owner checks it ("watch": not in yet, keep an eye; "failed": it never came).
   paidMomo?: boolean;
   total?: number;
+  momo?: "watch" | "failed";
 }
 
 interface TableOption {
@@ -534,6 +537,18 @@ export default function WaiterOrders() {
         }
       }
 
+      if (event.type === "momo_watch" || event.type === "momo_failed") {
+        const p = event.payload as any;
+        const mine = isManager || orders.some((o) => o.tabId === p.tabId) || billRequests.some((b) => b.tabId === p.tabId);
+        if (mine) {
+          const momo = event.type === "momo_failed" ? "failed" : "watch";
+          setBillRequests((prev) => [
+            { tabId: p.tabId, tableLabel: p.tableLabel, timestamp: new Date().toISOString(), paidMomo: true, total: p.total, momo },
+            ...prev.filter((b) => b.tabId !== p.tabId),
+          ]);
+        }
+      }
+
       if (event.type === "payment_claimed") {
         const p = event.payload as any;
         setBillRequests((prev) => [
@@ -848,6 +863,11 @@ export default function WaiterOrders() {
           navigate(`/kitchen?venueId=${venueId}&token=${staffToken}`, { replace: true });
           return;
         }
+        // The cashier confirms MoMo payments on their own screen.
+        if (d.success && d.data.role === "cashier") {
+          navigate(`/cashier?venueId=${venueId}&token=${staffToken}`, { replace: true });
+          return;
+        }
         if (d.success && d.data.role === "manager") {
           setIsManager(true);
           fetchMyTables();
@@ -1160,6 +1180,8 @@ export default function WaiterOrders() {
       )}
       {activeTab === "orders" && (
         <div className="px-4 pt-4 max-w-lg mx-auto space-y-3 pb-28 md:pb-6">
+          {/* A manager the owner lets confirm MoMo sees what's waiting (hidden otherwise). */}
+          {isManager && venueId && staffToken && <MomoToConfirm venueId={venueId} token={staffToken} hideWhenEmpty />}
           {/* A guest is calling: the big rust card */}
           {nudges.map((nudge) => (
             <div key={nudge.id} className="bg-brand-500 text-white rounded-[26px] p-5 flex flex-col gap-3 shadow-lg shadow-brand-500/20">
@@ -1256,7 +1278,9 @@ export default function WaiterOrders() {
           {billRequests.map((bill) => (
             <div
               key={bill.tabId}
-              className="bg-white dark:bg-gray-800 rounded-[22px] px-4 py-4 ring-1 ring-green-500/30"
+              className={`bg-white dark:bg-gray-800 rounded-[22px] px-4 py-4 ${
+                bill.momo === "failed" ? "ring-2 ring-red-500 bg-red-50 dark:bg-red-950/40" : bill.momo === "watch" ? "ring-2 ring-[#F2B33A]" : "ring-1 ring-green-500/30"
+              }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1266,26 +1290,35 @@ export default function WaiterOrders() {
                   <div>
                     <p className="text-[17px] font-bold text-gray-900 dark:text-white">
                       {bill.tableLabel}{sinceChip(bill.tableLabel, bill.tabId)}{" "}
-                      <span className="ml-1 align-middle text-[11px] font-extrabold bg-green-500 text-white px-2 py-0.5 rounded-full">
-                        {bill.paidMomo ? "Paid by MoMo?" : "Wants to pay"}
+                      <span className={`ml-1 align-middle text-[11px] font-extrabold px-2 py-0.5 rounded-full ${
+                        bill.momo === "failed" ? "bg-red-600 text-white" : bill.momo === "watch" ? "bg-[#F2B33A] text-gray-900" : "bg-green-500 text-white"
+                      }`}>
+                        {bill.momo === "failed" ? "MoMo didn't arrive" : bill.momo === "watch" ? "Keep an eye" : bill.paidMomo ? "Paying by MoMo" : "Wants to pay"}
                       </span>
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {bill.paidMomo
-                        ? `${(bill.total ?? 0).toLocaleString("en-US")} RWF to your MoMo Pay · check MoMo, then tap Paid`
-                        : timeAgo(bill.timestamp)}
+                      {bill.momo === "failed"
+                        ? `${(bill.total ?? 0).toLocaleString("en-US")} RWF never reached the MoMo Pay. Go to the table.`
+                        : bill.momo === "watch"
+                          ? `${(bill.total ?? 0).toLocaleString("en-US")} RWF not in yet. Don't let them leave before it's confirmed.`
+                          : bill.paidMomo
+                            ? `${(bill.total ?? 0).toLocaleString("en-US")} RWF · the cashier is checking the MoMo`
+                            : timeAgo(bill.timestamp)}
                     </p>
                   </div>
                 </div>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleCloseTab(bill.tabId, "momo")}
-                  disabled={closingTabId === bill.tabId}
-                  className="text-sm px-4 py-3 rounded-xl bg-green-600 text-white font-extrabold disabled:opacity-50 transition-colors"
-                >
-                  {closingTabId === bill.tabId ? "..." : "Paid ✓ MoMo"}
-                </button>
+              {/* Only managers may confirm MoMo here (if the owner allows it); waiters never do. */}
+              <div className={`mt-3 grid gap-2 ${isManager ? "grid-cols-2" : "grid-cols-1"}`}>
+                {isManager && (
+                  <button
+                    onClick={() => handleCloseTab(bill.tabId, "momo")}
+                    disabled={closingTabId === bill.tabId}
+                    className="text-sm px-4 py-3 rounded-xl bg-green-600 text-white font-extrabold disabled:opacity-50 transition-colors"
+                  >
+                    {closingTabId === bill.tabId ? "..." : "Paid ✓ MoMo"}
+                  </button>
+                )}
                 <button
                   onClick={() => handleCloseTab(bill.tabId, "cash")}
                   disabled={closingTabId === bill.tabId}

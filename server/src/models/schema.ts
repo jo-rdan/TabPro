@@ -12,7 +12,7 @@ import {
   index,
   unique,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -29,7 +29,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "delivered",
 ]);
 export const orderSourceEnum = pgEnum("order_source", ["customer", "staff"]);
-export const staffRoleEnum = pgEnum("staff_role", ["waiter", "manager", "kitchen"]);
+export const staffRoleEnum = pgEnum("staff_role", ["waiter", "manager", "kitchen", "cashier"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "trialing",
   "active",
@@ -95,6 +95,9 @@ export const venues = pgTable("venues", {
   // Guests pay this MoMo Pay code directly: 100% to the venue, Skuzi never
   // holds the money (2026-10-21, replaces the 8% in-app payments).
   momoPayCode: text("momo_pay_code"),
+  // Who confirms that a MoMo payment really arrived ("owner", "manager",
+  // "cashier"): they get the alerts and the Received button. Never waiters.
+  momoConfirmers: text("momo_confirmers").array().default(sql`ARRAY['owner','manager','cashier']::text[]`).notNull(),
   // Paid up to this date (set by the founder when the venue pays its package;
   // see `plan` + `trialEndsAt` above: basic = Starter, pro = Pro, elite = Bar+).
   paidUntil: timestamp("paid_until"),
@@ -229,8 +232,16 @@ export const tabs = pgTable("tabs", {
   // How a closed bill was paid when staff closed it: "momo" (straight to the
   // venue's MoMo Pay code) or "cash". Null for older bills.
   paidWith: text("paid_with"),
-  // The guest tapped "I've paid" with MoMo; the waiter still confirms.
+  // The guest tapped "I've paid" with MoMo; the cashier, a manager or the owner confirms.
   paidClaimAt: timestamp("paid_claim_at"),
+  // MoMo to confirm: the guest opened MoMo (or said they paid). Until someone
+  // taps Received, "Not yet" reminds whoever tapped it every minute, 3 times,
+  // then the bill turns red (momoFailedAt) for the owner and the waiter.
+  momoCheckAt: timestamp("momo_check_at"),
+  momoRemindAt: timestamp("momo_remind_at"),
+  momoReminders: integer("momo_reminders").default(0).notNull(),
+  momoRemindTo: text("momo_remind_to"), // "owner" or a staff id
+  momoFailedAt: timestamp("momo_failed_at"),
   // "Add a friend": the code a guest shows on their phone so a friend next to
   // them can join this bill. A bill is never joined any other way.
   joinCode: text("join_code").unique(),

@@ -75,6 +75,7 @@ app.use(errorMiddleware);
 
 // ─── HTTP + WebSocket server ──────────────────────────────────────────────────
 import { startUnpaidBillsChecker } from './services/unpaid.service';
+import { startMomoReminders } from './services/momoCheck.service';
 import { startHeartbeatChecker } from './services/heartbeat.service';
 import { startPaymentReconciler } from './services/pawapay.service';
 import { startKeepAlive } from './lib/keepAlive';
@@ -99,6 +100,7 @@ server.listen(PORT, () => {
     : '⚠️  Mobile Money: OFF — PAWAPAY_API_TOKEN not set, customers will be asked to pay their waiter');
   startHeartbeatChecker();
   startUnpaidBillsChecker();
+  startMomoReminders();
   startPaymentReconciler();
   startKeepAlive();
   startScheduler();
