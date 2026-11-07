@@ -1,6 +1,6 @@
 import { db } from '../lib/db';
 import { orders, orderItems, tabs, menuItems, staffPoints, tableAssignments } from '../models/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { broadcastToVenue } from '../lib/websocket';
 import { notifyTable, notifyGuest } from './push.service';
 import { offerForTab } from './campaign.service';
@@ -26,7 +26,8 @@ export async function placeOrder(
 
   if (!tab) throw new Error('Tab not found');
   // 'abandoned' is how older versions marked a quiet bill; its phone can carry on.
-  if (tab.status === 'abandoned') {
+  // A requested bill isn't the end of the night either: another round reopens it.
+  if (tab.status === 'abandoned' || tab.status === 'bill_requested') {
     await db.update(tabs).set({ status: 'open', lastSeenAt: new Date() }).where(eq(tabs.id, tabId));
     tab.status = 'open';
   }
@@ -204,9 +205,10 @@ export async function updateOrderStatus(
 }
 
 export async function getOrdersForVenue(venueId: string) {
-  // Get all open tabs for this venue, with their orders
+  // Get all unsettled tabs for this venue, with their orders. A guest who opened
+  // "My bill" before the food came still needs it served.
   const openTabs = await db.query.tabs.findMany({
-    where: eq(tabs.status, 'open'),
+    where: inArray(tabs.status, ['open', 'bill_requested']),
     with: {
       table: true,
       orders: {

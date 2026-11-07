@@ -330,7 +330,7 @@ export async function nudgeWaiter(tabId: string) {
   });
 
   if (!tab) throw new Error('Tab not found');
-  if (tab.status !== 'open') throw new Error('Tab is not open');
+  if (tab.status !== 'open' && tab.status !== 'bill_requested') throw new Error('Tab is not open');
 
   broadcastToVenue(tab.table.venueId, {
     type: 'new_nudge',
@@ -376,7 +376,7 @@ export async function nudgeTable(qrCode: string) {
   const table = await getTableByQrCode(qrCode);
   if (!table || !table.venue) throw new Error('Table not found');
   const openTab = await findUnsettledTab(table.id);
-  if (openTab && openTab.status === 'open') return nudgeWaiter(openTab.id);
+  if (openTab && openTab.status !== 'abandoned') return nudgeWaiter(openTab.id);
 
   const last = lastTableNudge.get(table.id) ?? 0;
   if (Date.now() - last < TABLE_NUDGE_GAP_MS) return { tabId: null, tableLabel: table.label };
@@ -407,6 +407,8 @@ export async function requestBill(tabId: string) {
   });
 
   if (!tab) throw new Error('Tab not found');
+  // Looking at the bill again (after "Order more") is fine; the waiter already knows.
+  if (tab.status === 'bill_requested') return tab;
   if (tab.status !== 'open') throw new Error('Tab is not open');
 
   const [updated] = await db

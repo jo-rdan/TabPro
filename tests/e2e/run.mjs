@@ -190,8 +190,14 @@ r = await call('POST', `/tabs/${tabId}/request-bill`);
 check('Customer requests bill', r.status === 200);
 r = await call('GET', `/tabs/${tabId}/bill`);
 check('Bill total correct (6,800)', r.json?.data?.grandTotal === 6800, `got ${r.json?.data?.grandTotal}`);
-r = await call('POST', '/orders', { tabId, items: [{ menuItemId: item('Fanta').id, quantity: 1 }] });
-check('Ordering after bill → clear error, server stays up', r.status === 400 && (await alive()), r.json?.error);
+r = await call('GET', `/orders/venue/${venueId}`, null, staffTok);
+check('Waiter still sees a round not served yet after the guest opens "My bill"', JSON.stringify(r.json).includes(tabId));
+r = await call('GET', `/dashboard/stats/${venueId}`, null, ownerTok);
+check('…and it still counts in the owner\'s pending orders', (r.json?.data?.pendingOrders ?? 0) >= 1, `pending=${r.json?.data?.pendingOrders}`);
+r = await call('POST', `/tabs/${tabId}/nudge`);
+check('Calling the waiter still works from the bill', r.status === 200, r.json?.error);
+r = await call('POST', `/tabs/${tabId}/request-bill`);
+check('Opening the bill again is fine', r.status === 200, r.json?.error);
 r = await call('POST', '/tabs/open', { qrCode: codes[0], phone: '0788333444', choice: 'join' });
 check('Another phone scanning the table gets its OWN bill, never this one', !!r.json?.data?.tab?.id && r.json?.data?.tab?.id !== tabId && !JSON.stringify(r.json).includes(tabId));
 await call('POST', `/tabs/${r.json?.data?.tab?.id}/close`, { paidWith: 'cash' }, staffTok);
@@ -243,6 +249,22 @@ for (const p of ['report', 'busy-hours', 'activity']) {
 }
 r = await call('GET', `/ratings/leaderboard/${venueId}`, null, ownerTok);
 check('Leaderboard works', r.status === 200 && r.json?.data?.[0]?.name === 'Alice');
+{ // "Order more" from the bill: another round reopens it
+  r = await call('POST', '/tabs/open', { qrCode: codes[2], phone: '0788 444 001', choice: 'new' });
+  const tb = r.json?.data?.tab?.id;
+  await call('POST', '/orders', { tabId: tb, items: [{ menuItemId: item('Fanta').id, quantity: 1 }] });
+  await call('POST', `/tabs/${tb}/request-bill`);
+  r = await call('POST', '/orders', { tabId: tb, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
+  const st = (await q1('select status from tabs where id=$1', [tb]))?.status;
+  check('Ordering more after opening the bill works and reopens it', r.status === 201 && st === 'open', `${r.status} ${st} ${r.json?.error ?? ''}`);
+  r = await call('GET', `/tabs/${tb}/bill`);
+  check('…and the new round is on the bill (2,300)', r.json?.data?.grandTotal === 2300, `got ${r.json?.data?.grandTotal}`);
+  await call('POST', `/tabs/${tb}/close`, { paidWith: 'momo' }, staffTok);
+  r = await call('GET', `/dashboard/activity/${venueId}`, null, ownerTok);
+  const pay = r.json?.data?.find((t) => t.tabId === tb)?.payment;
+  check('History shows a bill the waiter marked "Paid MoMo" as MoMo', pay?.method === 'momo_direct' && pay?.amountRwf === 2300, JSON.stringify(pay));
+  await pg.query('delete from tabs where id=$1', [tb]);
+}
 
 // ── 3. Mobile Money ──────────────────────────────────────────────────────────
 console.log('\n── Mobile Money (fake pawaPay v2)');
@@ -481,6 +503,7 @@ await sleep(500);
 check('Guest opens TabPro again → the sign goes away', ownerWs.events.some((e) => e.type === 'customer_back' && e.payload?.tabId === pushTab));
 // A bill nobody has touched for hours shows up for the owner, with the guest's number.
 await pg.query(`update tabs set last_seen_at = now() - interval '3 hours', opened_at = now() - interval '4 hours' where id=$1`, [pushTab]);
+await pg.query(`update orders set placed_at = now() - interval '3 hours' where tab_id=$1`, [pushTab]);
 r = await call('GET', `/dashboard/open-bills/${venueId}`, null, ownerTok);
 const leftOpen = (r.json?.data ?? []).find((b) => b.tabId === pushTab);
 check('Owner sees bills left open, with amount and guest phone', !!leftOpen && leftOpen.total > 0 && /^07\d{8}$/.test(leftOpen.phone ?? ''), JSON.stringify(leftOpen));
@@ -1037,6 +1060,11 @@ console.log('\n── New group at a table with an unpaid bill');
   await call('POST', `/tabs/${oldTab}/close`, { paidWith: 'cash' }, staffTok);
   r = await call('POST', '/tabs/open', { qrCode: gCode, phone: '0788 400 009', joinCode: oldCode });
   check('A code stops working once its bill is closed', r.status >= 400 && (await call('GET', `/tabs/join/${oldCode}`)).status === 404);
+  await call('POST', '/orders', { tabId: walkIn, items: [{ menuItemId: item('Primus').id, quantity: 1 }] }, staffTok);
+  await pg.query(`update tabs set opened_at = now() - interval '7 hours', last_seen_at = null where id=$1`, [walkIn]);
+  await pg.query(`update orders set placed_at = now() - interval '7 hours' where tab_id=$1`, [walkIn]);
+  r = await call('GET', `/dashboard/open-bills/${venueId}`, null, ownerTok);
+  check('A bill the waiter typed in and nobody paid shows in "Bills left open" too', (r.json?.data ?? []).some((b) => b.tabId === walkIn && b.total === 1500), JSON.stringify(r.json?.data));
   for (const t of [newTab, typedTab, walkIn]) await call('POST', `/tabs/${t}/close`, { paidWith: 'cash' }, staffTok);
 }
 

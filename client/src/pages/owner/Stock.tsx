@@ -401,10 +401,10 @@ function KitchenPanel({ venueId, onToast }: { venueId: string; onToast: (m: stri
           <div className="mt-4 grid grid-cols-3 gap-2.5">
             <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className="font-display text-xl font-bold text-gray-900 dark:text-white">{k.spentRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">spent on food</p></div>
             <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className="font-display text-xl font-bold text-gray-900 dark:text-white">{k.soldRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">food sold</p></div>
-            <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className={`font-display text-xl font-bold ${k.profitRwf < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>{k.profitRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">food profit</p></div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-800 dark:bg-gray-900"><p className={`font-display text-xl font-bold ${k.profitRwf < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>{k.profitRwf.toLocaleString('en-US')}</p><p className="text-xs font-semibold text-gray-500 dark:text-gray-400">left after buying food</p></div>
           </div>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            {k.spentPct === null ? 'No food sold in Skuzi yet for this period.' : `You spend ${k.spentPct}% of your food sales on ingredients.`} All amounts in RWF.
+            {k.soldRwf === 0 ? 'No food sold in Skuzi yet for this period. ' : ''}All amounts in RWF.
           </p>
 
           <button onClick={() => setAdding(true)} className="mt-4 w-full rounded-2xl bg-action py-3.5 font-extrabold text-action-ink">+ Add food you bought</button>
