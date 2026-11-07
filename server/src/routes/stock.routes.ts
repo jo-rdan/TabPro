@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import {
   handleGetStock, handleSetTracking, handleDelivery, handleCount, handleItemHistory,
-  handleGetKitchen, handleAddSpend, handleDeleteSpend, handleKitchenCategories,
+  handleGetKitchen, handleAddSpend, handleDeleteSpend, handleKitchenCategories, handleDeliveryPhoto, handleReceive,
 } from '../controllers/stock.controller';
+import { upload } from '../middleware/upload.middleware';
 import { venueManager, venueFromParam, venueOfMenuItem, planFeature } from '../middleware/venueAccess.middleware';
 
 // Stock for bars: the owner and managers (waiters never see it).
@@ -12,6 +13,8 @@ router.put('/items/:itemId', venueManager(venueOfMenuItem()), planFeature('stock
 router.get('/items/:itemId/history', venueManager(venueOfMenuItem()), planFeature('stock', venueOfMenuItem()), handleItemHistory);
 router.get('/:venueId', venueManager(venueFromParam()), planFeature('stock', venueFromParam()), handleGetStock);
 router.post('/:venueId/delivery', venueManager(venueFromParam()), planFeature('stock', venueFromParam()), handleDelivery);
+router.post('/:venueId/photo', venueManager(venueFromParam()), planFeature('stock', venueFromParam()), upload.single('file'), handleDeliveryPhoto);
+router.post('/:venueId/receive', venueManager(venueFromParam()), planFeature('stock', venueFromParam()), handleReceive);
 router.post('/:venueId/count', venueManager(venueFromParam()), planFeature('stock', venueFromParam()), handleCount);
 
 // Kitchen, in money

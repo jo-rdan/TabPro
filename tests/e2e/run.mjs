@@ -984,6 +984,49 @@ console.log('\n── Stock');
   check('A delivery adds bottles and puts it back on the menu', r.status === 200 && back.stock_qty === 24 && back.is_available === true);
   r = await call('POST', `/stock/${venueId}/count`, { items: [{ menuItemId: beer.id, counted: 21 }] }, ownerTok);
   check('The closing count shows what went missing', r.status === 200 && r.json?.data?.missing?.[0]?.qty === 3 && r.json?.data?.missingValueRwf === 4500, JSON.stringify(r.json?.data));
+  // Any drink, any pack: crates, trays, boxes or single bottles
+  r = await call('PUT', `/stock/items/${beer.id}`, { tracked: true, qty: 21, alertAt: 12, packKind: 'crate', packSize: 12 }, ownerTok);
+  let packed = (await call('GET', `/stock/${venueId}`, null, ownerTok)).json?.data?.items?.find((i) => i.id === beer.id);
+  check('Owner says how a drink comes (crate of 12)', r.status === 200 && packed?.pack?.kind === 'crate' && packed?.pack?.size === 12 && packed?.qty === 21, JSON.stringify(packed));
+  r = await call('PUT', `/stock/items/${beer.id}`, { tracked: true, packKind: 'crate', packSize: 1 }, ownerTok);
+  check('…a pack holds 2 to 100', r.status === 400 && /2 and 100/.test(r.json?.error ?? ''), r.json?.error);
+  r = await call('PUT', `/stock/items/${beer.id}`, { tracked: true, packKind: 'barrel', packSize: 12 }, ownerTok);
+  check('…crate, tray, box or single bottles only', r.status === 400, r.json?.error);
+  {
+    const photo = async (tok, type) => {
+      const fd = new FormData();
+      fd.append('file', new Blob([Buffer.from('not really a photo')], { type }), type === 'application/pdf' ? 'x.pdf' : 'delivery.jpg');
+      const res = await fetch(`${BASE}/stock/${venueId}/photo`, { method: 'POST', body: fd, headers: tok ? { Authorization: `Bearer ${tok}` } : {} });
+      return { status: res.status, json: await res.json().catch(() => null) };
+    };
+    r = await photo(ownerTok, 'application/pdf');
+    check('Delivery photo: only a photo is accepted', r.status === 400 && /photo of the delivery/.test(r.json?.error ?? ''), r.json?.error);
+    r = await photo(staffTok, 'image/jpeg');
+    check('…and waiters cannot add stock', r.status === 401 || r.status === 403, `status ${r.status}`);
+  }
+  r = await call('POST', `/stock/${venueId}/receive`, { menuItemId: beer.id, name: 'Stock Beer', packKind: 'crate', packSize: 12, packs: 2, loose: 3 }, ownerTok);
+  check('Typed-in delivery: 2 crates of 12 + 3 = 27 more', r.status === 200 && r.json?.data?.qty === 48 && r.json?.data?.left === '4 crates', JSON.stringify(r.json));
+  r = await call('POST', `/stock/${venueId}/receive`, { name: 'Test Energy Can', priceRwf: 2500, packKind: 'tray', packSize: 24, packs: 1, loose: 7 }, ownerTok);
+  const can = await q1("select price_rwf, category, stock_tracked, stock_qty, pack_kind, pack_size, is_available from menu_items where venue_id=$1 and name='Test Energy Can'", [venueId]);
+  check('A new drink is added to the menu with its price, tray and stock', r.status === 200 && can?.price_rwf === 2500 && can?.stock_tracked && can?.stock_qty === 31 && can?.pack_kind === 'tray' && can?.pack_size === 24 && can?.is_available && r.json?.data?.left === '1 tray + 7', JSON.stringify({ can, res: r.json }));
+  r = await call('POST', `/stock/${venueId}/receive`, { name: 'Test Spirit', packKind: null, packs: 0, loose: 3 }, ownerTok);
+  check('…a new drink needs a price', r.status === 400 && /price/i.test(r.json?.error ?? ''), r.json?.error);
+  r = await call('POST', `/stock/${venueId}/receive`, { name: 'Test Spirit', priceRwf: 40000, packKind: 'single', loose: 3 }, ownerTok);
+  check('Single bottles (spirits): 3 bottles', r.status === 200 && r.json?.data?.left === '3 bottles', JSON.stringify(r.json));
+  {
+    const mgr = await q1(`insert into staff (venue_id,name,phone,role) values ($1,'Pack Manager',$2,'manager') returning id`, [venueId, phone()]);
+    const mgrTok = jwt.sign({ staffId: mgr.id, venueId }, JWT_SECRET, { expiresIn: '1d' });
+    r = await call('POST', `/stock/${venueId}/receive`, { name: 'Manager New Drink', priceRwf: 1000, packKind: 'crate', packSize: 24, packs: 1 }, mgrTok);
+    check('A manager cannot add a drink to the menu', r.status === 400 && /Only the owner/.test(r.json?.error ?? ''), r.json?.error);
+    r = await call('POST', `/stock/${venueId}/receive`, { name: 'Test Energy Can', priceRwf: 9999, packKind: 'tray', packSize: 24, packs: 1 }, mgrTok);
+    check('…nor change a price', r.status === 400 && /Only the owner/.test(r.json?.error ?? ''), r.json?.error);
+    r = await call('POST', `/stock/${venueId}/receive`, { name: 'test energy can', packKind: 'tray', packSize: 24, packs: 1 }, mgrTok);
+    check('…but a manager adds deliveries of menu drinks', r.status === 200 && r.json?.data?.qty === 55, JSON.stringify(r.json));
+  }
+  await call('PUT', `/stock/items/${beer.id}`, { tracked: true, qty: 21, packKind: null }, ownerTok);
+  await pg.query("delete from stock_movements where menu_item_id in (select id from menu_items where venue_id=$1 and name in ('Test Energy Can','Test Spirit'))", [venueId]);
+  await pg.query("delete from menu_items where venue_id=$1 and name in ('Test Energy Can','Test Spirit')", [venueId]);
+  await pg.query("delete from stock_movements where menu_item_id=$1 and kind='delivery' and note is null and qty_change=27", [beer.id]);
   r = await call('GET', `/stock/items/${beer.id}/history`, null, ownerTok);
   check('Item history: sales, delivery, count', r.status === 200 && r.json?.data?.week?.sold === 5 && r.json?.data?.week?.delivered === 24 && r.json?.data?.week?.missing === 3, JSON.stringify(r.json?.data?.week));
   r = await call('GET', `/stock/${venueId}`, null, staffTok);
