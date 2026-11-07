@@ -565,10 +565,20 @@ check('…and the owner still hears about it', pushHits.includes('/owner'), push
 // A table whose waiter has their own phone: that waiter is told, not the manager.
 const phoneWaiterTable = await q1(`select t.id, s.code from tables t join qr_stickers s on s.table_id=t.id join table_assignments a on a.table_id=t.id join staff w on w.id=a.staff_id where t.venue_id=$1 and w.has_smartphone and w.role='waiter' and w.name in ('Alice','Eric') and not exists (select 1 from tabs x where x.table_id=t.id and x.status<>'closed') limit 1`, [venueId]);
 r = await call('POST', '/tabs/open', { qrCode: phoneWaiterTable.code, phone: phone() });
+const headsTab = r.json?.data?.tab?.id;
 pushHits.length = 0;
 await call('POST', '/orders', { tabId: r.json?.data?.tab?.id, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
 await sleep(800);
 check('Waiters with their own phone are not covered by the manager', (pushHits.includes('/eric') || pushHits.includes('/alice')) && !pushHits.includes('/manager'), pushHits.join(' '));
+pushHits.length = 0;
+r = await call('POST', `/tabs/${headsTab}/momo-opening`);
+await sleep(800);
+check('Guest taps "Open MoMo" → the owner and the manager get a heads-up', r.json?.data?.sent === true && pushHits.includes('/owner') && pushHits.includes('/manager'), pushHits.join(' '));
+check('…but not the waiters', !pushHits.includes('/eric') && !pushHits.includes('/alice'), pushHits.join(' '));
+pushHits.length = 0;
+r = await call('POST', `/tabs/${headsTab}/momo-opening`);
+await sleep(500);
+check('Tapping it again right away doesn\'t buzz them twice', r.json?.data?.sent === false && pushHits.length === 0, pushHits.join(' '));
 pushServer.close();
 
 const strangerPhone = phone();

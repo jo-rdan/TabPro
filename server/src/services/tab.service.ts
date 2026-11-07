@@ -8,7 +8,7 @@ import { skuziCallReason } from './tips.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
-import { notifyTable, sendPushToOwner } from './push.service';
+import { notifyTable, notifyOwnerAndManagers, sendPushToOwner } from './push.service';
 import { attributeVisit, offerForTab } from './campaign.service';
 import { onGuestSeated } from './booking.service';
 import { isPawapayConfigured } from '../lib/pawapay';
@@ -500,6 +500,27 @@ export async function getTabBill(tabId: string) {
     walletRwf,
     openedAt: tab.openedAt,
   };
+}
+
+// The guest tapped "Open MoMo" and is leaving Skuzi to pay the venue's MoMo Pay
+// code. Skuzi can't see that payment, so the owner and managers get a heads-up
+// to start checking their MoMo. Once a minute per bill at most.
+const lastMomoHeadsUp = new Map<string, number>();
+const MOMO_HEADS_UP_GAP_MS = 60_000;
+
+export async function momoHeadsUp(tabId: string) {
+  const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: true } });
+  if (!tab) throw new Error('Tab not found');
+  if (tab.status === 'closed') return { sent: false };
+  const last = lastMomoHeadsUp.get(tabId) ?? 0;
+  if (Date.now() - last < MOMO_HEADS_UP_GAP_MS) return { sent: false };
+  lastMomoHeadsUp.set(tabId, Date.now());
+  const total = (await getTabBill(tabId).catch(() => null))?.grandTotal ?? 0;
+  await notifyOwnerAndManagers(tab.table.venueId, {
+    title: `📱 ${tab.table.label} is paying by MoMo`,
+    body: `${total.toLocaleString('en-US')} RWF should reach your MoMo Pay soon. Skuzi can't see it: check your MoMo.`,
+  });
+  return { sent: true };
 }
 
 // paidByMomo: closed because the guest paid in the app (that alert is sent by the payment code).

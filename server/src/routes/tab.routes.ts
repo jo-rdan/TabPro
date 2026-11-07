@@ -4,6 +4,7 @@ import {
   handlePreviewTable,
   handleNudgeTable,
   handleClaimPaid,
+  handleMomoHeadsUp,
   handleStaffOpenTab,
   handleGetTab,
   handleNudgeWaiter,
@@ -33,6 +34,7 @@ router.get('/:tabId', handleGetTab);
 router.get('/:tabId/bill', handleGetTabBill);
 router.post('/:tabId/nudge', handleNudgeWaiter);
 router.post('/:tabId/paid-by-momo', handleClaimPaid);
+router.post('/:tabId/momo-opening', handleMomoHeadsUp);
 router.post('/:tabId/request-bill', handleRequestBill);
 // The guest's waiter (badges, tips on/off) and "I've sent a tip".
 // "Add a friend": the bill's join code (for the QR on the guest's phone), and

@@ -324,6 +324,8 @@ export default function CustomerMenu() {
   const [momoPayCode, setMomoPayCode] = useState<string | null>(null);
   const [claimState, setClaimState] = useState<"idle" | "sending" | "sent">("idle");
   const [codeCopied, setCodeCopied] = useState(false);
+  // "Open MoMo" first says the guest is leaving Skuzi; going on tells the owner and managers.
+  const [momoSheet, setMomoSheet] = useState(false);
   // Demo venue: everything works, but payments are simulated.
   const [isDemo, setIsDemo] = useState(false);
   const [payReferenceId, setPayReferenceId] = useState("");
@@ -1184,12 +1186,39 @@ export default function CustomerMenu() {
                   {codeCopied ? "Copied ✓" : "Copy"}
                 </button>
               </div>
-              <a
-                href={`tel:${encodeURIComponent(MOMO_DIAL(momoPayCode, grandTotal))}`}
+              <button
+                type="button"
+                onClick={() => setMomoSheet(true)}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FFCB05] py-4 text-base font-extrabold text-[#1B1B1B]"
               >
                 📱 Open MoMo
-              </a>
+              </button>
+              {momoSheet && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="momo-leave-title" onClick={() => setMomoSheet(false)}>
+                  <div className="w-full max-w-md rounded-t-[28px] bg-white p-6 dark:bg-[#3B2149] sm:rounded-[28px]" style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+                    <h2 id="momo-leave-title" className="font-display text-xl font-black text-gray-900 dark:text-white">You're leaving Skuzi</h2>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">MoMo opens outside Skuzi, so we can't see your payment. When it's done, come back and tap <b className="text-gray-900 dark:text-white">I've paid</b>.</p>
+                    <div className="mt-4 flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3 text-sm dark:bg-gray-800">
+                      <span className="text-gray-500 dark:text-gray-400">Code <b className="tabular-nums tracking-wider text-gray-900 dark:text-white">{momoPayCode}</b></span>
+                      <span className="font-extrabold tabular-nums text-gray-900 dark:text-white">{fmt(grandTotal)}</span>
+                    </div>
+                    <a
+                      href={`tel:${encodeURIComponent(MOMO_DIAL(momoPayCode, grandTotal))}`}
+                      onClick={() => {
+                        // Sent as the phone app opens, so it still goes out if the page is paused.
+                        if (tabId) apiBeacon(`/tabs/${tabId}/momo-opening`);
+                        setMomoSheet(false);
+                      }}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FFCB05] py-4 text-base font-extrabold text-[#1B1B1B]"
+                    >
+                      📱 Open MoMo
+                    </a>
+                    <button type="button" onClick={() => setMomoSheet(false)} className="mt-2 w-full py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
+                      Not now
+                    </button>
+                  </div>
+                </div>
+              )}
               <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">In MoMo: Pay → MoMo Pay code {momoPayCode} → {fmt(grandTotal)} → your PIN.</p>
               {claimState === "sent" ? (
                 <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-center dark:bg-green-500/10">

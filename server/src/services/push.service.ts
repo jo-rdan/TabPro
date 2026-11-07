@@ -185,6 +185,26 @@ export async function notifyGuest(tabId: string, message: Message, url?: string)
   await send(subs, message.title, message.body, target);
 }
 
+// ─── The owner and the managers ──────────────────────────────────────────────
+// Money news the people in charge should see, never the waiters.
+export async function notifyOwnerAndManagers(venueId: string, message: Message) {
+  if (!pushEnabled()) return;
+  const managers = await db.query.staff.findMany({
+    where: and(eq(staff.venueId, venueId), eq(staff.role, 'manager'), eq(staff.isActive, true)),
+    columns: { id: true },
+  });
+  const managerIds = new Set(managers.map((m) => m.id));
+  const managerSubs = managerIds.size
+    ? (await db.query.pushSubscriptions.findMany({
+        where: and(eq(pushSubscriptions.venueId, venueId), isNotNull(pushSubscriptions.staffId)),
+      })).filter((s) => s.staffId && managerIds.has(s.staffId))
+    : [];
+  const seen = new Set(managerSubs.map((s) => s.endpoint));
+  const owners = (await ownerSubs(venueId)).filter((s) => !seen.has(s.endpoint));
+  if (managerSubs.length) await send(managerSubs, message.title, message.body, STAFF_URL);
+  if (owners.length) await send(owners, message.title, message.body, OWNER_URL);
+}
+
 // ─── The owner only ───────────────────────────────────────────────────────────
 export async function sendPushToOwner(
   venueId: string,
