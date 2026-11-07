@@ -29,6 +29,7 @@ Keep this short and current. The bot and interactive sessions both update it.
 - Venue agreement, one-page pitch, pitch script, demo QR card, 16-table sticker sheet + clock-in sticker (Jordan's Sales folder).
 
 ## Needs Jordan
+- PR #91 (stock for any drink, any pack) is open and tested. Run migration 0035 on prod first, then merge it. The bot will not merge it.
 - **Aug 2027:** renew tabpro.lol before 2027-09-29 (auto-renew is OFF; renewal ≈ $26.26 at Porkbun).
 - Email: info@tabpro.lol forwards to Gmail (done 2026-10-04). Still to do: Gmail Apps Script (EMAIL_SCRIPT_URL/SECRET on Render) for demo-request emails.
 - Bank document → pawaPay email (Mon 2026-10-05).
