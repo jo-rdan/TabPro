@@ -99,10 +99,10 @@ export default function NightReport() {
         {report && (
           <div className="mt-5 flex flex-col gap-3">
             <div className="rounded-2xl bg-gray-900 p-5 text-white print:border print:border-gray-300 print:bg-white print:text-black">
-              <p className="text-xs font-bold uppercase tracking-wider text-white/60 print:text-gray-600">Sales</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-white/60 print:text-gray-600">You should have</p>
               <p className="mt-1 font-display text-4xl font-bold tabular-nums">{rwf(report.salesRwf)}</p>
               <p className="mt-1 text-sm text-white/80 print:text-gray-700">
-                {report.bills} {report.bills === 1 ? "bill" : "bills"} · average {rwf(report.averageBillRwf)}
+                Everything ordered on Skuzi · {report.bills} {report.bills === 1 ? "bill" : "bills"} · average {rwf(report.averageBillRwf)}
                 {report.busiestHour && ` · busiest ${hh(report.busiestHour.hour)}–${hh((report.busiestHour.hour + 1) % 24)}`}
               </p>
             </div>
@@ -111,13 +111,16 @@ export default function NightReport() {
               <p className="rounded-2xl border border-gray-200 bg-white p-5 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900">No bills on Skuzi this night.</p>
             ) : (
               <>
-                <Section title="How it was paid">
-                  <Row label="📲 MoMo" value={rwf(report.paid.momoRwf)} />
-                  <Row label="💵 Cash" value={rwf(report.paid.cashRwf)} />
-                  {report.paid.otherRwf > 0 && <Row label="Other" value={rwf(report.paid.otherRwf)} />}
-                  <Row label="Paid" value={rwf(paidTotal)} strong />
-                  <Row label={`⚠️ Still unpaid (${report.unpaidBills.length})`} value={rwf(report.unpaidRwf)} strong />
+                <Section title="Check it against your money">
+                  <Row label="📲 Your MoMo statement should show" value={rwf(report.paid.momoRwf)} />
+                  <Row label="💵 Your cash drawer should hold" value={rwf(report.paid.cashRwf)} />
+                  {report.paid.otherRwf > 0 && <Row label="Closed without saying how" value={rwf(report.paid.otherRwf)} />}
+                  <Row label="Marked paid by staff" value={rwf(paidTotal)} strong />
+                  <Row label={`⚠️ Not marked paid (${report.unpaidBills.length})`} value={rwf(report.unpaidRwf)} strong />
                 </Section>
+                <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200 print:hidden">
+                  Count your cash and open your MoMo. If they come up short of these numbers, something went wrong tonight, and now you know how much.
+                </p>
 
                 {report.unpaidBills.length > 0 && (
                   <Section title="Unpaid bills">

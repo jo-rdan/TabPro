@@ -19,6 +19,12 @@ import NotificationNotice from '../../components/NotificationNotice';
 
 interface Stats {
   revenueTonight: number;
+  // Everything ordered since 06:00, paid or not: what Skuzi knows for sure.
+  orderedTonight: number;
+  orderedBills: number;
+  openBills: number;
+  openRwf: number;
+  closedBills: number;
   activeTables: number;
   pendingOrders: number;
   avgRatingToday: number | null;
@@ -359,9 +365,12 @@ export default function Dashboard() {
 
   const statCards = [
     {
-      label: 'Revenue tonight',
-      value: tonight ? tonight.total.toLocaleString() : stats ? stats.revenueTonight.toLocaleString() : '—',
+      label: 'Ordered tonight',
+      value: stats ? stats.orderedTonight.toLocaleString() : '—',
       unit: stats ? 'RWF' : undefined,
+      sub: stats && stats.orderedBills > 0
+        ? `${stats.orderedBills} ${stats.orderedBills === 1 ? 'bill' : 'bills'}${stats.openBills ? ` · ${stats.openBills} still open (${stats.openRwf.toLocaleString()})` : ' · all closed'}`
+        : undefined,
       icon: TrendingUp,
       color: 'text-brand-500',
     },
@@ -583,7 +592,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
         <div className="lg:col-span-3 bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-[22px] px-5 pt-4 pb-3">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Money tonight</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Marked paid tonight</h2>
             {comparison && (
               <span className={`text-xs font-bold ${comparison.up ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
                 {comparison.text}
@@ -595,7 +604,7 @@ export default function Dashboard() {
           ) : (
             <div className="h-[180px] flex flex-col items-center justify-center text-center">
               <TrendingUp size={22} className="text-gray-300 dark:text-gray-600 mb-2" />
-              <p className="text-sm text-gray-400 dark:text-gray-500">No paid bills yet tonight.<br />The line starts with the first payment.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">No bills marked paid yet tonight.<br />The line starts when staff close the first bill.</p>
             </div>
           )}
         </div>
@@ -700,8 +709,8 @@ export default function Dashboard() {
               ) : (
                 <>
                   <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                    <b className="text-gray-900 dark:text-white">{tonight ? formatRwf(tonight.total) : stats ? formatRwf(stats.revenueTonight) : '—'}</b> from{' '}
-                    <b className="text-gray-900 dark:text-white">{summary.closedTabs}</b> paid {summary.closedTabs === 1 ? 'table' : 'tables'} ·{' '}
+                    <b className="text-gray-900 dark:text-white">{stats ? formatRwf(stats.orderedTonight) : '—'}</b> ordered ·{' '}
+                    <b className="text-gray-900 dark:text-white">{summary.closedTabs}</b> {summary.closedTabs === 1 ? 'table' : 'tables'} closed by staff ·{' '}
                     <b className="text-gray-900 dark:text-white">{summary.totalOrders}</b> {summary.totalOrders === 1 ? 'order' : 'orders'}.
                     {busiestHour && <> Busiest hour so far: <b className="text-gray-900 dark:text-white">{busiestHour}</b>.</>}
                   </p>
