@@ -26,7 +26,7 @@ interface StaffRow {
   id: string;
   name: string;
   phone: string;
-  role: "waiter" | "manager" | "kitchen";
+  role: "waiter" | "manager" | "kitchen" | "cashier";
   hasSmartphone: boolean;
   isActive: boolean;
   inviteStatus: "none" | "invited" | "active" | "no_phone";
@@ -65,7 +65,7 @@ export default function Staff() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [newRole, setNewRole] = useState<"waiter" | "manager" | "kitchen">("waiter");
+  const [newRole, setNewRole] = useState<"waiter" | "manager" | "kitchen" | "cashier">("waiter");
   const [newHasPhone, setNewHasPhone] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -178,7 +178,7 @@ export default function Staff() {
     }
   };
 
-  const handleUpdate = async (member: StaffRow, changes: { role?: "waiter" | "manager" | "kitchen"; hasSmartphone?: boolean }) => {
+  const handleUpdate = async (member: StaffRow, changes: { role?: "waiter" | "manager" | "kitchen" | "cashier"; hasSmartphone?: boolean }) => {
     if (!venue) return;
     setUpdating(member.id);
     try {
@@ -191,6 +191,8 @@ export default function Staff() {
           ? `${member.name} is now a manager: they see every table and cover waiters without a smartphone.`
           : changes.role === "kitchen"
             ? `${member.name} is now on the kitchen screen: they see food orders and tap Ready. No tables.`
+          : changes.role === "cashier"
+            ? `${member.name} is now a cashier: they confirm MoMo payments. No tables.`
           : changes.role === "waiter"
             ? `${member.name} is a waiter again.`
             : changes.hasSmartphone === false
@@ -357,7 +359,7 @@ export default function Staff() {
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-4">
             <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
-              {(["waiter", "manager", "kitchen"] as const).map((r) => (
+              {(["waiter", "manager", "kitchen", "cashier"] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
@@ -380,7 +382,12 @@ export default function Staff() {
               🔥 The chef: sees food orders on the kitchen screen and taps Ready. No tables. Part of Pro.
             </p>
           )}
-          {!newHasPhone && newRole !== "kitchen" && (
+          {newRole === "cashier" && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
+              💰 Holds your MoMo Pay phone: confirms each MoMo payment that arrives. No tables.
+            </p>
+          )}
+          {!newHasPhone && newRole !== "kitchen" && newRole !== "cashier" && (
             <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
               No invite needed. They still get tables and points; alerts for their tables go to your manager, or to you.
             </p>
@@ -406,6 +413,8 @@ export default function Staff() {
           <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
+
+      {venue && <MomoConfirmers venueId={venue.id} />}
 
       <div className="space-y-3">
         {sorted.map((member, i) => (
@@ -462,6 +471,11 @@ export default function Staff() {
                         🔥 Kitchen
                       </span>
                     )}
+                    {member.role === "cashier" && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                        💰 Cashier
+                      </span>
+                    )}
                     {!member.hasSmartphone && (
                       <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                         📵 No smartphone
@@ -469,7 +483,7 @@ export default function Staff() {
                     )}
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">{member.phone}</p>
-                  {member.role !== "kitchen" && (member.weekPoints > 0 || member.tipsWeekRwf > 0 || member.skuziCallsWeek > 0) && (
+                  {member.role !== "kitchen" && member.role !== "cashier" && (member.weekPoints > 0 || member.tipsWeekRwf > 0 || member.skuziCallsWeek > 0) && (
                     <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-bold">
                       {member.weekPoints > 0 && (
                         <span className={`rounded-full px-2.5 py-1 ${member.weekRank === 1 ? "bg-[#FFEDB8] text-[#7A5A16]" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
@@ -488,7 +502,7 @@ export default function Staff() {
                   )}
                   {member.isActive && (
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs">
-                      {(["waiter", "manager", "kitchen"] as const).filter((r) => r !== member.role).map((r, i) => (
+                      {(["waiter", "manager", "kitchen", "cashier"] as const).filter((r) => r !== member.role).map((r, i) => (
                         <span key={r} className="contents">
                           {i > 0 && <span className="text-gray-300 dark:text-gray-700">·</span>}
                           <button
@@ -496,7 +510,7 @@ export default function Staff() {
                             disabled={updating === member.id}
                             className="font-semibold text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
                           >
-                            {r === "waiter" ? "Make waiter" : r === "manager" ? "Make manager" : "Move to kitchen"}
+                            {r === "waiter" ? "Make waiter" : r === "manager" ? "Make manager" : r === "cashier" ? "Make cashier" : "Move to kitchen"}
                           </button>
                         </span>
                       ))}
@@ -586,7 +600,7 @@ export default function Staff() {
             )}
 
             {/* Table assignment panel (the kitchen gets no tables) */}
-            {member.isActive && member.role !== "kitchen" && (
+            {member.isActive && member.role !== "kitchen" && member.role !== "cashier" && (
               <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <button
                   onClick={() =>
@@ -718,5 +732,53 @@ export default function Staff() {
         </div>
       )}
     </Layout>
+  );
+}
+
+// Who confirms that MoMo money arrived: they get the "Table 6 is paying" alert
+// and the Received button. Waiters never do (they don't see the MoMo Pay phone).
+function MomoConfirmers({ venueId }: { venueId: string }) {
+  const [roles, setRoles] = useState<string[] | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    api.get(`/momo/${venueId}`).then((r) => setRoles(r.data.data.confirmers)).catch(() => setRoles(null));
+  }, [venueId]);
+  if (!roles) return null;
+  const toggle = async (role: string) => {
+    const next = roles.includes(role) ? roles.filter((r) => r !== role) : [...roles, role];
+    if (next.length === 0) {
+      setError("Keep at least one person who confirms MoMo.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    try {
+      const r = await api.patch(`/momo/${venueId}/confirmers`, { roles: next });
+      setRoles(r.data.data.confirmers);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Couldn't save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div className="mb-4 bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <p className="font-bold text-gray-900 dark:text-white">Who confirms MoMo payments?</p>
+      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">They get the "Table 6 is paying" alert and tap Received once the money is on your MoMo. Waiters never confirm MoMo.</p>
+      <div className="mt-3 flex flex-col gap-2">
+        {([
+          ["owner", "Me (owner)"],
+          ["manager", "Managers"],
+          ["cashier", "Cashiers"],
+        ] as const).map(([role, label]) => (
+          <label key={role} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-800 dark:bg-[#2B1838] dark:text-gray-200">
+            {label}
+            <input id={`momo-confirm-${role}`} type="checkbox" checked={roles.includes(role)} disabled={saving} onChange={() => toggle(role)} className="h-5 w-5 accent-brand-500" />
+          </label>
+        ))}
+      </div>
+      {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+    </div>
   );
 }

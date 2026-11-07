@@ -4,6 +4,7 @@ import { TrendingUp, Users, Clock, Star, ChevronLeft, ChevronRight, BellRing, Cr
 import MoneyTonight from '../../components/dashboard/MoneyTonight';
 import CoinJar from '../../components/dashboard/CoinJar';
 import OpenBills from '../../components/OpenBills';
+import MomoToConfirm from '../../components/MomoToConfirm';
 import Layout from '../../components/Layout';
 import ReceiptModal from '../../components/ReceiptModal';
 import JoinRequests from '../../components/JoinRequests';
@@ -544,6 +545,13 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* MoMo to confirm: only shows while there's something to check */}
+      {venue && localStorage.getItem('tabpro_token') && (
+        <div className="mb-4">
+          <MomoToConfirm venueId={venue.id} token={localStorage.getItem('tabpro_token')!} hideWhenEmpty forOwner />
         </div>
       )}
 

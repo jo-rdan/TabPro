@@ -185,24 +185,47 @@ export async function notifyGuest(tabId: string, message: Message, url?: string)
   await send(subs, message.title, message.body, target);
 }
 
-// ─── The owner and the managers ──────────────────────────────────────────────
-// Money news the people in charge should see, never the waiters.
-export async function notifyOwnerAndManagers(venueId: string, message: Message) {
+// ─── Whoever confirms MoMo payments ───────────────────────────────────────────
+// The owner picks who checks that MoMo money arrived (owner, managers, cashiers:
+// venues.momoConfirmers). Never waiters: they don't see the MoMo Pay phone.
+const CASHIER_URL = "/cashier";
+
+export async function notifyMomoConfirmers(venueId: string, message: Message) {
   if (!pushEnabled()) return;
-  const managers = await db.query.staff.findMany({
-    where: and(eq(staff.venueId, venueId), eq(staff.role, 'manager'), eq(staff.isActive, true)),
-    columns: { id: true },
-  });
-  const managerIds = new Set(managers.map((m) => m.id));
-  const managerSubs = managerIds.size
+  const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId), columns: { momoConfirmers: true } });
+  const who = new Set(venue?.momoConfirmers ?? ["owner", "manager", "cashier"]);
+  const roles = (["manager", "cashier"] as const).filter((r) => who.has(r));
+  const members = roles.length
+    ? await db.query.staff.findMany({
+        where: and(eq(staff.venueId, venueId), inArray(staff.role, roles), eq(staff.isActive, true)),
+        columns: { id: true, role: true },
+      })
+    : [];
+  const roleOf = new Map(members.map((m) => [m.id, m.role]));
+  const staffRows = members.length
     ? (await db.query.pushSubscriptions.findMany({
         where: and(eq(pushSubscriptions.venueId, venueId), isNotNull(pushSubscriptions.staffId)),
-      })).filter((s) => s.staffId && managerIds.has(s.staffId))
+      })).filter((s) => s.staffId && roleOf.has(s.staffId))
     : [];
-  const seen = new Set(managerSubs.map((s) => s.endpoint));
-  const owners = (await ownerSubs(venueId)).filter((s) => !seen.has(s.endpoint));
-  if (managerSubs.length) await send(managerSubs, message.title, message.body, STAFF_URL);
-  if (owners.length) await send(owners, message.title, message.body, OWNER_URL);
+  const seen = new Set(staffRows.map((s) => s.endpoint));
+  const cashiers = staffRows.filter((s) => roleOf.get(s.staffId!) === "cashier");
+  const managers = staffRows.filter((s) => roleOf.get(s.staffId!) === "manager");
+  if (cashiers.length) await send(cashiers, message.title, message.body, CASHIER_URL);
+  if (managers.length) await send(managers, message.title, message.body, STAFF_URL);
+  if (who.has("owner")) {
+    const owners = (await ownerSubs(venueId)).filter((s) => !seen.has(s.endpoint));
+    if (owners.length) await send(owners, message.title, message.body, OWNER_URL);
+  }
+}
+
+/** One staff member's phones (a cashier or manager being reminded). */
+export async function notifyStaffMember(venueId: string, staffId: string, message: Message) {
+  if (!pushEnabled()) return;
+  const member = await db.query.staff.findFirst({ where: eq(staff.id, staffId), columns: { role: true } });
+  const subs = await db.query.pushSubscriptions.findMany({
+    where: and(eq(pushSubscriptions.venueId, venueId), eq(pushSubscriptions.staffId, staffId)),
+  });
+  if (subs.length) await send(subs, message.title, message.body, member?.role === "cashier" ? CASHIER_URL : STAFF_URL);
 }
 
 // ─── The owner only ───────────────────────────────────────────────────────────

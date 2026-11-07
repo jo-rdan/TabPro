@@ -8,7 +8,8 @@ import { skuziCallReason } from './tips.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
-import { notifyTable, notifyOwnerAndManagers, sendPushToOwner } from './push.service';
+import { notifyTable, notifyMomoConfirmers, sendPushToOwner } from './push.service';
+import { startMomoCheck, endMomoCheck } from './momoCheck.service';
 import { attributeVisit, offerForTab } from './campaign.service';
 import { onGuestSeated } from './booking.service';
 import { isPawapayConfigured } from '../lib/pawapay';
@@ -503,8 +504,8 @@ export async function getTabBill(tabId: string) {
 }
 
 // The guest tapped "Open MoMo" and is leaving Skuzi to pay the venue's MoMo Pay
-// code. Skuzi can't see that payment, so the owner and managers get a heads-up
-// to start checking their MoMo. Once a minute per bill at most.
+// code. Skuzi can't see that payment, so whoever confirms MoMo (owner, managers,
+// cashiers: the owner picks) gets a heads-up. Once a minute per bill at most.
 const lastMomoHeadsUp = new Map<string, number>();
 const MOMO_HEADS_UP_GAP_MS = 60_000;
 
@@ -516,17 +517,18 @@ export async function momoHeadsUp(tabId: string) {
   if (Date.now() - last < MOMO_HEADS_UP_GAP_MS) return { sent: false };
   lastMomoHeadsUp.set(tabId, Date.now());
   const total = (await getTabBill(tabId).catch(() => null))?.grandTotal ?? 0;
-  await notifyOwnerAndManagers(tab.table.venueId, {
+  await startMomoCheck(tabId);
+  await notifyMomoConfirmers(tab.table.venueId, {
     title: `📱 ${tab.table.label} is paying by MoMo`,
-    body: `${total.toLocaleString('en-US')} RWF should reach your MoMo Pay soon. Skuzi can't see it: check your MoMo.`,
+    body: `${total.toLocaleString('en-US')} RWF should reach your MoMo Pay soon. Check it, then tap Received.`,
   });
   return { sent: true };
 }
 
 // paidByMomo: closed because the guest paid in the app (that alert is sent by the payment code).
 // The guest says they paid the venue's MoMo Pay code. Skuzi can't see that
-// payment (it goes straight to the venue), so the waiter checks their MoMo and
-// taps "Paid": we tell them now, with the amount.
+// payment (it goes straight to the venue), so whoever confirms MoMo checks it
+// and taps "Received". The waiter's screen shows that it's being checked.
 export async function claimPaidByMomo(tabId: string) {
   const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: { with: { venue: true } } } });
   if (!tab) throw new Error('Tab not found');
@@ -541,11 +543,11 @@ export async function claimPaidByMomo(tabId: string) {
     tableId: tab.tableId,
     timestamp: new Date().toISOString(),
   });
-  const msg = {
-    title: `💰 ${tab.table.label} paid by MoMo`,
-    body: `${total.toLocaleString('en-US')} RWF to your MoMo Pay. Check your MoMo, then tap Paid.`,
-  };
-  await notifyTable(tab.table.venueId, tab.tableId, tab.staffId, msg, msg);
+  await startMomoCheck(tabId);
+  await notifyMomoConfirmers(tab.table.venueId, {
+    title: `💰 ${tab.table.label} says they paid by MoMo`,
+    body: `${total.toLocaleString('en-US')} RWF to your MoMo Pay. Check your MoMo, then tap Received.`,
+  });
   return { alreadyClosed: false };
 }
 
@@ -563,6 +565,7 @@ export async function closeTab(tabId: string, { paidByMomo = false, paidWith }: 
     .set({ status: 'closed', closedAt: new Date(), ...(paidWith ? { paidWith } : {}) })
     .where(eq(tabs.id, tabId))
     .returning();
+  await endMomoCheck(tabId);
 
   broadcastToVenue(tab.table.venueId, {
     type: 'tab_closed',

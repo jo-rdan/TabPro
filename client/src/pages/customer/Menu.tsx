@@ -320,7 +320,7 @@ export default function CustomerMenu() {
   const [acceptsMobileMoney, setAcceptsMobileMoney] = useState(true);
   // The venue's Skuzi package went unpaid: the menu shows, ordering is by the waiter.
   const [orderingPaused, setOrderingPaused] = useState(false);
-  // The venue's own MoMo Pay code: guests pay it directly, the waiter confirms.
+  // The venue's own MoMo Pay code: guests pay it directly, the cashier, a manager or the owner confirms.
   const [momoPayCode, setMomoPayCode] = useState<string | null>(null);
   const [claimState, setClaimState] = useState<"idle" | "sending" | "sent">("idle");
   const [codeCopied, setCodeCopied] = useState(false);
@@ -1164,7 +1164,7 @@ export default function CustomerMenu() {
           )}
           {/* Mobile Money payment flow (pawaPay) */}
           {/* Pay the venue's own MoMo Pay code: 100% to the venue, Skuzi never
-              holds the money. The waiter checks their MoMo and taps Paid. */}
+              holds the money. The cashier, a manager or the owner checks the MoMo and taps Received. */}
           {payStep === "idle" && acceptsMobileMoney && momoPayCode && (
             <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F0763A]">Pay with MoMo</p>
@@ -1222,7 +1222,7 @@ export default function CustomerMenu() {
               <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">In MoMo: Pay → MoMo Pay code {momoPayCode} → {fmt(grandTotal)} → your PIN.</p>
               {claimState === "sent" ? (
                 <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-center dark:bg-green-500/10">
-                  <p className="text-sm font-extrabold text-green-800 dark:text-green-300">Your waiter is checking it 👍</p>
+                  <p className="text-sm font-extrabold text-green-800 dark:text-green-300">The restaurant is checking it 👍</p>
                   <p className="text-xs text-green-700/80 dark:text-green-300/80">This page updates as soon as they confirm.</p>
                 </div>
               ) : (
