@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { openTab, openTabByTableId, previewTable, getTab, nudgeWaiter,
-  nudgeTable, claimPaidByMomo, requestBill, getTabBill, closeTab } from '../services/tab.service';
+  nudgeTable, claimPaidByMomo, momoHeadsUp, requestBill, getTabBill, closeTab } from '../services/tab.service';
 import { ApiResponse } from '@tabpro/shared';
 import { z } from 'zod';
 
@@ -49,6 +49,16 @@ export async function handleGetTab(req: Request, res: Response) {
 export async function handleClaimPaid(req: Request, res: Response) {
   try {
     const body: ApiResponse = { success: true, data: await claimPaidByMomo(req.params.tabId) };
+    res.json(body);
+  } catch (err: any) {
+    const body: ApiResponse = { success: false, error: err.message };
+    res.status(400).json(body);
+  }
+}
+
+export async function handleMomoHeadsUp(req: Request, res: Response) {
+  try {
+    const body: ApiResponse = { success: true, data: await momoHeadsUp(req.params.tabId) };
     res.json(body);
   } catch (err: any) {
     const body: ApiResponse = { success: false, error: err.message };
