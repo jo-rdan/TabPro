@@ -1,5 +1,5 @@
 {
-  "id": "28c1afac-395e-4218-9738-38c7ae52d527",
+  "id": "c485d2e8-66c3-46c8-8ea4-375a0c5f2ca0",
   "prevId": "3ae7c2b3-78cb-432b-8a6e-8b1a931b9c94",
   "version": "7",
   "dialect": "postgresql",
@@ -1159,18 +1159,6 @@
         },
         "stock_alert_at": {
           "name": "stock_alert_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pack_kind": {
-          "name": "pack_kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pack_size": {
-          "name": "pack_size",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -2887,6 +2875,37 @@
           "primaryKey": false,
           "notNull": false
         },
+        "momo_check_at": {
+          "name": "momo_check_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "momo_remind_at": {
+          "name": "momo_remind_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "momo_reminders": {
+          "name": "momo_reminders",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "momo_remind_to": {
+          "name": "momo_remind_to",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "momo_failed_at": {
+          "name": "momo_failed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
         "join_code": {
           "name": "join_code",
           "type": "text",
@@ -3254,6 +3273,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "momo_confirmers": {
+          "name": "momo_confirmers",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "ARRAY['owner','manager','cashier']::text[]"
+        },
         "paid_until": {
           "name": "paid_until",
           "type": "timestamp",
@@ -3394,7 +3420,8 @@
       "values": [
         "waiter",
         "manager",
-        "kitchen"
+        "kitchen",
+        "cashier"
       ]
     },
     "public.stock_movement_kind": {

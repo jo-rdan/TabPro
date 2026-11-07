@@ -8,7 +8,8 @@ import { skuziCallReason } from './tips.service';
 import { findOrCreateCustomer } from './customer.service';
 import { getMenuForVenue } from './menu.service';
 import { broadcastToVenue } from '../lib/websocket';
-import { notifyTable, sendPushToOwner } from './push.service';
+import { notifyTable, notifyMomoConfirmers, sendPushToOwner } from './push.service';
+import { startMomoCheck, endMomoCheck } from './momoCheck.service';
 import { attributeVisit, offerForTab } from './campaign.service';
 import { onGuestSeated } from './booking.service';
 import { isPawapayConfigured } from '../lib/pawapay';
@@ -330,7 +331,7 @@ export async function nudgeWaiter(tabId: string) {
   });
 
   if (!tab) throw new Error('Tab not found');
-  if (tab.status !== 'open') throw new Error('Tab is not open');
+  if (tab.status !== 'open' && tab.status !== 'bill_requested') throw new Error('Tab is not open');
 
   broadcastToVenue(tab.table.venueId, {
     type: 'new_nudge',
@@ -376,7 +377,7 @@ export async function nudgeTable(qrCode: string) {
   const table = await getTableByQrCode(qrCode);
   if (!table || !table.venue) throw new Error('Table not found');
   const openTab = await findUnsettledTab(table.id);
-  if (openTab && openTab.status === 'open') return nudgeWaiter(openTab.id);
+  if (openTab && openTab.status !== 'abandoned') return nudgeWaiter(openTab.id);
 
   const last = lastTableNudge.get(table.id) ?? 0;
   if (Date.now() - last < TABLE_NUDGE_GAP_MS) return { tabId: null, tableLabel: table.label };
@@ -407,6 +408,8 @@ export async function requestBill(tabId: string) {
   });
 
   if (!tab) throw new Error('Tab not found');
+  // Looking at the bill again (after "Order more") is fine; the waiter already knows.
+  if (tab.status === 'bill_requested') return tab;
   if (tab.status !== 'open') throw new Error('Tab is not open');
 
   const [updated] = await db
@@ -500,10 +503,32 @@ export async function getTabBill(tabId: string) {
   };
 }
 
+// The guest tapped "Open MoMo" and is leaving Skuzi to pay the venue's MoMo Pay
+// code. Skuzi can't see that payment, so whoever confirms MoMo (owner, managers,
+// cashiers: the owner picks) gets a heads-up. Once a minute per bill at most.
+const lastMomoHeadsUp = new Map<string, number>();
+const MOMO_HEADS_UP_GAP_MS = 60_000;
+
+export async function momoHeadsUp(tabId: string) {
+  const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: true } });
+  if (!tab) throw new Error('Tab not found');
+  if (tab.status === 'closed') return { sent: false };
+  const last = lastMomoHeadsUp.get(tabId) ?? 0;
+  if (Date.now() - last < MOMO_HEADS_UP_GAP_MS) return { sent: false };
+  lastMomoHeadsUp.set(tabId, Date.now());
+  const total = (await getTabBill(tabId).catch(() => null))?.grandTotal ?? 0;
+  await startMomoCheck(tabId);
+  await notifyMomoConfirmers(tab.table.venueId, {
+    title: `📱 ${tab.table.label} is paying by MoMo`,
+    body: `${total.toLocaleString('en-US')} RWF should reach your MoMo Pay soon. Check it, then tap Received.`,
+  });
+  return { sent: true };
+}
+
 // paidByMomo: closed because the guest paid in the app (that alert is sent by the payment code).
 // The guest says they paid the venue's MoMo Pay code. Skuzi can't see that
-// payment (it goes straight to the venue), so the waiter checks their MoMo and
-// taps "Paid": we tell them now, with the amount.
+// payment (it goes straight to the venue), so whoever confirms MoMo checks it
+// and taps "Received". The waiter's screen shows that it's being checked.
 export async function claimPaidByMomo(tabId: string) {
   const tab = await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: { with: { venue: true } } } });
   if (!tab) throw new Error('Tab not found');
@@ -518,11 +543,11 @@ export async function claimPaidByMomo(tabId: string) {
     tableId: tab.tableId,
     timestamp: new Date().toISOString(),
   });
-  const msg = {
-    title: `💰 ${tab.table.label} paid by MoMo`,
-    body: `${total.toLocaleString('en-US')} RWF to your MoMo Pay. Check your MoMo, then tap Paid.`,
-  };
-  await notifyTable(tab.table.venueId, tab.tableId, tab.staffId, msg, msg);
+  await startMomoCheck(tabId);
+  await notifyMomoConfirmers(tab.table.venueId, {
+    title: `💰 ${tab.table.label} says they paid by MoMo`,
+    body: `${total.toLocaleString('en-US')} RWF to your MoMo Pay. Check your MoMo, then tap Received.`,
+  });
   return { alreadyClosed: false };
 }
 
@@ -540,6 +565,7 @@ export async function closeTab(tabId: string, { paidByMomo = false, paidWith }: 
     .set({ status: 'closed', closedAt: new Date(), ...(paidWith ? { paidWith } : {}) })
     .where(eq(tabs.id, tabId))
     .returning();
+  await endMomoCheck(tabId);
 
   broadcastToVenue(tab.table.venueId, {
     type: 'tab_closed',

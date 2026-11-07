@@ -56,7 +56,7 @@ export default function OpenBills({ venueId, className = "" }: { venueId: string
         ) : count === 0 ? (
           <>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">0</p>
-            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">All settled</p>
+            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">None forgotten</p>
           </>
         ) : (
           <>

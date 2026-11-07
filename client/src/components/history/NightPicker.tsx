@@ -6,9 +6,8 @@ import { nightKey, lastWeekday, nightLabel, monthLabel } from "../../lib/nights"
 export type PayFilter = "all" | "momo" | "other" | "open";
 export interface HistoryFilters {
   pay: PayFilter;
-  payoutsOnTheWay: boolean;
 }
-export const NO_FILTERS: HistoryFilters = { pay: "all", payoutsOnTheWay: false };
+export const NO_FILTERS: HistoryFilters = { pay: "all" };
 
 interface NightTotal { night: string; total: number; bills: number }
 
@@ -174,8 +173,8 @@ export default function NightPicker({
             {([
               ["all", "All bills", Layers],
               ["momo", "MoMo", Smartphone],
-              ["other", "Cash/other", Banknote],
-              ["open", "Still open", Hourglass],
+              ["other", "Cash", Banknote],
+              ["open", "Not marked paid", Hourglass],
             ] as const).map(([value, label, Icon]) => (
               <button
                 key={value}
@@ -191,16 +190,6 @@ export default function NightPicker({
               </button>
             ))}
           </div>
-          <label className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-[#3B2149] px-4 py-3 cursor-pointer">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Only payouts still on the way</span>
-            <input
-              type="checkbox"
-              checked={draft.payoutsOnTheWay}
-              onChange={(e) => setDraft((d) => ({ ...d, payoutsOnTheWay: e.target.checked }))}
-              className="peer sr-only"
-            />
-            <span className="relative h-6 w-11 flex-shrink-0 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-green-500 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
-          </label>
 
           {/* Actions */}
           <div className="mt-5 flex items-center gap-3">

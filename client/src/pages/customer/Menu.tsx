@@ -320,10 +320,12 @@ export default function CustomerMenu() {
   const [acceptsMobileMoney, setAcceptsMobileMoney] = useState(true);
   // The venue's Skuzi package went unpaid: the menu shows, ordering is by the waiter.
   const [orderingPaused, setOrderingPaused] = useState(false);
-  // The venue's own MoMo Pay code: guests pay it directly, the waiter confirms.
+  // The venue's own MoMo Pay code: guests pay it directly, the cashier, a manager or the owner confirms.
   const [momoPayCode, setMomoPayCode] = useState<string | null>(null);
   const [claimState, setClaimState] = useState<"idle" | "sending" | "sent">("idle");
   const [codeCopied, setCodeCopied] = useState(false);
+  // "Open MoMo" first says the guest is leaving Skuzi; going on tells the owner and managers.
+  const [momoSheet, setMomoSheet] = useState(false);
   // Demo venue: everything works, but payments are simulated.
   const [isDemo, setIsDemo] = useState(false);
   const [payReferenceId, setPayReferenceId] = useState("");
@@ -716,6 +718,15 @@ export default function CustomerMenu() {
     }
   };
 
+  // Back to the menu from the bill: the next order reopens the bill on the server.
+  const handleOrderMore = () => {
+    if (!tabId) return;
+    setTabStatus("open");
+    setStep("menu");
+    saveSession({ tabStatus: "open" });
+    loadOrders(tabId);
+  };
+
   // ─── Heartbeat — ping server every 30s so it knows customer is still here ───
   useEffect(() => {
     if (!tabId || tabStatus === "closed") return;
@@ -918,6 +929,14 @@ export default function CustomerMenu() {
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-semibold">
               Your receipt
             </p>
+            {tabId && (
+              <button
+                onClick={handleOrderMore}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold bg-white dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/15 active:scale-95 transition-all"
+              >
+                <Plus size={15} strokeWidth={2.6} /> Order more
+              </button>
+            )}
           </div>
           {/* ── Thermal receipt design ── */}
           <div
@@ -1145,7 +1164,7 @@ export default function CustomerMenu() {
           )}
           {/* Mobile Money payment flow (pawaPay) */}
           {/* Pay the venue's own MoMo Pay code: 100% to the venue, Skuzi never
-              holds the money. The waiter checks their MoMo and taps Paid. */}
+              holds the money. The cashier, a manager or the owner checks the MoMo and taps Received. */}
           {payStep === "idle" && acceptsMobileMoney && momoPayCode && (
             <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <p className="text-xs font-black uppercase tracking-widest text-brand-500 dark:text-[#F0763A]">Pay with MoMo</p>
@@ -1167,16 +1186,43 @@ export default function CustomerMenu() {
                   {codeCopied ? "Copied ✓" : "Copy"}
                 </button>
               </div>
-              <a
-                href={`tel:${encodeURIComponent(MOMO_DIAL(momoPayCode, grandTotal))}`}
+              <button
+                type="button"
+                onClick={() => setMomoSheet(true)}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FFCB05] py-4 text-base font-extrabold text-[#1B1B1B]"
               >
                 📱 Open MoMo
-              </a>
+              </button>
+              {momoSheet && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="momo-leave-title" onClick={() => setMomoSheet(false)}>
+                  <div className="w-full max-w-md rounded-t-[28px] bg-white p-6 dark:bg-[#3B2149] sm:rounded-[28px]" style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+                    <h2 id="momo-leave-title" className="font-display text-xl font-black text-gray-900 dark:text-white">You're leaving Skuzi</h2>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">MoMo opens outside Skuzi, so we can't see your payment. When it's done, come back and tap <b className="text-gray-900 dark:text-white">I've paid</b>.</p>
+                    <div className="mt-4 flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3 text-sm dark:bg-gray-800">
+                      <span className="text-gray-500 dark:text-gray-400">Code <b className="tabular-nums tracking-wider text-gray-900 dark:text-white">{momoPayCode}</b></span>
+                      <span className="font-extrabold tabular-nums text-gray-900 dark:text-white">{fmt(grandTotal)}</span>
+                    </div>
+                    <a
+                      href={`tel:${encodeURIComponent(MOMO_DIAL(momoPayCode, grandTotal))}`}
+                      onClick={() => {
+                        // Sent as the phone app opens, so it still goes out if the page is paused.
+                        if (tabId) apiBeacon(`/tabs/${tabId}/momo-opening`);
+                        setMomoSheet(false);
+                      }}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FFCB05] py-4 text-base font-extrabold text-[#1B1B1B]"
+                    >
+                      📱 Open MoMo
+                    </a>
+                    <button type="button" onClick={() => setMomoSheet(false)} className="mt-2 w-full py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
+                      Not now
+                    </button>
+                  </div>
+                </div>
+              )}
               <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">In MoMo: Pay → MoMo Pay code {momoPayCode} → {fmt(grandTotal)} → your PIN.</p>
               {claimState === "sent" ? (
                 <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-center dark:bg-green-500/10">
-                  <p className="text-sm font-extrabold text-green-800 dark:text-green-300">Your waiter is checking it 👍</p>
+                  <p className="text-sm font-extrabold text-green-800 dark:text-green-300">The restaurant is checking it 👍</p>
                   <p className="text-xs text-green-700/80 dark:text-green-300/80">This page updates as soon as they confirm.</p>
                 </div>
               ) : (

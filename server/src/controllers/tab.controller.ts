@@ -1,7 +1,14 @@
 import { Request, Response } from 'express';
 import { openTab, openTabByTableId, previewTable, getTab, nudgeWaiter,
-  nudgeTable, claimPaidByMomo, requestBill, getTabBill, closeTab } from '../services/tab.service';
+  nudgeTable, claimPaidByMomo, momoHeadsUp, requestBill, getTabBill, closeTab } from '../services/tab.service';
 import { ApiResponse } from '@tabpro/shared';
+import { canConfirmMomo } from '../services/momoCheck.service';
+import { db } from '../lib/db';
+import { tabs } from '../models/schema';
+import { eq } from 'drizzle-orm';
+
+const venueIdOfTab = async (tabId: string) =>
+  (await db.query.tabs.findFirst({ where: eq(tabs.id, tabId), with: { table: true } }))?.table?.venueId;
 import { z } from 'zod';
 
 const openTabSchema = z.object({
@@ -56,6 +63,16 @@ export async function handleClaimPaid(req: Request, res: Response) {
   }
 }
 
+export async function handleMomoHeadsUp(req: Request, res: Response) {
+  try {
+    const body: ApiResponse = { success: true, data: await momoHeadsUp(req.params.tabId) };
+    res.json(body);
+  } catch (err: any) {
+    const body: ApiResponse = { success: false, error: err.message };
+    res.status(400).json(body);
+  }
+}
+
 export async function handleNudgeTable(req: Request, res: Response) {
   try {
     const result = await nudgeTable(req.params.qrCode);
@@ -86,8 +103,18 @@ export async function handleGetTabBill(req: Request, res: Response) {
 }
 
 export async function handleCloseTab(req: Request, res: Response) {
+  const paidWith = req.body?.paidWith === 'momo' || req.body?.paidWith === 'cash' ? req.body.paidWith : undefined;
+  // MoMo goes to the venue's MoMo Pay phone, which waiters don't see: only the
+  // people the owner picked (owner, managers, cashiers) can say it arrived.
+  if (paidWith === 'momo') {
+    const venueId = await venueIdOfTab(req.params.tabId);
+    if (!venueId || !(await canConfirmMomo(venueId, { ownerId: req.owner?.ownerId, staffId: req.staffMember?.staffId }))) {
+      const body: ApiResponse = { success: false, error: 'Only the cashier, a manager or the owner can confirm MoMo payments' };
+      res.status(403).json(body);
+      return;
+    }
+  }
   try {
-    const paidWith = req.body?.paidWith === 'momo' || req.body?.paidWith === 'cash' ? req.body.paidWith : undefined;
     const result = await closeTab(req.params.tabId, { paidWith });
     const body: ApiResponse = { success: true, data: result };
     res.json(body);

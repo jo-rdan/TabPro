@@ -4,6 +4,7 @@ import { TrendingUp, Users, Clock, Star, ChevronLeft, ChevronRight, BellRing, Cr
 import MoneyTonight from '../../components/dashboard/MoneyTonight';
 import CoinJar from '../../components/dashboard/CoinJar';
 import OpenBills from '../../components/OpenBills';
+import MomoToConfirm from '../../components/MomoToConfirm';
 import Layout from '../../components/Layout';
 import ReceiptModal from '../../components/ReceiptModal';
 import JoinRequests from '../../components/JoinRequests';
@@ -391,8 +392,9 @@ export default function Dashboard() {
     : { value: 0, label: '', name: '' };
   const comparison = tonight && tonight.lastSameNightSoFar > 0
     ? (() => {
-        const pct = Math.round(((tonight.total - tonight.lastSameNightSoFar) / tonight.lastSameNightSoFar) * 100);
-        return { up: pct >= 0, text: `${pct >= 0 ? '+' : ''}${pct}% vs last ${kigaliNow.weekday} at this time` };
+        // Money, not percentages: owners count in francs.
+        const diff = tonight.total - tonight.lastSameNightSoFar;
+        return { up: diff >= 0, text: `${formatRwf(Math.abs(diff))} ${diff >= 0 ? 'more' : 'less'} than last ${kigaliNow.weekday} at this time` };
       })()
     : tonight && tonight.total > 0
     ? { up: true, text: `${formatRwf(tonight.total)} so far` }
@@ -546,6 +548,13 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* MoMo to confirm: only shows while there's something to check */}
+      {venue && localStorage.getItem('tabpro_token') && (
+        <div className="mb-4">
+          <MomoToConfirm venueId={venue.id} token={localStorage.getItem('tabpro_token')!} hideWhenEmpty forOwner />
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
         {statCards.map((card, i) => {
@@ -594,7 +603,11 @@ export default function Dashboard() {
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-50">Tonight's jar</h2>
             <span className="text-xs text-gray-500 dark:text-gray-300">
-              {jarBenchmark.value > 0 ? `${Math.min(999, Math.round(((tonight?.total ?? 0) / jarBenchmark.value) * 100))}% of ${jarBenchmark.name}` : 'Your first night'}
+              {jarBenchmark.value > 0
+                ? (tonight?.total ?? 0) >= jarBenchmark.value
+                  ? 'Your best night yet 🎉'
+                  : `${shortRwf(jarBenchmark.value - (tonight?.total ?? 0))} to beat ${jarBenchmark.name}`
+                : 'Your first night'}
             </span>
           </div>
           <CoinJar total={tonight?.total ?? 0} benchmark={jarBenchmark.value} benchmarkLabel={jarBenchmark.label} dark={isDark} />

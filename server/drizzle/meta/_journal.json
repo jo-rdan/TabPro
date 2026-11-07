@@ -250,8 +250,15 @@
     {
       "idx": 35,
       "version": "7",
-      "when": 1793972737821,
-      "tag": "0035_skuzi_stock_packs",
+      "when": 1794078208169,
+      "tag": "0035_skuzi_cashier_momo_confirm",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794093675437,
+      "tag": "0036_skuzi_stock_packs",
       "breakpoints": true
     }
   ]

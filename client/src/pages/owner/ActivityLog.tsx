@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import NightPicker, { HistoryFilters, NO_FILTERS } from "../../components/history/NightPicker";
 import { nightKey, nightLabel, addDays } from "../../lib/nights";
-import { Users, User, Clock, Receipt, CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Loader2, RotateCw, Smartphone, Banknote, X } from "lucide-react";
+import { Users, User, Clock, Receipt, CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Hourglass, Smartphone, Banknote, X } from "lucide-react";
 import Layout from "../../components/Layout";
 import { useAuthStore } from "../../lib/auth";
 import api from "../../lib/api";
@@ -16,9 +16,11 @@ interface OrderEntry {
   total: number;
 }
 
+// "momo" = paid in the app (old model and the demo venue); "momo_direct" = the guest paid the
+// venue's MoMo Pay code and staff marked it. Either way, MoMo is what staff or the app recorded.
 type Payment =
-  | { method: "momo"; amountRwf: number; payoutRwf: number | null; payoutStatus: "pending" | "successful" | "failed"; paidAt: string }
-  | { method: "other" }
+  | { method: "momo" | "momo_direct"; amountRwf: number; paidAt: string }
+  | { method: "cash" | "other" }
   | null;
 
 interface TabEntry {
@@ -69,28 +71,28 @@ export default function ActivityLog() {
   };
   const [pickerOpen, setPickerOpen] = useState(false);
   const [filters, setFilters] = useState<HistoryFilters>(NO_FILTERS);
+  const isMomo = (t: TabEntry) => t.payment?.method === "momo" || t.payment?.method === "momo_direct";
   const filtered = activity.filter((t) => {
-    if (filters.pay === "momo" && t.payment?.method !== "momo") return false;
-    if (filters.pay === "other" && !(t.tabStatus === "closed" && t.payment?.method !== "momo")) return false;
+    if (filters.pay === "momo" && !isMomo(t)) return false;
+    if (filters.pay === "other" && t.payment?.method !== "cash") return false;
     if (filters.pay === "open" && t.tabStatus === "closed") return false;
-    if (filters.payoutsOnTheWay && !(t.payment?.method === "momo" && t.payment.payoutStatus !== "successful")) return false;
     return true;
   });
   const filterLabels = [
     filters.pay === "momo" && "MoMo only",
-    filters.pay === "other" && "Cash or other only",
-    filters.pay === "open" && "Still open only",
-    filters.payoutsOnTheWay && "Payouts on the way",
+    filters.pay === "other" && "Cash only",
+    filters.pay === "open" && "Not marked paid only",
   ].filter(Boolean) as string[];
 
   const paid = activity.filter((t) => t.tabStatus === "closed");
   const total = paid.reduce((s, t) => s + t.tabTotal, 0);
-  const momo = paid.filter((t) => t.payment?.method === "momo");
-  const momoTotal = momo.reduce((s, t) => s + (t.payment?.method === "momo" ? t.payment.amountRwf : 0), 0);
-  const otherTotal = total - momo.reduce((s, t) => s + t.tabTotal, 0);
-  const received = momo.reduce((s, t) => s + (t.payment?.method === "momo" && t.payment.payoutStatus === "successful" ? t.payment.payoutRwf ?? 0 : 0), 0);
-  const onTheWay = momo.filter((t) => t.payment?.method === "momo" && t.payment.payoutStatus !== "successful").length;
-  const stillOpen = activity.length - paid.length;
+  const momo = paid.filter(isMomo);
+  const momoTotal = momo.reduce((s, t) => s + t.tabTotal, 0);
+  const cash = paid.filter((t) => t.payment?.method === "cash");
+  const cashTotal = cash.reduce((s, t) => s + t.tabTotal, 0);
+  const open = activity.filter((t) => t.tabStatus !== "closed");
+  const openTotal = open.reduce((s, t) => s + t.tabTotal, 0);
+  const bills = (n: number) => `${n} ${n === 1 ? "bill" : "bills"}`;
 
   return (
     <Layout>
@@ -148,23 +150,25 @@ export default function ActivityLog() {
           <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
             <p className="text-xs text-gray-500 dark:text-gray-400">Total sales</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{total.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
-            <p className="text-xs text-gray-400 mt-0.5">{paid.length} paid {paid.length === 1 ? "bill" : "bills"}{stillOpen ? ` · ${stillOpen} still open` : ""}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{bills(paid.length)} marked paid</p>
           </div>
           <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><Smartphone size={12} /> Paid with MoMo</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{momoTotal.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
-            <p className="text-xs text-gray-400 mt-0.5">{momo.length} {momo.length === 1 ? "bill" : "bills"} through Skuzi</p>
+            <p className="text-xs text-gray-400 mt-0.5">{bills(momo.length)} · marked by staff</p>
           </div>
           <div className="bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5">
-            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><Banknote size={12} /> Paid another way</p>
-            <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{otherTotal.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
-            <p className="text-xs text-gray-400 mt-0.5">Cash or at the counter · no fee</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><Banknote size={12} /> Paid in cash</p>
+            <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{cashTotal.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
+            <p className="text-xs text-gray-400 mt-0.5">{bills(cash.length)} · marked by staff</p>
           </div>
-          <div className="bg-white dark:bg-[#3B2149] border border-green-300/70 dark:border-green-700/50 rounded-2xl px-4 py-3.5">
-            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><CheckCircle2 size={12} className="text-green-600 dark:text-green-400" /> Received on your MoMo</p>
-            <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{received.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
-            <p className={`text-xs mt-0.5 ${onTheWay ? "text-amber-700 dark:text-amber-300" : "text-green-600 dark:text-green-400"}`}>
-              {onTheWay ? `${onTheWay} ${onTheWay === 1 ? "payout" : "payouts"} on the way` : momo.length ? "All payouts received" : "Your 92% of MoMo bills"}
+          <div className={`bg-white dark:bg-[#3B2149] border rounded-2xl px-4 py-3.5 ${open.length ? "border-amber-300/80 dark:border-amber-700/50" : "border-green-300/70 dark:border-green-700/50"}`}>
+            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              {open.length ? <Hourglass size={12} className="text-amber-600 dark:text-amber-400" /> : <CheckCircle2 size={12} className="text-green-600 dark:text-green-400" />} Not marked paid
+            </p>
+            <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{openTotal.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
+            <p className={`text-xs mt-0.5 ${open.length ? "text-amber-700 dark:text-amber-300" : "text-green-600 dark:text-green-400"}`}>
+              {open.length ? `${bills(open.length)} still open` : "Every bill is marked paid"}
             </p>
           </div>
         </div>
@@ -213,9 +217,6 @@ export default function ActivityLog() {
                   </button>
                 </div>
               </div>
-
-              {/* Where the money went */}
-              {tab.payment?.method === "momo" && <PayoutLine payment={tab.payment} />}
 
               {/* Orders */}
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -269,26 +270,10 @@ export default function ActivityLog() {
 
 function PaidChip({ tab }: { tab: TabEntry }) {
   if (tab.tabStatus !== "closed") {
-    return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Still open</span>;
+    return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Not marked paid</span>;
   }
-  if (tab.payment?.method === "momo") {
+  if (tab.payment?.method === "momo" || tab.payment?.method === "momo_direct") {
     return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Paid · MoMo</span>;
   }
-  return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">Paid · cash or other</span>;
-}
-
-function PayoutLine({ payment }: { payment: Extract<Payment, { method: "momo" }> }) {
-  const amount = payment.payoutRwf != null ? formatRwf(payment.payoutRwf) : "Your 92%";
-  const state =
-    payment.payoutStatus === "successful"
-      ? { icon: <CheckCircle2 size={13} />, text: "on your MoMo", cls: "text-green-700 dark:text-green-400" }
-      : payment.payoutStatus === "failed"
-      ? { icon: <RotateCw size={13} />, text: "being sent again automatically", cls: "text-amber-700 dark:text-amber-300" }
-      : { icon: <Loader2 size={13} className="animate-spin" />, text: "on its way to your MoMo", cls: "text-amber-700 dark:text-amber-300" };
-  return (
-    <div className={`px-5 py-2 border-b border-gray-100 dark:border-gray-800 text-xs font-semibold flex items-center gap-1.5 ${state.cls}`}>
-      {state.icon}
-      <span className="tabular-nums">{amount}</span> {state.text}
-    </div>
-  );
+  return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{tab.payment?.method === "cash" ? "Paid · cash" : "Paid"}</span>;
 }

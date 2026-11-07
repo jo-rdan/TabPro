@@ -21,8 +21,8 @@ export async function getLeftOpenBills(venueId: string) {
   });
 
   const now = Date.now();
+  // Bills a waiter typed in count too: unpaid is unpaid, whoever entered it.
   return open
-    .filter((t) => t.orders.some((o) => o.source === 'customer'))
     .map((t) => ({
       tabId: t.id,
       tableLabel: t.table.label,
@@ -30,10 +30,12 @@ export async function getLeftOpenBills(venueId: string) {
       phone: t.customer?.phone ?? null,
       name: t.customer?.name ?? null,
       openedAt: t.openedAt,
-      lastSeenAt: t.lastSeenAt,
+      // Quiet = no guest phone and no new round for a while.
+      lastActiveAt: Math.max((t.lastSeenAt ?? t.openedAt).getTime(), ...t.orders.map((o) => o.placedAt.getTime())),
     }))
     .filter((b) => b.total > 0)
-    .filter((b) => now - (b.lastSeenAt ?? b.openedAt).getTime() > QUIET_FOR_MS || now - b.openedAt.getTime() > OPEN_FOR_MS)
+    .filter((b) => now - b.lastActiveAt > QUIET_FOR_MS || now - b.openedAt.getTime() > OPEN_FOR_MS)
+    .map(({ lastActiveAt, ...b }) => b)
     .sort((a, b) => a.openedAt.getTime() - b.openedAt.getTime());
 }
 
