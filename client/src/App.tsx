@@ -42,6 +42,7 @@ import WaiterLogin from "./pages/waiter/WaiterLogin";
 import Kitchen from "./pages/waiter/Kitchen";
 import Cashier from "./pages/waiter/Cashier";
 import Translated from "./components/Translated";
+import LangCorner from "./components/LangCorner";
 import ClockIn from "./pages/waiter/ClockIn";
 
 // Customer pages
@@ -83,15 +84,15 @@ export default function App() {
       ) : (
       <Routes>
         {/* Public */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LangCorner><Login /></LangCorner>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/invite/:token" element={<InviteAccept />} />
+        <Route path="/invite/:token" element={<LangCorner><InviteAccept /></LangCorner>} />
 
         {/* Customer — public, accessed via QR scan */}
         <Route path="/t/:qrCode" element={<Translated><CustomerMenu /></Translated>} />
 
         {/* Waiter */}
-        <Route path="/waiter" element={<Translated><WaiterLogin /></Translated>} />
+        <Route path="/waiter" element={<LangCorner><WaiterLogin /></LangCorner>} />
         <Route path="/clock-in" element={CLOCK_IN_ENABLED ? <ClockIn /> : <ClockInOff />} />
         <Route path="/waiter/orders" element={<Translated><WaiterOrders /></Translated>} />
         <Route path="/kitchen" element={<Translated><Kitchen /></Translated>} />
@@ -105,7 +106,7 @@ export default function App() {
           path="/setup"
           element={
             <ProtectedRoute>
-              <VenueSetup />
+              <LangCorner><VenueSetup /></LangCorner>
             </ProtectedRoute>
           }
         />
@@ -174,7 +175,7 @@ export default function App() {
         <Route path="/me" element={<Me />} />
         <Route path="/my-bookings" element={BOOKINGS_ENABLED ? <MyBookings /> : <Navigate to={GUEST_HOME} replace />} />
         <Route path="/home-screen/:code" element={<HomeScreenGuide />} />
-        <Route path="/join/:code" element={<Join />} />
+        <Route path="/join/:code" element={<LangCorner><Join /></LangCorner>} />
 
         {/* Skuzi Creators */}
         <Route path="/creators/join" element={CREATORS_ENABLED ? <CreatorJoin /> : <Navigate to="/" replace />} />

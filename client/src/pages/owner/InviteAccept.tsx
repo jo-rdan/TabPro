@@ -169,6 +169,8 @@ export default function InviteAccept() {
             name: staffName,
           }),
         );
+        // They just set and confirmed their PIN: don't ask for it a third time.
+        sessionStorage.setItem("tabpro_pin_unlocked", "1");
         window.location.href = `/waiter/orders?venueId=${venueId}&staffId=${staffId}&token=${staffJwt}`;
       }, 1500);
     } catch (err: any) {
