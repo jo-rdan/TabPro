@@ -1,4 +1,5 @@
 import { ThemeCycleButton } from "../../components/ThemeSwitch";
+import LanguageSwitch from "../../components/LanguageSwitch";
 import { useState, useEffect, useRef } from "react";
 import GuestAlerts from "../../components/GuestAlerts";
 import { useParams } from "react-router-dom";
@@ -1631,7 +1632,10 @@ export default function CustomerMenu() {
                   </p>
                 </div>
               </div>
-              <ThemeCycleButton className="ml-auto flex-shrink-0 !text-[color:var(--g-muted)] hover:!bg-white/10" />
+              <div className="ml-auto flex flex-shrink-0 items-center gap-1.5">
+                <LanguageSwitch onColor />
+                <ThemeCycleButton className="flex-shrink-0 !text-[color:var(--g-muted)] hover:!bg-white/10" />
+              </div>
               {placedOrders.length > 0 && (
                 <div className="hidden md:flex gap-2 flex-shrink-0">
                   <button

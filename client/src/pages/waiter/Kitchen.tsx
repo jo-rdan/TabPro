@@ -4,6 +4,7 @@ import { LogOut, Volume2, VolumeX } from "lucide-react";
 import type { WsEvent } from "@tabpro/shared";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { apiFetch } from "../../lib/apiFetch";
+import LanguageSwitch from "../../components/LanguageSwitch";
 
 // The kitchen screen (Bar+): food tickets only, oldest first. The chef taps
 // Start (the guest sees "Preparing"), then Ready (the waiter is told to pick it
@@ -152,6 +153,7 @@ export default function Kitchen() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSwitch onColor />
           <button
             onClick={() => {
               if (!sound) beep();

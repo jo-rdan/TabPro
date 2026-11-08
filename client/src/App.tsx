@@ -41,6 +41,7 @@ import WaiterOrders from "./pages/waiter/Orders";
 import WaiterLogin from "./pages/waiter/WaiterLogin";
 import Kitchen from "./pages/waiter/Kitchen";
 import Cashier from "./pages/waiter/Cashier";
+import Translated from "./components/Translated";
 import ClockIn from "./pages/waiter/ClockIn";
 
 // Customer pages
@@ -87,14 +88,14 @@ export default function App() {
         <Route path="/invite/:token" element={<InviteAccept />} />
 
         {/* Customer — public, accessed via QR scan */}
-        <Route path="/t/:qrCode" element={<CustomerMenu />} />
+        <Route path="/t/:qrCode" element={<Translated><CustomerMenu /></Translated>} />
 
         {/* Waiter */}
-        <Route path="/waiter" element={<WaiterLogin />} />
+        <Route path="/waiter" element={<Translated><WaiterLogin /></Translated>} />
         <Route path="/clock-in" element={CLOCK_IN_ENABLED ? <ClockIn /> : <ClockInOff />} />
-        <Route path="/waiter/orders" element={<WaiterOrders />} />
-        <Route path="/kitchen" element={<Kitchen />} />
-        <Route path="/cashier" element={<Cashier />} />
+        <Route path="/waiter/orders" element={<Translated><WaiterOrders /></Translated>} />
+        <Route path="/kitchen" element={<Translated><Kitchen /></Translated>} />
+        <Route path="/cashier" element={<Translated><Cashier /></Translated>} />
 
         {/* Receipt — accessible by cashier/owner, no strict auth gate needed */}
         <Route path="/receipt/:tabId" element={<Receipt />} />
