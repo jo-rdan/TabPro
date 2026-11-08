@@ -261,7 +261,7 @@ function UnpaidSection({ venueId, call }: { venueId: string; call: Call }) {
   useEffect(() => { call(`/dashboard/open-bills/${venueId}`).then(setBills).catch((e) => setError(e.message)); }, [venueId]);
   return (
     <section className={card} aria-labelledby="setup-unpaid">
-      <h3 id="setup-unpaid" className="text-lg font-bold text-gray-900 dark:text-white">Unpaid bills {bills && <span className="text-sm font-semibold text-gray-400">· {bills.length}</span>}</h3>
+      <h3 id="setup-unpaid" className="text-lg font-bold text-gray-900 dark:text-white">Not paid yet {bills && <span className="text-sm font-semibold text-gray-400">· {bills.length}</span>}</h3>
       <p className="text-xs text-gray-500 dark:text-gray-400">Bills nobody touched for hours. Call the guest if you need to.</p>
       {error && <p role="alert" className="mt-2 text-sm font-semibold text-red-600">{error}</p>}
       <div className="mt-3 flex flex-col gap-2">

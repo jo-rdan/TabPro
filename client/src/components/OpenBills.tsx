@@ -48,7 +48,7 @@ export default function OpenBills({ venueId, className = "" }: { venueId: string
         } ${className}`}
       >
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Bills left open</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Not paid yet</p>
           <Receipt size={15} className={count > 0 ? "text-amber-600 dark:text-amber-400" : "text-gray-400"} />
         </div>
         {bills === null ? (
@@ -77,7 +77,7 @@ export default function OpenBills({ venueId, className = "" }: { venueId: string
           <div className="relative w-full sm:max-w-md bg-white dark:bg-[#3B2149] border border-gray-200 dark:border-gray-800 rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[80vh] flex flex-col">
             <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
               <div>
-                <h2 id="open-bills-title" className="text-lg font-bold text-gray-900 dark:text-white">Bills left open</h2>
+                <h2 id="open-bills-title" className="text-lg font-bold text-gray-900 dark:text-white">Not paid yet</h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Not paid in Skuzi and untouched for hours. Call the guest if you need to.</p>
               </div>
               <button onClick={() => setOpen(false)} aria-label="Close" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">

@@ -69,21 +69,21 @@ function FreeBox() {
 }
 
 // ─── List ─────────────────────────────────────────────────────────────────────
-export default function Campaigns() {
+// embedded: the list inside Promote, under the AI event planner.
+export default function Campaigns({ embedded = false }: { embedded?: boolean }) {
   const venue = useVenue();
   const audience = useAudience(venue?.id);
   const [list, setList] = useState<Campaign[] | null>(null);
   useEffect(() => { if (venue) api.get(`/campaigns/${venue.id}`).then((r) => setList(r.data.data)).catch(() => setList([])); }, [venue?.id]);
 
-  return (
-    <Layout>
+  const page = (
       <div className="mx-auto max-w-5xl">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Campaigns</h1>
+            {embedded ? <h2 className="text-lg font-bold text-gray-900 dark:text-white">Your events and invites</h2> : <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Campaigns</h1>}
             <p className="text-sm text-gray-500 dark:text-gray-400">We already have the right people. Tell them what's on.</p>
           </div>
-          <Link to="/campaigns/new" className="flex min-h-[44px] items-center gap-2 rounded-xl bg-brand-500 px-5 text-sm font-bold text-white hover:bg-brand-600"><Plus size={16} /> New campaign</Link>
+          <Link to="/campaigns/new" className="flex min-h-[44px] items-center gap-2 rounded-xl bg-brand-500 px-5 text-sm font-bold text-white hover:bg-brand-600"><Plus size={16} /> Plan your own event</Link>
         </div>
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="min-w-0">
@@ -116,8 +116,8 @@ export default function Campaigns() {
           <aside className="space-y-4"><AudienceCard a={audience} /><FreeBox /></aside>
         </div>
       </div>
-    </Layout>
   );
+  return embedded ? page : <Layout>{page}</Layout>;
 }
 
 // ─── New campaign ─────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ export function CampaignNew() {
   return (
     <Layout>
       <div className="mx-auto max-w-5xl">
-        <Link to="/campaigns" className="mb-4 inline-flex min-h-[40px] items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><ArrowLeft size={16} /> Campaigns</Link>
+        <Link to="/promote" className="mb-4 inline-flex min-h-[40px] items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><ArrowLeft size={16} /> Promote</Link>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">New campaign</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">We already have the right people. <b className="text-gray-800 dark:text-gray-200">Tell them what's on.</b></p>
 
@@ -315,7 +315,7 @@ export function CampaignDetail() {
   return (
     <Layout>
       <div className="mx-auto max-w-3xl">
-        <Link to="/campaigns" className="mb-4 inline-flex min-h-[40px] items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><ArrowLeft size={16} /> Campaigns</Link>
+        <Link to="/promote" className="mb-4 inline-flex min-h-[40px] items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><ArrowLeft size={16} /> Promote</Link>
         {error && <p role="alert" className="mb-4 rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-200">{error}</p>}
         {!c ? (!error && <div className="h-60 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />) : (
           <>

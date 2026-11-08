@@ -4,22 +4,17 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
-  QrCode,
-  UtensilsCrossed,
-  Users,
-  History,
   CalendarDays,
   Megaphone,
   LogOut,
-  Menu as MenuIcon,
   X,
   ChevronsLeft,
   ChevronsRight,
  Package,
-  Gem,
   Lock,
-  FileText,
-  Sparkles,
+  BarChart3,
+  Store,
+  ArrowLeft,
 } from "lucide-react";
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
@@ -32,34 +27,30 @@ import Wordmark from "./Wordmark";
 import { useAuthStore } from "../lib/auth";
 import { useThemeStore } from "../lib/theme";
 
+// The pages inside My venue: they show "‹ My venue" and light up its tab.
+const VENUE_PAGES = ["/menu", "/tables", "/staff", "/subscription"];
+
 interface LayoutProps {
   children: React.ReactNode;
   /** Use more of the screen (the dashboard fits everything on one screen). */
   wide?: boolean;
 }
 
-type NavItem = { label: string; href: string; icon: typeof LayoutDashboard; feature?: PlanFeature };
+type NavItem = { label: string; href: string; icon: typeof LayoutDashboard; feature?: PlanFeature; also?: string[] };
+// Five tabs. My venue holds the set-up-once pages (Menu first), Promote is
+// events + campaigns, Reports is the night report + every bill.
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Tables", href: "/tables", icon: QrCode },
   ...(BOOKINGS_ENABLED ? [{ label: "Bookings", href: "/bookings", icon: CalendarDays, feature: "bookings" as PlanFeature }] : []),
-  { label: "Menu", href: "/menu", icon: UtensilsCrossed },
   { label: "Stock", href: "/stock", icon: Package, feature: "stock" as PlanFeature },
-  { label: "Events", href: "/events", icon: Sparkles, feature: "events" as PlanFeature },
-  { label: "Campaigns", href: "/campaigns", icon: Megaphone, feature: "campaigns" as PlanFeature },
-  { label: "Staff", href: "/staff", icon: Users },
-  { label: "History", href: "/history", icon: History, feature: "history" as PlanFeature },
-  { label: "Report", href: "/report", icon: FileText },
-  { label: "Plan", href: "/subscription", icon: Gem },
+  { label: "Promote", href: "/promote", icon: Megaphone, feature: "campaigns" as PlanFeature, also: ["/campaigns", "/events"] },
+  { label: "Reports", href: "/reports", icon: BarChart3, also: ["/report", "/history"] },
+  { label: "My venue", href: "/venue", icon: Store, also: VENUE_PAGES },
   // Hidden for launch to keep Skuzi simple to pitch and learn; the pages
   // still exist and can come back as paid extras: /ratings, /busy-hours,
   // /shifts (the staff sticker and venue PIN moved to Staff).
 ];
 
-// Bottom nav shows the 3 most-used items pinned, then a "More" button
-// that opens a sheet with everything else — including locked Pro/Elite
-// items, so they stay visible as an upsell instead of disappearing.
-const PINNED_NAV = NAV_ITEMS.slice(0, 3);
 // The founder also sees Skuzi-wide tools.
 
 export default function Layout({ children, wide = false }: LayoutProps) {
@@ -76,8 +67,12 @@ export default function Layout({ children, wide = false }: LayoutProps) {
 
   // Creators stays off the menu (it was showing on the founder's screen in front of staff); the founder opens /creators directly.
   const navItems = NAV_ITEMS;
-  const MORE_NAV = navItems.slice(3);
-  const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/");
+  const under = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/");
+  const isActive = (href: string) => {
+    const item = navItems.find((n) => n.href === href);
+    return under(href) || !!item?.also?.some(under);
+  };
+  const inVenue = VENUE_PAGES.some(under);
   // Features outside the venue's package stay in the menu with a lock (a quiet
   // upsell) and open the Plan page instead.
   // In the free trial everything is open (effectivePlan = Max).
@@ -101,7 +96,6 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         {pendingBookings > 9 ? "9+" : pendingBookings}
       </span>
     ) : null;
-  const [moreOpen, setMoreOpen] = useState(false);
   // Desktop sidebar can shrink to icons; remembered on this device only.
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem("skuzi_nav_collapsed") === "1"; } catch { return false; }
@@ -112,7 +106,6 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       return !c;
     });
   };
-  const isMoreActive = MORE_NAV.some((item) => isActive(item.href));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] text-gray-900 dark:text-gray-100 print:!bg-white">
@@ -294,6 +287,11 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       >
         <div className={`${wide ? "max-w-7xl md:px-8" : "max-w-5xl"} mx-auto px-4 py-6 md:py-7`}>
           {location.pathname !== "/subscription" && <div className="print:hidden"><PlanBanner status={venue?.planStatus} /></div>}
+          {inVenue && !walled && (
+            <Link to="/venue" className="mb-3 inline-flex min-h-[40px] items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white print:hidden">
+              <ArrowLeft size={16} /> My venue
+            </Link>
+          )}
           {walled && venue?.planStatus ? <PlanWall status={venue.planStatus} venueName={venue.name} /> : children}
         </div>
         <TermsPrompt />
@@ -308,7 +306,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         h-16 flex items-stretch
       "
       >
-        {PINNED_NAV.map(({ label, href, icon: Icon, feature }) => (
+        {navItems.map(({ label, href, icon: Icon, feature }) => (
           <Link
             key={href}
             to={linkFor(href, feature)}
@@ -332,26 +330,6 @@ export default function Layout({ children, wide = false }: LayoutProps) {
           </Link>
         ))}
 
-        {/* More button — reveals Activity + locked Pro/Elite items as a sales surface */}
-        <button
-          onClick={() => setMoreOpen(true)}
-          className={`
-            relative flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors
-            ${
-              isMoreActive
-                ? "text-brand-500"
-                : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            }
-          `}
-        >
-          <div className="relative">
-            <MenuIcon size={20} />
-          </div>
-          <span className="text-[10px]">More</span>
-          {isMoreActive && (
-            <span className="absolute bottom-0 w-6 h-0.5 bg-brand-500 rounded-full" />
-          )}
-        </button>
       </nav>
 
       {/* ── Venue card (mobile) ───────────────────────────────────────────── */}
@@ -381,63 +359,6 @@ export default function Layout({ children, wide = false }: LayoutProps) {
         </div>
       )}
 
-      {/* ── More sheet (mobile) ────────────────────────────────────────────── */}
-      {moreOpen && (
-        <div className="md:hidden fixed inset-0 z-30">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setMoreOpen(false)}
-          />
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#3B2149] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 pb-8 pt-3 px-4 max-h-[75vh] overflow-y-auto">
-            {/* Drag handle */}
-            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-4" />
-
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                More
-              </h3>
-              <button
-                onClick={() => setMoreOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {MORE_NAV.map(({ label, href, icon: Icon, feature }) => {
-                return (
-                  <Link
-                    key={href}
-                    to={linkFor(href, feature)}
-                    onClick={() => setMoreOpen(false)}
-                    className={`
-                      relative flex flex-col items-center justify-center gap-2 rounded-2xl px-3 py-4 text-center transition-colors
-                      ${
-                        isActive(href)
-                          ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200/70 dark:border-brand-700/40"
-                          : "bg-gray-50 dark:bg-gray-800/40 border border-transparent"
-                      }
-                    `}
-                  >
-                    <Icon
-                      size={20}
-                      className={isActive(href) ? "text-brand-500" : "text-gray-500 dark:text-gray-400"}
-                    />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      {label}
-                    </span>
-                    {locked(feature) && <Lock size={12} className="absolute right-2.5 top-2.5 text-gray-400" aria-label="Not in your package" />}
-                  </Link>
-                );
-              })}
-            </div>
-
-            <p className="mt-6 mb-2.5 text-xs font-bold uppercase tracking-[0.14em] text-gray-400">Theme</p>
-            <ThemeSwitch layout="labels" />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -61,7 +61,7 @@ export async function sendUnpaidSummaries() {
     const sum = bills.reduce((s, b) => s + b.total, 0);
     await sendPushToOwner(
       venue.id,
-      `🧾 ${bills.length} ${bills.length === 1 ? 'bill was' : 'bills were'} left open · ${sum.toLocaleString('en-US')} RWF`,
+      `🧾 ${bills.length} ${bills.length === 1 ? 'bill' : 'bills'} not paid yet · ${sum.toLocaleString('en-US')} RWF`,
       'Open Skuzi to see the tables and the guests’ phone numbers.',
     );
   }
