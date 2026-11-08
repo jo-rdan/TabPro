@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BellRing, LogOut } from "lucide-react";
 import MomoToConfirm, { MomoSummary } from "../../components/MomoToConfirm";
+import LanguageSwitch from "../../components/LanguageSwitch";
 import { usePushNotifications, useKeepPushSubscribed } from "../../hooks/usePushNotifications";
 
 // The cashier's screen: they hold the venue's MoMo Pay phone, so they confirm
@@ -50,9 +51,12 @@ export default function Cashier() {
             {waitingCount} to confirm{name && ` · ${name}`}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <LanguageSwitch onColor />
         <button onClick={signOut} aria-label="Sign out" className="rounded-xl bg-white/10 p-2.5 text-white/80">
           <LogOut size={16} />
         </button>
+        </div>
       </header>
 
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 pb-10 sm:px-6">

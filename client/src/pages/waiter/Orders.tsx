@@ -1,5 +1,6 @@
 import { StockPanel } from "../owner/Stock";
 import { ThemeCycleButton } from "../../components/ThemeSwitch";
+import LanguageSwitch from "../../components/LanguageSwitch";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -1095,7 +1096,7 @@ export default function WaiterOrders() {
         </h2>
         <div className="flex items-center gap-2">
           {myPoints && (
-            <span className="bg-[#F2B33A] text-[#231A2C] text-xs font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap">
+            <span className="hidden sm:inline bg-[#F2B33A] text-[#231A2C] text-xs font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap">
               {myPoints.totalPoints} pts
             </span>
           )}
@@ -1113,11 +1114,13 @@ export default function WaiterOrders() {
               localStorage.removeItem("tabpro_staff_venue");
               window.location.href = "/waiter";
             }}
-            className="md:hidden whitespace-nowrap text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="md:hidden p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Sign out"
+            aria-label="Sign out"
           >
-            Sign out
+            <LogOut size={17} />
           </button>
+          <LanguageSwitch />
           <ThemeCycleButton />
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
         </div>
