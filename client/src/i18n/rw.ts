@@ -251,8 +251,11 @@ export const RW: { exact: Record<string, string>; patterns?: [RegExp, string][] 
     "Open Skuzi": "Fungura Skuzi",
     "This link has expired. Open Skuzi at your next visit to connect.": "Iyi link yararangiye. Fungura Skuzi ubutaha uzaza.",
     "One tap so your invites and offers can reach you.": "Kanda rimwe ubone ubutumire n'impano.",
+    "would love a hand ·": "akeneye ubufasha ·",
+    "On my way": "Ndaje",
   },
   patterns: [
+    [/^0s ago$/, "nonaha"],
     [/^(\d+)s ago$/, "hashize amasegonda $1"],
     [/^(\d+)m ago$/, "hashize iminota $1"],
     [/^(\d+)h ago$/, "hashize amasaha $1"],
