@@ -250,8 +250,11 @@ export const FR: { exact: Record<string, string>; patterns?: [RegExp, string][] 
     "Open Skuzi": "Ouvrir Skuzi",
     "This link has expired. Open Skuzi at your next visit to connect.": "Ce lien a expiré. Ouvrez Skuzi lors de votre prochaine visite.",
     "One tap so your invites and offers can reach you.": "Un geste pour recevoir vos invitations et offres.",
+    "would love a hand ·": "a besoin d'aide ·",
+    "On my way": "J'arrive",
   },
   patterns: [
+    [/^0s ago$/, "à l'instant"],
     [/^(\d+)s ago$/, "il y a $1 s"],
     [/^(\d+)m ago$/, "il y a $1 min"],
     [/^(\d+)h ago$/, "il y a $1 h"],
