@@ -84,7 +84,7 @@ export default {
       },
       fontFamily: {
         sans: ['Figtree', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['"Bricolage Grotesque"', 'Figtree', 'sans-serif'],
+        display: ['Poppins', 'Figtree', 'sans-serif'],
       },
     },
   },
