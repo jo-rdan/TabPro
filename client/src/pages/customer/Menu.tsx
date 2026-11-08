@@ -56,6 +56,7 @@ interface BillLine {
 type Step = "identify" | "menu" | "bill" | "rating" | "closed";
 type TabStatus = "open" | "bill_requested" | "closed";
 
+const SAVED_PHONE_KEY = "skuzi_guest_phone";
 const SESSION_KEY = (qr: string) => `tabpro_tab_${qr}`;
 // The same session, kept on the phone after the page is closed (sessionStorage
 // is wiped then), so only this phone can bring its bill back.
@@ -252,7 +253,11 @@ export default function CustomerMenu() {
   const [step, setStep] = useState<Step>("identify");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [phone, setPhone] = useState("");
+  // The guest's MoMo number: asked once, then this phone remembers it for every
+  // next visit and bill (they can still change it from the bill).
+  const [phone, setPhone] = useState(() => {
+    try { return localStorage.getItem(SAVED_PHONE_KEY) ?? ""; } catch { return ""; }
+  });
   // Menu first: the number is asked only when the guest sends their first order.
   const [askPhone, setAskPhone] = useState(false);
   const [tabId, setTabId] = useState<string | null>(null);
@@ -538,8 +543,10 @@ export default function CustomerMenu() {
 
   // The guest gave their number: open (or join) the table's tab. Returns the
   // tab id, or null if the bill is already being paid (they land on the bill).
+  const openFailed = useRef(false);
   const openTabWithPhone = async (joinCode?: string): Promise<string | null> => {
     const cleaned = phone.trim();
+    openFailed.current = true;
     if (cleaned.replace(/\D/g, "").length < 9) {
       setError("Enter your MTN MoMo or Airtel Money number, e.g. 078 123 4567");
       return null;
@@ -584,6 +591,8 @@ export default function CustomerMenu() {
       };
       sessionStorage.setItem(SESSION_KEY(qrCode!), JSON.stringify(session));
       keep(qrCode!, session);
+      try { localStorage.setItem(SAVED_PHONE_KEY, cleaned); } catch { /* asked again next time */ }
+      openFailed.current = false;
       // Joining a table whose bill is already requested lands on the bill.
       if (tab.status === "bill_requested") {
         setAskPhone(false);
@@ -600,7 +609,8 @@ export default function CustomerMenu() {
     }
   };
 
-  // "Confirm order": the first time, ask for the number, then send.
+  // "Confirm order": the first time ever, ask for the number, then send. A
+  // phone that already gave its number goes straight through.
   const confirmOrder = () => {
     if (tabId) {
       handlePlaceOrder(tabId);
@@ -608,6 +618,14 @@ export default function CustomerMenu() {
     }
     setError("");
     setCartOpen(false);
+    if (phone.replace(/\D/g, "").length >= 9) {
+      openTabWithPhone().then((id) => {
+        if (id) handlePlaceOrder(id);
+        // The saved number didn't work (or no connection): let them check it.
+        else if (openFailed.current) setAskPhone(true);
+      });
+      return;
+    }
     setAskPhone(true);
   };
   const sendFirstOrder = async () => {
