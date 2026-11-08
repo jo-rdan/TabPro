@@ -19,11 +19,13 @@ import {
   MapPin,
   LogOut,
   Package,
+  Wrench,
 } from "lucide-react";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { usePushNotifications, useKeepPushSubscribed } from "../../hooks/usePushNotifications";
 import NotificationNotice from "../../components/NotificationNotice";
 import MomoToConfirm from "../../components/MomoToConfirm";
+import ManagerSetup from "../../components/ManagerSetup";
 import { WsEvent } from "@tabpro/shared";
 import VenueLogo from "../../components/VenueLogo";
 import { WavingHand } from "../../components/Logo";
@@ -316,7 +318,7 @@ export default function WaiterOrders() {
   const [manualSuccess, setManualSuccess] = useState(false);
 
   // ── Tab bar + points ──────────────────────────────────────────────────────
-  type ActiveTab = "orders" | "tables" | "points" | "stock";
+  type ActiveTab = "orders" | "tables" | "points" | "stock" | "setup";
   const [activeTab, setActiveTab] = useState<ActiveTab>("orders");
   const staffToken =
     searchParams.get("token") ||
@@ -346,6 +348,8 @@ export default function WaiterOrders() {
   const [myTables, setMyTables] = useState<AssignedTable[]>([]);
   const [tablesLoading, setTablesLoading] = useState(false);
   const [isManager, setIsManager] = useState(false);
+  // What the owner lets this manager set up (menu, tables, team, unpaid).
+  const [setupRights, setSetupRights] = useState<("menu" | "tables" | "team" | "unpaid")[]>([]);
   // Managers: tables whose waiter has no smartphone, by label → waiter name
   const coveredTables = new Map(
     myTables.filter((t) => t.waiterHasSmartphone === false && t.waiterName).map((t) => [t.label, t.waiterName as string]),
@@ -870,6 +874,7 @@ export default function WaiterOrders() {
         }
         if (d.success && d.data.role === "manager") {
           setIsManager(true);
+          setSetupRights(d.data.setupRights ?? []);
           fetchMyTables();
         }
       })
@@ -1031,6 +1036,7 @@ export default function WaiterOrders() {
               { key: "tables", label: isManager ? "Floor" : "My Tables", icon: MapPin },
               { key: "points", label: "My Points", icon: Trophy },
               ...(isManager ? [{ key: "stock", label: "Stock", icon: Package }] : []),
+              ...(isManager && setupRights.length > 0 ? [{ key: "setup", label: "Setup", icon: Wrench }] : []),
             ] as { key: ActiveTab; label: string; icon: typeof Receipt }[]
           ).map(({ key, label, icon: Icon }) => (
             <button
@@ -1555,7 +1561,13 @@ export default function WaiterOrders() {
       {/* ── Stock (managers only) ──────────────────────────────────────────── */}
       {activeTab === "stock" && isManager && staffToken && venueId && (
         <div className="px-4 pt-4 pb-28 md:pb-6 min-h-screen">
-          <StockPanel venueId={venueId} token={staffToken} />
+          <StockPanel venueId={venueId} token={staffToken} canEditMenu={setupRights.includes("menu")} />
+        </div>
+      )}
+      {/* ── Setup (managers the owner allowed) ─────────────────────────────── */}
+      {activeTab === "setup" && isManager && setupRights.length > 0 && staffToken && venueId && (
+        <div className="px-4 pt-4 pb-28 md:pb-6 max-w-lg mx-auto min-h-screen">
+          <ManagerSetup venueId={venueId} token={staffToken} rights={setupRights} />
         </div>
       )}
       {/* ── My Points tab ─────────────────────────────────────────────────── */}
@@ -1700,13 +1712,14 @@ export default function WaiterOrders() {
       )}
       {/* ── Bottom tab bar (mobile only — desktop uses the sidebar) ────────── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-2 bg-gray-50 dark:bg-gray-950">
-        <div className={`grid ${isManager ? "grid-cols-4" : "grid-cols-3"} gap-1.5 bg-white dark:bg-gray-800 rounded-[22px] p-1.5 ring-1 ring-gray-200/70 dark:ring-0`}>
+        <div className={`grid ${isManager ? (setupRights.length > 0 ? "grid-cols-5" : "grid-cols-4") : "grid-cols-3"} gap-1.5 bg-white dark:bg-gray-800 rounded-[22px] p-1.5 ring-1 ring-gray-200/70 dark:ring-0`}>
           {(
             [
               { key: "orders", label: "Orders", icon: Receipt },
               { key: "tables", label: isManager ? "Floor" : "My tables", icon: MapPin },
               { key: "points", label: "Points", icon: Trophy },
               ...(isManager ? [{ key: "stock", label: "Stock", icon: Package }] : []),
+              ...(isManager && setupRights.length > 0 ? [{ key: "setup", label: "Setup", icon: Wrench }] : []),
             ] as { key: ActiveTab; label: string; icon: typeof Receipt }[]
           ).map(({ key, label, icon: Icon }) => (
             <button

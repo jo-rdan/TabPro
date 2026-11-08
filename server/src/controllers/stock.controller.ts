@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '@tabpro/shared';
+import { db } from '../lib/db';
+import { staff } from '../models/schema';
+import { eq } from 'drizzle-orm';
 import { getStock, setTracking, addDelivery, saveCount, getItemHistory, readDeliveryPhoto, receiveDelivery } from '../services/stock.service';
 import { getKitchen, addSpend, deleteSpend, setKitchenCategories } from '../services/kitchen.service';
 
@@ -38,7 +41,12 @@ export async function handleDeliveryPhoto(req: Request, res: Response) {
 
 // The review screen's "Add to stock" (after a photo, or typed in).
 export async function handleReceive(req: Request, res: Response) {
-  try { send(res, await receiveDelivery(req.params.venueId, req.body ?? {}, { canEditMenu: !req.staffMember })); } catch (err) { fail(res, err); }
+  try {
+    // The owner, or a manager the owner lets edit the menu, may add a drink or change its price.
+    const member = req.staffMember ? await db.query.staff.findFirst({ where: eq(staff.id, req.staffMember.staffId), columns: { setupRights: true } }) : null;
+    const canEditMenu = !req.staffMember || !!member?.setupRights.includes('menu');
+    send(res, await receiveDelivery(req.params.venueId, req.body ?? {}, { canEditMenu }));
+  } catch (err) { fail(res, err); }
 }
 
 export async function handleItemHistory(req: Request, res: Response) {

@@ -288,6 +288,7 @@ export async function getStaffForVenue(venueId: string) {
       role: s.role,
       hasSmartphone: s.hasSmartphone,
       isActive: s.isActive,
+      setupRights: s.setupRights,
       pendingApproval: s.pendingApproval,
       inviteStatus,
       inviteToken: latestInvite?.acceptedAt ? null : latestInvite?.token ?? null,
@@ -379,7 +380,7 @@ export async function declineJoinRequest(staffId: string) {
 }
 
 // ─── Owner edits a team member: manager or waiter, smartphone or not ─────────
-export async function updateStaff(staffId: string, changes: { role?: 'waiter' | 'manager' | 'kitchen' | 'cashier'; hasSmartphone?: boolean }) {
+export async function updateStaff(staffId: string, changes: { role?: 'waiter' | 'manager' | 'kitchen' | 'cashier'; hasSmartphone?: boolean; setupRights?: string[] }) {
   const [updated] = await db.update(staff).set(changes).where(eq(staff.id, staffId)).returning();
   if (!updated) throw new Error('Staff not found');
   // Managers don't serve tables when there are waiters: share tables out again.

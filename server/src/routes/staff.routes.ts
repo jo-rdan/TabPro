@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { handleCreateStaff, handleAcceptInvite, handleGetStaff, handleGetMyPoints, handleToggleStaffActive, handleResendInvite, handleSetPin, handleVerifyPin, handleStaffLogin, handleJoinRequest, handleApproveJoin, handleDeclineJoin, handleUpdateStaff, handleGetMe } from '../controllers/staff.controller';
 import { requireAuth, requireStaffAuth } from '../middleware/auth.middleware';
-import { ownsVenue, venueFromParam, venueFromBody, venueOfStaff } from '../middleware/venueAccess.middleware';
+import { ownsVenue, venueFromParam, venueFromBody, venueOfStaff, ownerOrManager } from '../middleware/venueAccess.middleware';
 import { setTipMomo } from '../services/tips.service';
 
 const router = Router();
@@ -23,9 +23,11 @@ router.post('/me/set-pin', requireStaffAuth, handleSetPin);
 router.post('/me/verify-pin', requireStaffAuth, handleVerifyPin);
 
 // Owner-auth
+// The owner, or a manager the owner lets add waiters, kitchen and cashiers (the owner is told).
+router.post('/', ownerOrManager('team', venueFromBody(), (req, who) => `${who} added ${req.body?.name ?? 'someone'} (${req.body?.role ?? 'waiter'})`), handleCreateStaff);
+router.get('/:venueId([0-9a-f-]{36})', ownerOrManager('team', venueFromParam()), handleGetStaff);
+
 router.use(requireAuth);
-router.post('/', ownsVenue(venueFromBody()), handleCreateStaff);
-router.get('/:venueId', ownsVenue(venueFromParam()), handleGetStaff);
 router.patch('/:staffId/active', ownsVenue(venueOfStaff()), handleToggleStaffActive);
 router.patch('/:staffId', ownsVenue(venueOfStaff()), handleUpdateStaff);
 router.post('/:staffId/resend-invite', ownsVenue(venueOfStaff()), handleResendInvite);
