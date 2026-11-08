@@ -23,7 +23,8 @@ export async function handleCreateTable(req: Request, res: Response) {
     where: eq(venues.id, parsed.data.venueId),
   });
 
-  if (!venue || venue.ownerId !== req.owner!.ownerId) {
+  // The route already checked the owner (or an allowed manager) for this venue.
+  if (!venue || (req.owner && venue.ownerId !== req.owner.ownerId)) {
     const body: ApiResponse = { success: false, error: 'Venue not found' };
     res.status(404).json(body);
     return;

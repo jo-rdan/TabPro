@@ -1,0 +1,1 @@
+ALTER TABLE "staff" ADD COLUMN "setup_rights" text[] DEFAULT ARRAY[]::text[] NOT NULL;

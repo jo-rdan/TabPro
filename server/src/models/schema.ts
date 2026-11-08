@@ -133,6 +133,10 @@ export const staff = pgTable("staff", {
   // Waiters without a smartphone still get tables, credit and tips; their
   // alerts go to a manager (or the owner if there's no manager).
   hasSmartphone: boolean("has_smartphone").default(true).notNull(),
+  // What the owner lets a manager set up without them: "menu", "tables",
+  // "team" (waiters, kitchen, cashiers) and "unpaid" (see unpaid bills).
+  // Money stays the owner's: MoMo code, plan, reports, adding managers.
+  setupRights: text("setup_rights").array().default(sql`ARRAY[]::text[]`).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   pin: text("pin"), // bcrypt hash, null until waiter sets it on first login
   // Joined by scanning the clock-in sticker; inactive until the owner approves.

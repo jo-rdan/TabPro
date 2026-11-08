@@ -168,3 +168,55 @@ export function planFeature(feature: PlanFeature, resolve: VenueResolver) {
     next();
   };
 }
+
+export type SetupRight = 'menu' | 'tables' | 'team' | 'unpaid';
+
+/**
+ * The venue's owner, or one of its managers the owner allowed to do this part
+ * of the setup (staff.setupRights). Does its own token check. Without a
+ * resolver, a manager acts on their own venue (e.g. reading a menu photo).
+ * When `tell` is given, a manager's successful change pings the owner.
+ */
+export function ownerOrManager(right: SetupRight, resolve?: VenueResolver, tell?: (req: Request, name: string) => string | null) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const header = req.headers.authorization;
+    if (!header?.startsWith('Bearer ')) throw new HttpError(401, 'Unauthorized');
+    let payload: Partial<JwtPayload & StaffJwtPayload>;
+    try {
+      payload = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as any;
+    } catch {
+      throw new HttpError(401, 'Invalid or expired token');
+    }
+
+    if (payload.ownerId) {
+      req.owner = payload as JwtPayload;
+      if (resolve && !(await ownerOwnsVenue(payload.ownerId, await resolveVenueId(resolve, req)))) {
+        throw new HttpError(403, 'You do not have access to this venue');
+      }
+      return next();
+    }
+
+    if (payload.staffId) {
+      const member = await db.query.staff.findFirst({ where: eq(staff.id, payload.staffId) });
+      const venueId = resolve ? await resolveVenueId(resolve, req) : member?.venueId;
+      if (!member || !member.isActive || member.venueId !== venueId || member.role !== 'manager' || !member.setupRights.includes(right)) {
+        throw new HttpError(403, 'Ask the owner to let you do this part of the setup');
+      }
+      req.staffMember = payload as StaffJwtPayload;
+      if (tell) {
+        res.on('finish', () => {
+          if (res.statusCode >= 300) return;
+          const message = tell(req, member.name);
+          if (message) {
+            import('../services/push.service')
+              .then(({ sendPushToOwner }) => sendPushToOwner(member.venueId, `🛠 ${message}`, 'Done by your manager in Skuzi.'))
+              .catch(() => {});
+          }
+        });
+      }
+      return next();
+    }
+
+    throw new HttpError(401, 'Unauthorized');
+  };
+}

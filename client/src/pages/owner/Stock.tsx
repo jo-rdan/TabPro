@@ -120,11 +120,11 @@ export default function Stock() {
 }
 
 /** The whole Stock screen. `token`: a manager's staff token (waiter app). */
-export function StockPanel(props: { venueId: string; venueName?: string; token?: string }) {
+export function StockPanel(props: { venueId: string; venueName?: string; token?: string; canEditMenu?: boolean }) {
   return <TokenCtx.Provider value={props.token}><StockScreen {...props} /></TokenCtx.Provider>;
 }
 
-function StockScreen({ venueId, venueName, token: staffToken }: { venueId: string; venueName?: string; token?: string }) {
+function StockScreen({ venueId, venueName, token: staffToken, canEditMenu: managerEditsMenu }: { venueId: string; venueName?: string; token?: string; canEditMenu?: boolean }) {
   const req = useReq();
   const ownerToken = useAuthStore((st) => st.token);
   const [stock, setStock] = useState<Stock | null>(null);
@@ -219,7 +219,7 @@ function StockScreen({ venueId, venueName, token: staffToken }: { venueId: strin
 
       {sheet === 'setup' && stock && <SetupSheet stock={stock} onClose={() => setSheet(null)} onSaved={() => { load(); setToast('Stock items saved'); }} />}
       {sheet === 'delivery' && <DeliverySheet venueId={venueId} items={tracked} onReceive={(photo) => setSheet(photo ? 'photo' : 'typed')} onClose={() => setSheet(null)} onSaved={() => { load(); setSheet(null); setToast('Delivery added'); }} />}
-      {(sheet === 'photo' || sheet === 'typed') && stock && <ReceiveSheet venueId={venueId} items={stock.items} photo={sheet === 'photo'} canEditMenu={!staffToken} onClose={() => setSheet(null)} onSaved={(msg) => { load(); setSheet(null); setToast(msg); }} />}
+      {(sheet === 'photo' || sheet === 'typed') && stock && <ReceiveSheet venueId={venueId} items={stock.items} photo={sheet === 'photo'} canEditMenu={!staffToken || !!managerEditsMenu} onClose={() => setSheet(null)} onSaved={(msg) => { load(); setSheet(null); setToast(msg); }} />}
       {sheet === 'count' && <CountSheet venueId={venueId} items={tracked} onClose={() => { setSheet(null); load(); }} />}
       {item && <ItemSheet item={item} onClose={() => setItemId(null)} onChanged={load} />}
       {toast && <Toast message={toast} onDismiss={() => setToast('')} />}
@@ -478,7 +478,7 @@ function ReceiveSheet({ venueId, items, photo, canEditMenu, onClose, onSaved }: 
           <div><p className="mb-1 text-xs font-bold text-gray-500 dark:text-gray-400">How it comes</p><PackPicker pack={pack} name={name || 'this drink'} onChange={setPack} /></div>
           <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Price on your menu (RWF)
             <input inputMode="numeric" value={price ? Number(price).toLocaleString('en-US') : ''} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))} disabled={!canEditMenu} placeholder="e.g. 2,000" className={`${field} disabled:opacity-60`} />
-            {!canEditMenu && <span className="mt-1 block font-normal">Only the owner adds drinks or changes prices.</span>}
+            {!canEditMenu && <span className="mt-1 block font-normal">Only the owner (or a manager they allow) adds drinks or changes prices.</span>}
           </label>
           {name.trim() && (
             <p className={`rounded-xl px-3 py-2 text-xs font-semibold ${known ? 'bg-green-50 text-green-800 dark:bg-green-500/10 dark:text-green-300' : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200'}`}>

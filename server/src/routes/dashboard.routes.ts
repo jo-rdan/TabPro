@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { handleGetStats, handleGetActivityLog, handleGetEndOfNightReport, handleGetBusyHours, handleGetOpenBills, handleGetTonight, handleGetNightTotals } from '../controllers/dashboard.controller';
 import { requireAuth } from '../middleware/auth.middleware';
-import { ownsVenue, venueFromParam, planFeature } from '../middleware/venueAccess.middleware';
+import { ownsVenue, venueFromParam, planFeature, ownerOrManager } from '../middleware/venueAccess.middleware';
 import { getNightReport } from '../services/nightReport.service';
 
 const router = Router();
+
+// Unpaid bills: the owner, or a manager the owner lets see them.
+router.get('/open-bills/:venueId', ownerOrManager('unpaid', venueFromParam()), handleGetOpenBills);
 
 router.use(requireAuth);
 router.get('/stats/:venueId', ownsVenue(venueFromParam()), handleGetStats);
@@ -18,7 +21,6 @@ router.get('/night-report/:venueId', ownsVenue(venueFromParam()), async (req, re
   } catch (err) { res.status(400).json({ success: false, error: (err as Error).message }); }
 });
 router.get('/busy-hours/:venueId', ownsVenue(venueFromParam()), handleGetBusyHours);
-router.get('/open-bills/:venueId', ownsVenue(venueFromParam()), handleGetOpenBills);
 router.get('/tonight/:venueId', ownsVenue(venueFromParam()), handleGetTonight);
 router.get('/nights/:venueId', ownsVenue(venueFromParam()), planFeature('history', venueFromParam()), handleGetNightTotals);
 

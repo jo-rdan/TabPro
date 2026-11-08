@@ -540,6 +540,50 @@ r = await call('GET', '/staff/me', null, managerTok);
 check('App knows they are a manager', r.json?.data?.role === 'manager');
 r = await call('GET', `/tables/assignments/${venueId}`, null, ownerTok);
 check('Manager is not given tables (waiters serve them)', !(r.json?.data ?? []).some((a) => a.staffId === managerId && a.tableIds.length > 0));
+{ // The owner lets the manager set up: menu, tables, team, unpaid bills (and is told)
+  r = await call('POST', '/menu', { venueId, items: [{ name: 'Mango juice', category: 'Drinks', priceRwf: 2000 }] }, managerTok);
+  check('A manager CANNOT edit the menu until the owner allows it', r.status === 403, `status ${r.status}`);
+  r = await call('GET', `/dashboard/open-bills/${venueId}`, null, managerTok);
+  check('…nor see unpaid bills', r.status === 403, `status ${r.status}`);
+  r = await call('PATCH', `/staff/${managerId}`, { setupRights: ['menu', 'tables', 'team', 'unpaid'] }, managerTok);
+  check('A manager CANNOT give themselves setup rights', r.status === 401 || r.status === 403, `status ${r.status}`);
+  r = await call('PATCH', `/staff/${managerId}`, { setupRights: ['menu', 'tables', 'team', 'unpaid'] }, ownerTok);
+  check('Owner lets the manager set up', r.status === 200 && r.json?.data?.setupRights?.length === 4, JSON.stringify(r.json));
+  r = await call('GET', '/staff/me', null, managerTok);
+  check('…the manager\'s app knows what they may set up', r.json?.data?.setupRights?.join() === 'menu,tables,team,unpaid', JSON.stringify(r.json?.data?.setupRights));
+  pushHits.length = 0;
+  r = await call('POST', '/menu', { venueId, items: [{ name: 'Mango juice', category: 'Drinks', priceRwf: 2000 }] }, managerTok);
+  const mango = r.json?.data?.[0]?.id;
+  await sleep(800);
+  check('Manager adds a menu item → the owner is told', r.status === 201 && !!mango && pushHits.includes('/owner'), `${r.status} ${pushHits.join(' ')}`);
+  r = await call('PATCH', `/menu/items/${mango}`, { name: 'Mango juice', priceRwf: 2500 }, managerTok);
+  check('Manager changes a price', r.status === 200 && (await q1('select price_rwf from menu_items where id=$1', [mango]))?.price_rwf === 2500, `status ${r.status}`);
+  r = await call('POST', '/tables', { venueId, label: 'Garden 1' }, managerTok);
+  const garden = r.json?.data?.id ?? r.json?.data?.table?.id;
+  check('Manager adds a table', r.status === 201, `status ${r.status} ${r.json?.error ?? ''}`);
+  r = await call('POST', '/staff', { venueId, name: 'Boss Two', phone: phone(), role: 'manager' }, managerTok);
+  check('A manager CANNOT add another manager', r.status === 403, `status ${r.status}`);
+  const helperPhone = phone();
+  r = await call('POST', '/staff', { venueId, name: 'Helper', phone: helperPhone, role: 'waiter' }, managerTok);
+  check('Manager adds a waiter and gets their invite link', r.status === 201 && !!r.json?.data?.token, r.json?.error);
+  r = await call('GET', `/staff/${venueId}`, null, managerTok);
+  check('The team list a manager sees has no invite links', r.status === 200 && (r.json?.data ?? []).length > 0 && !JSON.stringify(r.json).includes('nvite') && !JSON.stringify(r.json).includes('"pin"'), JSON.stringify(r.json?.data?.[0]));
+  r = await call('GET', `/dashboard/open-bills/${venueId}`, null, managerTok);
+  check('Manager sees unpaid bills', r.status === 200 && Array.isArray(r.json?.data), `status ${r.status}`);
+  r = await call('POST', '/menu', { venueId, items: [{ name: 'Nope', category: 'Drinks', priceRwf: 100 }] }, staffTok);
+  check('A waiter still CANNOT edit the menu', r.status === 403, `status ${r.status}`);
+  r = await call('GET', `/dashboard/stats/${venueId}`, null, managerTok);
+  check('Money pages stay the owner\'s', r.status === 401 || r.status === 403, `status ${r.status}`);
+  // Leave the venue as it was for the rest of the run.
+  await pg.query('delete from menu_items where id=$1', [mango]);
+  await pg.query(`delete from tables where venue_id=$1 and label='Garden 1'`, [venueId]).catch(() => pg.query(`update tables set is_active=false where venue_id=$1 and label='Garden 1'`, [venueId]));
+  const helper = await q1('select id from staff where venue_id=$1 and name=$2', [venueId, 'Helper']);
+  if (helper) {
+    await pg.query('delete from table_assignments where staff_id=$1', [helper.id]);
+    await pg.query('delete from staff where id=$1', [helper.id]).catch(() => pg.query('update staff set is_active=false where id=$1', [helper.id]));
+  }
+  await call('PATCH', `/staff/${managerId}`, { setupRights: [] }, ownerTok);
+}
 r = await call('GET', '/tables/my-tables', null, managerTok);
 check('Manager sees the whole floor with each table\'s waiter', (r.json?.data ?? []).length >= 3 && (r.json?.data ?? []).some((t) => t.waiterName === 'Grace' && t.waiterHasSmartphone === false), JSON.stringify((r.json?.data ?? []).map((t) => t.waiterName)));
 r = await call('PATCH', `/staff/${graceId}`, { role: 'manager' }, rivalTokEarly);

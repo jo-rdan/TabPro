@@ -260,6 +260,13 @@
       "when": 1794093675437,
       "tag": "0036_skuzi_stock_packs",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794095161895,
+      "tag": "0037_skuzi_manager_setup",
+      "breakpoints": true
     }
   ]
 }

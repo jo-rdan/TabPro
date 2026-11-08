@@ -29,6 +29,8 @@ interface StaffRow {
   role: "waiter" | "manager" | "kitchen" | "cashier";
   hasSmartphone: boolean;
   isActive: boolean;
+  // What a manager may set up without the owner ("menu", "tables", "team", "unpaid").
+  setupRights?: string[];
   inviteStatus: "none" | "invited" | "active" | "no_phone";
   inviteToken: string | null;
   totalPoints: number;
@@ -599,6 +601,8 @@ export default function Staff() {
               </div>
             )}
 
+            {member.isActive && member.role === "manager" && <ManagerRights member={member} onSaved={fetchStaff} />}
+
             {/* Table assignment panel (the kitchen gets no tables) */}
             {member.isActive && member.role !== "kitchen" && member.role !== "cashier" && (
               <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
@@ -779,6 +783,44 @@ function MomoConfirmers({ venueId }: { venueId: string }) {
         ))}
       </div>
       {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+// What this manager may set up without the owner. Money stays the owner's.
+function ManagerRights({ member, onSaved }: { member: StaffRow; onSaved: () => void }) {
+  const [rights, setRights] = useState<string[]>(member.setupRights ?? []);
+  const [saving, setSaving] = useState(false);
+  const toggle = async (r: string) => {
+    const next = rights.includes(r) ? rights.filter((x) => x !== r) : [...rights, r];
+    setRights(next);
+    setSaving(true);
+    try {
+      await api.patch(`/staff/${member.id}`, { setupRights: next });
+      onSaved();
+    } catch {
+      setRights(rights);
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div className="mb-3 rounded-xl bg-gray-50 p-3 dark:bg-[#2B1838]">
+      <p className="text-xs font-bold text-gray-700 dark:text-gray-200">{member.name.split(" ")[0]} can set up without you</p>
+      <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+        {([
+          ["menu", "Menu & prices"],
+          ["tables", "Tables & stickers"],
+          ["team", "Add waiters, kitchen, cashiers"],
+          ["unpaid", "See unpaid bills"],
+        ] as const).map(([r, label]) => (
+          <label key={r} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input id={`rights-${member.id}-${r}`} type="checkbox" checked={rights.includes(r)} disabled={saving} onChange={() => toggle(r)} className="h-4 w-4 accent-brand-500" />
+            {label}
+          </label>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-gray-400">You're told about every change. The MoMo code, your plan, reports and adding managers stay yours.</p>
     </div>
   );
 }

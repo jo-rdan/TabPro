@@ -25,6 +25,12 @@ export async function handleCreateStaff(req: Request, res: Response) {
   }
 
   const { venueId, name, phone, role, hasSmartphone } = parsed.data;
+  // A manager adds waiters, kitchen and cashiers; only the owner adds managers.
+  if (req.staffMember && role === 'manager') {
+    const body: ApiResponse = { success: false, error: 'Only the owner can add a manager' };
+    res.status(403).json(body);
+    return;
+  }
   const result = await createStaff(venueId, name, phone, { role, hasSmartphone });
   const inviteUrl = result.token ? `${process.env.CLIENT_URL}/invite/${result.token}` : null;
 
@@ -41,7 +47,12 @@ export async function handleAcceptInvite(req: Request, res: Response) {
 
 export async function handleGetStaff(req: Request, res: Response) {
   const staffList = await getStaffForVenue(req.params.venueId);
-  const body: ApiResponse = { success: true, data: staffList };
+  // A manager sees names and roles only: never invite links (they'd let them
+  // sign in as someone else) or anything else private.
+  const data = req.staffMember
+    ? staffList.map((m) => ({ id: m.id, name: m.name, role: m.role, isActive: m.isActive, hasSmartphone: m.hasSmartphone }))
+    : staffList;
+  const body: ApiResponse = { success: true, data };
   res.json(body);
 }
 
@@ -175,8 +186,13 @@ export async function handleDeclineJoin(req: Request, res: Response) {
 }
 
 const updateStaffSchema = z
-  .object({ role: z.enum(['waiter', 'manager', 'kitchen', 'cashier']).optional(), hasSmartphone: z.boolean().optional() })
-  .refine((v) => v.role !== undefined || v.hasSmartphone !== undefined, 'Nothing to change');
+  .object({
+    role: z.enum(['waiter', 'manager', 'kitchen', 'cashier']).optional(),
+    hasSmartphone: z.boolean().optional(),
+    // What a manager may set up without the owner.
+    setupRights: z.array(z.enum(['menu', 'tables', 'team', 'unpaid'])).optional(),
+  })
+  .refine((v) => v.role !== undefined || v.hasSmartphone !== undefined || v.setupRights !== undefined, 'Nothing to change');
 
 export async function handleUpdateStaff(req: Request, res: Response) {
   const parsed = updateStaffSchema.safeParse(req.body);
@@ -186,7 +202,7 @@ export async function handleUpdateStaff(req: Request, res: Response) {
     return;
   }
   const member = await updateStaff(req.params.staffId, parsed.data);
-  const body: ApiResponse = { success: true, data: { id: member.id, role: member.role, hasSmartphone: member.hasSmartphone } };
+  const body: ApiResponse = { success: true, data: { id: member.id, role: member.role, hasSmartphone: member.hasSmartphone, setupRights: member.setupRights } };
   res.json(body);
 }
 
@@ -205,6 +221,6 @@ export async function handleGetMe(req: Request, res: Response) {
     ? { orderingPaused: plan.orderingPaused, pausesAt: plan.pausesAt }
     : null;
   const tipsJustOn = await tipsOnByDefault(me);
-  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, phone: me.phone, role: me.role, hasSmartphone: me.hasSmartphone, tipMomo: me.tipMomo || null, tipsJustOn, planNotice } };
+  const body: ApiResponse = { success: true, data: { id: me.id, name: me.name, phone: me.phone, role: me.role, hasSmartphone: me.hasSmartphone, setupRights: me.role === 'manager' ? me.setupRights : [], tipMomo: me.tipMomo || null, tipsJustOn, planNotice } };
   res.json(body);
 }
