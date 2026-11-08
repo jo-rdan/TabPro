@@ -27,7 +27,9 @@ const when = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Kigali" }).replace(" at ", " · ");
 const shortDay = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Africa/Kigali" });
 
-export default function Events() {
+// embedded: shown inside Promote (no page frame, no title, no events list:
+// Promote's own list has them).
+export default function Events({ embedded = false }: { embedded?: boolean }) {
   const { venues, fetchMe } = useAuthStore();
   const venue = venues[0];
   useEffect(() => { if (!venue) fetchMe(); }, []);
@@ -103,15 +105,14 @@ export default function Events() {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
 
-  return (
-    <Layout>
+  const page = (
       <div className="mx-auto max-w-2xl">
-        <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white">Events</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Your AI event planner finds the idea, makes the poster, and sends it to your guests.</p>
+        {!embedded && <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white">Events</h1>}
+        {!embedded && <p className="text-sm text-gray-500 dark:text-gray-400">Your AI event planner finds the idea, makes the poster, and sends it to your guests.</p>}
         {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{error}</p>}
 
         {/* The idea */}
-        <section className="mt-5 rounded-2xl bg-gray-900 p-5 text-white dark:bg-gray-800">
+        <section className={`${embedded ? "" : "mt-5 "}rounded-2xl bg-gray-900 p-5 text-white dark:bg-gray-800`}>
           {learning && !idea && (
             <>
               <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#FFD966]"><Sparkles size={15} /> AI event planner</p>
@@ -205,7 +206,7 @@ export default function Events() {
         )}
 
         {/* What happened */}
-        {events.length > 0 && (
+        {!embedded && events.length > 0 && (
           <section className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <p className="font-bold text-gray-900 dark:text-white">Your events</p>
             <div className="mt-2 divide-y divide-gray-100 dark:divide-gray-800">
@@ -224,6 +225,6 @@ export default function Events() {
           </section>
         )}
       </div>
-    </Layout>
   );
+  return embedded ? page : <Layout>{page}</Layout>;
 }

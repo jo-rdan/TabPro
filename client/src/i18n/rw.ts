@@ -188,7 +188,12 @@ export const RW: { exact: Record<string, string>; patterns?: [RegExp, string][] 
     "Team": "Abakozi",
     "Has a smartphone": "Afite telefoni igezweho",
     "Only the owner adds managers.": "Nyir'aho wenyine ni we wongeraho abayobozi.",
-    "Unpaid bills": "Fagitire zitishyuwe",
+    "Not paid yet": "Ntiyarishyurwa",
+    // Owner tabs (owner screens get translated in step 3)
+    "Promote": "Kwamamaza",
+    "Reports": "Raporo",
+    "My venue": "Restora yanjye",
+    "Every bill": "Fagitire zose",
     "Bills nobody touched for hours. Call the guest if you need to.": "Fagitire zimaze amasaha nta muntu uzikoraho. Hamagara umukiriya nibiba ngombwa.",
     "waiter": "umuseriveri",
     "manager": "umuyobozi",

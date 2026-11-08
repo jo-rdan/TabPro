@@ -1,5 +1,5 @@
 import { CLOCK_IN_ENABLED, BOOKINGS_ENABLED, EXPLORE_ENABLED, CREATORS_ENABLED, GUEST_HOME } from "./lib/features";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useThemeStore } from "./lib/theme";
@@ -10,13 +10,15 @@ import AuthCallback from "./pages/owner/AuthCallback";
 import Dashboard from "./pages/owner/Dashboard";
 import Tables from "./pages/owner/Tables";
 import Staff from "./pages/owner/Staff";
-import ActivityLog from "./pages/owner/ActivityLog";
 import InviteAccept from "./pages/owner/InviteAccept";
 import VenueSetup from "./pages/owner/VenueSetup";
 import MenuManagement from "./pages/owner/MenuManagement";
 import Subscription from "./pages/owner/Subscription";
 import Stock from "./pages/owner/Stock";
-import Campaigns, { CampaignNew, CampaignDetail } from "./pages/owner/Campaigns";
+import { CampaignNew, CampaignDetail } from "./pages/owner/Campaigns";
+import MyVenue from "./pages/owner/MyVenue";
+import Promote from "./pages/owner/Promote";
+import Reports from "./pages/owner/Reports";
 import Bookings from "./pages/owner/Bookings";
 import Explore from "./pages/guest/Explore";
 import VenuePage from "./pages/guest/VenuePage";
@@ -29,8 +31,6 @@ import CreatorJoin from "./pages/guest/CreatorJoin";
 import { CreatorHome, CreatorLink } from "./pages/guest/CreatorHome";
 import CreatorsAdmin from "./pages/owner/CreatorsAdmin";
 import PlansAdmin from "./pages/owner/PlansAdmin";
-import NightReport from "./pages/owner/NightReport";
-import Events from "./pages/owner/Events";
 import Ratings from "./pages/owner/Ratings";
 import BusyHours from "./pages/owner/BusyHours";
 import Shifts from "./pages/owner/Shifts";
@@ -59,6 +59,12 @@ import { WAITLIST_MODE } from "./lib/waitlistMode";
 function BookingOff() {
   const { slug } = useParams<{ slug: string }>();
   return <Navigate to={`/v/${slug}`} replace />;
+}
+
+// The 2am alert links to /report?night=…: keep the night.
+function OldReport() {
+  const { search } = useLocation();
+  return <Navigate to={`/reports${search}`} replace />;
 }
 
 export default function App() {
@@ -142,17 +148,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/history"
-          element={
-            <ProtectedRoute>
-              <ActivityLog />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/activity" element={<Navigate to="/history" replace />} />
-        <Route path="/report" element={<ProtectedRoute><NightReport /></ProtectedRoute>} />
-        <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+        <Route path="/venue" element={<ProtectedRoute><MyVenue /></ProtectedRoute>} />
+        <Route path="/promote" element={<ProtectedRoute><Promote /></ProtectedRoute>} />
+        <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+        {/* Old addresses (links in alerts and on phones' home screens) */}
+        <Route path="/history" element={<Navigate to="/reports?view=bills" replace />} />
+        <Route path="/activity" element={<Navigate to="/reports?view=bills" replace />} />
+        <Route path="/report" element={<OldReport />} />
+        <Route path="/events" element={<Navigate to="/promote" replace />} />
         <Route
           path="/subscription"
           element={
@@ -162,7 +165,7 @@ export default function App() {
           }
         />
         <Route path="/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
-        <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+        <Route path="/campaigns" element={<Navigate to="/promote" replace />} />
         <Route path="/campaigns/new" element={<ProtectedRoute><CampaignNew /></ProtectedRoute>} />
         <Route path="/campaigns/:campaignId" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />
         <Route path="/bookings" element={BOOKINGS_ENABLED ? <ProtectedRoute><Bookings /></ProtectedRoute> : <Navigate to="/dashboard" replace />} />

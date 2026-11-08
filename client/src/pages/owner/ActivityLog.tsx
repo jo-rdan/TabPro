@@ -37,7 +37,8 @@ interface TabEntry {
 const formatRwf = (n: number) => `${n.toLocaleString()} RWF`;
 const formatTime = (d: string) => new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
-export default function ActivityLog() {
+// embedded: the "Every bill" side of Reports.
+export default function ActivityLog({ embedded = false }: { embedded?: boolean }) {
   const { venues, fetchMe } = useAuthStore();
   const venue = venues[0];
   useEffect(() => {
@@ -81,7 +82,7 @@ export default function ActivityLog() {
   const filterLabels = [
     filters.pay === "momo" && "MoMo only",
     filters.pay === "other" && "Cash only",
-    filters.pay === "open" && "Not marked paid only",
+    filters.pay === "open" && "Not paid yet only",
   ].filter(Boolean) as string[];
 
   const paid = activity.filter((t) => t.tabStatus === "closed");
@@ -94,16 +95,16 @@ export default function ActivityLog() {
   const openTotal = open.reduce((s, t) => s + t.tabTotal, 0);
   const bills = (n: number) => `${n} ${n === 1 ? "bill" : "bills"}`;
 
-  return (
-    <Layout>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+  const page = (
+    <>
+      {!embedded && <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">History</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Every bill and payment, night by night · {venue?.name}
           </p>
         </div>
-      </div>
+      </div>}
 
       {/* Night picker: the last 7 nights, arrows, and a calendar for older ones */}
       <div className="mb-6 flex items-center gap-2">
@@ -164,7 +165,7 @@ export default function ActivityLog() {
           </div>
           <div className={`bg-white dark:bg-[#3B2149] border rounded-2xl px-4 py-3.5 ${open.length ? "border-amber-300/80 dark:border-amber-700/50" : "border-green-300/70 dark:border-green-700/50"}`}>
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              {open.length ? <Hourglass size={12} className="text-amber-600 dark:text-amber-400" /> : <CheckCircle2 size={12} className="text-green-600 dark:text-green-400" />} Not marked paid
+              {open.length ? <Hourglass size={12} className="text-amber-600 dark:text-amber-400" /> : <CheckCircle2 size={12} className="text-green-600 dark:text-green-400" />} Not paid yet
             </p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{openTotal.toLocaleString()} <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RWF</span></p>
             <p className={`text-xs mt-0.5 ${open.length ? "text-amber-700 dark:text-amber-300" : "text-green-600 dark:text-green-400"}`}>
@@ -264,13 +265,14 @@ export default function ActivityLog() {
         />
       )}
       {receiptTabId && <ReceiptModal tabId={receiptTabId} onClose={() => setReceiptTabId(null)} />}
-    </Layout>
+    </>
   );
+  return embedded ? page : <Layout>{page}</Layout>;
 }
 
 function PaidChip({ tab }: { tab: TabEntry }) {
   if (tab.tabStatus !== "closed") {
-    return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Not marked paid</span>;
+    return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Not paid yet</span>;
   }
   if (tab.payment?.method === "momo" || tab.payment?.method === "momo_direct") {
     return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Paid · MoMo</span>;

@@ -187,7 +187,12 @@ export const FR: { exact: Record<string, string>; patterns?: [RegExp, string][] 
     "Team": "Équipe",
     "Has a smartphone": "A un smartphone",
     "Only the owner adds managers.": "Seul le propriétaire ajoute des responsables.",
-    "Unpaid bills": "Additions impayées",
+    "Not paid yet": "Pas encore payé",
+    // Owner tabs (owner screens get translated in step 3)
+    "Promote": "Promouvoir",
+    "Reports": "Rapports",
+    "My venue": "Mon établissement",
+    "Every bill": "Toutes les additions",
     "Bills nobody touched for hours. Call the guest if you need to.": "Additions sans activité depuis des heures. Appelez le client si besoin.",
     "waiter": "serveur",
     "manager": "responsable",

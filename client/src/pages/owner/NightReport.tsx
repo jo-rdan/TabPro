@@ -52,7 +52,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export default function NightReport() {
+// embedded: the "Night report" side of Reports.
+export default function NightReport({ embedded = false }: { embedded?: boolean }) {
   const { venues, fetchMe } = useAuthStore();
   const venue = venues[0];
   useEffect(() => { if (!venue) fetchMe(); }, []);
@@ -74,12 +75,11 @@ export default function NightReport() {
   const go = (days: number) => report && setParams({ night: shift(report.night, days) });
   const paidTotal = report ? report.paid.momoRwf + report.paid.cashRwf + report.paid.otherRwf : 0;
 
-  return (
-    <Layout>
+  const page = (
       <div className="mx-auto max-w-2xl print:max-w-none">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white print:text-black">Night report</h1>
+            <h1 className={`font-display text-3xl font-bold text-gray-900 dark:text-white print:text-black ${embedded ? "hidden print:block" : ""}`}>Night report</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-700">
               {report ? `${report.venueName} · ${longDay(report.night)} (06:00 to 06:00)` : venue?.name}
             </p>
@@ -116,14 +116,14 @@ export default function NightReport() {
                   <Row label="💵 Your cash drawer should hold" value={rwf(report.paid.cashRwf)} />
                   {report.paid.otherRwf > 0 && <Row label="Closed without saying how" value={rwf(report.paid.otherRwf)} />}
                   <Row label="Marked paid by staff" value={rwf(paidTotal)} strong />
-                  <Row label={`⚠️ Not marked paid (${report.unpaidBills.length})`} value={rwf(report.unpaidRwf)} strong />
+                  <Row label={`⚠️ Not paid yet (${report.unpaidBills.length})`} value={rwf(report.unpaidRwf)} strong />
                 </Section>
                 <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200 print:hidden">
                   Count your cash and open your MoMo. If they come up short of these numbers, something went wrong tonight, and now you know how much.
                 </p>
 
                 {report.unpaidBills.length > 0 && (
-                  <Section title="Unpaid bills">
+                  <Section title="Not paid yet">
                     {report.unpaidBills.map((b, i) => (
                       <Row key={i} label={`${b.tableLabel} · opened ${new Date(b.openedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Kigali" })}`} value={rwf(b.totalRwf)} />
                     ))}
@@ -155,6 +155,6 @@ export default function NightReport() {
           </div>
         )}
       </div>
-    </Layout>
   );
+  return embedded ? page : <Layout>{page}</Layout>;
 }

@@ -174,7 +174,7 @@ export default function NightPicker({
               ["all", "All bills", Layers],
               ["momo", "MoMo", Smartphone],
               ["other", "Cash", Banknote],
-              ["open", "Not marked paid", Hourglass],
+              ["open", "Not paid yet", Hourglass],
             ] as const).map(([value, label, Icon]) => (
               <button
                 key={value}
