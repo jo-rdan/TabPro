@@ -267,6 +267,13 @@
       "when": 1794095161895,
       "tag": "0037_skuzi_manager_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794135045575,
+      "tag": "0038_skuzi_push_lang",
+      "breakpoints": true
     }
   ]
 }

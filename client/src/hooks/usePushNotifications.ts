@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../lib/api";
+import { syncPushLang } from "../lib/i18n";
 
 interface PushSubscribeOptions {
   venueId: string;
@@ -76,6 +77,7 @@ export function usePushNotifications() {
         },
       }, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
 
+      syncPushLang();
       return true;
     } catch (err) {
       console.error("[Push] Subscription failed:", err);
@@ -104,6 +106,7 @@ export function usePushNotifications() {
         tabId,
         subscription: { endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh, auth: sub.keys?.auth } },
       });
+      syncPushLang();
       return true;
     } catch (err) {
       console.error("[Push] Guest subscription failed:", err);

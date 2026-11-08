@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { RW } from "../i18n/rw";
 import { FR } from "../i18n/fr";
+import { apiFetch } from "./apiFetch";
 
 // Guests and staff read Skuzi in Kinyarwanda, English or French, each on their
 // own phone. The screens are written in English; <Translated> swaps every
@@ -44,6 +45,20 @@ export function setLang(lang: Lang) {
   try { localStorage.setItem(KEY, lang); } catch { /* still applied for this visit */ }
   document.documentElement.lang = lang === "rw" ? "rw" : lang;
   listeners.forEach((l) => l());
+  syncPushLang();
+}
+
+/** This phone's alerts follow its language: tell the server (if alerts are on). */
+export async function syncPushLang() {
+  try {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = await reg?.pushManager.getSubscription();
+    if (!sub) return;
+    await apiFetch("/push/lang", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint, lang: current }) });
+  } catch {
+    /* alerts keep their last language */
+  }
 }
 export function useLang(): Lang {
   return useSyncExternalStore(

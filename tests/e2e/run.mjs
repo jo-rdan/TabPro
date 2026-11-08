@@ -615,6 +615,18 @@ pushHits.length = 0;
 await call('POST', '/orders', { tabId: r.json?.data?.tab?.id, items: [{ menuItemId: item('Primus').id, quantity: 1 }] });
 await sleep(800);
 check('Waiters with their own phone are not covered by the manager', (pushHits.includes('/eric') || pushHits.includes('/alice')) && !pushHits.includes('/manager'), pushHits.join(' '));
+{ // Alerts in each phone's language (RW · EN · FR switch)
+  const ericDevice = (await q1(`select endpoint from push_subscriptions where endpoint like '%/eric'`))?.endpoint;
+  r = await call('POST', '/push/lang', { endpoint: ericDevice, lang: 'rw' });
+  check('A phone switched to Kinyarwanda: its alerts follow', r.status === 200 && (await q1('select lang from push_subscriptions where endpoint=$1', [ericDevice]))?.lang === 'rw', JSON.stringify(r.json));
+  r = await call('POST', '/push/lang', { endpoint: ericDevice, lang: 'de' });
+  check('…only Kinyarwanda, English or French', r.status === 400);
+  const { translatePush } = await import(new URL('../../server/dist/lib/pushI18n.js', import.meta.url).href);
+  check('Waiter alert in Kinyarwanda', translatePush('👋 Table 6 needs you', 'rw') === '👋 Table 6 irakwita' && translatePush('A guest would love a hand 👋', 'rw') === 'Umukiriya akeneye ubufasha 👋');
+  check('…and in French, with the covering note', translatePush("A guest would love a hand 👋 (Grace's table)", 'fr') === "Un client a besoin d'aide 👋 (table de Grace)", translatePush("A guest would love a hand 👋 (Grace's table)", 'fr'));
+  check('Unknown alerts stay English', translatePush('Something new', 'rw') === 'Something new');
+  await call('POST', '/push/lang', { endpoint: ericDevice, lang: 'en' });
+}
 pushHits.length = 0;
 r = await call('POST', `/tabs/${headsTab}/momo-opening`);
 await sleep(800);

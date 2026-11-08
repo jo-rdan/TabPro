@@ -665,6 +665,8 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   endpoint: text("endpoint").notNull(),
   p256dh: text("p256dh").notNull(),
   auth: text("auth").notNull(),
+  // The language chosen on that phone ("en", "rw", "fr"): alerts go out in it.
+  lang: text("lang").default("en").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

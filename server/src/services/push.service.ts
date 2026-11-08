@@ -3,6 +3,7 @@ import { db } from "../lib/db";
 import { pushSubscriptions, tableAssignments, tabs, qrStickers, owners, venues, staff } from "../models/schema";
 import { and, eq, inArray, isNull, isNotNull } from "drizzle-orm";
 import * as dotenv from "dotenv";
+import { pushLang, translatePush } from "../lib/pushI18n";
 
 dotenv.config();
 
@@ -63,15 +64,18 @@ async function send(subs: Sub[], title: string, body: string, url: string, data?
   if (!pushEnabled() || subs.length === 0) return;
   // The same device can hold an owner and a waiter row: notify it once.
   const unique = [...new Map(subs.map((s) => [s.endpoint, s])).values()];
-  const payload = JSON.stringify({ title, body, data: { ...data, url } });
 
   const results = await Promise.allSettled(
-    unique.map((sub) =>
+    unique.map((sub) => {
+      // In that phone's language. Owner alerts stay English for now, like the
+      // owner screens (a row with no staff, tab or guest is the owner's).
+      const lang = sub.staffId || sub.tabId || sub.customerId ? pushLang(sub.lang) : "en";
+      const payload = JSON.stringify({ title: translatePush(title, lang), body: translatePush(body, lang), data: { ...data, url } });
       // High urgency: a locked Android phone holds "normal" pushes until it wakes
       // up, which made order and waiter alerts arrive only when the phone was
       // opened. TTL: an alert older than 6 hours is no longer useful.
-      webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload, { urgency: "high", TTL: 6 * 3600 }),
-    ),
+      return webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload, { urgency: "high", TTL: 6 * 3600 });
+    }),
   );
 
   for (let i = 0; i < results.length; i++) {
