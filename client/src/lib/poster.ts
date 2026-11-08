@@ -19,7 +19,7 @@ const W = 1080;
 const H = 1350;
 
 const FONTS_URL =
-  "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Anton&family=Fredoka:wght@500;700&family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Figtree:wght@500;700;800&display=swap";
+  "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Anton&family=Fredoka:wght@500;700&family=Poppins:wght@800&family=Figtree:wght@500;700;800&display=swap";
 
 async function loadFonts() {
   if (!document.querySelector(`link[href="${FONTS_URL}"]`)) {
@@ -29,7 +29,7 @@ async function loadFonts() {
     document.head.appendChild(link);
   }
   await Promise.all(
-    ['700 80px "Playfair Display"', 'italic 500 40px "Playfair Display"', '400 80px Anton', '700 80px Fredoka', '500 40px Fredoka', '800 80px "Bricolage Grotesque"', '500 40px Figtree', '800 40px Figtree'].map((f) =>
+    ['700 80px "Playfair Display"', 'italic 500 40px "Playfair Display"', '400 80px Anton', '700 80px Fredoka', '500 40px Fredoka', '800 80px Poppins', '500 40px Figtree', '800 40px Figtree'].map((f) =>
       document.fonts.load(f).catch(() => null),
     ),
   );
@@ -228,7 +228,7 @@ export async function drawPoster(canvas: HTMLCanvasElement, d: PosterData) {
     logoBadge(ctx, logo, initials, W - 130, 130, 130, accent, "#140A1F", accent);
     ctx.textAlign = "left"; ctx.fillStyle = "#FFFFFF";
     ctx.shadowColor = accent; ctx.shadowBlur = 40;
-    ctx.font = '800 128px "Bricolage Grotesque", sans-serif';
+    ctx.font = '800 128px Poppins, sans-serif';
     let y = lines(ctx, d.name, 70, 640, 940, 128, 3);
     ctx.shadowBlur = 0;
     ctx.fillStyle = accent; ctx.font = '800 48px Figtree, sans-serif';
@@ -246,7 +246,7 @@ export async function drawPoster(canvas: HTMLCanvasElement, d: PosterData) {
     ctx.restore();
     logoBadge(ctx, logo, initials, 170, 720, 150, "#F6F1EA", "#FFFFFF", accent);
     ctx.textAlign = "left"; ctx.fillStyle = "#231A2C";
-    ctx.font = '800 100px "Bricolage Grotesque", sans-serif';
+    ctx.font = '800 100px Poppins, sans-serif';
     let y = lines(ctx, d.name, 70, 900, 940, 104, 2);
     ctx.fillStyle = accent; ctx.font = '700 46px Figtree, sans-serif';
     y = lines(ctx, d.offer, 70, y + 26, 940, 58, 3);

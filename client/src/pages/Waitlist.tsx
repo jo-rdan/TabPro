@@ -25,7 +25,7 @@ export default function Waitlist() {
     document.title = "Skuzi · Owners' waitlist";
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap";
+    link.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Figtree:wght@400;500;600;700;800&display=swap";
     document.head.appendChild(link);
     return () => { link.remove(); };
   }, []);
@@ -60,13 +60,13 @@ export default function Waitlist() {
       <div className="relative mx-auto max-w-md px-5 pb-16 pt-10">
         <div className="flex items-center gap-2">
           {HAND}
-          <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", letterSpacing: "-0.045em" }} className="text-[28px] font-bold leading-none">skuzi</span>
+          <span style={{ fontFamily: "Poppins, sans-serif", letterSpacing: "-0.045em" }} className="text-[28px] font-bold leading-none">skuzi</span>
         </div>
 
         {position === null ? (
           <>
             <p className="mt-10 text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#F2B33A]">For restaurant &amp; bar owners</p>
-            <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", letterSpacing: "-0.035em" }} className="mt-3 text-[40px] font-extrabold leading-[1.02]">
+            <h1 style={{ fontFamily: "Poppins, sans-serif", letterSpacing: "-0.035em" }} className="mt-3 text-[40px] font-extrabold leading-[1.02]">
               Be one of the first venues on <span className="text-[#F2B33A]">Skuzi.</span>
             </h1>
             <p className="mt-4 text-[16px] leading-relaxed text-[#D3CADC]">Guests order, pay, and enjoy from their table, and their waiter is just one tap away. You see every table and every franc, live.</p>
@@ -77,7 +77,7 @@ export default function Waitlist() {
             </ul>
 
             <form onSubmit={submit} className="mt-8 rounded-[28px] bg-[#FDFCFE] p-5 text-[#231A2C] shadow-2xl sm:p-6">
-              <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-[20px] font-bold">Join the waitlist</p>
+              <p style={{ fontFamily: "Poppins, sans-serif" }} className="text-[20px] font-bold">Join the waitlist</p>
               <p className="mt-1 text-[13.5px] text-[#6F6379]">We'll WhatsApp you before launch. No commitment.</p>
               <div className="mt-5 space-y-3">
                 <input required autoComplete="name" placeholder="Your name" value={form.name} onChange={set("name")} className={input} />
@@ -110,7 +110,7 @@ export default function Waitlist() {
         ) : (
           <div className="mt-16 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#5E7A55] text-[30px] font-bold">✓</div>
-            <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", letterSpacing: "-0.035em" }} className="mt-6 text-[36px] font-extrabold leading-tight">
+            <h1 style={{ fontFamily: "Poppins, sans-serif", letterSpacing: "-0.035em" }} className="mt-6 text-[36px] font-extrabold leading-tight">
               You're on the list{form.name ? `, ${form.name.split(" ")[0]}` : ""}!
             </h1>
             {position > 0 && <p className="mt-3 text-[18px] font-bold text-[#F2B33A]">Owner #{position} on the Skuzi waitlist</p>}
