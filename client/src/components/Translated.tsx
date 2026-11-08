@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { translate, useLang } from "../lib/i18n";
+import { syncPushLang, translate, useLang } from "../lib/i18n";
 
 // Shows its children in the chosen language: every text node and the
 // placeholder / aria-label / title attributes under it go through translate()
@@ -59,6 +59,7 @@ export default function Translated({ children }: { children: ReactNode }) {
     };
 
     walk(el);
+    syncPushLang();
     const obs = new MutationObserver((records) => {
       for (const r of records) {
         if (r.type === "characterData") doText(r.target as Text);

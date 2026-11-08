@@ -78,6 +78,8 @@ export async function getDeviceSubscription(): Promise<PushSubscriptionJSON | nu
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey) as unknown as ArrayBuffer,
     }));
+    // Once the server has saved it, its alerts follow this phone's language.
+    setTimeout(() => { import("./i18n").then((m) => m.syncPushLang()).catch(() => {}); }, 4000);
     return sub.toJSON();
   } catch {
     return null;
