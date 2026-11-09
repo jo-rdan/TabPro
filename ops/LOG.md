@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-11-09 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200. Nightly/main Tests: the run after #104 failed (founding-price test), #105 fixed it and the latest main run is green. PR #91 was merged 2026-11-07. One open PR: #106 "Staff guide in invites and on staff screens" (Jordan's, its Tests run was still in progress).
+- Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. Did not merge #106 (not bot work). No code changed, so no e2e run.
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach). Check that prod has migration 0035. ops/README.md still describes the old 8% model.
+
 ## 2026-11-07 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-07). One open PR: #91 "Stock: any drink, any pack" (Jordan's, its Tests runs passed; description says migration 0035 must run on prod BEFORE merging).
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. Did not merge #91: it is not bot work and needs a prod migration first. No code changed, so no e2e run.
