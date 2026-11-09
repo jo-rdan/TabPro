@@ -1,4 +1,5 @@
 import { useState } from "react";
+import GuideButton from "../../components/GuideButton";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BellRing, LogOut } from "lucide-react";
 import MomoToConfirm, { MomoSummary } from "../../components/MomoToConfirm";
@@ -53,6 +54,7 @@ export default function Cashier() {
         </div>
         <div className="flex items-center gap-2">
         <LanguageSwitch onColor />
+        <GuideButton role="cashier" onColor />
         <button onClick={signOut} aria-label="Sign out" className="rounded-xl bg-white/10 p-2.5 text-white/80">
           <LogOut size={16} />
         </button>

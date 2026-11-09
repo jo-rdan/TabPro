@@ -203,7 +203,7 @@ export async function createStaff(
   const smsResult = await sendInviteSms(staffMember.phone, staffMember.name, inviteUrl);
 
   // Always provide a WhatsApp deep link for the owner to tap
-  const whatsappLink = buildWhatsAppLink(staffMember.phone, staffMember.name, inviteUrl);
+  const whatsappLink = buildWhatsAppLink(staffMember.phone, staffMember.name, inviteUrl, staffMember.role);
 
   return { staff: staffMember, invite, token, smsSent: smsResult.sent, whatsappLink };
 }
@@ -220,7 +220,7 @@ export async function resendInvite(staffId: string) {
 
   const inviteUrl = `${process.env.CLIENT_URL}/invite/${latestInvite.token}`;
   const smsResult = await sendInviteSms(staffMember.phone, staffMember.name, inviteUrl);
-  const whatsappLink = buildWhatsAppLink(staffMember.phone, staffMember.name, inviteUrl);
+  const whatsappLink = buildWhatsAppLink(staffMember.phone, staffMember.name, inviteUrl, staffMember.role);
 
   return { smsSent: smsResult.sent, whatsappLink, token: latestInvite.token };
 }
