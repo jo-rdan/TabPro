@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
-import type { PlanStatus } from "@tabpro/shared";
+import { PLANS, planPrice, type PlanStatus } from "@tabpro/shared";
 
 // The package banner (trial ending, payment due) and the wall that goes up
 // when it's unpaid 3+ days. Only the Plan page stays open behind the wall.
@@ -11,7 +11,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday
 export function PlanBanner({ status }: { status?: PlanStatus }) {
   if (!status) return null;
   const soon = (status.state === "trial" || status.state === "paid") && status.daysLeft <= 3;
-  if (!soon && status.state !== "grace") return null;
+  if (!soon && status.state !== "grace") return status.founding ? <FoundingStrip /> : null;
   const text =
     status.state === "grace"
       ? `Your package is unpaid. Pay ${rwf(status.priceRwf)} by ${day(status.locksAt)} to keep your dashboard.`
@@ -48,5 +48,16 @@ export function PlanWall({ status, venueName }: { status: PlanStatus; venueName?
         Pay {rwf(status.priceRwf)} with MoMo
       </Link>
     </div>
+  );
+}
+
+/** One of the first 15 venues: a quiet gold reminder of their deal. */
+export function FoundingStrip() {
+  return (
+    <Link to="/subscription" className="mb-4 flex items-center gap-2 rounded-2xl bg-amber-100 px-4 py-2.5 text-sm font-semibold text-amber-900 dark:bg-amber-900/30 dark:text-amber-200">
+      <span>
+        ⭐ Founding venue: {PLANS.elite.name} for {rwf(planPrice("elite", true).priceRwf)} a month instead of {rwf(PLANS.elite.priceRwf)}, for as long as you stay.
+      </span>
+    </Link>
   );
 }

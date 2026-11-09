@@ -1435,7 +1435,7 @@ console.log('\n── Packages & direct MoMo');
   check('Another owner cannot pay or start payments for my venue', r.status === 403, `status ${r.status}`);
   r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788 123 456' }, ownerTok);
   const pdep = r.json?.data?.depositId;
-  check('Owner pays Max (founding venue): their phone is asked for the Pro price, 75,000', r.status === 200 && pawa.state.deposits.get(pdep)?.amount === '75000' && pawa.state.deposits.get(pdep)?.payer?.accountDetails?.phoneNumber === '250788123456', r.json?.error);
+  check('Owner pays Max (founding venue): their phone is asked for the Pro price, 60,000', r.status === 200 && pawa.state.deposits.get(pdep)?.amount === '60000' && pawa.state.deposits.get(pdep)?.payer?.accountDetails?.phoneNumber === '250788123456', r.json?.error);
   r = await call('GET', `/plans/${venueId}/pay/${pdep}`, null, ownerTok);
   check('…nothing changes until MoMo confirms', r.json?.data?.status === 'pending' && (await q1('select paid_until from venues where id=$1', [venueId])).paid_until === null);
   r = await call('GET', `/plans/${venueId}/pay/${pdep}`, null, rivalTokEarly);
@@ -1464,23 +1464,30 @@ console.log('\n── Packages & direct MoMo');
   r = await call('GET', `/plans/${venueId}/pay/${declined}`, null, ownerTok);
   check('A declined payment says so and changes nothing', r.json?.data?.status === 'failed' && !!r.json?.data?.error && !/waiter/.test(r.json?.data?.error) && Math.abs((new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z') - Date.now()) / 864e5 - paidDays) < 0.01, r.json?.data?.error);
 
-  // A year at once: Go 5%, Pro 10%, Max 20% off
+  // 6 months at once, or a year for 10 months' price
   r = await call('POST', `/plans/${venueId}/pay`, { plan: 'basic', phone: '0788123456', period: 'year' }, ownerTok);
-  check('Go yearly: the phone is asked for 513,000 (5% off)', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '513000', r.json?.error);
+  check('Go yearly: the phone is asked for 350,000', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '350000', r.json?.error);
   pawa.state.deposits.get(r.json?.data?.depositId).status = 'FAILED';
   await call('GET', `/plans/${venueId}/pay/${r.json?.data?.depositId}`, null, ownerTok);
   r = await call('POST', `/plans/${venueId}/pay`, { plan: 'pro', phone: '0788123456', period: 'year' }, ownerTok);
-  check('Pro yearly: the phone is asked for 810,000 (10% off)', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '810000', r.json?.error);
+  check('Pro yearly: the phone is asked for 600,000', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '600000', r.json?.error);
   pawa.state.deposits.get(r.json?.data?.depositId).status = 'FAILED';
   await call('GET', `/plans/${venueId}/pay/${r.json?.data?.depositId}`, null, ownerTok);
   const beforeYear = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
   r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788123456', period: 'year' }, ownerTok);
   const ydep = r.json?.data?.depositId;
-  check('Max yearly (founding venue): the phone is asked for the Pro year, 810,000', r.status === 200 && pawa.state.deposits.get(ydep)?.amount === '810000', r.json?.error);
+  check('Max yearly (founding venue): the phone is asked for the Pro year, 600,000', r.status === 200 && pawa.state.deposits.get(ydep)?.amount === '600000', r.json?.error);
   pawa.state.deposits.get(ydep).status = 'COMPLETED';
   await call('GET', `/plans/${venueId}/pay/${ydep}`, null, ownerTok);
   const afterYear = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
   check('…and it adds a full year', Math.abs((afterYear - beforeYear) / 864e5 - 365) < 0.01, `${((afterYear - beforeYear) / 864e5).toFixed(2)} days`);
+  r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788123456', period: 'half' }, ownerTok);
+  const hdep = r.json?.data?.depositId;
+  check('Max for 6 months (founding venue): the phone is asked for 325,000', r.status === 200 && pawa.state.deposits.get(hdep)?.amount === '325000', r.json?.error);
+  pawa.state.deposits.get(hdep).status = 'COMPLETED';
+  await call('GET', `/plans/${venueId}/pay/${hdep}`, null, ownerTok);
+  const afterHalf = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
+  check('…and it adds 6 months', Math.abs((afterHalf - afterYear) / 864e5 - 182) < 0.01, `${((afterHalf - afterYear) / 864e5).toFixed(2)} days`);
 
   // Never paid: the wall, then guest ordering pauses
   await pg.query("update venues set trial_ends_at = now() - interval '40 days', paid_until = now() - interval '5 days' where id=$1", [venueId]);
