@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { WavingHand } from "./Logo";
 import ThemeSwitch, { ThemeCycleButton } from "./ThemeSwitch";
+import LanguageSwitch from "./LanguageSwitch";
+import Translated from "./Translated";
 import TermsPrompt from "./TermsPrompt";
 import { PlanBanner, PlanWall } from "./PlanWall";
 import VenueLogo from "./VenueLogo";
@@ -108,6 +110,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
   };
 
   return (
+    <Translated>
     <div className="min-h-screen bg-gray-50 dark:bg-[#2B1838] text-gray-900 dark:text-gray-100 print:!bg-white">
       {/* ── Side nav (desktop md+) ─────────────────────────────────────────── */}
       <aside
@@ -222,6 +225,14 @@ export default function Layout({ children, wide = false }: LayoutProps) {
             </div>
           )}
 
+          {/* Language: RW · EN · FR */}
+          {!collapsed && (
+            <div className="flex items-center justify-between gap-2 pl-3 pr-1 py-1.5">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Language</span>
+              <LanguageSwitch />
+            </div>
+          )}
+
           {/* Logout */}
           <button
             onClick={logout}
@@ -264,6 +275,7 @@ export default function Layout({ children, wide = false }: LayoutProps) {
           </div>
         )}
         <div className="flex items-center gap-1">
+          <LanguageSwitch />
           <ThemeCycleButton />
           <button
             onClick={logout}
@@ -360,5 +372,6 @@ export default function Layout({ children, wide = false }: LayoutProps) {
       )}
 
     </div>
+    </Translated>
   );
 }
