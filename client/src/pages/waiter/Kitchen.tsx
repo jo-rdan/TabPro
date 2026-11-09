@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import GuideButton from "../../components/GuideButton";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { LogOut, Volume2, VolumeX } from "lucide-react";
 import type { WsEvent } from "@tabpro/shared";
@@ -154,6 +155,7 @@ export default function Kitchen() {
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitch onColor />
+          <GuideButton role="kitchen" onColor />
           <button
             onClick={() => {
               if (!sound) beep();

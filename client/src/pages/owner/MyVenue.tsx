@@ -91,6 +91,10 @@ export default function MyVenue() {
             </li>
           ))}
         </ul>
+
+        <Link to="/guide/owner" className="mt-4 flex min-h-[48px] items-center justify-center rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 dark:border-gray-800 dark:bg-[#3B2149] dark:text-gray-200">
+          📖 How to use Skuzi
+        </Link>
       </div>
     </Layout>
   );

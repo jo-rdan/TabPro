@@ -1,4 +1,5 @@
 import { StockPanel } from "../owner/Stock";
+import GuideButton from "../../components/GuideButton";
 import { ThemeCycleButton } from "../../components/ThemeSwitch";
 import LanguageSwitch from "../../components/LanguageSwitch";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -1121,6 +1122,7 @@ export default function WaiterOrders() {
             <LogOut size={17} />
           </button>
           <LanguageSwitch />
+          <GuideButton role="waiter" />
           <ThemeCycleButton />
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
         </div>

@@ -69,11 +69,14 @@ export async function sendInviteSms(
  * Returns a wa.me deep-link the owner can tap to open WhatsApp
  * pre-filled with the invite message for the staff member.
  */
-export function buildWhatsAppLink(phone: string, staffName: string, inviteUrl: string): string {
+export function buildWhatsAppLink(phone: string, staffName: string, inviteUrl: string, role = 'waiter'): string {
   const to = formatRwandaPhone(phone).replace('+', '');
+  // The invite, plus their own page of the guide (in Kinyarwanda).
+  const guideUrl = `${process.env.CLIENT_URL}/guide/${role}`;
   const text = encodeURIComponent(
     `Hi ${staffName}! You've been invited to Skuzi. ` +
-    `Tap this link to set up your waiter account: ${inviteUrl}`
+    `Tap this link to set up your account: ${inviteUrl}\n\n` +
+    `📖 Uko Skuzi ikoreshwa (how to use it): ${guideUrl}`
   );
   return `https://wa.me/${to}?text=${text}`;
 }

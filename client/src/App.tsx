@@ -1,4 +1,5 @@
 import { CLOCK_IN_ENABLED, BOOKINGS_ENABLED, EXPLORE_ENABLED, CREATORS_ENABLED, GUEST_HOME } from "./lib/features";
+import Guide from "./pages/Guide";
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -178,6 +179,7 @@ export default function App() {
         <Route path="/me" element={<Me />} />
         <Route path="/my-bookings" element={BOOKINGS_ENABLED ? <MyBookings /> : <Navigate to={GUEST_HOME} replace />} />
         <Route path="/home-screen/:code" element={<HomeScreenGuide />} />
+        <Route path="/guide/:role" element={<Guide />} />
         <Route path="/join/:code" element={<LangCorner><Join /></LangCorner>} />
 
         {/* Skuzi Creators */}

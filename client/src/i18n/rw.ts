@@ -453,8 +453,12 @@ export const RW: { exact: Record<string, string>; patterns?: [RegExp, string | (
     "items ·": "ibintu ·",
     "tables ·": "ameza ·",
     "team members ·": "abakozi ·",
+    "How to use Skuzi": "Uko Skuzi ikoreshwa",
+    "📖 How to use Skuzi": "📖 Uko Skuzi ikoreshwa",
+    "Incorrect PIN. Try again.": "PIN siyo. Ongera ugerageze.",
   },
   patterns: [
+    [/^waiting · reminder (\d) of 3$/, "birategereje · ubutumwa bwa $1 kuri 3"],
     [/^0s ago$/, "nonaha"],
     [/^(\d+)s ago$/, "hashize amasegonda $1"],
     [/^(\d+)m ago$/, "hashize iminota $1"],

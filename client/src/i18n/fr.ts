@@ -452,8 +452,12 @@ export const FR: { exact: Record<string, string>; patterns?: [RegExp, string | (
     "items ·": "articles ·",
     "tables ·": "tables ·",
     "team members ·": "membres ·",
+    "How to use Skuzi": "Comment utiliser Skuzi",
+    "📖 How to use Skuzi": "📖 Comment utiliser Skuzi",
+    "Incorrect PIN. Try again.": "PIN incorrect. Réessayez.",
   },
   patterns: [
+    [/^waiting · reminder (\d) of 3$/, "en attente · rappel $1 sur 3"],
     [/^0s ago$/, "à l'instant"],
     [/^(\d+)s ago$/, "il y a $1 s"],
     [/^(\d+)m ago$/, "il y a $1 min"],
