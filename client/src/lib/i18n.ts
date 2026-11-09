@@ -13,7 +13,7 @@ export type Lang = "rw" | "en" | "fr";
 export const LANGS: Lang[] = ["rw", "en", "fr"];
 const KEY = "skuzi_lang";
 
-type Dict = { exact: Record<string, string>; patterns?: [RegExp, string][] };
+type Dict = { exact: Record<string, string>; patterns?: [RegExp, string | ((...a: string[]) => string)][] };
 const DICTS: Record<Exclude<Lang, "en">, Dict> = { rw: RW, fr: FR };
 
 function detect(): Lang {
@@ -79,7 +79,7 @@ export function translate(text: string, lang: Lang = current): string {
   const hit = dict.exact[core];
   if (hit !== undefined) return lead + hit + trail;
   for (const [re, out] of dict.patterns ?? []) {
-    if (re.test(core)) return lead + core.replace(re, out) + trail;
+    if (re.test(core)) return lead + core.replace(re, out as string) + trail;
   }
   if (import.meta.env.DEV) missing.add(core);
   return text;
