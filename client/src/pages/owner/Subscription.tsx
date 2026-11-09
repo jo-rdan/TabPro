@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Check, Lock, Smartphone, Loader2 } from "lucide-react";
-import { PLANS, PLAN_FOR, type PlanFeature, type PlanId, type PlanStatus } from "@tabpro/shared";
+import { PLANS, PLAN_FOR, planPrice, type PlanFeature, type PlanId, type PlanStatus } from "@tabpro/shared";
 import Layout from "../../components/Layout";
 import api from "../../lib/api";
 import { useAuthStore } from "../../lib/auth";
@@ -68,13 +68,13 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
 
 // Pays one month of a package from the owner's MoMo: their phone asks for the
 // PIN, then this checks every few seconds until MoMo confirms.
-function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onPaid: (s: Status) => void }) {
+function PayCard({ venueId, plan, founding, onPaid }: { venueId: string; plan: PlanId; founding: boolean; onPaid: (s: Status) => void }) {
   const [phone, setPhone] = useState(() => localStorage.getItem("skuzi_pay_phone") ?? "");
   const [step, setStep] = useState<"form" | "waiting" | "done">("form");
   // Every package can be paid for a year at once, cheaper the bigger the package.
-  const yearlyRwf = PLANS[plan].yearlyRwf;
+  const { priceRwf: monthRwf, yearlyRwf } = planPrice(plan, founding);
   const [period, setPeriod] = useState<"month" | "year">("month");
-  const price = period === "year" && yearlyRwf ? yearlyRwf : PLANS[plan].priceRwf;
+  const price = period === "year" && yearlyRwf ? yearlyRwf : monthRwf;
   const [error, setError] = useState("");
   const timer = useRef<number>();
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -120,7 +120,7 @@ function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onP
           {(["month", "year"] as const).map((p) => (
             <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p}
               className={`rounded-lg px-3 py-1.5 text-xs font-extrabold ${period === p ? "bg-white text-gray-900" : "text-white/80"}`}>
-              {p === "month" ? "Monthly" : `Yearly · save ${(PLANS[plan].priceRwf * 12 - yearlyRwf).toLocaleString("en-US")}`}
+              {p === "month" ? "Monthly" : `Yearly · save ${(monthRwf * 12 - yearlyRwf).toLocaleString("en-US")}`}
             </button>
           ))}
         </div>
@@ -134,7 +134,7 @@ function PayCard({ venueId, plan, onPaid }: { venueId: string; plan: PlanId; onP
         </button>
       </div>
       {error && <p role="alert" className="mt-2 text-sm font-semibold text-red-200">{error}</p>}
-      <p className="mt-2 text-xs text-white/60">{period === "year" ? `A full year of ${PLANS[plan].name}, ${yearlyRwf ? Math.round((1 - yearlyRwf / (PLANS[plan].priceRwf * 12)) * 100) : 0}% off.` : `One month of ${PLANS[plan].name}.`} Paying early never loses days.</p>
+      <p className="mt-2 text-xs text-white/60">{period === "year" ? `A full year of ${PLANS[plan].name}, ${yearlyRwf ? Math.round((1 - yearlyRwf / (monthRwf * 12)) * 100) : 0}% off.` : `One month of ${PLANS[plan].name}.`} Paying early never loses days.</p>
     </div>
   );
 }
@@ -186,7 +186,7 @@ export default function Subscription() {
                 {status.state === "grace" && `Unpaid. Pay by ${day(status.locksAt)} to keep your dashboard.`}
                 {status.state === "locked" && (status.orderingPaused ? "Unpaid: your dashboard is locked and guests can't order from their phones." : `Unpaid: your dashboard is locked. Guests stop ordering from their phones on ${day(status.pausesAt)}.`)}
               </p>
-              {venue && <PayCard key={payFor ?? status.plan} venueId={venue.id} plan={payFor ?? status.plan} onPaid={paid} />}
+              {venue && <PayCard key={payFor ?? status.plan} venueId={venue.id} plan={payFor ?? status.plan} founding={status.founding} onPaid={paid} />}
             </div>
 
             {venue && <div className="mt-4"><MomoCodeCard venueId={venue.id} status={status} onSaved={setStatus} /></div>}
@@ -204,7 +204,13 @@ export default function Subscription() {
                       <p className="font-display text-xl font-bold text-gray-900 dark:text-white">{p.name}</p>
                       {current && <span className="rounded-full bg-brand-500 px-2.5 py-0.5 text-[11px] font-extrabold uppercase text-white">Yours</span>}
                     </div>
-                    <p className="mt-1 font-display text-2xl font-bold text-gray-900 dark:text-white">{p.priceRwf.toLocaleString("en-US")} <span className="text-sm font-semibold text-gray-500">RWF / month</span></p>
+                    {status.founding && id === "elite" && (
+                      <p className="mt-1 w-fit rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">⭐ Founding venue · Pro price</p>
+                    )}
+                    <p className="mt-1 font-display text-2xl font-bold text-gray-900 dark:text-white">
+                      {planPrice(id, status.founding).priceRwf.toLocaleString("en-US")} <span className="text-sm font-semibold text-gray-500">RWF / month</span>
+                      {status.founding && id === "elite" && <span className="ml-2 text-sm font-semibold text-gray-400 line-through">{p.priceRwf.toLocaleString("en-US")}</span>}
+                    </p>
                     <p className="text-xs font-bold text-green-700 dark:text-green-400">{p.trialDays === 14 ? "2 weeks free" : "1 month free"}</p>
                     <ul className="mt-3 flex-1 space-y-2">
                       {INCLUDED[id].map((f) => (

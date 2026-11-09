@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../lib/db';
 import { venues, owners, momoPayments } from '../models/schema';
-import { and, desc, eq, lt } from 'drizzle-orm';
-import { PLANS, planAllows, type PlanFeature, type PlanId } from '@tabpro/shared';
+import { and, asc, desc, eq, gte, lt } from 'drizzle-orm';
+import { FOUNDING_SEATS, PLANS, planAllows, planPrice, type PlanFeature, type PlanId } from '@tabpro/shared';
 import {
   isPawapayConfigured, predictProvider, initiateDeposit, getDeposit, failureMessage, PaymentRefusedError, PawapayError,
 } from '../lib/pawapay';
@@ -30,6 +30,19 @@ export type PlanState = 'trial' | 'paid' | 'grace' | 'locked';
 
 const fmtDay = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Africa/Kigali' });
 
+// Founding venues: the first 15 real restaurants that signed up from 9 Nov 2026
+// (earlier sign-ups were tests). Kept in memory; refreshed on start, every 10
+// minutes and when a venue signs up.
+const FOUNDING_FROM = new Date('2026-11-08T22:00:00Z'); // 9 Nov 2026, 00:00 in Kigali
+let foundingIds = new Set<string>();
+export async function refreshFounding() {
+  const rows = await db.select({ id: venues.id }).from(venues)
+    .where(and(eq(venues.isDemo, false), gte(venues.createdAt, FOUNDING_FROM)))
+    .orderBy(asc(venues.createdAt)).limit(FOUNDING_SEATS);
+  foundingIds = new Set(rows.map((r) => r.id));
+}
+export const isFounding = (venueId: string) => foundingIds.has(venueId);
+
 export function planStatus(venue: Venue) {
   const now = Date.now();
   const trialEnds = venue.trialEndsAt ? new Date(venue.trialEndsAt).getTime() : 0;
@@ -42,7 +55,7 @@ export function planStatus(venue: Venue) {
   return {
     plan,
     planName: PLANS[plan].name,
-    priceRwf: PLANS[plan].priceRwf,
+    priceRwf: planPrice(plan, isFounding(venue.id)).priceRwf,
     // In the free trial everything is open (Bar+), whatever package was picked.
     effectivePlan: (trialEnds > now || venue.isDemo ? 'elite' : plan) as PlanId,
     trialEndsAt: venue.trialEndsAt,
@@ -57,6 +70,7 @@ export function planStatus(venue: Venue) {
     pausesAt: new Date(runsOutAt + PAUSE_DAYS * DAY).toISOString(),
     orderingPaused: !venue.isDemo && state === 'locked' && daysOver >= PAUSE_DAYS,
     momoPayCode: venue.momoPayCode,
+    founding: isFounding(venue.id),
   } as const;
 }
 
@@ -100,8 +114,9 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
   if (!(plan in PLANS)) throw new Error('Pick Starter, Pro or Bar+');
   if (typeof input.phone !== 'string' || !input.phone.trim()) throw new Error('Enter the MoMo number to pay from');
   const yearly = input.period === 'year';
-  if (yearly && !PLANS[plan].yearlyRwf) throw new Error('This package can only be paid monthly');
-  const amountRwf = yearly ? PLANS[plan].yearlyRwf! : PLANS[plan].priceRwf;
+  const price = planPrice(plan, isFounding(venueId));
+  if (yearly && !price.yearlyRwf) throw new Error('This package can only be paid monthly');
+  const amountRwf = yearly ? price.yearlyRwf! : price.priceRwf;
   const depositId = uuidv4();
 
   if (venue.isDemo) {
@@ -140,7 +155,7 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
 
 // A payment of the yearly price buys a year; any other buys a month.
 const daysPaidFor = (plan: PlanId | null, amountRwf: number) =>
-  plan && PLANS[plan]?.yearlyRwf === amountRwf ? 365 : 30;
+  plan && (PLANS[plan]?.yearlyRwf === amountRwf || planPrice(plan, true).yearlyRwf === amountRwf) ? 365 : 30;
 
 /**
  * Checks a package payment and, once MoMo confirms it, adds 30 days. Safe to

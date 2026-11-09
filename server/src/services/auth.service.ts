@@ -2,6 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import jwt from 'jsonwebtoken';
 import { db } from '../lib/db';
+import { refreshFounding } from './plan.service';
 import { owners, venues, subscriptions } from '../models/schema';
 import { eq } from 'drizzle-orm';
 import * as dotenv from 'dotenv';
@@ -77,6 +78,7 @@ export async function createVenueForOwner(
     plan: 'basic',
     status: 'trialing',
   });
+  await refreshFounding().catch(() => {});
 
   return venue;
 }
