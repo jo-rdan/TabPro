@@ -10,7 +10,7 @@ Keep this short and current. The bot and interactive sessions both update it.
   Until then, real venues can run with cash/waiter payment; MoMo switches on later.
 
 ## Sales pipeline
-(Weekly issue for 2026-11-02 opened; outreach status not confirmed by Jordan yet.)
+(Weekly issue for 2026-11-09 opened (#107); outreach status not confirmed by Jordan yet.)
 | Who | Status | Next step |
 |---|---|---|
 | Cousin (content creator) | Not contacted | Jordan messages her 2026-10-06: video + demo link + ask for 2–3 owner intros |
@@ -29,7 +29,7 @@ Keep this short and current. The bot and interactive sessions both update it.
 - Venue agreement, one-page pitch, pitch script, demo QR card, 16-table sticker sheet + clock-in sticker (Jordan's Sales folder).
 
 ## Needs Jordan
-- PR #91 (stock for any drink, any pack) was merged 2026-11-07. Confirm migration 0035 is on prod. PR #104 (founding venues: first 15 get Max at the Pro price) and #105 are merged; PR #106 (staff guide) is open, Jordan's.
+- PR #91 (stock for any drink, any pack) was merged 2026-11-07. Confirm the stock packs migration (now numbered 0036) is on prod. PRs #104 (founding venues: first 15 get Max at the Pro price), #105 and #106 (staff guide) are merged.
 - **Aug 2027:** renew tabpro.lol before 2027-09-29 (auto-renew is OFF; renewal ≈ $26.26 at Porkbun).
 - Email: info@tabpro.lol forwards to Gmail (done 2026-10-04). Still to do: Gmail Apps Script (EMAIL_SCRIPT_URL/SECRET on Render) for demo-request emails.
 - Bank document → pawaPay email (Mon 2026-10-05).

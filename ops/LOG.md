@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-11-09 UTC · weekly
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; Tests on main green (after #106); no open PRs, no `idea` PRs.
+- Did: opened the weekly issue "Week of 2026-11-09" (#107: what happened, plan, 2 ideas, 3 posts). No code changed, so no e2e run.
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach status; no replies on weekly issues). Stock packs migration is now 0036 (renumbered); check it is on prod. ops/README.md still describes the old 8% model.
+
 ## 2026-11-09 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200. Nightly/main Tests: the run after #104 failed (founding-price test), #105 fixed it and the latest main run is green. PR #91 was merged 2026-11-07. One open PR: #106 "Staff guide in invites and on staff screens" (Jordan's, its Tests run was still in progress).
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. Did not merge #106 (not bot work). No code changed, so no e2e run.
