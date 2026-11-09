@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Check, Lock, Smartphone, Loader2 } from "lucide-react";
 import { PLANS, PLAN_FOR, planPrice, type PlanFeature, type PlanId, type PlanStatus } from "@tabpro/shared";
 import Layout from "../../components/Layout";
+import { FoundingStrip } from "../../components/PlanWall";
 import api from "../../lib/api";
 import { useAuthStore } from "../../lib/auth";
 import { BOOKINGS_ENABLED } from "../../lib/features";
@@ -72,9 +73,10 @@ function PayCard({ venueId, plan, founding, onPaid }: { venueId: string; plan: P
   const [phone, setPhone] = useState(() => localStorage.getItem("skuzi_pay_phone") ?? "");
   const [step, setStep] = useState<"form" | "waiting" | "done">("form");
   // Every package can be paid for a year at once, cheaper the bigger the package.
-  const { priceRwf: monthRwf, yearlyRwf } = planPrice(plan, founding);
-  const [period, setPeriod] = useState<"month" | "year">("month");
-  const price = period === "year" && yearlyRwf ? yearlyRwf : monthRwf;
+  const { priceRwf: monthRwf, sixMonthRwf, yearlyRwf } = planPrice(plan, founding);
+  const [period, setPeriod] = useState<"month" | "half" | "year">("month");
+  const price = (period === "year" && yearlyRwf) || (period === "half" && sixMonthRwf) || monthRwf;
+  const months = period === "year" ? 12 : period === "half" ? 6 : 1;
   const [error, setError] = useState("");
   const timer = useRef<number>();
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -116,11 +118,11 @@ function PayCard({ venueId, plan, founding, onPaid }: { venueId: string; plan: P
   return (
     <div className="mt-3">
       {yearlyRwf && (
-        <div className="mb-2 inline-flex rounded-xl bg-white/10 p-1" role="group" aria-label="Pay monthly or yearly">
-          {(["month", "year"] as const).map((p) => (
+        <div className="mb-2 inline-flex flex-wrap rounded-xl bg-white/10 p-1" role="group" aria-label="How long to pay for">
+          {(["month", "half", "year"] as const).map((p) => (
             <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p}
               className={`rounded-lg px-3 py-1.5 text-xs font-extrabold ${period === p ? "bg-white text-gray-900" : "text-white/80"}`}>
-              {p === "month" ? "Monthly" : `Yearly · save ${(monthRwf * 12 - yearlyRwf).toLocaleString("en-US")}`}
+              {p === "month" ? "1 month" : p === "half" ? "6 months" : "1 year · 2 months free"}
             </button>
           ))}
         </div>
@@ -134,7 +136,7 @@ function PayCard({ venueId, plan, founding, onPaid }: { venueId: string; plan: P
         </button>
       </div>
       {error && <p role="alert" className="mt-2 text-sm font-semibold text-red-200">{error}</p>}
-      <p className="mt-2 text-xs text-white/60">{period === "year" ? `A full year of ${PLANS[plan].name}, ${yearlyRwf ? Math.round((1 - yearlyRwf / (monthRwf * 12)) * 100) : 0}% off.` : `One month of ${PLANS[plan].name}.`} Paying early never loses days.</p>
+      <p className="mt-2 text-xs text-white/60">{months === 1 ? `One month of ${PLANS[plan].name}.` : `${months === 12 ? "A full year" : "6 months"} of ${PLANS[plan].name}: you save ${rwf(monthRwf * months - price)}.`} Paying early never loses days.</p>
     </div>
   );
 }
@@ -177,6 +179,7 @@ export default function Subscription() {
           <div className="mt-5 h-32 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
         ) : (
           <>
+            {status.founding && <div className="mt-5"><FoundingStrip /></div>}
             <div className="mt-5 rounded-2xl bg-gray-900 p-5 text-white dark:bg-gray-800">
               <p className="text-xs font-bold uppercase tracking-wider text-white/60">Your package</p>
               <p className="mt-1 font-display text-3xl font-bold">{status.planName} <span className="text-base font-semibold text-white/70">· {rwf(status.priceRwf)} / month</span></p>

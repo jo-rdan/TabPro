@@ -7,7 +7,7 @@ export const TERMS_DATE = "October 2026";
 
 export const TERMS_SUMMARY: { icon: string; tint: string; title: string; text: string }[] = [
   { icon: "💯", tint: "#E4EADF", title: "100% of your sales are yours.", text: "Guests pay your own MoMo Pay code or cash. Skuzi takes nothing from your bills." },
-  { icon: "📦", tint: "#FFEDB8", title: "One monthly package.", text: "Go 45,000 · Pro 75,000 · Max 150,000 RWF. No setup fee, no machine." },
+  { icon: "📦", tint: "#FFEDB8", title: "One monthly package.", text: "Go 35,000 · Pro 60,000 · Max 120,000 RWF. No setup fee, no machine." },
   { icon: "🎁", tint: "#FCE3D3", title: "Free to start.", text: "2 weeks on Go, 1 month on Pro and Max." },
   { icon: "🧾", tint: "#EFEBF2", title: "Your sales, your receipts.", text: "You issue your own EBM receipts and handle your taxes." },
   { icon: "👋", tint: "#FEF3EC", title: "Stop anytime,", text: "with nothing to return." },
@@ -16,7 +16,7 @@ export const TERMS_SUMMARY: { icon: string; tint: string; title: string; text: s
 // Shown to owners who agreed to an earlier version: what changed in this one.
 export const TERMS_WHATS_NEW: string[] = [
   "No more 8% or 15%: Skuzi takes nothing from your sales. Guests pay your own MoMo Pay code (or cash), and your waiter taps Paid.",
-  "Skuzi is now a monthly package: Go 45,000, Pro 75,000 or Max 150,000 RWF, after a free trial (2 weeks on Go, 1 month on Pro and Max).",
+  "Skuzi is now a monthly package: Go 35,000, Pro 60,000 or Max 120,000 RWF, after a free trial (2 weeks on Go, 1 month on Pro and Max).",
 ];
 
 export const TERMS_CLAUSES: { title: string; text: string }[] = [
@@ -26,7 +26,7 @@ export const TERMS_CLAUSES: { title: string; text: string }[] = [
   },
   {
     title: "Packages and payment",
-    text: "The venue chooses a monthly package: Go (45,000 RWF), Pro (75,000 RWF) or Max (150,000 RWF). Each can also be paid for a year at once: Go 513,000 RWF, Pro 810,000 RWF, Max 1,440,000 RWF. The first 2 weeks (Go) or month (Pro, Max) are free. The free trial includes every Max feature. After that the package is paid monthly (or yearly) in advance to VNT250 Ltd by Mobile Money, from the Plan page; the app reminds the venue before it is due. If a payment is 3 days late, the owner's dashboard locks until it is paid; if it is 10 days late, guests can no longer order from their phones (the menu stays visible and staff keep working). Everything comes back as soon as the payment goes through. Prices include no setup fee and no equipment.",
+    text: "The venue chooses a monthly package: Go (35,000 RWF), Pro (60,000 RWF) or Max (120,000 RWF). Each can also be paid for 6 months at once (Go 190,000, Pro 325,000, Max 650,000 RWF) or a year at once (Go 350,000, Pro 600,000, Max 1,200,000 RWF). The first 15 venues to join from 9 November 2026 are founding venues: they get Max for the Pro price (60,000 RWF a month, 325,000 for 6 months, 600,000 a year) for as long as they stay. The first 2 weeks (Go) or month (Pro, Max) are free. The free trial includes every Max feature. After that the package is paid in advance (monthly, for 6 months or yearly) to VNT250 Ltd by Mobile Money, from the Plan page; the app reminds the venue before it is due. If a payment is 3 days late, the owner's dashboard locks until it is paid; if it is 10 days late, guests can no longer order from their phones (the menu stays visible and staff keep working). Everything comes back as soon as the payment goes through. Prices include no setup fee and no equipment.",
   },
   {
     title: "Guests' payments",

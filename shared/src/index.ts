@@ -273,20 +273,21 @@ export type PlanFeature = "history" | "bookings" | "campaigns" | "momo" | "stock
 
 // Go · Pro · Max (2026-10-30). The ids keep their old names (basic = Go,
 // pro = Pro, elite = Max) so existing venues and payments carry on.
-export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[]; yearlyRwf?: number }> = {
-  // Every package can also be paid for a year at once: Go 5% off, Pro 10% off, Max 20% off.
-  basic: { name: "Go", priceRwf: 45000, trialDays: 14, features: [], yearlyRwf: 513000 },
-  pro: { name: "Pro", priceRwf: 75000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"], yearlyRwf: 810000 },
-  elite: { name: "Max", priceRwf: 150000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], yearlyRwf: 1440000 },
+export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[]; sixMonthRwf?: number; yearlyRwf?: number }> = {
+  // 2026-11-09: every package can also be paid 6 months at once (about 5½
+  // months' price) or a year at once (10 months' price).
+  basic: { name: "Go", priceRwf: 35000, trialDays: 14, features: [], sixMonthRwf: 190000, yearlyRwf: 350000 },
+  pro: { name: "Pro", priceRwf: 60000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"], sixMonthRwf: 325000, yearlyRwf: 600000 },
+  elite: { name: "Max", priceRwf: 120000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], sixMonthRwf: 650000, yearlyRwf: 1200000 },
 };
 
 // Founding venues: the first 15 restaurants get Max for the Pro price, monthly
-// or yearly, for as long as they stay.
+// 6 months or yearly, for as long as they stay.
 export const FOUNDING_SEATS = 15;
 /** What a package costs this venue: founding venues pay Pro prices for Max. */
-export function planPrice(plan: PlanId, founding = false): { priceRwf: number; yearlyRwf?: number } {
-  if (founding && plan === "elite") return { priceRwf: PLANS.pro.priceRwf, yearlyRwf: PLANS.pro.yearlyRwf };
-  return { priceRwf: PLANS[plan].priceRwf, yearlyRwf: PLANS[plan].yearlyRwf };
+export function planPrice(plan: PlanId, founding = false): { priceRwf: number; sixMonthRwf?: number; yearlyRwf?: number } {
+  const p = founding && plan === "elite" ? PLANS.pro : PLANS[plan];
+  return { priceRwf: p.priceRwf, sixMonthRwf: p.sixMonthRwf, yearlyRwf: p.yearlyRwf };
 }
 
 /** The cheapest package that includes a feature. */

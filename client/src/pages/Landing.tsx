@@ -4,6 +4,7 @@ import {
   ArrowRight, ArrowUpRight, Check, Plus, Minus, Hourglass, HelpCircle, FileX, Moon,
   Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet,
 } from "lucide-react";
+import { PLANS, planPrice, type PlanId } from "@tabpro/shared";
 import AnimatedLogo from "../components/AnimatedLogo";
 import ThemeSwitch, { ThemeCycleButton } from "../components/ThemeSwitch";
 import Wordmark from "../components/Wordmark";
@@ -84,7 +85,7 @@ function Nav() {
           <AnimatedLogo size={28} on="dark" bg="#1B1524" className="hidden dark:inline-flex" />
         </a>
         <div className="hidden items-center gap-1 rounded-full bg-[var(--bg)] p-1 ring-1 ring-[var(--line)] md:flex">
-          {[["How it works", "#tour"], ["For owners", "#owners"], ["Questions", "#faq"]].map(([l, h]) => (
+          {[["How it works", "#tour"], ["For owners", "#owners"], ["Prices", "#prices"], ["Questions", "#faq"]].map(([l, h]) => (
             <a key={l} href={h} className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-[var(--body)] transition hover:bg-[var(--bg)] hover:text-[var(--ink)]">{l}</a>
           ))}
         </div>
@@ -553,9 +554,8 @@ function Owners() {
 
 const FAQS = [
   { q: "Do my guests need to download an app?", a: "No. They scan the sticker on the table with their phone camera and your menu opens. It works on any smartphone." },
-  { q: "How do guests pay?", a: "With MTN MoMo or Airtel Money, from their own phone. They approve with their PIN. Skuzi never sees their PIN. Cash still works as usual." },
-  { q: "When do I get my money?", a: "Right away. As soon as the guest's payment is confirmed, your share is sent to your venue's Mobile Money number, usually within seconds." },
-  { q: "What does it cost?", a: "Nothing to set up, no machine to buy, and you can try it free for a week. Book a demo and we'll walk you through it in 5 minutes." },
+  { q: "How do guests pay?", a: "With your own MoMo Pay code, or cash as usual. The money goes straight to you: Skuzi takes nothing from your bills." },
+  { q: "What does it cost?", a: "One package a month: Go 35,000, Pro 60,000 or Max 120,000 RWF. Nothing to set up, no machine to buy, and the first weeks are free. Pay 6 months or a year at once and save." },
   { q: "Do I need to buy any equipment?", a: "No. Your waiters use their own phones, you use yours, and we bring the stickers for your tables." },
   { q: "What if some of my waiters don't have a smartphone?", a: "That's fine. Add them anyway: a manager's phone gets their table calls, so no guest is left waiting." },
   { q: "How do I get started?", a: WAITLIST_MODE ? "Join the waitlist. When your spot comes up, we come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." : "Book a free demo. We come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
@@ -596,6 +596,68 @@ function Faq() {
             })}
           </div>
         </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─── Prices ──────────────────────────────────────────────────────────────────
+
+const PRICE_ROWS: { id: PlanId; who: string; has: string[] }[] = [
+  { id: "basic", who: "Small bars", has: ["QR menu on every table", "Waiter phones", "Bills and today's sales"] },
+  { id: "pro", who: "Most restaurants", has: ["Everything in Go", "Kitchen and cashier screens", "Stock, history, bookings, campaigns"] },
+  { id: "elite", who: "Big places", has: ["Everything in Pro", "Events and nights out", "Everything Skuzi does"] },
+];
+
+function Prices() {
+  const [period, setPeriod] = useState<"month" | "half" | "year">("month");
+  const n = (v: number) => v.toLocaleString("en-US");
+  return (
+    <section id="prices" className="scroll-mt-16 bg-[var(--bg)] py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
+          <Eyebrow>Prices</Eyebrow>
+          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] sm:text-5xl">
+            One package. <span className="text-[var(--rust-ink)]">Nothing taken from your sales.</span>
+          </h2>
+          <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-[var(--body)]">No setup fee, no machine to buy: Skuzi runs on the phones you already have. Start with a free trial.</p>
+          <div className="mt-6 inline-flex flex-wrap rounded-2xl bg-[var(--card)] p-1 ring-1 ring-[var(--line)]" role="group" aria-label="How long to pay for">
+            {(["month", "half", "year"] as const).map((p) => (
+              <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p}
+                className={`rounded-full px-4 py-2 text-[13.5px] font-bold transition ${period === p ? "bg-[var(--cta-bg)] text-[var(--cta-ink)]" : "text-[var(--body)]"}`}>
+                {p === "month" ? "Monthly" : p === "half" ? "6 months" : "1 year · 2 months free"}
+              </button>
+            ))}
+          </div>
+        </Reveal>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {PRICE_ROWS.map((row, i) => {
+            const plan = PLANS[row.id];
+            const price = period === "year" ? plan.yearlyRwf! : period === "half" ? plan.sixMonthRwf! : plan.priceRwf;
+            const founding = row.id === "elite";
+            const fp = planPrice("elite", true);
+            const foundingPrice = period === "year" ? fp.yearlyRwf! : period === "half" ? fp.sixMonthRwf! : fp.priceRwf;
+            return (
+              <Reveal key={row.id} delay={i * 80}>
+                <div className={`flex h-full flex-col rounded-3xl bg-[var(--card)] p-6 ring-1 ${founding ? "ring-2 ring-[#F2B33A]" : "ring-[var(--line)]"}`}>
+                  <p className="text-[13px] font-bold uppercase tracking-wider text-[var(--muted)]">{row.who}</p>
+                  <p className="mt-1 font-display text-3xl font-extrabold">{plan.name}</p>
+                  <p className="mt-4 font-display text-3xl font-extrabold">
+                    {n(price)} <span className="text-[14px] font-semibold text-[var(--muted)]">RWF / {period === "year" ? "year" : period === "half" ? "6 months" : "month"}</span>
+                  </p>
+                  {founding && (
+                    <p className="mt-3 rounded-2xl bg-[#FFEDB8] px-4 py-3 text-[14px] font-semibold text-[#5A3A00]">
+                      ⭐ First 15 venues: <b>{n(foundingPrice)} RWF</b>, the Pro price, for as long as they stay.
+                    </p>
+                  )}
+                  <ul className="mt-5 space-y-2 text-[15px] text-[var(--body)]">
+                    {row.has.map((h) => <li key={h}>✓ {h}</li>)}
+                  </ul>
+                </div>
+              </Reveal>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -787,6 +849,7 @@ export default function Landing() {
         <OneMoreRound />
         <Tour />
         <Owners />
+        <Prices />
         <Faq />
         <FinalCta />
       </main>

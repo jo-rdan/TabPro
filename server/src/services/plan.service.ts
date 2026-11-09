@@ -106,22 +106,22 @@ export async function chooseOwnPlan(venueId: string, raw: unknown) {
 
 // ─── Paying with MoMo ─────────────────────────────────────────────────────────
 
-/** Asks the owner's phone for the package price: one month, or a year at once (Go 5%, Pro 10%, Max 20% off). */
+/** Asks the owner's phone for the package price: one month, 6 months, or a year at once. */
 export async function startPlanPayment(venueId: string, input: { plan?: unknown; phone?: unknown; period?: unknown }) {
   const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
   if (!venue) throw new Error('Venue not found');
   const plan = (input.plan ?? venue.plan) as PlanId;
   if (!(plan in PLANS)) throw new Error('Pick Starter, Pro or Bar+');
   if (typeof input.phone !== 'string' || !input.phone.trim()) throw new Error('Enter the MoMo number to pay from');
-  const yearly = input.period === 'year';
+  const period = input.period === 'year' ? 'year' : input.period === 'half' ? 'half' : 'month';
   const price = planPrice(plan, isFounding(venueId));
-  if (yearly && !price.yearlyRwf) throw new Error('This package can only be paid monthly');
-  const amountRwf = yearly ? price.yearlyRwf! : price.priceRwf;
+  const amountRwf = period === 'year' ? price.yearlyRwf : period === 'half' ? price.sixMonthRwf : price.priceRwf;
+  if (!amountRwf) throw new Error('This package can only be paid monthly');
   const depositId = uuidv4();
 
   if (venue.isDemo) {
     await db.insert(momoPayments).values({ venueId, type: 'subscription', plan, referenceId: depositId, phone: input.phone, amountRwf, status: 'pending' });
-    return { depositId, amountRwf, plan, period: yearly ? 'year' : 'month' };
+    return { depositId, amountRwf, plan, period };
   }
   if (!isPawapayConfigured()) throw new Error('MoMo payments are not available right now. Try again later.');
 
@@ -138,7 +138,7 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
       phoneNumber: payer.phoneNumber,
       provider: payer.provider,
       amountRwf,
-      customerMessage: `Skuzi ${PLANS[plan].name.replace(/[^A-Za-z0-9 ]/g, '')} ${yearly ? 'year' : 'month'}`.slice(0, 22),
+      customerMessage: `Skuzi ${PLANS[plan].name.replace(/[^A-Za-z0-9 ]/g, '')} ${period === 'half' ? '6 months' : period}`.slice(0, 22),
       metadata: { venueId, plan, kind: 'package' },
     });
   } catch (err: any) {
@@ -150,12 +150,17 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
     console.error('[plan payment]', err?.message);
     throw new Error('MoMo payments are not available right now. Try again later.');
   }
-  return { depositId, amountRwf, plan, period: yearly ? 'year' : 'month' };
+  return { depositId, amountRwf, plan, period };
 }
 
-// A payment of the yearly price buys a year; any other buys a month.
-const daysPaidFor = (plan: PlanId | null, amountRwf: number) =>
-  plan && (PLANS[plan]?.yearlyRwf === amountRwf || planPrice(plan, true).yearlyRwf === amountRwf) ? 365 : 30;
+// What a payment buys, by how many months' price it is (this also covers
+// founding prices and payments made at the old prices): 10+ months' price buys
+// a year, 5+ buys 6 months, anything less a month.
+const daysPaidFor = (plan: PlanId | null, amountRwf: number) => {
+  if (!plan || !PLANS[plan]) return 30;
+  const months = amountRwf / Math.min(PLANS[plan].priceRwf, planPrice(plan, true).priceRwf);
+  return months >= 9.5 ? 365 : months >= 5 ? 182 : 30;
+};
 
 /**
  * Checks a package payment and, once MoMo confirms it, adds 30 days. Safe to
