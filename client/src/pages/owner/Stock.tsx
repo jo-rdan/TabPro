@@ -410,9 +410,10 @@ function ReceiveSheet({ venueId, items, photo, canEditMenu, onClose, onSaved }: 
       else if (it?.pack) setPack(it.pack);
       if (r.packsSeen > 0 && r.pack !== 'single') setPacks(r.packsSeen);
       setStep('review');
-    } catch (e: any) {
-      setError(e?.response?.data?.error ?? "Couldn't read the photo. Try again, or type it in.");
-      setStep('snap');
+    } catch {
+      // Couldn't read it (an empty crate, a dark photo): straight to typing it in.
+      setReading({ drink: null, size: null, pack: null, perPack: 0, packsSeen: 0, menuItemId: null, name: null, priceRwf: null });
+      setStep('review');
     }
   };
   // Size chips: the same brand in that size, if the menu has it.

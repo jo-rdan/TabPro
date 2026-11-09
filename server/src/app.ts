@@ -81,6 +81,7 @@ import { startPaymentReconciler } from './services/pawapay.service';
 import { startKeepAlive } from './lib/keepAlive';
 import { startScheduler } from './lib/scheduler';
 import { isPawapayConfigured, PAWAPAY_ENV } from './lib/pawapay';
+import { refreshFounding } from './services/plan.service';
 
 // Last line of defence: a failure in a background job (heartbeat checker,
 // push send, etc.) must never take every venue offline.
@@ -99,6 +100,9 @@ server.listen(PORT, () => {
     ? `✅ Mobile Money: pawaPay ${PAWAPAY_ENV}`
     : '⚠️  Mobile Money: OFF — PAWAPAY_API_TOKEN not set, customers will be asked to pay their waiter');
   startHeartbeatChecker();
+  // Founding venues (first 15): load now, then every 10 minutes.
+  refreshFounding().catch((e) => console.error('[founding]', e.message));
+  setInterval(() => refreshFounding().catch(() => {}), 10 * 60e3);
   startUnpaidBillsChecker();
   startMomoReminders();
   startPaymentReconciler();

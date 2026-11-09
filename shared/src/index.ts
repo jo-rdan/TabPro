@@ -74,6 +74,8 @@ export interface PlanStatus {
   pausesAt: string;
   orderingPaused: boolean;
   momoPayCode: string | null;
+  /** One of the first 15 restaurants: Max at the Pro price. */
+  founding: boolean;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────
@@ -277,6 +279,15 @@ export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: 
   pro: { name: "Pro", priceRwf: 75000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"], yearlyRwf: 810000 },
   elite: { name: "Max", priceRwf: 150000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], yearlyRwf: 1440000 },
 };
+
+// Founding venues: the first 15 restaurants get Max for the Pro price, monthly
+// or yearly, for as long as they stay.
+export const FOUNDING_SEATS = 15;
+/** What a package costs this venue: founding venues pay Pro prices for Max. */
+export function planPrice(plan: PlanId, founding = false): { priceRwf: number; yearlyRwf?: number } {
+  if (founding && plan === "elite") return { priceRwf: PLANS.pro.priceRwf, yearlyRwf: PLANS.pro.yearlyRwf };
+  return { priceRwf: PLANS[plan].priceRwf, yearlyRwf: PLANS[plan].yearlyRwf };
+}
 
 /** The cheapest package that includes a feature. */
 export const PLAN_FOR: Record<PlanFeature, PlanId> = {

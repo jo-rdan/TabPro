@@ -1,5 +1,6 @@
 import { PLANS, type PlanId } from '@tabpro/shared';
 import { db } from '../lib/db';
+import { refreshFounding } from './plan.service';
 import { venues, subscriptions, owners, venueTermsAcceptances } from '../models/schema';
 import { eq, isNull, like } from 'drizzle-orm';
 import { parseHours } from '../lib/hours';
@@ -63,6 +64,7 @@ export async function createVenue(ownerId: string, name: string, location?: stri
     plan: 'basic',
     status: 'trialing',
   });
+  await refreshFounding().catch(() => {});
 
   return venue;
 }
