@@ -2,7 +2,7 @@ import { useEffect, useState, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, ArrowUpRight, Check, Plus, Minus, Hourglass, HelpCircle, FileX, Moon,
-  Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet,
+  Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet, Sparkles,
 } from "lucide-react";
 import { PLANS, planPrice, type PlanId } from "@tabpro/shared";
 import { INCLUDED } from "../lib/packages";
@@ -14,7 +14,7 @@ import Wordmark from "../components/Wordmark";
 import BookDemo, { openBookDemo } from "./landing/BookDemo";
 import { WAITLIST_MODE, cta } from "../lib/waitlistMode";
 import {
-  PhoneFrame, ScreenScan, ScreenMenu, ScreenPay, WaiterCall, TonightCard,
+  PhoneFrame, ScreenScan, ScreenMenu, ScreenPay, ScreenMore, WaiterCall, TonightCard,
   MoneyWidget, PayoutWidget, AlertsWidget,
   Hand, useInView,
 } from "./landing/screens";
@@ -263,8 +263,9 @@ function FaceCard({ side, fixed = false }: { side: { icon: typeof Zap; title: st
 
 const STEPS = [
   { icon: QrCode, title: "Scan", text: "Guests point their phone camera at the code on the table and your menu opens. No app, no account.", screen: ScreenScan },
-  { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Your team gets it right away.", screen: () => <ScreenMenu /> },
+  { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Your team gets it right away.", screen: () => <ScreenMenu noCall /> },
   { icon: Wallet, title: "Pay", text: "The bill is on their phone, item by item. They pay your MoMo Pay code or cash, and the waiter taps Paid.", screen: ScreenPay },
+  { icon: Sparkles, title: "And a lot more", text: "Behind every scan, Skuzi keeps your team, your kitchen and your night running smoothly, and brings guests back. The rest, we show you in person.", screen: ScreenMore },
 ];
 
 function Tour() {
