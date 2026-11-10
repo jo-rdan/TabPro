@@ -76,6 +76,8 @@ export interface PlanStatus {
   momoPayCode: string | null;
   /** One of the first 15 restaurants: Max at the Pro price. */
   founding: boolean;
+  /** Can this venue pay by card (Lemon Squeezy set up)? */
+  card?: boolean;
 }
 
 // ─── Staff ────────────────────────────────────────────────────────────────────
@@ -276,7 +278,7 @@ export type PlanFeature = "history" | "bookings" | "campaigns" | "momo" | "stock
 export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: number; features: PlanFeature[]; sixMonthRwf?: number; yearlyRwf?: number }> = {
   // 2026-11-09: every package can also be paid 6 months at once (about 5½
   // months' price) or a year at once (10 months' price).
-  basic: { name: "Go", priceRwf: 35000, trialDays: 14, features: [], sixMonthRwf: 190000, yearlyRwf: 350000 },
+  basic: { name: "Go", priceRwf: 35000, trialDays: 14, features: ["momo", "kitchen"], sixMonthRwf: 190000, yearlyRwf: 350000 },
   pro: { name: "Pro", priceRwf: 60000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen"], sixMonthRwf: 325000, yearlyRwf: 600000 },
   elite: { name: "Max", priceRwf: 120000, trialDays: 30, features: ["history", "bookings", "campaigns", "momo", "stock", "kitchen", "events"], sixMonthRwf: 650000, yearlyRwf: 1200000 },
 };
@@ -295,9 +297,9 @@ export const PLAN_FOR: Record<PlanFeature, PlanId> = {
   history: "pro",
   bookings: "pro",
   campaigns: "pro",
-  momo: "pro",
+  momo: "basic",
   stock: "pro",
-  kitchen: "pro",
+  kitchen: "basic",
   events: "elite",
 };
 

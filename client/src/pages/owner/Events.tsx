@@ -108,14 +108,14 @@ export default function Events({ embedded = false }: { embedded?: boolean }) {
   const page = (
       <div className="mx-auto max-w-2xl">
         {!embedded && <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white">Events</h1>}
-        {!embedded && <p className="text-sm text-gray-500 dark:text-gray-400">Your AI event planner finds the idea, makes the poster, and sends it to your guests.</p>}
+        {!embedded && <p className="text-sm text-gray-500 dark:text-gray-400">Skuzi AI plans your next big night, makes the poster, and invites your guests.</p>}
         {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{error}</p>}
 
         {/* The idea */}
         <section className={`${embedded ? "" : "mt-5 "}rounded-2xl bg-gray-900 p-5 text-white dark:bg-gray-800`}>
           {learning && !idea && (
             <>
-              <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#FFD966]"><Sparkles size={15} /> AI event planner</p>
+              <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#FFD966]"><Sparkles size={15} /> Skuzi AI</p>
               <p className="mt-1 font-display text-2xl font-bold">Your AI is learning your restaurant</p>
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuemin={0} aria-valuemax={learning.needed} aria-valuenow={learning.orders}>
                 <div className="h-full rounded-full bg-[#FFD966]" style={{ width: `${Math.max(3, Math.round((learning.orders / learning.needed) * 100))}%` }} />
@@ -127,7 +127,7 @@ export default function Events({ embedded = false }: { embedded?: boolean }) {
           )}
           {!learning && !idea && !thinking && (
             <>
-              <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#FFD966]"><Sparkles size={15} /> AI event planner</p>
+              <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#FFD966]"><Sparkles size={15} /> Skuzi AI</p>
               <p className="mt-1 font-display text-2xl font-bold">Fill your quiet night</p>
               <p className="mt-1 text-sm text-white/75">It looks at your slow nights and your best sellers, and plans an event for you.</p>
               <button onClick={findIdea} className="mt-4 w-full rounded-xl bg-[#FFD966] py-3.5 text-base font-extrabold text-gray-900">Find an idea</button>

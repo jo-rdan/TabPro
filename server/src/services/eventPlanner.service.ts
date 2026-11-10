@@ -249,7 +249,7 @@ export async function plannerProgress(venueId: string) {
 
 async function mustBeOpen(venueId: string) {
   const p = await plannerProgress(venueId);
-  if (p) throw new HttpError(403, `Your AI event planner opens after ${p.needed} orders through Skuzi (${p.orders} so far), or as soon as you pay for Max.`);
+  if (p) throw new HttpError(403, `Skuzi AI opens after ${p.needed} orders through Skuzi (${p.orders} so far), or as soon as you pay for Max.`);
 }
 
 /** One idea for the venue's quiet night (AI first, built-in templates as backup). */

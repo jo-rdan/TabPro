@@ -7,6 +7,7 @@ import { venues } from '../models/schema';
 import { eq } from 'drizzle-orm';
 import { planStatus, setMomoPayCode, chooseOwnPlan, listVenuePlans, adminUpdatePlan, startPlanPayment, settlePlanPayment } from '../services/plan.service';
 import { momoPayments } from '../models/schema';
+import { isCardConfigured, startCardCheckout } from '../services/lemonsqueezy.service';
 import { and } from 'drizzle-orm';
 
 // Packages and the venue's MoMo Pay code. Owners see and pick their package in
@@ -24,7 +25,7 @@ router.patch('/admin/:venueId', requireAdmin, async (req: Request, res: Response
 
 router.get('/:venueId', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
   const venue = await db.query.venues.findFirst({ where: eq(venues.id, req.params.venueId) });
-  ok(res, venue ? planStatus(venue) : null);
+  ok(res, venue ? { ...planStatus(venue), card: isCardConfigured() } : null);
 });
 router.patch('/:venueId/momo-code', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
   try { ok(res, await setMomoPayCode(req.params.venueId, req.body?.code)); } catch (err) { fail(res, err); }
@@ -37,6 +38,10 @@ router.patch('/:venueId', ownsVenue(venueFromParam()), async (req: Request, res:
 // Plan page checks until it's through.
 router.post('/:venueId/pay', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
   try { ok(res, await startPlanPayment(req.params.venueId, req.body ?? {})); } catch (err) { fail(res, err); }
+});
+// The owner pays by card: Lemon Squeezy's page, then it renews by itself.
+router.post('/:venueId/card', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
+  try { ok(res, await startCardCheckout(req.params.venueId, req.body ?? {})); } catch (err) { fail(res, err); }
 });
 router.get('/:venueId/pay/:depositId', ownsVenue(venueFromParam()), async (req: Request, res: Response) => {
   try {

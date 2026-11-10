@@ -1372,7 +1372,7 @@ export default function WaiterOrders() {
                     </span>
                     {sinceChip(order.tableLabel, order.tabId)}
                     {order.offer && (
-                      <span title="This guest came with a campaign offer. Give it when they pay with Skuzi." className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">
+                      <span title="This guest came with a campaign offer. Give it to them." className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">
                         🎁 {order.offer.replace(/ when you pay with Skuzi$/, "")}
                       </span>
                     )}

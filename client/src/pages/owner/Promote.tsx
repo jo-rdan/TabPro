@@ -27,7 +27,7 @@ export default function Promote() {
             <Link to="/subscription?need=events" className="mx-auto flex max-w-2xl items-center gap-3 rounded-2xl bg-gray-900 p-5 text-white dark:bg-gray-800">
               <Sparkles size={22} className="flex-none text-[#FFD966]" />
               <span className="min-w-0 flex-1">
-                <span className="block font-bold">AI event planner</span>
+                <span className="block font-bold">Skuzi AI</span>
                 <span className="block text-sm text-white/75">It plans events for your quiet nights. In Max.</span>
               </span>
               <Lock size={16} className="flex-none opacity-60" aria-label="Not in your package" />

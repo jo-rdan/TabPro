@@ -21,8 +21,8 @@ export type OfferType = "none" | "free_item" | "discount_10";
 export type Audience = "regulars" | "everyone";
 
 export function offerText(c: { offerType: string; offerLabel: string | null }): string | null {
-  if (c.offerType === "discount_10") return "10% off when you pay with Skuzi";
-  if (c.offerType === "free_item" && c.offerLabel) return `${c.offerLabel} when you pay with Skuzi`;
+  if (c.offerType === "discount_10") return "10% off your bill";
+  if (c.offerType === "free_item" && c.offerLabel) return c.offerLabel;
   return null;
 }
 
