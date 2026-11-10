@@ -7,6 +7,8 @@ import {
 import { PLANS, planPrice, type PlanId } from "@tabpro/shared";
 import { INCLUDED } from "../lib/packages";
 import AnimatedLogo from "../components/AnimatedLogo";
+import LanguageSwitch from "../components/LanguageSwitch";
+import Translated from "../components/Translated";
 import ThemeSwitch, { ThemeCycleButton } from "../components/ThemeSwitch";
 import Wordmark from "../components/Wordmark";
 import BookDemo, { openBookDemo } from "./landing/BookDemo";
@@ -91,12 +93,13 @@ function Nav() {
           ))}
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSwitch />
           <span className="hidden xl:block"><ThemeSwitch /></span>
           <ThemeCycleButton className="xl:hidden" />
           {!WAITLIST_MODE && <Link to={loggedIn ? "/dashboard" : "/login"} className="hidden rounded-full px-4 py-2 text-[13.5px] font-semibold text-[var(--body)] transition hover:text-[var(--ink)] sm:block">
             {loggedIn ? "Dashboard" : "Log in"}
           </Link>}
-          <button onClick={openBookDemo} className="rounded-full bg-[var(--cta-bg)] px-4 py-2 text-[13.5px] font-extrabold text-[var(--cta-ink)] transition hover:bg-[var(--cta-hover)]">
+          <button onClick={openBookDemo} className="whitespace-nowrap rounded-full bg-[var(--cta-bg)] px-4 py-2 text-[13.5px] font-extrabold text-[var(--cta-ink)] transition hover:bg-[var(--cta-hover)]">
             {cta("Book a demo")}
           </button>
         </div>
@@ -133,7 +136,7 @@ function Hero() {
             </span>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-7 font-display text-[46px] font-extrabold leading-[0.98] tracking-[-0.045em] text-balance sm:text-7xl lg:text-[92px]">
+            <h1 className="mt-7 font-display text-[min(46px,10.5vw)] font-extrabold leading-[0.98] tracking-[-0.045em] text-balance sm:text-7xl lg:text-[92px]">
               <span className="inline-flex items-baseline">
                 Less waiting.
                 <span className="sk-wave ml-2 inline-block translate-y-[0.06em] text-[var(--hero-hand)]"><Hand size={64} color="currentColor" className="h-[0.8em] w-[0.8em]" /></span>
@@ -843,6 +846,7 @@ export default function Landing() {
   return (
     <div className="sk-site min-h-screen [overflow-x:clip] bg-[var(--bg)] font-sans text-[var(--ink)] antialiased selection:bg-[#F2B33A] selection:text-[#231A2C]">
       <style>{STYLES}</style>
+      <Translated>
       <Nav />
       <main>
         <Hero />
@@ -856,6 +860,7 @@ export default function Landing() {
       </main>
       <Footer />
       <BookDemo />
+      </Translated>
     </div>
   );
 }
