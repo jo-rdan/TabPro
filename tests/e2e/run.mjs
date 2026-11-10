@@ -1421,7 +1421,7 @@ console.log('\n── Packages & direct MoMo');
   r = await call('GET', `/dashboard/activity/${venueId}`, null, ownerTok);
   check('Paid Go: history is locked (Pro)', r.status === 403);
   r = await call('GET', `/tabs/preview/${codes[1]}`);
-  check('Paid Go: guests pay the waiter, no MoMo code shown', r.json?.data?.venue?.acceptsMobileMoney === false && r.json?.data?.venue?.momoPayCode === null);
+  check('Paid Go: guests see the MoMo Pay code too', r.json?.data?.venue?.momoPayCode === '482910', JSON.stringify(r.json?.data?.venue?.momoPayCode));
   r = await call('PATCH', `/plans/${venueId}`, { plan: 'elite' }, ownerTok);
   check('After the trial, you switch package by paying for it', r.status === 400 && /Pay/.test(r.json?.error ?? ''), r.json?.error);
   r = await call('GET', '/plans/admin/all', null, ownerTok);
