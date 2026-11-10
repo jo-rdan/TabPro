@@ -187,7 +187,11 @@ export default function MenuManagement() {
       const res = await api.post("/menu/extract", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setExtracted(res.data.data);
+      // Another page before saving: add it to the list (a dish read twice stays once).
+      setExtracted((prev) => {
+        const seen = new Set(prev.map((i) => i.name.trim().toLowerCase()));
+        return [...prev, ...(res.data.data as ExtractedItem[]).filter((i) => !seen.has(i.name.trim().toLowerCase()))];
+      });
       setShowReview(true);
     } catch (err: any) {
       setError(
@@ -273,7 +277,7 @@ export default function MenuManagement() {
                 </p>
               </div>
               <button
-                onClick={() => setShowReview(false)}
+                onClick={() => { setShowReview(false); setExtracted([]); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X size={18} />
@@ -309,7 +313,7 @@ export default function MenuManagement() {
             </div>
             <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
               <button
-                onClick={() => setShowReview(false)}
+                onClick={() => { setShowReview(false); setExtracted([]); }}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Cancel
