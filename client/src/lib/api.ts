@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ownTextFrom } from './i18n';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -17,7 +18,7 @@ api.interceptors.request.use((config) => {
 
 // Handle 401 globally - clear token and redirect to login (owner requests only)
 api.interceptors.response.use(
-  (response) => response,
+  (response) => { ownTextFrom(response.data); return response; },
   (error) => {
     const usedOwnerToken = error.config?.headers?.Authorization === `Bearer ${localStorage.getItem('tabpro_token')}`;
     if (error.response?.status === 401 && usedOwnerToken) {

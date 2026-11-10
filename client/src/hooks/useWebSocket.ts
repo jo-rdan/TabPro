@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
+import { ownTextFrom } from "../lib/i18n";
 import { WsEvent } from "@tabpro/shared";
 
 interface UseWebSocketOptions {
@@ -40,6 +41,7 @@ export function useWebSocket({
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        ownTextFrom(data);
         if (data.type && data.type !== "connected") {
           onEventRef.current(data);
         }
