@@ -68,6 +68,21 @@ export function useLang(): Lang {
   );
 }
 
+// What restaurants typed (dish and category names, descriptions, table and
+// staff names) is never translated, even when it happens to match a phrase in
+// the dictionary ("Goat brochette", "Kitchen"…). Every API response and live
+// update feeds its names in here (see ownTextFrom).
+const own = new Set<string>();
+const OWN_KEYS = new Set(["name", "description", "label", "category", "categoryName", "itemName", "tableLabel", "venueName", "staffName", "waiterName", "offerLabel"]);
+export function ownTextFrom(data: unknown, depth = 0) {
+  if (!data || depth > 8 || typeof data !== "object") return;
+  if (Array.isArray(data)) { for (const d of data) ownTextFrom(d, depth + 1); return; }
+  for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
+    if (typeof v === "string") { if (OWN_KEYS.has(k) && v.trim()) own.add(v.trim()); }
+    else if (v && typeof v === "object") ownTextFrom(v, depth + 1);
+  }
+}
+
 /** One piece of on-screen English in the chosen language (unknown text stays English). */
 export function translate(text: string, lang: Lang = current): string {
   if (lang === "en" || !text) return text;
@@ -75,6 +90,7 @@ export function translate(text: string, lang: Lang = current): string {
   if (!m) return text;
   const [, lead, core, trail] = m;
   if (!core || !/[A-Za-z]/.test(core)) return text;
+  if (own.has(core)) return text;
   const dict = DICTS[lang];
   const hit = dict.exact[core];
   if (hit !== undefined) return lead + hit + trail;
