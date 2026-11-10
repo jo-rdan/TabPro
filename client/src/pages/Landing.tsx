@@ -111,6 +111,7 @@ function Nav() {
 // ─── Hero: try it right here ─────────────────────────────────────────────────
 
 function Hero() {
+  // The live demo: the guest sends their order and the waiter's card buzzes.
   const [called, setCalled] = useState(false);
   const call = () => {
     if (called) return;
@@ -165,7 +166,7 @@ function Hero() {
           </Reveal>
         </div>
 
-        {/* Live demo: tap Skuzi! on the guest phone and the waiter's card buzzes */}
+        {/* Live demo: send the order on the guest phone and the waiter's card buzzes */}
         <Reveal delay={320} className="relative mx-auto mt-16 max-w-5xl">
           <div id="try" className="relative flex scroll-mt-28 items-end justify-center">
             <div className="absolute left-0 top-24 hidden lg:block">
@@ -175,7 +176,7 @@ function Hero() {
             <div className="relative z-10">
               <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--hero-muted)]">Your guest, at table 4</p>
               <PhoneFrame className="h-[560px] w-[292px]">
-                <ScreenMenu onCall={call} called={called} compact />
+                <ScreenMenu noCall onSend={call} sent={called} compact />
               </PhoneFrame>
             </div>
             <div className="absolute right-0 top-28 hidden lg:block">

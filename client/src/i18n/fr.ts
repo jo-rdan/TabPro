@@ -459,6 +459,8 @@ export const FR: { exact: Record<string, string>; patterns?: [RegExp, string | (
     "100% of the money is yours": "100 % de l'argent est à vous",
     "Guests pay your own MoMo Pay code. Skuzi takes nothing from your sales.": "Les clients paient votre propre code MoMo Pay. Skuzi ne prend rien sur vos ventes.",
     // Website (skuzi.xyz)
+    "Sent · Eric has it": "Envoyé · Eric l'a reçu",
+    "Table 4 · new order": "Table 4 · nouvelle commande",
     "And a lot more": "Et bien plus",
     "Behind every scan, Skuzi keeps your team, your kitchen and your night running smoothly, and brings guests back. The rest, we show you in person.": "Derrière chaque scan, Skuzi fait tourner votre équipe, votre cuisine et votre soirée en douceur, et fait revenir vos clients. Le reste, on vous le montre en personne.",
     "Behind the scenes": "En coulisses",

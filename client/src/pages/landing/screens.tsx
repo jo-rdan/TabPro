@@ -99,8 +99,8 @@ const MENU = [
   { name: "Chips mayai", note: "Kitchen", price: 2500, qty: 0 },
 ];
 
-/** The guest's menu. In the hero it's live: tap "Skuzi!" and the waiter's card buzzes. */
-export function ScreenMenu({ onCall, called = false, compact = false, noCall = false }: { onCall?: () => void; called?: boolean; compact?: boolean; noCall?: boolean }) {
+/** The guest's menu. In the hero it's live: send the order and the waiter's card buzzes. */
+export function ScreenMenu({ onCall, called = false, compact = false, noCall = false, onSend, sent = false }: { onCall?: () => void; called?: boolean; compact?: boolean; noCall?: boolean; onSend?: () => void; sent?: boolean }) {
   const [qty, setQty] = useState(MENU.map((m) => m.qty));
   const total = MENU.reduce((s, m, i) => s + m.price * qty[i], 0);
   const items = qty.reduce((a, b) => a + b, 0);
@@ -140,10 +140,21 @@ export function ScreenMenu({ onCall, called = false, compact = false, noCall = f
           {called ? <><Check size={15} strokeWidth={3} /> Eric is on his way</> : <><Hand size={17} color="#231A2C" /> Skuzi!</>}
           {onCall && !called && <span className="sk-tapme absolute -right-1 -top-2 rounded-full bg-[#BF4A1A] px-2 py-0.5 text-[9px] font-extrabold text-[#F4F0F7]">Tap me</span>}
         </button>}
-        <div className="flex items-center justify-between rounded-2xl bg-[#BF4A1A] px-4 py-3 text-[#F4F0F7]">
-          <span className="text-[12px] font-bold">Send order · {items} items</span>
-          <span className="text-[12px] font-bold">{fmt(total)} RWF</span>
-        </div>
+        <button
+          type="button"
+          onClick={onSend}
+          className={`relative flex w-full items-center justify-between rounded-2xl px-4 py-3 text-[#F4F0F7] transition active:scale-[0.98] ${sent ? "bg-[#5E7A55]" : "bg-[#BF4A1A]"}`}
+        >
+          {sent ? (
+            <span className="flex w-full items-center justify-center gap-2 text-[12px] font-bold"><Check size={15} strokeWidth={3} /> Sent · Eric has it</span>
+          ) : (
+            <>
+              <span className="text-[12px] font-bold">Send order · {items} items</span>
+              <span className="text-[12px] font-bold">{fmt(total)} RWF</span>
+            </>
+          )}
+          {onSend && !sent && <span className="sk-tapme absolute -right-1 -top-2 rounded-full bg-[#F2B33A] px-2 py-0.5 text-[9px] font-extrabold text-[#231A2C]">Tap me</span>}
+        </button>
       </div>
     </div>
   );
@@ -220,17 +231,17 @@ export function ScreenPay() {
 
 // ─── Hero side cards ─────────────────────────────────────────────────────────
 
-/** The waiter's phone card: quiet, then buzzes when the guest taps Skuzi!. */
+/** The waiter's phone card: quiet, then buzzes when the guest sends an order. */
 export function WaiterCall({ calling }: { calling: boolean }) {
   return (
     <div className={`w-[230px] rounded-[24px] p-4 shadow-[0_30px_60px_-25px_rgba(0,0,0,0.6)] transition-colors duration-300 ${calling ? "sk-buzz bg-[#BF4A1A] text-[#F4F0F7]" : "bg-[#FDFCFE] text-[#231A2C]"}`}>
       <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${calling ? "text-[#FCE3D3]" : "text-[#6F6379]"}`}>Eric's phone</p>
       {calling ? (
         <div className="mt-2 flex items-center gap-3">
-          <span className="sk-wave inline-block"><Hand size={34} color="#F4F0F7" /></span>
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/15"><Bell size={20} /></span>
           <div>
-            <p className="font-display text-[17px] font-bold leading-tight">Skuzi! Table 4</p>
-            <p className="text-[11.5px] text-[#FCE3D3]">would love a hand · now</p>
+            <p className="font-display text-[17px] font-bold leading-tight">Table 4 · new order</p>
+            <p className="text-[11.5px] text-[#FCE3D3]">2 × Primus · Goat brochette</p>
           </div>
         </div>
       ) : (
