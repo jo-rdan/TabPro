@@ -68,17 +68,17 @@ export function useLang(): Lang {
   );
 }
 
-// What restaurants typed (dish and category names, descriptions, table and
-// staff names) is never translated, even when it happens to match a phrase in
-// the dictionary ("Goat brochette", "Kitchen"…). Every API response and live
-// update feeds its names in here (see ownTextFrom).
+// Dish names are never translated, even when one happens to match a phrase in
+// the dictionary. Every API response and live update feeds its dish names in
+// here: the name of anything with a price, and order lines' item names.
 const own = new Set<string>();
-const OWN_KEYS = new Set(["name", "description", "label", "category", "categoryName", "itemName", "tableLabel", "venueName", "staffName", "waiterName", "offerLabel"]);
 export function ownTextFrom(data: unknown, depth = 0) {
   if (!data || depth > 8 || typeof data !== "object") return;
   if (Array.isArray(data)) { for (const d of data) ownTextFrom(d, depth + 1); return; }
-  for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
-    if (typeof v === "string") { if (OWN_KEYS.has(k) && v.trim()) own.add(v.trim()); }
+  const o = data as Record<string, unknown>;
+  const dish = "priceRwf" in o || "unitPriceRwf" in o || "menuItemId" in o;
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v === "string") { if (v.trim() && ((dish && k === "name") || k === "itemName")) own.add(v.trim()); }
     else if (v && typeof v === "object") ownTextFrom(v, depth + 1);
   }
 }
