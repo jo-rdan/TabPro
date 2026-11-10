@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, ReactNode } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, ArrowUpRight, Check, Plus, Minus, Hourglass, HelpCircle, FileX, Moon,
@@ -14,7 +14,7 @@ import Wordmark from "../components/Wordmark";
 import BookDemo, { openBookDemo } from "./landing/BookDemo";
 import { WAITLIST_MODE, cta } from "../lib/waitlistMode";
 import {
-  PhoneFrame, ScreenScan, ScreenMenu, ScreenCall, ScreenPay, WaiterCall, TonightCard,
+  PhoneFrame, ScreenScan, ScreenMenu, ScreenPay, WaiterCall, TonightCard,
   MoneyWidget, PayoutWidget, AlertsWidget,
   Hand, useInView,
 } from "./landing/screens";
@@ -202,124 +202,53 @@ const PAINS = [
   { pain: { icon: HelpCircle, title: "“Did table 6 pay?”", text: "Nobody is sure. Someone checks MoMo messages at the door while guests wait to leave." },
     fix: { icon: BadgeCheck, title: "Every bill, clear.", text: "Guests pay your MoMo Pay code or cash, the waiter taps Paid, and you see it on your phone. No guessing at the door." } },
   { pain: { icon: FileX, title: "Orders get lost.", text: "A busy waiter, a scrap of paper, a forgotten brochette. The guest is upset and you lose the sale." },
-    fix: { icon: Send, title: "Every order reaches the right waiter.", text: "Straight to their phone with the table number. Nothing to write down, nothing to forget." } },
+    fix: { icon: Send, title: "Orders never get lost.", text: "Every order arrives clear, from the table to the bar and kitchen. Nothing to write down, nothing to forget." } },
   { pain: { icon: Moon, title: "You find out at closing.", text: "Or the next morning. You can't fix a slow night you couldn't see." },
-    fix: { icon: LineChart, title: "You watch the night as it happens.", text: "Money, tables and waiters on your phone, live, wherever you are." } },
+    fix: { icon: LineChart, title: "You watch the night as it happens.", text: "Your whole restaurant on your phone, live, wherever you are." } },
 ];
 
-// Scroll tells the story: visitors land on the problems, then the Skuzi hand
-// sweeps across and each card flips over to its fix. On computers the section
-// stays pinned while you scroll; on phones each card flips as you reach it.
+// Without / With Skuzi: two tabs, the same four moments of a busy night.
 function PainSwitch() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [progress, setProgress] = useState(0); // 0..1 through the pinned stretch (computers)
-  const [flipped, setFlipped] = useState<boolean[]>([false, false, false, false]);
-  const [wide, setWide] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const onMq = () => setWide(mq.matches);
-    onMq();
-    mq.addEventListener("change", onMq);
-    let raf = 0;
-    const measure = () => {
-      raf = 0;
-      const el = sectionRef.current;
-      if (!el) return;
-      if (mq.matches) {
-        const r = el.getBoundingClientRect();
-        const span = r.height - window.innerHeight;
-        const p = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 1;
-        setProgress(p);
-        setFlipped(FLIP_AT.map((at) => p >= at));
-      } else {
-        // Phones: a card flips once it has risen past 45% of the screen.
-        setFlipped(cardRefs.current.map((c) => !!c && c.getBoundingClientRect().top < window.innerHeight * 0.45));
-      }
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(measure); };
-    measure();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      mq.removeEventListener("change", onMq);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  const done = flipped.filter(Boolean).length;
-  const all = done === PAINS.length;
-  // The hand travels from just left of the first card to past the last one.
-  const handX = Math.min(1.06, Math.max(-0.06, (progress - 0.1) / 0.72));
-  const handVisible = wide && progress > 0.06 && progress < 0.9;
-
+  const [withSkuzi, setWithSkuzi] = useState(false);
   return (
-    <section ref={sectionRef} className="relative bg-[var(--bg)] lg:h-[260vh]">
-      <div className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-center">
-        <div className="mx-auto w-full max-w-7xl px-5 py-24 sm:px-8 lg:py-0 lg:pt-16">
-          <Reveal className="mx-auto max-w-3xl text-center">
-            <Eyebrow>Sound familiar?</Eyebrow>
-            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-              Friday night, full house,{" "}
-              <span className="relative inline-grid">
-                <span className={`col-start-1 row-start-1 text-[var(--rust-ink)] transition-all duration-500 ${all ? "-translate-y-3 opacity-0" : "opacity-100"}`}>and then…</span>
-                <span className={`col-start-1 row-start-1 text-[#5E7A55] transition-all duration-500 dark:text-[#A9BE9F] ${all ? "opacity-100" : "translate-y-3 opacity-0"}`} aria-hidden={!all}>and Skuzi.</span>
-              </span>
-            </h2>
-          </Reveal>
+    <section className="relative bg-[var(--bg)]">
+      <div className="mx-auto w-full max-w-7xl px-5 py-24 sm:px-8">
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <Eyebrow>Sound familiar?</Eyebrow>
+          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
+            Friday night, full house,{" "}
+            <span className={withSkuzi ? "text-[#5E7A55] dark:text-[#A9BE9F]" : "text-[var(--rust-ink)]"}>{withSkuzi ? "and Skuzi." : "and then…"}</span>
+          </h2>
+        </Reveal>
 
-          {/* Without → With: fills with green as the cards flip */}
-          <div className="mt-8 flex flex-col items-center gap-2" aria-hidden="true">
-            <div className="relative grid w-[300px] grid-cols-2 overflow-hidden rounded-full bg-[var(--card)] p-1.5 text-[14px] font-bold ring-1 ring-[var(--line)]">
-              <span className="absolute inset-y-1.5 left-1.5 rounded-full bg-[#5E7A55] transition-[width] duration-500 ease-out" style={{ width: `calc((100% - 12px) * ${done / PAINS.length})` }} />
-              <span className={`relative z-10 py-2 text-center transition-colors ${done >= 2 ? "text-[#F4F0F7]" : "text-[var(--ink)]"}`}>Without Skuzi</span>
-              <span className={`relative z-10 py-2 text-center transition-colors ${all ? "text-[#F4F0F7]" : "text-[var(--muted)]"}`}>With Skuzi</span>
-            </div>
-            <p className={`text-[13px] font-semibold text-[var(--muted)] transition-opacity duration-500 ${done ? "opacity-0" : "opacity-100"}`}>
-              Keep scrolling <span className="sk-bob inline-block">↓</span>
-            </p>
+        <div className="mt-8 flex justify-center">
+          <div role="tablist" aria-label="Without or with Skuzi" className="grid w-[300px] grid-cols-2 rounded-full bg-[var(--card)] p-1.5 text-[14px] font-bold ring-1 ring-[var(--line)]">
+            {[false, true].map((w) => (
+              <button key={String(w)} role="tab" aria-selected={withSkuzi === w} onClick={() => setWithSkuzi(w)}
+                className={`rounded-full py-2 transition-colors ${withSkuzi === w ? (w ? "bg-[#5E7A55] text-[#F4F0F7]" : "bg-[#231A2C] text-[#F4F0F7]") : "text-[var(--muted)]"}`}>
+                {w ? "With Skuzi" : "Without Skuzi"}
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="relative mt-8">
-            {/* The Skuzi hand sweeping across the cards (computers) */}
-            <div
-              className="pointer-events-none absolute -top-12 z-20 hidden -translate-x-1/2 transition-opacity duration-300 lg:block"
-              style={{ left: `${handX * 100}%`, opacity: handVisible ? 1 : 0 }}
-              aria-hidden="true"
-            >
-              <span className="sk-wave inline-block drop-shadow-[0_10px_20px_rgba(242,179,58,0.45)]"><Hand size={56} color="#F0763A" /></span>
-            </div>
-            <div className="pointer-events-none absolute -top-2 left-0 z-10 hidden h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#F2B33A] to-[#F2B33A] lg:block" style={{ width: `${Math.max(0, handX) * 100}%`, opacity: handVisible || all ? 0.8 : 0, transition: "opacity .3s" }} />
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {PAINS.map(({ pain, fix }, i) => (
-                <div key={i} ref={(el) => (cardRefs.current[i] = el)} className="sk-flip-scene">
-                  <div className={`sk-flip-card ${flipped[i] ? "is-flipped" : ""}`}>
-                    <FaceCard side={pain} />
-                    <FaceCard side={fix} fixed />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <p className={`mt-8 text-center text-[16px] font-semibold text-[var(--body)] transition-opacity duration-500 ${all ? "opacity-100" : "opacity-0"}`}>
+        <div key={String(withSkuzi)} className="sk-fade mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {PAINS.map(({ pain, fix }, i) => <FaceCard key={i} side={withSkuzi ? fix : pain} fixed={withSkuzi} />)}
+        </div>
+        {withSkuzi && (
+          <p className="mt-8 text-center text-[16px] font-semibold text-[var(--body)]">
             Skuzi fixes all four, <span className="text-[var(--ink)]">without a single new machine.</span>
           </p>
-        </div>
+        )}
       </div>
     </section>
   );
 }
 
-const FLIP_AT = [0.22, 0.38, 0.54, 0.7];
-
 function FaceCard({ side, fixed = false }: { side: { icon: typeof Zap; title: string; text: string }; fixed?: boolean }) {
   const Icon = side.icon;
   return (
-    <div className={`sk-face h-full rounded-[28px] p-7 ${fixed ? "sk-face-back bg-[#231A2C] text-[#F4F0F7] shadow-[0_30px_60px_-30px_rgba(35,26,44,0.6)]" : "bg-[var(--card)] ring-1 ring-[var(--line)]"}`}>
+    <div className={`h-full rounded-[28px] p-7 ${fixed ? "bg-[#231A2C] text-[#F4F0F7] shadow-[0_30px_60px_-30px_rgba(35,26,44,0.6)]" : "bg-[var(--card)] ring-1 ring-[var(--line)]"}`}>
       <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${fixed ? "bg-[#F2B33A] text-[#231A2C]" : "bg-[var(--bg)] text-[var(--muted)]"}`}>
         <Icon size={22} />
       </span>
@@ -332,12 +261,9 @@ function FaceCard({ side, fixed = false }: { side: { icon: typeof Zap; title: st
 
 // ─── How it works: a guided tour on a phone ─────────────────────────────────
 
-const HandIcon = ({ size = 21 }: { size?: number }) => <Hand size={size + 3} />;
-
 const STEPS = [
-  { icon: QrCode, title: "Scan", text: "Every table gets a Skuzi sticker. Guests point their phone camera at it and your menu opens. No app, no account.", screen: ScreenScan },
-  { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Each order goes straight to their waiter's phone.", screen: () => <ScreenMenu /> },
-  { icon: HandIcon, title: "Skuzi!", text: "Need a glass, more ice, the bill? One tap and only their waiter's phone buzzes. The room stays calm.", screen: ScreenCall },
+  { icon: QrCode, title: "Scan", text: "Guests point their phone camera at the code on the table and your menu opens. No app, no account.", screen: ScreenScan },
+  { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Your team gets it right away.", screen: () => <ScreenMenu /> },
   { icon: Wallet, title: "Pay", text: "The bill is on their phone, item by item. They pay your MoMo Pay code or cash, and the waiter taps Paid.", screen: ScreenPay },
 ];
 
@@ -358,7 +284,7 @@ function Tour() {
         <Reveal>
           <Eyebrow>How it works</Eyebrow>
           <h2 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
-            One scan. Four taps. <span className="text-[var(--rust-ink)]">One happy table.</span>
+            One scan. A few taps. <span className="text-[var(--rust-ink)]">One happy table.</span>
           </h2>
         </Reveal>
       </div>
@@ -522,10 +448,9 @@ function Owners() {
                   ["Cash still welcome", "MoMo and cash, side by side."],
                   ["Every waiter covered", "No smartphone? A manager covers their tables."],
                   ["Set up in one visit", "We come to you and get your team going."],
-                ].map(([t, d]) => (
+                ].map(([t]) => (
                   <div key={t} className="rounded-2xl bg-[var(--bg)] p-4">
                     <p className="flex items-start gap-1.5 text-[14px] font-extrabold leading-snug"><Check size={15} strokeWidth={3} className="mt-0.5 flex-shrink-0 text-[#5E7A55]" />{t}</p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--body)]">{d}</p>
                   </div>
                 ))}
               </div>
@@ -560,7 +485,7 @@ const FAQS = [
   { q: "Do my guests need to download an app?", a: "No. They scan the sticker on the table with their phone camera and your menu opens. It works on any smartphone." },
   { q: "How do guests pay?", a: "With your own MoMo Pay code, or cash as usual. The money goes straight to you: Skuzi takes nothing from your bills." },
   { q: "What does it cost?", a: "One package a month: Go 35,000, Pro 60,000 or Max 120,000 RWF. Nothing to set up, no machine to buy, and the first weeks are free. Pay 6 months or a year at once and save." },
-  { q: "Do I need to buy any equipment?", a: "No. Your waiters use their own phones, you use yours, and we bring the stickers for your tables." },
+  { q: "Do I need to buy any equipment?", a: "No. Your waiters use their own phones, you use yours, and we bring everything else." },
   { q: "What if some of my waiters don't have a smartphone?", a: "That's fine. Add them anyway: a manager's phone gets their table calls, so no guest is left waiting." },
   { q: "How do I get started?", a: WAITLIST_MODE ? "Join the waitlist. When your spot comes up, we come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." : "Book a free demo. We come to you, set up your menu, tables and team with you, and show your waiters how it works. Usually in one visit." },
 ];
