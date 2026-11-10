@@ -460,6 +460,9 @@ export const RW: { exact: Record<string, string>; patterns?: [RegExp, string | (
     "100% of the money is yours": "100% by'amafaranga ni ayawe",
     "Guests pay your own MoMo Pay code. Skuzi takes nothing from your sales.": "Abakiriya bishyura kuri MoMo Pay code yawe. Skuzi nta kintu ikura ku byo wagurishije.",
     // Website (skuzi.xyz)
+    "Beer · 72cl": "Byeri · 72cl",
+    "Grill": "Ibyokeje",
+    "Soft drink": "Ikinyobwa kidasindisha",
     "Skuzi home": "Ahabanza ha Skuzi",
     "How it works": "Uko ikora",
     "For owners": "Ku banyiri restora",
