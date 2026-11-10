@@ -200,7 +200,7 @@ const PAINS = [
   { pain: { icon: Hourglass, title: "The second round never comes.", text: "Guests wave, whistle and wait. Many give up and stop ordering. That's money quietly walking out the door." },
     fix: { icon: Zap, title: "Another round in two taps.", text: "Guests order from their own phone the moment they're thirsty. No catching anyone's eye." } },
   { pain: { icon: HelpCircle, title: "“Did table 6 pay?”", text: "Nobody is sure. Someone checks MoMo messages at the door while guests wait to leave." },
-    fix: { icon: BadgeCheck, title: "Paid means paid.", text: "Mobile Money payments are confirmed for you and the bill closes itself. No screenshots, no arguments." } },
+    fix: { icon: BadgeCheck, title: "Every bill, clear.", text: "Guests pay your MoMo Pay code or cash, the waiter taps Paid, and you see it on your phone. No guessing at the door." } },
   { pain: { icon: FileX, title: "Orders get lost.", text: "A busy waiter, a scrap of paper, a forgotten brochette. The guest is upset and you lose the sale." },
     fix: { icon: Send, title: "Every order reaches the right waiter.", text: "Straight to their phone with the table number. Nothing to write down, nothing to forget." } },
   { pain: { icon: Moon, title: "You find out at closing.", text: "Or the next morning. You can't fix a slow night you couldn't see." },
@@ -338,7 +338,7 @@ const STEPS = [
   { icon: QrCode, title: "Scan", text: "Every table gets a Skuzi sticker. Guests point their phone camera at it and your menu opens. No app, no account.", screen: ScreenScan },
   { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Each order goes straight to their waiter's phone.", screen: () => <ScreenMenu /> },
   { icon: HandIcon, title: "Skuzi!", text: "Need a glass, more ice, the bill? One tap and only their waiter's phone buzzes. The room stays calm.", screen: ScreenCall },
-  { icon: Wallet, title: "Pay", text: "The bill is on their phone, item by item. They approve with their MoMo or Airtel Money PIN, and that's it.", screen: ScreenPay },
+  { icon: Wallet, title: "Pay", text: "The bill is on their phone, item by item. They pay your MoMo Pay code or cash, and the waiter taps Paid.", screen: ScreenPay },
 ];
 
 function Tour() {
@@ -509,7 +509,7 @@ function Owners() {
             <Card><MoneyWidget active={inView} /><CardTitle title="Tonight's money, live" text="Every paid bill adds to the line. Know how the night is going before closing time, not after." /></Card>
           </Reveal>
           <Reveal delay={80} className="md:col-span-2">
-            <Card dark><PayoutWidget /><CardTitle dark title="Paid in seconds" text="The moment a guest pays, your money goes straight to your Mobile Money." /></Card>
+            <Card dark><PayoutWidget /><CardTitle dark title="100% of the money is yours" text="Guests pay your own MoMo Pay code. Skuzi takes nothing from your sales." /></Card>
           </Reveal>
           <Reveal className="md:col-span-3">
             <Card><AlertsWidget /><CardTitle title="You hear about everything" text="Guests seated, waiters called, bills paid. Nothing happens without you knowing." /></Card>
