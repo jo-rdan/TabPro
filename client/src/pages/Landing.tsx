@@ -2,7 +2,7 @@ import { useEffect, useState, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, ArrowUpRight, Check, Plus, Minus, Hourglass, HelpCircle, FileX, Moon,
-  Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet,
+  Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet, Sparkles,
 } from "lucide-react";
 import { PLANS, planPrice, type PlanId } from "@tabpro/shared";
 import { INCLUDED } from "../lib/packages";
@@ -14,7 +14,7 @@ import Wordmark from "../components/Wordmark";
 import BookDemo, { openBookDemo } from "./landing/BookDemo";
 import { WAITLIST_MODE, cta } from "../lib/waitlistMode";
 import {
-  PhoneFrame, ScreenScan, ScreenMenu, ScreenPay, WaiterCall, TonightCard,
+  PhoneFrame, ScreenScan, ScreenMenu, ScreenPay, ScreenMore, WaiterCall, TonightCard,
   MoneyWidget, PayoutWidget, AlertsWidget,
   Hand, useInView,
 } from "./landing/screens";
@@ -111,6 +111,7 @@ function Nav() {
 // ─── Hero: try it right here ─────────────────────────────────────────────────
 
 function Hero() {
+  // The live demo: the guest sends their order and the waiter's card buzzes.
   const [called, setCalled] = useState(false);
   const call = () => {
     if (called) return;
@@ -165,7 +166,7 @@ function Hero() {
           </Reveal>
         </div>
 
-        {/* Live demo: tap Skuzi! on the guest phone and the waiter's card buzzes */}
+        {/* Live demo: send the order on the guest phone and the waiter's card buzzes */}
         <Reveal delay={320} className="relative mx-auto mt-16 max-w-5xl">
           <div id="try" className="relative flex scroll-mt-28 items-end justify-center">
             <div className="absolute left-0 top-24 hidden lg:block">
@@ -175,7 +176,7 @@ function Hero() {
             <div className="relative z-10">
               <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--hero-muted)]">Your guest, at table 4</p>
               <PhoneFrame className="h-[560px] w-[292px]">
-                <ScreenMenu onCall={call} called={called} compact />
+                <ScreenMenu noCall onSend={call} sent={called} compact />
               </PhoneFrame>
             </div>
             <div className="absolute right-0 top-28 hidden lg:block">
@@ -263,8 +264,9 @@ function FaceCard({ side, fixed = false }: { side: { icon: typeof Zap; title: st
 
 const STEPS = [
   { icon: QrCode, title: "Scan", text: "Guests point their phone camera at the code on the table and your menu opens. No app, no account.", screen: ScreenScan },
-  { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Your team gets it right away.", screen: () => <ScreenMenu /> },
+  { icon: UtensilsCrossed, title: "Order", text: "They see your menu with prices and order round after round. Your team gets it right away.", screen: () => <ScreenMenu noCall /> },
   { icon: Wallet, title: "Pay", text: "The bill is on their phone, item by item. They pay your MoMo Pay code or cash, and the waiter taps Paid.", screen: ScreenPay },
+  { icon: Sparkles, title: "And a lot more", text: "Behind every scan, Skuzi keeps your team, your kitchen and your night running smoothly, and brings guests back. The rest, we show you in person.", screen: ScreenMore },
 ];
 
 function Tour() {
