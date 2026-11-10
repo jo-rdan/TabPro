@@ -200,19 +200,19 @@ export function ScreenPay() {
           <div className="sk-pop flex flex-col items-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#5E7A55] text-[#F4F0F7] shadow-lg shadow-[#5E7A55]/40"><Check size={30} strokeWidth={3} /></span>
             <p className="mt-3 text-[14px] font-extrabold">Paid · 7,300 RWF</p>
-            <p className="mt-1 text-[10.5px] text-[#6F6379]">Thank you! See you next time.</p>
+            <p className="mt-1 text-[10.5px] text-[#6F6379]">Your waiter marked it paid. See you next time!</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
             <Loader2 size={34} className="animate-spin text-[#BF4A1A]" />
-            <p className="mt-3 text-[13px] font-extrabold">Approve on your phone</p>
-            <p className="mt-1 text-[10.5px] text-[#6F6379]">Enter your MoMo PIN to confirm</p>
+            <p className="mt-3 text-[13px] font-extrabold">Pay MoMo code 482910</p>
+            <p className="mt-1 text-[10.5px] text-[#6F6379]">Or pay cash. Your waiter taps "Paid".</p>
           </div>
         )}
       </div>
       <div className="flex justify-center gap-1.5 pb-6">
         <span className="rounded-full bg-[#ffcb05] px-2.5 py-1 text-[9px] font-extrabold text-[#231A2C]">MTN MoMo</span>
-        <span className="rounded-full bg-[#e40000] px-2.5 py-1 text-[9px] font-extrabold text-white">Airtel Money</span>
+        <span className="rounded-full bg-[#5E7A55] px-2.5 py-1 text-[9px] font-extrabold text-white">Cash</span>
       </div>
     </div>
   );
@@ -307,9 +307,9 @@ export function PayoutWidget() {
   return (
     <div className="space-y-2.5">
       {[
-        ["Table 4 paid", "7,300 RWF", "Sent to your MoMo", "just now"],
-        ["Table 9 paid", "14,500 RWF", "Sent to your MoMo", "4 min ago"],
-        ["Table 2 paid", "9,000 RWF", "Sent to your MoMo", "11 min ago"],
+        ["Table 4 paid", "7,300 RWF", "MoMo Pay code", "just now"],
+        ["Table 9 paid", "14,500 RWF", "Cash", "4 min ago"],
+        ["Table 2 paid", "9,000 RWF", "MoMo Pay code", "11 min ago"],
       ].map(([t, a, s, w], i) => (
         <div key={t} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10" style={{ opacity: 1 - i * 0.22 }}>
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#5E7A55]/30"><Check size={16} className="text-[#A9BE9F]" /></span>
@@ -392,10 +392,10 @@ export function MenuPhotoWidget() {
 // Owner alerts that keep arriving: the "I know everything" feeling.
 const ALERTS: [typeof Bell, string, string, string][] = [
   [Users, "Table 7", "Guests just sat down", "bg-[#EFEBF2] text-[#554A60]"],
-  [Wallet, "Table 4 paid", "7,300 RWF · on your MoMo", "bg-[#E4EADF] text-[#3F5A38]"],
+  [Wallet, "Table 4 paid", "7,300 RWF · MoMo Pay code", "bg-[#E4EADF] text-[#3F5A38]"],
   [Bell, "Table 2 called Grace", "She's on her way", "bg-[#FFEDB8] text-[#7A5A16]"],
   [Users, "Table 9", "Guests just sat down", "bg-[#EFEBF2] text-[#554A60]"],
-  [Wallet, "Table 1 paid", "14,500 RWF · on your MoMo", "bg-[#E4EADF] text-[#3F5A38]"],
+  [Wallet, "Table 1 paid", "14,500 RWF · cash", "bg-[#E4EADF] text-[#3F5A38]"],
 ];
 export function AlertsWidget() {
   const [n, setN] = useState(0);
