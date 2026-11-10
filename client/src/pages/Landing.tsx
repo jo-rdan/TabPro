@@ -5,6 +5,7 @@ import {
   Zap, BadgeCheck, Send, LineChart, QrCode, UtensilsCrossed, Wallet,
 } from "lucide-react";
 import { PLANS, planPrice, type PlanId } from "@tabpro/shared";
+import { INCLUDED } from "../lib/packages";
 import AnimatedLogo from "../components/AnimatedLogo";
 import ThemeSwitch, { ThemeCycleButton } from "../components/ThemeSwitch";
 import Wordmark from "../components/Wordmark";
@@ -603,10 +604,10 @@ function Faq() {
 
 // ─── Prices ──────────────────────────────────────────────────────────────────
 
-const PRICE_ROWS: { id: PlanId; who: string; has: string[] }[] = [
-  { id: "basic", who: "Small bars", has: ["QR menu on every table", "Waiter phones", "Bills and today's sales"] },
-  { id: "pro", who: "Most restaurants", has: ["Everything in Go", "Kitchen and cashier screens", "Stock, history, bookings, campaigns"] },
-  { id: "elite", who: "Big places", has: ["Everything in Pro", "Events and nights out", "Everything Skuzi does"] },
+const PRICE_ROWS: { id: PlanId; who: string }[] = [
+  { id: "basic", who: "Small bars" },
+  { id: "pro", who: "Most restaurants" },
+  { id: "elite", who: "Big nights out" },
 ];
 
 function Prices() {
@@ -651,7 +652,7 @@ function Prices() {
                     </p>
                   )}
                   <ul className="mt-5 space-y-2 text-[15px] text-[var(--body)]">
-                    {row.has.map((h) => <li key={h}>✓ {h}</li>)}
+                    {INCLUDED[row.id].map((h) => <li key={h}>✓ {h}</li>)}
                   </ul>
                 </div>
               </Reveal>

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Check, Lock, Smartphone, Loader2 } from "lucide-react";
+import { Check, CreditCard, Lock, Smartphone, Loader2 } from "lucide-react";
 import { PLANS, PLAN_FOR, planPrice, type PlanFeature, type PlanId, type PlanStatus } from "@tabpro/shared";
 import Layout from "../../components/Layout";
 import { FoundingStrip } from "../../components/PlanWall";
 import api from "../../lib/api";
 import { useAuthStore } from "../../lib/auth";
-import { BOOKINGS_ENABLED } from "../../lib/features";
+import { INCLUDED } from "../../lib/packages";
 
 // Plan: the venue's package (Go / Pro / Max), its free trial (with
 // everything), paying a month with MoMo, and the MoMo Pay code guests pay.
@@ -16,14 +16,9 @@ type Status = PlanStatus;
 const rwf = (n: number) => `${n.toLocaleString("en-US")} RWF`;
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "Africa/Kigali" }) : "");
 
-const INCLUDED: Record<PlanId, string[]> = {
-  basic: ["Guests order from the table", "Skuzi! button: guests reach their waiter", "Your live dashboard, from anywhere", "Night report at 2am", "Unlimited tables and staff"],
-  pro: ["Everything in Go", "History: every night, every bill", ...(BOOKINGS_ENABLED ? ["Bookings and your page on Explore"] : []), "Campaigns that bring guests back", "Bar stock and food stock", "Food orders go straight to the chef's own phone"],
-  elite: ["Everything in Pro", "AI event planner: finds the idea, makes the poster, sends it to your guests", "See how many clients each event brought"],
-};
 
 const FEATURE_NAME: Record<PlanFeature, string> = {
-  history: "History", bookings: "Bookings", campaigns: "Campaigns", momo: "MoMo payments", stock: "Stock", kitchen: "The kitchen screen", events: "The AI event planner",
+  history: "History", bookings: "Bookings", campaigns: "Campaigns", momo: "MoMo payments", stock: "Stock", kitchen: "The kitchen screen", events: "Skuzi AI",
 };
 
 function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: Status; onSaved: (s: Status) => void }) {
@@ -46,7 +41,7 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
         Guests pay this code from their bill. <b className="text-gray-900 dark:text-white">100% goes straight to you</b>: Skuzi takes nothing from your sales. Your waiter taps "Paid" once it shows on your MoMo.
       </p>
       {!allowed ? (
-        <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300"><Lock size={14} /> Part of Pro and Max. On Go, guests pay the waiter.</p>
+        <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300"><Lock size={14} /> Part of every package.</p>
       ) : editing ? (
         <div className="mt-3">
           <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="e.g. 123456" aria-label="MoMo Pay code"
@@ -69,7 +64,7 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
 
 // Pays one month of a package from the owner's MoMo: their phone asks for the
 // PIN, then this checks every few seconds until MoMo confirms.
-function PayCard({ venueId, plan, founding, onPaid }: { venueId: string; plan: PlanId; founding: boolean; onPaid: (s: Status) => void }) {
+function PayCard({ venueId, plan, founding, card, onPaid }: { venueId: string; plan: PlanId; founding: boolean; card: boolean; onPaid: (s: Status) => void }) {
   const [phone, setPhone] = useState(() => localStorage.getItem("skuzi_pay_phone") ?? "");
   const [step, setStep] = useState<"form" | "waiting" | "done">("form");
   // Every package can be paid for a year at once, cheaper the bigger the package.
@@ -78,7 +73,20 @@ function PayCard({ venueId, plan, founding, onPaid }: { venueId: string; plan: P
   const price = (period === "year" && yearlyRwf) || (period === "half" && sixMonthRwf) || monthRwf;
   const months = period === "year" ? 12 : period === "half" ? 6 : 1;
   const [error, setError] = useState("");
+  const [opening, setOpening] = useState(false);
   const timer = useRef<number>();
+
+  // Card: Lemon Squeezy's page takes the card, then comes back here.
+  const payByCard = async () => {
+    setError(""); setOpening(true);
+    try {
+      const r = await api.post(`/plans/${venueId}/card`, { plan, period });
+      window.location.href = r.data.data.url;
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? "Could not open the card payment. Try again.");
+      setOpening(false);
+    }
+  };
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const pay = async () => {
@@ -127,6 +135,16 @@ function PayCard({ venueId, plan, founding, onPaid }: { venueId: string; plan: P
           ))}
         </div>
       )}
+      {card && (
+        <>
+          <button onClick={payByCard} disabled={opening}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FFD966] px-5 py-3 text-sm font-extrabold text-gray-900 disabled:opacity-60">
+            <CreditCard size={16} /> {opening ? "Opening…" : `Pay ${rwf(price)} by card`}
+          </button>
+          <p className="mt-1.5 text-xs text-white/60">Renews by itself. Stop any time.</p>
+          <p className="my-3 text-center text-xs font-bold uppercase tracking-wider text-white/40">or with MoMo</p>
+        </>
+      )}
       <div className="flex flex-col gap-2 sm:flex-row">
         <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Your MoMo number, 07…" aria-label="MoMo number to pay from"
           className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3 text-base font-semibold text-gray-900 placeholder-gray-400" />
@@ -152,9 +170,18 @@ export default function Subscription() {
   const need = params.get("need") as PlanFeature | null;
   // Which package to pay for (after the trial, paying is how you switch).
   const [payFor, setPayFor] = useState<PlanId | null>(null);
-  const paid = async (s: Status | null) => { if (s) setStatus(s); await fetchMe(); };
+  const paid = async (s: Status | null) => { if (s) setStatus((old) => ({ ...s, card: old?.card })); await fetchMe(); };
+  // Back from the card page: the payment lands a few seconds later.
+  const cardDone = params.get("card") === "done";
 
-  useEffect(() => { if (venue) api.get(`/plans/${venue.id}`).then((r) => setStatus(r.data.data)).catch(() => {}); }, [venue?.id]);
+  useEffect(() => {
+    if (!venue) return;
+    const load = () => api.get(`/plans/${venue.id}`).then((r) => setStatus(r.data.data)).catch(() => {});
+    load();
+    if (!cardDone) return;
+    const t = [4000, 10000, 25000].map((ms) => window.setTimeout(load, ms));
+    return () => t.forEach(window.clearTimeout);
+  }, [venue?.id]);
 
   const choose = async (plan: PlanId) => {
     if (!venue) return;
@@ -168,6 +195,11 @@ export default function Subscription() {
       <div className="mx-auto max-w-3xl">
         <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white">Plan</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">{venue?.name}</p>
+        {cardDone && (
+          <p className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-semibold text-green-800 dark:bg-green-500/10 dark:text-green-200">
+            💳 Card payment received, thank you! Your package updates here within a minute.
+          </p>
+        )}
 
         {need && PLAN_FOR[need] && (
           <div className="mt-4 flex items-start gap-2 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-800 dark:bg-white/5 dark:text-brand-200">
@@ -189,7 +221,7 @@ export default function Subscription() {
                 {status.state === "grace" && `Unpaid. Pay by ${day(status.locksAt)} to keep your dashboard.`}
                 {status.state === "locked" && (status.orderingPaused ? "Unpaid: your dashboard is locked and guests can't order from their phones." : `Unpaid: your dashboard is locked. Guests stop ordering from their phones on ${day(status.pausesAt)}.`)}
               </p>
-              {venue && <PayCard key={payFor ?? status.plan} venueId={venue.id} plan={payFor ?? status.plan} founding={status.founding} onPaid={paid} />}
+              {venue && <PayCard key={payFor ?? status.plan} venueId={venue.id} plan={payFor ?? status.plan} founding={status.founding} card={!!status.card} onPaid={paid} />}
             </div>
 
             {venue && <div className="mt-4"><MomoCodeCard venueId={venue.id} status={status} onSaved={setStatus} /></div>}

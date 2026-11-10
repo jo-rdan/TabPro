@@ -190,9 +190,19 @@ export async function settlePlanPayment(depositId: string) {
     return { status: 'failed' as const, error: ownerFailure(momoStatus) };
   }
 
+  await creditPlanPayment(depositId, momoStatus, 'MoMo');
+  return { status: 'successful' as const };
+}
+
+/**
+ * Marks a pending package payment paid and adds its days, once (a second call
+ * for the same payment does nothing). Used for MoMo and card payments.
+ */
+export async function creditPlanPayment(referenceId: string, status: string, via: 'MoMo' | 'card') {
+  const p = (await db.query.momoPayments.findFirst({ where: eq(momoPayments.referenceId, referenceId) }))!;
   const settled = await db.transaction(async (tx) => {
-    const [won] = await tx.update(momoPayments).set({ status: 'successful', momoStatus, resolvedAt: new Date() })
-      .where(and(eq(momoPayments.referenceId, depositId), eq(momoPayments.status, 'pending'))).returning();
+    const [won] = await tx.update(momoPayments).set({ status: 'successful', momoStatus: status, resolvedAt: new Date() })
+      .where(and(eq(momoPayments.referenceId, referenceId), eq(momoPayments.status, 'pending'))).returning();
     if (!won) return null;
     const v = (await tx.query.venues.findFirst({ where: eq(venues.id, p.venueId) }))!;
     // Paying early never loses days: the month starts when the trial or the
@@ -206,9 +216,9 @@ export async function settlePlanPayment(depositId: string) {
   if (settled) {
     const s = planStatus(settled);
     await sendPushToOwner(settled.id, `Paid ✓ ${s.planName}`, `Thank you! ${settled.name} is on ${s.planName} until ${fmtDay(new Date(s.paidUntil!))}.`, { url: '/subscription' }).catch(() => {});
-    if (!settled.isDemo) await notifyAdmin(`💰 ${settled.name} paid ${s.planName}`, `${p.amountRwf.toLocaleString('en-US')} RWF by MoMo. Paid until ${fmtDay(new Date(s.paidUntil!))}.`).catch(() => {});
+    if (!settled.isDemo) await notifyAdmin(`💰 ${settled.name} paid ${s.planName}`, `${p.amountRwf.toLocaleString('en-US')} RWF by ${via}. Paid until ${fmtDay(new Date(s.paidUntil!))}.`).catch(() => {});
   }
-  return { status: 'successful' as const };
+  return settled;
 }
 
 const ownerFailure = (momoStatus: string | null) =>

@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleCardWebhook, verifyCardWebhook } from './services/lemonsqueezy.service';
 // Routes thrown errors from async handlers into errorMiddleware; without it
 // Express 4 leaves them unhandled and Node kills the whole process.
 import 'express-async-errors';
@@ -30,6 +31,18 @@ app.use(cors({
   origin: allowedOrigins(),
   credentials: true,
 }));
+
+// Lemon Squeezy signs the raw body, so its webhook is read before express.json().
+app.post('/api/lemonsqueezy/webhook', express.raw({ type: '*/*' }), async (req, res) => {
+  if (!verifyCardWebhook(req.body as Buffer, req.get('X-Signature'))) return res.status(401).end();
+  try {
+    await handleCardWebhook(JSON.parse((req.body as Buffer).toString('utf8')));
+    res.status(200).end();
+  } catch (err: any) {
+    console.error('[card webhook]', err?.message);
+    res.status(500).end(); // Lemon Squeezy tries again
+  }
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

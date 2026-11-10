@@ -1187,12 +1187,12 @@ console.log('\n── Kitchen screen');
     check('A manager can open the kitchen screen', r.status === 200, `status ${r.status}`);
     await pg.query('update staff set is_active=false where id=$1', [m.id]);
   }
-  // Go (paid, after the trial) has no kitchen screen
+  // Go (paid, after the trial) has the kitchen screen too
   await pg.query("update venues set plan='basic', trial_ends_at = now() - interval '1 day', paid_until = now() + interval '20 days' where id=$1", [venueId]);
   r = await call('GET', `/kitchen/${venueId}/tickets`, null, chefTok);
-  check('Go: the kitchen screen is locked (Pro)', r.status === 403 && /Pro/.test(r.json?.error ?? ''), r.json?.error);
+  check('Go: the kitchen screen works', r.status === 200, r.json?.error);
   r = await call('POST', '/orders', { tabId: kTab, items: [{ menuItemId: item('Brochette').id, quantity: 1 }] });
-  check('Go: food orders go to the waiter as before', (await q1('select kitchen_status k from orders where id=$1', [r.json?.data?.order?.id])).k === null);
+  check('Go: food orders go to the kitchen', (await q1('select kitchen_status k from orders where id=$1', [r.json?.data?.order?.id])).k !== null);
   await pg.query("update venues set plan='elite', trial_ends_at = now() + interval '30 days', paid_until = null where id=$1", [venueId]);
   await pg.query("update menu_items set is_available=true where id=$1", [chips.id]);
   await call('POST', `/tabs/${kTab}/close`, { paidWith: 'cash' }, ownerTok);
@@ -1488,6 +1488,12 @@ console.log('\n── Packages & direct MoMo');
   await call('GET', `/plans/${venueId}/pay/${hdep}`, null, ownerTok);
   const afterHalf = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
   check('…and it adds 6 months', Math.abs((afterHalf - afterYear) / 864e5 - 182) < 0.01, `${((afterHalf - afterYear) / 864e5).toFixed(2)} days`);
+
+  // Card (Lemon Squeezy): off until it's set up, and the webhook needs its signature
+  r = await call('POST', `/plans/${venueId}/card`, { plan: 'pro', period: 'year' }, ownerTok);
+  check('Card payments say "not available yet" until Lemon Squeezy is set up', r.status === 400 && /MoMo/.test(r.json?.error ?? ''), r.json?.error);
+  r = await fetch(`${BASE}/lemonsqueezy/webhook`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Signature': 'ab12' }, body: JSON.stringify({ meta: { event_name: 'subscription_payment_success', custom_data: { venue_id: venueId, plan: 'elite', period: 'year' } }, data: { id: '1' } }) });
+  check('A fake card webhook (bad signature) is refused', r.status === 401, `status ${r.status}`);
 
   // Never paid: the wall, then guest ordering pauses
   await pg.query("update venues set trial_ends_at = now() - interval '40 days', paid_until = now() - interval '5 days' where id=$1", [venueId]);

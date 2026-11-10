@@ -144,7 +144,7 @@ export function CampaignNew() {
   const [confirm, setConfirm] = useState(false);
 
   const reach = audience ? (everyone ? audience.total : audience.regulars) : 0;
-  const offerText = offer === 'discount_10' ? '10% off when you pay with Skuzi' : offer === 'free_item' && offerLabel.trim() ? `${offerLabel.trim()} when you pay with Skuzi` : null;
+  const offerText = offer === 'discount_10' ? '10% off your bill' : offer === 'free_item' && offerLabel.trim() ? offerLabel.trim() : null;
 
   const validate = () => {
     if (title.trim().length < 2) return 'Give it a short name, e.g. Karaoke Friday';
@@ -224,7 +224,7 @@ export function CampaignNew() {
                 </>
               )}
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {offer === 'discount_10' ? 'Taken off automatically when the guest pays with Skuzi. Your venue covers it.' : offer === 'free_item' ? 'Guests show it to the waiter and get it when they pay with Skuzi. Your venue covers it.' : 'Offers make people more likely to come.'}
+                {offer === 'discount_10' ? 'Guests show it to the waiter, who takes 10% off. Your venue covers it.' : offer === 'free_item' ? 'Guests show it to the waiter and get it. Your venue covers it.' : 'Offers make people more likely to come.'}
               </p>
             </fieldset>
 
