@@ -384,6 +384,13 @@ await sleep(4500);
 r = await call('GET', `/tabpayment/${td}/pay/status/${depD}`);
 check('Demo payment "succeeds" after a few seconds, tab closed', r.json?.data?.status === 'successful' && (await q1('select status from tabs where id=$1', [td])).status === 'closed');
 check('Demo venue: no money paid out', pawa.state.payouts.length === payoutsBefore && pawa.state.deposits.size === depsBefore);
+// A demo bill nobody paid (bill asked for, then everyone left) must not greet
+// the next demo on that phone: after 30 minutes it's over.
+r = await call('POST', '/tabs/open', { qrCode: demoCode, phone: '0788444334' });
+const tdOld = r.json?.data?.tab?.id;
+await pg.query(`update tabs set status='bill_requested', opened_at=now()-interval '31 minutes' where id=$1`, [tdOld]);
+r = await call('GET', `/tabs/${tdOld}`);
+check('Old unpaid demo bill is over: the phone gets the menu again', r.json?.data?.status === 'closed', r.json?.data?.status);
 
 // ── 4. Locked phone ──────────────────────────────────────────────────────────
 console.log('\n── Locked phone');
