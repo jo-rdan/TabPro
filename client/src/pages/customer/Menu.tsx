@@ -356,34 +356,37 @@ export default function CustomerMenu() {
       loadPreview();
       return;
     }
+    // This phone remembers its own bill (and only this phone: a bill never
+    // comes back from typing a number). Ask the server whether it's still open
+    // first: a bill that was closed meanwhile (or an old demo bill) must not
+    // come back.
     const saved = sessionStorage.getItem(SESSION_KEY(qrCode));
-    if (!saved) {
-      // The page was closed: this phone remembers its own bill (and only this
-      // phone: a bill never comes back from typing a number).
-      const kept = readKept(qrCode);
-      if (!kept) {
-        loadPreview();
-        return;
-      }
-      apiFetch(`/tabs/${kept.tabId}`)
-        .then((r) => r.json())
-        .then((d) => {
-          const raw = d.success ? d.data?.status : null;
-          // "abandoned": an older bill's quiet state; it's still this phone's open bill.
-          const status = raw === "abandoned" ? "open" : raw;
-          if (status === "open" || status === "bill_requested") {
-            const s = { ...kept, tabStatus: status };
-            sessionStorage.setItem(SESSION_KEY(qrCode), JSON.stringify(s));
-            restoreSession(s);
-          } else {
-            forgetKept(qrCode);
-            loadPreview();
-          }
-        })
-        .catch(() => loadPreview());
+    const kept = saved ? JSON.parse(saved) : readKept(qrCode);
+    if (!kept) {
+      loadPreview();
       return;
     }
-    restoreSession(JSON.parse(saved));
+    if (saved && kept.tabStatus === "closed") {
+      restoreSession(kept); // closed while they watched: the rating screen
+      return;
+    }
+    apiFetch(`/tabs/${kept.tabId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const raw = d.success ? d.data?.status : null;
+        // "abandoned": an older bill's quiet state; it's still this phone's open bill.
+        const status = raw === "abandoned" ? "open" : raw;
+        if (status === "open" || status === "bill_requested") {
+          const s = { ...kept, tabStatus: status };
+          sessionStorage.setItem(SESSION_KEY(qrCode), JSON.stringify(s));
+          restoreSession(s);
+        } else {
+          sessionStorage.removeItem(SESSION_KEY(qrCode));
+          forgetKept(qrCode);
+          loadPreview();
+        }
+      })
+      .catch(() => (saved ? restoreSession(kept) : loadPreview()));
   }, [qrCode]);
 
   function restoreSession(s: any) {

@@ -312,9 +312,17 @@ export async function getTab(tabId: string) {
     },
   });
   if (!tab) return tab;
+  // Demo bills are never paid or closed by staff, so a phone that tried the
+  // demo card once would land back on its old bill at every later demo.
+  // After 30 minutes a demo bill is over: the next scan shows the menu.
+  if (tab.table.venue.isDemo && tab.status !== 'closed' && Date.now() - tab.openedAt.getTime() > DEMO_BILL_MS) {
+    await db.update(tabs).set({ status: 'closed', closedAt: new Date() }).where(eq(tabs.id, tab.id));
+    tab.status = 'closed';
+  }
   const { table, ...rest } = tab;
   return { ...rest, table: { id: table.id, label: table.label, venue: publicVenue(table.venue) } };
 }
+const DEMO_BILL_MS = 30 * 60e3;
 
 
 export async function getActiveTabForTable(tableId: string) {
