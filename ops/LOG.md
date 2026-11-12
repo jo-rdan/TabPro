@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-11-12 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-12); no open PRs. PR #118 (demo card: old unpaid demo bill reset) was merged today and its Tests runs passed.
+- Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. No code changed, so no e2e run.
+- Left off: waiting on Jordan (confirm freeze is over, Skuzi domain, pawaPay, outreach). Check that prod has the stock packs migration (0036). ops/README.md still describes the old 8% model.
+
 ## 2026-11-11 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-11); no open PRs; no new commits since the last run.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. No code changed, so no e2e run.
