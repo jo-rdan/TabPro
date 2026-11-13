@@ -55,7 +55,7 @@ export function planStatus(venue: Venue) {
   return {
     plan,
     planName: PLANS[plan].name,
-    priceRwf: planPrice(plan, isFounding(venue.id)).priceRwf,
+    priceRwf: planPrice(plan, isFounding(venue.id), venue.dealPriceRwf).priceRwf,
     // In the free trial everything is open (Bar+), whatever package was picked.
     effectivePlan: (trialEnds > now || venue.isDemo ? 'elite' : plan) as PlanId,
     trialEndsAt: venue.trialEndsAt,
@@ -71,6 +71,7 @@ export function planStatus(venue: Venue) {
     orderingPaused: !venue.isDemo && state === 'locked' && daysOver >= PAUSE_DAYS,
     momoPayCode: venue.momoPayCode,
     founding: isFounding(venue.id),
+    dealPriceRwf: venue.dealPriceRwf ?? null,
   } as const;
 }
 
@@ -114,7 +115,7 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
   if (!(plan in PLANS)) throw new Error('Pick Starter, Pro or Bar+');
   if (typeof input.phone !== 'string' || !input.phone.trim()) throw new Error('Enter the MoMo number to pay from');
   const period = input.period === 'year' ? 'year' : input.period === 'half' ? 'half' : 'month';
-  const price = planPrice(plan, isFounding(venueId));
+  const price = planPrice(plan, isFounding(venueId), venue.dealPriceRwf);
   const amountRwf = period === 'year' ? price.yearlyRwf : period === 'half' ? price.sixMonthRwf : price.priceRwf;
   if (!amountRwf) throw new Error('This package can only be paid monthly');
   const depositId = uuidv4();
@@ -154,11 +155,11 @@ export async function startPlanPayment(venueId: string, input: { plan?: unknown;
 }
 
 // What a payment buys, by how many months' price it is (this also covers
-// founding prices and payments made at the old prices): 10+ months' price buys
-// a year, 5+ buys 6 months, anything less a month.
-const daysPaidFor = (plan: PlanId | null, amountRwf: number) => {
+// founding and deal prices, and payments made at the old prices): 10+ months'
+// price buys a year, 5+ buys 6 months, anything less a month.
+const daysPaidFor = (plan: PlanId | null, amountRwf: number, dealRwf?: number | null) => {
   if (!plan || !PLANS[plan]) return 30;
-  const months = amountRwf / Math.min(PLANS[plan].priceRwf, planPrice(plan, true).priceRwf);
+  const months = amountRwf / Math.min(PLANS[plan].priceRwf, planPrice(plan, true, dealRwf).priceRwf);
   return months >= 9.5 ? 365 : months >= 5 ? 182 : 30;
 };
 
@@ -209,7 +210,7 @@ export async function creditPlanPayment(referenceId: string, status: string, via
     // last paid month ends.
     const from = Math.max(Date.now(), v.trialEndsAt ? new Date(v.trialEndsAt).getTime() : 0, v.paidUntil ? new Date(v.paidUntil).getTime() : 0);
     const [after] = await tx.update(venues)
-      .set({ plan: p.plan ?? v.plan, paidUntil: new Date(from + daysPaidFor(p.plan, p.amountRwf) * DAY), planNotice: null })
+      .set({ plan: p.plan ?? v.plan, paidUntil: new Date(from + daysPaidFor(p.plan, p.amountRwf, v.dealPriceRwf) * DAY), planNotice: null })
       .where(eq(venues.id, v.id)).returning();
     return after;
   });
@@ -291,9 +292,14 @@ export async function listVenuePlans() {
   }));
 }
 
-/** Founder: change a venue's package, trial end, or mark it paid (still works by hand). */
-export async function adminUpdatePlan(venueId: string, input: { plan?: unknown; trialEndsAt?: unknown; paidUntil?: unknown }) {
+/** Founder: change a venue's package, trial end, deal price, or mark it paid (still works by hand). */
+export async function adminUpdatePlan(venueId: string, input: { plan?: unknown; trialEndsAt?: unknown; paidUntil?: unknown; dealPriceRwf?: unknown }) {
   const set: Partial<typeof venues.$inferInsert> = {};
+  if (input.dealPriceRwf !== undefined) {
+    const n = input.dealPriceRwf === null || input.dealPriceRwf === "" ? null : Number(input.dealPriceRwf);
+    if (n !== null && (!Number.isInteger(n) || n < 1000 || n > 1_000_000)) throw new Error("A deal price is a whole number of RWF a month, e.g. 50000");
+    set.dealPriceRwf = n;
+  }
   if (input.plan !== undefined) {
     if (!((input.plan as string) in PLANS)) throw new Error('Unknown package');
     set.plan = input.plan as PlanId;

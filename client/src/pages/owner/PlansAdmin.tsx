@@ -10,6 +10,7 @@ type Row = {
   id: string; name: string; isDemo: boolean; ownerName: string; ownerEmail: string; createdAt: string;
   plan: PlanId; planName: string; priceRwf: number; trialEndsAt: string | null; trialDaysLeft: number;
   paidUntil: string | null; state: "trial" | "paid" | "grace" | "locked"; orderingPaused: boolean; momoPayCode: string | null;
+  founding: boolean; dealPriceRwf: number | null;
 };
 
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Kigali" }) : "—");
@@ -73,7 +74,14 @@ export default function PlansAdmin() {
                 </label>
                 <button onClick={() => paidMonth(r)} className="rounded-xl bg-green-600 px-3 py-2 text-sm font-extrabold text-white">Paid +1 month</button>
                 {r.paidUntil && <button onClick={() => update(r.id, { paidUntil: null })} className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600 dark:border-gray-700 dark:text-gray-300">Clear payment</button>}
-                <span className="text-xs text-gray-400">MoMo Pay code: {r.momoPayCode ?? "not set"}</span>
+                <label className="flex items-center gap-1.5 text-xs text-gray-500">Deal price
+                  <input type="number" inputMode="numeric" min={1000} step={1000} placeholder="list price" defaultValue={r.dealPriceRwf ?? ""}
+                    onBlur={(e) => { const v = e.target.value.trim(); if (v !== String(r.dealPriceRwf ?? "")) update(r.id, { dealPriceRwf: v ? Number(v) : null }); }}
+                    aria-label={`Deal price for ${r.name}, RWF a month`}
+                    className="w-28 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+                  RWF / month
+                </label>
+                <span className="text-xs text-gray-400">Pays {r.priceRwf.toLocaleString("en-US")} a month{r.founding ? " · founding" : ""} · MoMo Pay code: {r.momoPayCode ?? "not set"}</span>
               </div>
             </div>
           ))}

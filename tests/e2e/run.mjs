@@ -1496,6 +1496,42 @@ console.log('\n── Packages & direct MoMo');
   const afterHalf = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
   check('…and it adds 6 months', Math.abs((afterHalf - afterYear) / 864e5 - 182) < 0.01, `${((afterHalf - afterYear) / 864e5).toFixed(2)} days`);
 
+  // A deal price agreed with one venue (e.g. Max for 50,000): the founder sets it
+  {
+    const fo = await q1(`select id, email from owners where email='jordankayinamura@gmail.com'`);
+    const fTok = jwt.sign({ ownerId: fo.id, email: fo.email }, JWT_SECRET, { expiresIn: '1d' });
+    r = await call('PATCH', `/plans/admin/${venueId}`, { dealPriceRwf: 50000 }, ownerTok);
+    check('An owner cannot set their own deal price', r.status === 403, `status ${r.status}`);
+    r = await call('PATCH', `/plans/admin/${venueId}`, { dealPriceRwf: 5 }, fTok);
+    check('A deal price must be a real monthly amount', r.status === 400, `status ${r.status}`);
+    r = await call('PATCH', `/plans/admin/${venueId}`, { dealPriceRwf: 50000 }, fTok);
+    check('The founder sets Max for 50,000 a month', r.status === 200 && r.json?.data?.dealPriceRwf === 50000, r.json?.error);
+    r = await call('GET', `/plans/${venueId}`, null, ownerTok);
+    check('…the owner sees 50,000 as their price', r.json?.data?.priceRwf === 50000 && r.json?.data?.dealPriceRwf === 50000, `${r.json?.data?.priceRwf}`);
+    r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788123456' }, ownerTok);
+    check('…a month of Max asks their phone for 50,000', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '50000', r.json?.error);
+    pawa.state.deposits.get(r.json?.data?.depositId).status = 'FAILED';
+    await call('GET', `/plans/${venueId}/pay/${r.json?.data?.depositId}`, null, ownerTok);
+    r = await call('POST', `/plans/${venueId}/pay`, { plan: 'basic', phone: '0788123456' }, ownerTok);
+    check('…a cheaper package keeps its own price (Go 35,000)', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '35000', r.json?.error);
+    pawa.state.deposits.get(r.json?.data?.depositId).status = 'FAILED';
+    await call('GET', `/plans/${venueId}/pay/${r.json?.data?.depositId}`, null, ownerTok);
+    const beforeDeal = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
+    r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788123456', period: 'half' }, ownerTok);
+    const ddep = r.json?.data?.depositId;
+    check('…6 months of Max at the deal price: 270,000', r.status === 200 && pawa.state.deposits.get(ddep)?.amount === '270000', r.json?.error);
+    pawa.state.deposits.get(ddep).status = 'COMPLETED';
+    await call('GET', `/plans/${venueId}/pay/${ddep}`, null, ownerTok);
+    const afterDeal = new Date((await q1('select paid_until from venues where id=$1', [venueId])).paid_until + 'Z').getTime();
+    check('…and it adds 6 months', Math.abs((afterDeal - beforeDeal) / 864e5 - 182) < 0.01, `${((afterDeal - beforeDeal) / 864e5).toFixed(2)} days`);
+    r = await call('POST', `/plans/${venueId}/pay`, { plan: 'elite', phone: '0788123456', period: 'year' }, ownerTok);
+    check('…a year at the deal price: 500,000', r.status === 200 && pawa.state.deposits.get(r.json?.data?.depositId)?.amount === '500000', r.json?.error);
+    pawa.state.deposits.get(r.json?.data?.depositId).status = 'FAILED';
+    await call('GET', `/plans/${venueId}/pay/${r.json?.data?.depositId}`, null, ownerTok);
+    r = await call('PATCH', `/plans/admin/${venueId}`, { dealPriceRwf: null }, fTok);
+    check('Clearing the deal brings the usual price back', r.status === 200 && r.json?.data?.dealPriceRwf === null && r.json?.data?.priceRwf === 60000, `${r.json?.data?.priceRwf}`);
+  }
+
   // Card (Lemon Squeezy): off until it's set up, and the webhook needs its signature
   r = await call('POST', `/plans/${venueId}/card`, { plan: 'pro', period: 'year' }, ownerTok);
   check('Card payments say "not available yet" until Lemon Squeezy is set up', r.status === 400 && /MoMo/.test(r.json?.error ?? ''), r.json?.error);
