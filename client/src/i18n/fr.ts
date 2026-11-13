@@ -682,6 +682,8 @@ export const FR: { exact: Record<string, string>; patterns?: [RegExp, string | (
     "📖 How to use Skuzi": "📖 Comment utiliser Skuzi",
     "Incorrect PIN. Try again.": "PIN incorrect. Réessayez.",
     // Owner, manager and staff screens (13 Nov 2026)
+    "⭐ Your special price": "⭐ Votre prix spécial",
+    "Your special price is paid with MoMo. Pay with MoMo below.": "Votre prix spécial se paie avec MoMo. Payez avec MoMo ci-dessous.",
     "Clock-in isn't switched on yet": "Le pointage n'est pas encore activé",
     "Your orders are on the waiter screen. Ask your manager if you need to sign in.": "Vos commandes sont sur l'écran serveur. Demandez à votre responsable si vous devez vous connecter.",
     "Open the waiter screen": "Ouvrir l'écran serveur",
@@ -1253,6 +1255,7 @@ export const FR: { exact: Record<string, string>; patterns?: [RegExp, string | (
     [/^(\d+) people$/, "$1 personnes"],
     ...datePatterns({ days: ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"], short: ["lun","mar","mer","jeu","ven","sam","dim"], months: ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"], shortMonths: ["janv","févr","mars","avr","mai","juin","juil","août","sept","oct","nov","déc"], orders: (n) => `${n} commande${n === "1" ? "" : "s"}` }),
     // Whole sentences with values or bold parts (13 Nov 2026)
+    [/^⭐ Your special price: (.+?) for (.+?) a month instead of (.+?)\.$/, "⭐ Votre prix spécial : $1 pour $2 par mois au lieu de $3."],
     [/^Code ([A-Z0-9]{3,})$/, "Code $1"],
     [/^(.+?) wants to join your team$/, "$1 veut rejoindre votre équipe"],
     [/^· (\d+) items$/, "· $1 articles"],
