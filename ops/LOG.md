@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-11-13 UTC · daily
+- Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-13). PR #119 (translations: owner, manager, staff screens) merged today, Tests passed. One open PR: #120 "Deal price for one venue (The 3K: Max for 50,000)" (Jordan's; its Tests run passed).
+- Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. Did not merge #120 (not bot work). No code changed, so no e2e run.
+- Left off: waiting on Jordan (merge #120 if wanted, confirm freeze is over, Skuzi domain, pawaPay, outreach). Check that prod has the stock packs migration (0036). ops/README.md still describes the old 8% model.
+
 ## 2026-11-12 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-12); no open PRs. PR #118 (demo card: old unpaid demo bill reset) was merged today and its Tests runs passed.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. No code changed, so no e2e run.
