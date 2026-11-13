@@ -81,7 +81,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/waitlist" element={<Waitlist />} />
-          <Route path="/venue-terms" element={<VenueTerms />} />
+          <Route path="/venue-terms" element={<LangCorner><VenueTerms /></LangCorner>} />
           {CREATORS_ENABLED && <Route path="/creators/join" element={<CreatorJoin />} />}
           {CREATORS_ENABLED && <Route path="/creator/:token" element={<CreatorHome />} />}
           <Route path="/privacy.html" element={null} />
@@ -106,7 +106,7 @@ export default function App() {
         <Route path="/cashier" element={<Translated><Cashier /></Translated>} />
 
         {/* Receipt — accessible by cashier/owner, no strict auth gate needed */}
-        <Route path="/receipt/:tabId" element={<Receipt />} />
+        <Route path="/receipt/:tabId" element={<Translated><Receipt /></Translated>} />
 
         {/* Owner — protected */}
         <Route
@@ -216,12 +216,12 @@ export default function App() {
           path="/claim-sticker"
           element={
             <ProtectedRoute>
-              <ClaimSticker />
+              <LangCorner><ClaimSticker /></LangCorner>
             </ProtectedRoute>
           }
         />
 
-        <Route path="/venue-terms" element={<VenueTerms />} />
+        <Route path="/venue-terms" element={<LangCorner><VenueTerms /></LangCorner>} />
         <Route path="/privacy.html" element={null} />
         <Route path="/terms.html" element={null} />
 
