@@ -1,0 +1,1 @@
+ALTER TABLE "venues" ADD COLUMN "deal_price_rwf" integer;

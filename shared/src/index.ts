@@ -76,6 +76,8 @@ export interface PlanStatus {
   momoPayCode: string | null;
   /** One of the first 15 restaurants: Max at the Pro price. */
   founding: boolean;
+  /** A monthly price agreed with this venue (null = list prices). */
+  dealPriceRwf: number | null;
   /** Can this venue pay by card (Lemon Squeezy set up)? */
   card?: boolean;
 }
@@ -286,9 +288,17 @@ export const PLANS: Record<PlanId, { name: string; priceRwf: number; trialDays: 
 // Founding venues: the first 15 restaurants get Max for the Pro price, monthly
 // 6 months or yearly, for as long as they stay.
 export const FOUNDING_SEATS = 15;
-/** What a package costs this venue: founding venues pay Pro prices for Max. */
-export function planPrice(plan: PlanId, founding = false): { priceRwf: number; sixMonthRwf?: number; yearlyRwf?: number } {
+/**
+ * What a package costs this venue: founding venues pay Pro prices for Max, and
+ * a venue with a deal price (agreed with the founder) never pays more than it a
+ * month. A deal keeps the usual bulk discounts: 6 months for about 5.4 months'
+ * price (rounded down to 5,000), a year for 10 months' price.
+ */
+export function planPrice(plan: PlanId, founding = false, dealRwf?: number | null): { priceRwf: number; sixMonthRwf?: number; yearlyRwf?: number } {
   const p = founding && plan === "elite" ? PLANS.pro : PLANS[plan];
+  if (dealRwf && dealRwf < p.priceRwf) {
+    return { priceRwf: dealRwf, sixMonthRwf: Math.floor((dealRwf * 65) / 12 / 5000) * 5000, yearlyRwf: dealRwf * 10 };
+  }
   return { priceRwf: p.priceRwf, sixMonthRwf: p.sixMonthRwf, yearlyRwf: p.yearlyRwf };
 }
 

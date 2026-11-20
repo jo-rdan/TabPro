@@ -34,6 +34,8 @@ export async function startCardCheckout(venueId: string, input: { plan?: unknown
   if (!isCardConfigured()) throw new Error('Card payments are not available yet. Pay with MoMo for now.');
   const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
   if (!venue) throw new Error('Venue not found');
+  // Card prices are fixed on Lemon Squeezy; a deal price is paid with MoMo.
+  if (venue.dealPriceRwf) throw new Error('Your special price is paid with MoMo. Pay with MoMo below.');
   const plan = (input.plan ?? venue.plan) as PlanId;
   if (!(plan in PLANS)) throw new Error('Pick Go, Pro or Max');
   const period: Period = input.period === 'year' ? 'year' : input.period === 'half' ? 'half' : 'month';

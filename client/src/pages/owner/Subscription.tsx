@@ -64,11 +64,11 @@ function MomoCodeCard({ venueId, status, onSaved }: { venueId: string; status: S
 
 // Pays one month of a package from the owner's MoMo: their phone asks for the
 // PIN, then this checks every few seconds until MoMo confirms.
-function PayCard({ venueId, plan, founding, card, onPaid }: { venueId: string; plan: PlanId; founding: boolean; card: boolean; onPaid: (s: Status) => void }) {
+function PayCard({ venueId, plan, founding, deal, card, onPaid }: { venueId: string; plan: PlanId; founding: boolean; deal: number | null; card: boolean; onPaid: (s: Status) => void }) {
   const [phone, setPhone] = useState(() => localStorage.getItem("skuzi_pay_phone") ?? "");
   const [step, setStep] = useState<"form" | "waiting" | "done">("form");
   // Every package can be paid for a year at once, cheaper the bigger the package.
-  const { priceRwf: monthRwf, sixMonthRwf, yearlyRwf } = planPrice(plan, founding);
+  const { priceRwf: monthRwf, sixMonthRwf, yearlyRwf } = planPrice(plan, founding, deal);
   const [period, setPeriod] = useState<"month" | "half" | "year">("month");
   const price = (period === "year" && yearlyRwf) || (period === "half" && sixMonthRwf) || monthRwf;
   const months = period === "year" ? 12 : period === "half" ? 6 : 1;
@@ -211,7 +211,7 @@ export default function Subscription() {
           <div className="mt-5 h-32 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
         ) : (
           <>
-            {status.founding && <div className="mt-5"><FoundingStrip /></div>}
+            {(status.founding || !!status.dealPriceRwf) && <div className="mt-5"><FoundingStrip founding={status.founding} dealRwf={status.dealPriceRwf} /></div>}
             <div className="mt-5 rounded-2xl bg-gray-900 p-5 text-white dark:bg-gray-800">
               <p className="text-xs font-bold uppercase tracking-wider text-white/60">Your package</p>
               <p className="mt-1 font-display text-3xl font-bold">{status.planName} <span className="text-base font-semibold text-white/70">· {rwf(status.priceRwf)} / month</span></p>
@@ -221,7 +221,7 @@ export default function Subscription() {
                 {status.state === "grace" && `Unpaid. Pay by ${day(status.locksAt)} to keep your dashboard.`}
                 {status.state === "locked" && (status.orderingPaused ? "Unpaid: your dashboard is locked and guests can't order from their phones." : `Unpaid: your dashboard is locked. Guests stop ordering from their phones on ${day(status.pausesAt)}.`)}
               </p>
-              {venue && <PayCard key={payFor ?? status.plan} venueId={venue.id} plan={payFor ?? status.plan} founding={status.founding} card={!!status.card} onPaid={paid} />}
+              {venue && <PayCard key={payFor ?? status.plan} venueId={venue.id} plan={payFor ?? status.plan} founding={status.founding} deal={status.dealPriceRwf} card={!!status.card && !status.dealPriceRwf} onPaid={paid} />}
             </div>
 
             {venue && <div className="mt-4"><MomoCodeCard venueId={venue.id} status={status} onSaved={setStatus} /></div>}
@@ -233,18 +233,19 @@ export default function Subscription() {
               {(Object.keys(PLANS) as PlanId[]).map((id) => {
                 const p = PLANS[id];
                 const current = status.plan === id;
+                const yours = planPrice(id, status.founding, status.dealPriceRwf).priceRwf;
                 return (
                   <div key={id} className={`flex flex-col rounded-2xl border-2 bg-white p-5 dark:bg-gray-900 ${current ? "border-brand-500" : "border-gray-200 dark:border-gray-800"}`}>
                     <div className="flex items-center justify-between">
                       <p className="font-display text-xl font-bold text-gray-900 dark:text-white">{p.name}</p>
                       {current && <span className="rounded-full bg-brand-500 px-2.5 py-0.5 text-[11px] font-extrabold uppercase text-white">Yours</span>}
                     </div>
-                    {status.founding && id === "elite" && (
-                      <p className="mt-1 w-fit rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">⭐ Founding venue · Pro price</p>
+                    {yours < p.priceRwf && (
+                      <p className="mt-1 w-fit rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">{status.dealPriceRwf ? "⭐ Your special price" : "⭐ Founding venue · Pro price"}</p>
                     )}
                     <p className="mt-1 font-display text-2xl font-bold text-gray-900 dark:text-white">
-                      {planPrice(id, status.founding).priceRwf.toLocaleString("en-US")} <span className="text-sm font-semibold text-gray-500">RWF / month</span>
-                      {status.founding && id === "elite" && <span className="ml-2 text-sm font-semibold text-gray-400 line-through">{p.priceRwf.toLocaleString("en-US")}</span>}
+                      {yours.toLocaleString("en-US")} <span className="text-sm font-semibold text-gray-500">RWF / month</span>
+                      {yours < p.priceRwf && <span className="ml-2 text-sm font-semibold text-gray-400 line-through">{p.priceRwf.toLocaleString("en-US")}</span>}
                     </p>
                     <p className="text-xs font-bold text-green-700 dark:text-green-400">{p.trialDays === 14 ? "2 weeks free" : "1 month free"}</p>
                     <ul className="mt-3 flex-1 space-y-2">

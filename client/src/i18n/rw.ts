@@ -683,6 +683,8 @@ export const RW: { exact: Record<string, string>; patterns?: [RegExp, string | (
     "📖 How to use Skuzi": "📖 Uko Skuzi ikoreshwa",
     "Incorrect PIN. Try again.": "PIN siyo. Ongera ugerageze.",
     // Owner, manager and staff screens (13 Nov 2026)
+    "⭐ Your special price": "⭐ Igiciro cyawe cyihariye",
+    "Your special price is paid with MoMo. Pay with MoMo below.": "Igiciro cyawe cyihariye cyishyurwa na MoMo. Ishyura na MoMo hasi.",
     "Clock-in isn't switched on yet": "Kwemeza ko wageze ku kazi ntibirafungurwa",
     "Your orders are on the waiter screen. Ask your manager if you need to sign in.": "Ibyatumijwe byawe biri kuri paji y'umuseriveri. Baza umuyobozi wawe niba ukeneye kwinjira.",
     "Open the waiter screen": "Fungura paji y'umuseriveri",
@@ -1254,6 +1256,7 @@ export const RW: { exact: Record<string, string>; patterns?: [RegExp, string | (
     [/^(\d+) people$/, "Abantu $1"],
     ...datePatterns({ days: ["Ku wa mbere","Ku wa kabiri","Ku wa gatatu","Ku wa kane","Ku wa gatanu","Ku wa gatandatu","Ku cyumweru"], short: ["Mbe","Kab","Gtu","Kan","Gnu","Gnd","Cyu"], months: ["Mutarama","Gashyantare","Werurwe","Mata","Gicurasi","Kamena","Nyakanga","Kanama","Nzeri","Ukwakira","Ugushyingo","Ukuboza"], shortMonths: ["Mut","Gas","Wer","Mat","Gic","Kam","Nya","Kan","Nze","Ukw","Ugu","Uku"], orders: (n) => `ibitumizwa ${n}` }),
     // Whole sentences with values or bold parts (13 Nov 2026)
+    [/^⭐ Your special price: (.+?) for (.+?) a month instead of (.+?)\.$/, "⭐ Igiciro cyawe cyihariye: $1 ku $2 ku kwezi aho kuba $3."],
     [/^Code ([A-Z0-9]{3,})$/, "Kode $1"],
     [/^(.+?) wants to join your team$/, "$1 arashaka kwinjira mu bakozi bawe"],
     [/^· (\d+) items$/, "· ibintu $1"],

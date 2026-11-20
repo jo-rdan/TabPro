@@ -11,7 +11,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday
 export function PlanBanner({ status }: { status?: PlanStatus }) {
   if (!status) return null;
   const soon = (status.state === "trial" || status.state === "paid") && status.daysLeft <= 3;
-  if (!soon && status.state !== "grace") return status.founding ? <FoundingStrip /> : null;
+  if (!soon && status.state !== "grace") return status.founding || status.dealPriceRwf ? <FoundingStrip founding={status.founding} dealRwf={status.dealPriceRwf} /> : null;
   const text =
     status.state === "grace"
       ? `Your package is unpaid. Pay ${rwf(status.priceRwf)} by ${day(status.locksAt)} to keep your dashboard.`
@@ -51,12 +51,15 @@ export function PlanWall({ status, venueName }: { status: PlanStatus; venueName?
   );
 }
 
-/** One of the first 15 venues: a quiet gold reminder of their deal. */
-export function FoundingStrip() {
+/** One of the first 15 venues, or a venue with its own deal: a quiet gold reminder of it. */
+export function FoundingStrip({ founding = true, dealRwf }: { founding?: boolean; dealRwf?: number | null }) {
+  const price = rwf(planPrice("elite", founding, dealRwf).priceRwf);
   return (
     <Link to="/subscription" className="mb-4 flex items-center gap-2 rounded-2xl bg-amber-100 px-4 py-2.5 text-sm font-semibold text-amber-900 dark:bg-amber-900/30 dark:text-amber-200">
       <span>
-        ⭐ Founding venue: {PLANS.elite.name} for {rwf(planPrice("elite", true).priceRwf)} a month instead of {rwf(PLANS.elite.priceRwf)}, for as long as you stay.
+        {founding
+          ? <>⭐ Founding venue: {PLANS.elite.name} for {price} a month instead of {rwf(PLANS.elite.priceRwf)}, for as long as you stay.</>
+          : <>⭐ Your special price: {PLANS.elite.name} for {price} a month instead of {rwf(PLANS.elite.priceRwf)}.</>}
       </span>
     </Link>
   );
