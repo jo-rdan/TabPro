@@ -29,6 +29,7 @@ Keep this short and current. The bot and interactive sessions both update it.
 - Venue agreement, one-page pitch, pitch script, demo QR card, 16-table sticker sheet + clock-in sticker (Jordan's Sales folder).
 
 ## Needs Jordan
+- **URGENT (2026-11-28): Render has SUSPENDED the backend service (tabpro-backend). The app is down.** Log in to Render, open the service, find why (billing / limit) and resume it. See issue #123.
 - PR #91 (stock for any drink, any pack) was merged 2026-11-07. Confirm the stock packs migration (now numbered 0036) is on prod. PRs #104 (founding venues: first 15 get Max at the Pro price), #105 and #106 (staff guide) are merged.
 - **Aug 2027:** renew tabpro.lol before 2027-09-29 (auto-renew is OFF; renewal ≈ $26.26 at Porkbun).
 - Email: info@tabpro.lol forwards to Gmail (done 2026-10-04). Still to do: Gmail Apps Script (EMAIL_SCRIPT_URL/SECRET on Render) for demo-request emails.

@@ -2,6 +2,11 @@
 
 Newest first. Every routine run and interactive session adds an entry.
 
+## 2026-11-28 UTC · daily
+- Checked: watchdog issue #123 open: backend /health returns 503 "Service Suspended" (Render), tabpro.lol 200. Nightly Tests on main green (2026-11-28). One open PR: #120 (Jordan's).
+- Did: found the cause (Render suspended the backend service; not a code issue, cannot be fixed from the repo). Commented on #123 and opened the daily report issue. No code changed, so no e2e run. Design polish skipped (freeze).
+- Left off: next run: check /health again; if still 503, Jordan has not resumed the service. Also waiting on #120, freeze confirmation, Skuzi domain, pawaPay, outreach; check prod migration 0036; ops/README.md still describes the old 8% model.
+
 ## 2026-11-27 UTC · daily
 - Checked: no open watchdog issues; /health and tabpro.lol both 200; nightly Tests on main green (2026-11-27). One open PR: #120 "Deal price for one venue (The 3K: Max for 50,000)" (Jordan's). No new code commits since the last run.
 - Did: nothing to do. No `bot-ok` items in "Up next"; design polish skipped because nobody has told the bot the freeze is over. Did not merge #120 (not bot work). No code changed, so no e2e run.
